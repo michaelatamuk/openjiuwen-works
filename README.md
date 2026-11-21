@@ -21,11 +21,11 @@
   <img src="docs/ui/story.png" alt="openJiuwen Works Story view: Reported → Picked up → Confirmed → Fixed → Checked, with Mira at the ready-to-release gate and Evidence one click away" width="100%" />
 </div>
 
-## The problem
+## Waiting is the bug
 
 A bug report waits: for triage, for an agent's answer, for a reviewer, for someone to prove the change works. Writing the fix is the short part.
 
-## The solution
+## A factory, not a chat
 
 **A factory that turns a report into a proof, then lets a person decide.**
 
