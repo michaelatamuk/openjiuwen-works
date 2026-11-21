@@ -36,8 +36,9 @@ STATUS = {
 }
 
 
-def _statuses() -> Counter[str]:
+def _statuses() -> tuple[Counter[str], list[str]]:
     counted: Counter[str] = Counter()
+    survivors: list[str] = []
     for meta in Path("mutants").rglob("*.meta"):
         try:
             payload: Any = json.loads(meta.read_text(encoding="utf-8"))
@@ -48,11 +49,14 @@ def _statuses() -> Counter[str]:
         codes = payload.get("exit_code_by_key")
         if not isinstance(codes, dict):
             continue
-        for code in codes.values():
+        for key, code in codes.items():
             if code is None or code in EXCLUDED:
                 continue
-            counted[STATUS.get(int(code), f"exit {code}")] += 1
-    return counted
+            status = STATUS.get(int(code), f"exit {code}")
+            counted[status] += 1
+            if status == "survived":
+                survivors.append(f"{meta}: {key}")
+    return counted, survivors
 
 
 def main() -> int:
@@ -60,12 +64,14 @@ def main() -> int:
     print(run.stdout[-4000:])
     if run.returncode != 0:
         print(run.stderr[-4000:], file=sys.stderr)
-    counted = _statuses()
+    counted, survivors = _statuses()
     total = sum(counted.values())
     killed = sum(counted[status] for status in ("killed", "caught by type check"))
     score = killed / total if total else 0.0
     print("statuses:", dict(counted))
     print(f"mutation score: {score:.1%} ({killed}/{total}); threshold {THRESHOLD:.0%}")
+    for survivor in survivors[:40]:
+        print("survived:", survivor)
     if total == 0:
         print("no mutants were considered; failing the gate", file=sys.stderr)
         return 1
