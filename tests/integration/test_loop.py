@@ -30,7 +30,9 @@ def test_the_whole_loop_proves_a_fix(paths, submit, scenario_set, make_superviso
     record = run(make_supervisor("fix-add"), task.id, scenario_set, approve_plan=True)
 
     proof = evidence(paths, record)
-    assert record.stop_reason is StopReason.COMPLETED, proof.get("test")
+    test = proof.get("test") or {}
+    detail = (test.get("exit_code"), test.get("stdout_tail"), test.get("stderr_tail"))
+    assert record.stop_reason is StopReason.COMPLETED, detail
     assert record.state is TaskState.PROVED
     assert record.tokens == 1200
     assert record.usd == pytest.approx(0.012)

@@ -40,6 +40,11 @@ jobs:
           name: coverage
           path: coverage.xml
           if-no-files-found: ignore
+      - name: Integration evidence on failure
+        if: failure()
+        run: |
+          find /tmp/pytest-of-runner -name commands.jsonl -print -exec cat {} \; || true
+          find /tmp/pytest-of-runner -name evidence.md -print -exec sed -n '1,100p' {} \; || true
 
   benchmark:
     runs-on: ubuntu-latest
