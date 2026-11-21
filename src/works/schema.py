@@ -7,6 +7,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from .evidence import Evidence
+from .harness.base import Proposal
 from .records import (
     SCHEMA_VERSION,
     CommandRecord,
@@ -27,6 +28,7 @@ def all_schemas() -> dict[str, Any]:
         "ledger": LedgerRow,
         "command": CommandRecord,
         "evidence": Evidence,
+        "proposal": Proposal,
     }
     return {
         "schema_version": SCHEMA_VERSION,

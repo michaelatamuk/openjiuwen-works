@@ -18,7 +18,8 @@ from .gitops import GitRepo
 from .harness.base import Harness, Proposal, ProposalRequest
 from .ledger import Ledger
 from .logs import get_logger
-from .policy import PolicyReport, check_patch, paths_from_patch
+from .memory import Memory, NullMemory
+from .policy import PolicyReport, check_patch, check_paths, paths_from_patch
 from .quarantine import ensure_outside
 from .quarantine import load as load_quarantine
 from .queue import Queue
@@ -82,6 +83,7 @@ class Supervisor:
         ledger: Ledger,
         harness: Harness | None,
         runner: CommandRunner,
+        memory: Memory | None = None,
         flows_dir: Path | None = None,
         python: str | None = None,
         clock: Callable[[], datetime] | None = None,
@@ -91,6 +93,7 @@ class Supervisor:
         self._ledger = ledger
         self._harness = harness
         self._runner = runner
+        self._memory = memory or NullMemory()
         self._flows_dir = flows_dir or paths.flows
         self._python = python
         self._clock = clock or (lambda: datetime.now(tz=UTC))
@@ -243,14 +246,23 @@ class Supervisor:
             self._stop(ctx, StopReason.BUDGET_EXCEEDED, detail="wall-clock budget")
             return
 
-        violations = check_patch(proposal.patch, flow.paths)
+        violations = (
+            check_paths(proposal.touched_paths, flow.paths)
+            if proposal.applied
+            else check_patch(proposal.patch, flow.paths)
+        )
+        if proposal.applied:
+            worktree = _required(ctx.worktree, "worktree")
+            touched = proposal.touched_paths or repo.all_changed_files(worktree)
+            violations = check_paths(touched, flow.paths)
         ctx.policy = PolicyReport(ok=not violations, violations=violations)
         if violations:
             self._stop(ctx, StopReason.POLICY_VIOLATION)
             return
 
-        worktree = _required(ctx.worktree, "worktree")
-        repo.apply_patch(worktree, proposal.patch, ctx.run_dir / "proposal.diff")
+        if not proposal.applied:
+            worktree = _required(ctx.worktree, "worktree")
+            repo.apply_patch(worktree, proposal.patch, ctx.run_dir / "proposal.diff")
         self._move(ctx, TaskState.CHECKING)
 
         if any(node.id == "test" for node in flow.nodes):
@@ -517,7 +529,7 @@ class Supervisor:
             test=ctx.test,
             verdict=ctx.verdict,
             diff=diff,
-        )
+        ).bind()
         _, md_path = write_evidence(ctx.run_dir, evidence)
         record = RunRecord(
             run_id=ctx.run_id,
@@ -558,6 +570,14 @@ class Supervisor:
                 usd=proposal.usd if proposal else 0.0,
             )
         )
+        try:
+            self._memory.record(
+                task=self._queue.load(ctx.task.id),
+                record=record,
+                evidence=evidence,
+            )
+        except Exception as exc:
+            LOG.warning("memory was not updated: %s", exc, extra={"run_id": ctx.run_id})
         LOG.info(
             "run finished",
             extra={"run_id": ctx.run_id, "task_id": ctx.task.id, "duration_ms": duration_ms},

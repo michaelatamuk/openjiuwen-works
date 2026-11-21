@@ -3,9 +3,10 @@
 A software factory: one signal goes in, a released fix comes out — and the fix goes back to
 where the bug was seen.
 
-**Status: M0 + M0.5 walking skeleton.** The queue, policy, supervisor, evidence, ledger and CLI
-work end to end on a fixture repository with a recorded harness trace. No live model call yet
-(M1); nothing is published yet (M3).
+**Status: M0.5 + live builder path.** The queue, policy, supervisor, evidence, ledger and CLI work
+end to end. The builder can be the real `openjiuwen` Claude Code harness on the DeepSeek
+Anthropic-compatible endpoint, and finished runs are reported to PPMA memory. The verifier is
+still the local scenario runner (M2); nothing is published yet (M3).
 
 ---
 
@@ -31,6 +32,9 @@ uv sync --extra dev
 uv run works --help
 ```
 
+The live builder is opt-in: `uv sync --extra live` and an installed (or `PYTHONPATH`-visible)
+`openjiuwen`; see `docs/live-harness.md`.
+
 The full M0 demo, with a planted bug and a recorded proposal:
 
 ```powershell
@@ -52,7 +56,9 @@ the ledger row. No model and no network are used.
 | `works trace <task>` | Renders the timeline from the event store |
 | `works approve <task>` | Closes the plan gate |
 | `works run <task> --dry-run` | Shows nodes and scenarios; changes nothing |
-| `works run <task> --scenarios … --trace …` | Reproduce → plan → build → test → scenarios → proof |
+| `works run <task> --scenarios … --trace …` | Reproduce → plan → build → test → scenarios → proof (recorded) |
+| `works run <task> --live …` | The same loop with the real `openjiuwen` Claude Code harness |
+| `works run <task> --ppma URL` | Report the finished run to PPMA memory over its north contract |
 | `works policy check <paths>` | Refuses test paths and escapes before any command runs |
 | `works ledger` | Reads the append-only ledger |
 | `works schema --json` | Prints every persisted JSON Schema and its version |
@@ -80,9 +86,10 @@ in v0 — no silent retry, no "trust the builder".
 
 | Area | State |
 |---|---|
-| Live harness | The fake harness replays `fixtures/traces/`. The openjiuwen adapter lands in M1 |
+| Live harness | Works: `openjiuwen` + bundled `claude.exe` + DeepSeek Anthropic endpoint; measured 115.6 s / 104 563 tokens / $0.094 for the fixture fix |
 | Verifier | The local scenario runner stands in; the container and provider split land in M2 |
 | Release | The loop stops at `proved`; branch, PR and the issue comment land in M3 |
+| Memory | Finished runs are posted to PPMA (`works.run_finished`); recall and lessons are M4 |
 | GUI | CLI only. The 2026 window standard is in the plan, §6.5, for after M2 |
 
 The fixture bug is deliberate: `add` subtracts. The good trace fixes it, the sneaky trace passes
@@ -115,7 +122,8 @@ make bench          # re-measure the budgets
 
 CI adds bandit and gitleaks on every PR, a weekly mutation gate (71.8% on state, policy and queue),
 and a weekly `pip-audit`. Decisions are recorded as ADRs in `docs/adrs/`; known failures and first
-responses are in `docs/runbook.md`.
+responses are in `docs/runbook.md`. The live builder is in `docs/live-harness.md`; the PPMA memory
+integration is in `docs/ppma.md`.
 
 ---
 
@@ -130,7 +138,7 @@ responses are in `docs/runbook.md`.
 | `docs/plan.md` | The plan: preconditions, milestones, checkboxes, standards, refactoring gates |
 | `docs/deck/` | Five slides (SVG + PNG) |
 | `docs/video/` | The 47 s concept film |
-| `docs/adrs/` | Seven architecture decisions |
+| `docs/adrs/` | Nine architecture decisions |
 | `scripts/` | Demo, benchmark, check, mutation gate, film generators |
 
 ---

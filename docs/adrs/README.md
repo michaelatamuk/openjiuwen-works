@@ -12,5 +12,7 @@ deleted — a superseded decision is marked as such and points to its replacemen
 | [005](005-verifier-independence.md) | The verifier is independent in runtime and provider | accepted |
 | [006](006-sqlite-derived-index.md) | SQLite is a derived index, not the source of truth | accepted |
 | [007](007-cli-startup-budget.md) | The CLI starts without a framework | accepted |
+| [008](008-live-harness.md) | The builder is a real openjiuwen harness, not a patch generator | accepted |
+| [009](009-ppma-memory.md) | PPMA owns memory; Works reports finished runs | accepted |
 
 Format: context, decision, consequences, alternatives rejected.

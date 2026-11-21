@@ -212,21 +212,35 @@ def cmd_approve(args: argparse.Namespace) -> int:
 
 
 def _supervisor(args: argparse.Namespace) -> Supervisor:
+    from .harness.base import Harness
     from .harness.fake import FakeHarness
     from .ledger import Ledger
     from .runner import SubprocessRunner
     from .supervisor import Supervisor
 
+    if args.trace is not None and args.live:
+        raise ConfigError("use either --trace (recorded) or --live (real model), not both")
     paths = _paths(args)
-    harness = None
+    harness: Harness | None = None
     if args.trace is not None:
         harness = FakeHarness(args.trace)
+    elif args.live:
+        from .harness.openjiuwen import LiveHarness
+
+        harness = LiveHarness(model=args.model, base_url=args.model_base)
+    memory = None
+    ppma_url = args.ppma or os.environ.get("WORKS_PPMA_URL")
+    if ppma_url:
+        from .memory import PpmaMemory
+
+        memory = PpmaMemory(ppma_url, space=args.ppma_space)
     return Supervisor(
         paths=paths,
         queue=_queue(args),
         ledger=Ledger(paths.ledger),
         harness=harness,
         runner=SubprocessRunner(),
+        memory=memory,
     )
 
 
@@ -246,10 +260,10 @@ def cmd_run(args: argparse.Namespace) -> int:
             print(json.dumps(payload, indent=2, ensure_ascii=False, default=str))
         return 0
 
-    if args.trace is None:
+    if args.trace is None and not args.live:
         raise ConfigError(
-            "no harness configured: pass --trace PATH to replay a recorded trace "
-            "(the live openjiuwen adapter lands in M1)"
+            "no harness configured: pass --trace PATH for a recorded run "
+            "or --live for the real openjiuwen harness"
         )
 
     if not args.approve_plan and not _is_ci() and sys.stdin.isatty():
@@ -410,6 +424,11 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--scenarios", default=None)
     run.add_argument("--quarantine", default=None)
     run.add_argument("--trace", type=Path, default=None)
+    run.add_argument("--live", action="store_true")
+    run.add_argument("--model", default=None)
+    run.add_argument("--model-base", default=None)
+    run.add_argument("--ppma", default=None)
+    run.add_argument("--ppma-space", default="me")
     run.add_argument("--json", action="store_true")
     run.set_defaults(func=cmd_run)
 

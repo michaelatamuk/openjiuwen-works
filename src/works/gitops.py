@@ -82,6 +82,13 @@ class GitRepo:
         output = self._git("diff", "--name-only", "HEAD", cwd=worktree).stdout
         return [line.strip() for line in output.splitlines() if line.strip()]
 
+    def untracked_files(self, worktree: Path) -> list[str]:
+        output = self._git("ls-files", "--others", "--exclude-standard", cwd=worktree).stdout
+        return [line.strip() for line in output.splitlines() if line.strip()]
+
+    def all_changed_files(self, worktree: Path) -> list[str]:
+        return sorted({*self.changed_files(worktree), *self.untracked_files(worktree)})
+
     def diff_text(self, worktree: Path) -> str:
         return self._git("diff", "HEAD", "--no-color", cwd=worktree).stdout
 

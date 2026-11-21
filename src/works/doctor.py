@@ -6,6 +6,7 @@ import importlib.util
 import os
 import shutil
 import sys
+import urllib.request
 from pathlib import Path
 from typing import Literal
 
@@ -72,13 +73,56 @@ def _harness_check() -> CheckResult:
         spec = importlib.util.find_spec("openjiuwen.harness_protocol")
     except (ImportError, ModuleNotFoundError):
         spec = None
-    if spec is None:
+    try:
+        sdk = importlib.util.find_spec("claude_agent_sdk")
+    except (ImportError, ModuleNotFoundError):
+        sdk = None
+    native = None
+    if sdk is not None and sdk.origin:
+        candidate = Path(sdk.origin).parent / "_bundled" / "claude.exe"
+        native = str(candidate) if candidate.exists() else None
+    if spec is not None and sdk is not None and native is not None:
         return CheckResult(
             name="harness",
-            status="warn",
-            detail="openjiuwen.harness_protocol not importable; the fake harness is in use",
+            status="ok",
+            detail=f"live ready: openjiuwen + claude-agent-sdk + {native}",
         )
-    return CheckResult(name="harness", status="ok", detail=str(spec.origin))
+    missing = []
+    if spec is None:
+        missing.append("openjiuwen.harness_protocol")
+    if sdk is None:
+        missing.append("claude-agent-sdk")
+    if sdk is not None and native is None:
+        missing.append("bundled claude.exe")
+    return CheckResult(
+        name="harness",
+        status="warn",
+        detail=f"fake harness in use; missing: {', '.join(missing)}",
+    )
+
+
+def _ppma_check(environ: dict[str, str]) -> CheckResult:
+    url = environ.get("WORKS_PPMA_URL")
+    if not url:
+        return CheckResult(
+            name="ppma",
+            status="warn",
+            detail="WORKS_PPMA_URL not set; runs are not reported to PPMA memory",
+        )
+    token = environ.get("WORKS_PPMA_TOKEN") or environ.get("PPMA_OWNER_TOKEN") or "dev"
+    request = urllib.request.Request(  # noqa: S310  # nosec B310
+        f"{url.rstrip('/')}/v0/spaces/me/memory/views",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=2) as response:  # noqa: S310  # nosec B310
+            if response.status == 200:
+                return CheckResult(name="ppma", status="ok", detail=f"reachable at {url}")
+            return CheckResult(
+                name="ppma", status="warn", detail=f"{url} returned {response.status}"
+            )
+    except Exception as exc:
+        return CheckResult(name="ppma", status="warn", detail=f"{url}: {exc}")
 
 
 def _container_check() -> CheckResult:
@@ -91,15 +135,21 @@ def _container_check() -> CheckResult:
 
 
 def _credentials_check(environ: dict[str, str]) -> CheckResult:
-    names = ("WORKS_BUILDER_API_KEY", "WORKS_VERIFIER_API_KEY")
-    present = [name for name in names if environ.get(name)]
-    if len(present) == 2:
-        return CheckResult(name="credentials", status="ok", detail="both provider keys set")
+    builder = environ.get("ANTHROPIC_API_KEY") or environ.get("WORKS_MODEL_KEY")
+    verifier = environ.get("WORKS_VERIFIER_API_KEY")
+    if builder and verifier:
+        return CheckResult(
+            name="credentials", status="ok", detail="builder and verifier keys are set"
+        )
+    missing = []
+    if not builder:
+        missing.append("ANTHROPIC_API_KEY / WORKS_MODEL_KEY (builder)")
+    if not verifier:
+        missing.append("WORKS_VERIFIER_API_KEY (verifier, M2)")
     return CheckResult(
         name="credentials",
         status="warn",
-        detail=f"missing: {', '.join(name for name in names if name not in present)}; "
-        "not needed for the fake harness",
+        detail=f"missing: {', '.join(missing)}; the fake harness needs none",
     )
 
 
@@ -144,6 +194,7 @@ def run_checks(
         _root_check(paths),
         _flow_check(paths),
         _harness_check(),
+        _ppma_check(environment),
         _container_check(),
         _credentials_check(environment),
         _scenario_check(paths, repo),

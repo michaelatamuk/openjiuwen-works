@@ -58,6 +58,8 @@ reports the best of several runs and the in-process logic separately.
 
 ## What is deliberately fake
 
-- The harness replays `fixtures/traces/*.json`; no model is called.
+- This demo replays `fixtures/traces/*.json`; no model is called. The real builder is
+  `works run --live` — see `docs/live-harness.md`; it proved the same fixture in 115.6 s for
+  104 563 tokens and $0.093938.
 - The verifier is the local scenario runner; the container and the independent provider land in M2.
 - The release step stops at `proved`; publishing a branch and a PR lands in M3.

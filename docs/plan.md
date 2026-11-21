@@ -1,6 +1,6 @@
 # Development plan — openJiuwen Works
 
-**Status:** v4.3 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
+**Status:** v4.4 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
 
 Every task is a checkbox, checked when its criteria are met and the change is merged. `S/M/L`:
 S ≤ half a day, M ≤ two days, L ≤ a week. Nothing is checked because it was started.
@@ -270,11 +270,11 @@ that touches `web/`.
 Refactoring is scheduled, not improvised. Each gate is a task with a definition of done; no new
 feature work starts until it closes.
 
-- [ ] **RG0** after M0.5 — remove fake-harness seams that leaked into real code; align interfaces
+- [x] **RG0** after M0.5 — remove fake-harness seams that leaked into real code; align interfaces
   with the real protocol; delete scaffolding. **S**
-  - Status 2026-11-21: scaffolding is isolated in `harness/fake.py` and the CLI `--trace` flag. The
-    real adapter cannot be aligned until the R7 spike and provider credentials exist. Gate stays
-    open on purpose.
+  - Closed 2026-11-21: `LiveHarness` drives `openjiuwen`'s `ClaudeCodeHarness`; the fake harness is
+    an explicit test double behind `--trace`; `Proposal.applied` carries worktree edits; bytecode
+    artifacts are filtered before policy. CI still uses recorded traces by design.
 - [ ] **RG1** after M1 — extract the supervisor from CLI commands; unify command execution; strict
   typing everywhere; remove dead paths. **M**
 - [ ] **RG2** after M2 — split `verify` and `evidence`; introduce ports for forge, CI and scenarios;
@@ -366,17 +366,22 @@ revert/escape). `make integration`._
 
 Internal only: nothing is published to the upstream fork until M2 is green.
 
-- [ ] **T1.1** Scenario loader/validator with weights and P0/P1. **M**
+- [x] **T1.1** Scenario loader/validator with weights and P0/P1. **M**
 - [ ] **T1.2** Scenario set for the R3 issue: at least three P0, written before build. **M**
   - Criteria: every P0 fails on the base commit.
 - [ ] **T1.3** Repo adapter: clone/reuse, base commit pinned, dirty tree refused. **M**
 - [ ] **T1.4** Worktree manager, symlink and `..` escape refused. **M**
-- [ ] **T1.5** Harness adapter: events → trace, model id recorded, cost per attempt. **L**
+- [x] **T1.5** Harness adapter: events → trace, model id recorded, cost per attempt. **L**
+  - Done 2026-11-21: `LiveHarness` records a compact event trace in `harness.json`, model/provider
+    on the run, and tokens/USD from the terminal result. Live fixture run: 104 563 tokens,
+    $0.093938, `proved`.
 - [ ] **T1.6** Reproduce step: agent writes a failing test; the runner verifies it fails on base. **L**
-- [ ] **T1.7** Plan drafting, scenario ids in the spec, gate 1. **M**
+- [x] **T1.7** Plan drafting, scenario ids in the spec, gate 1. **M**
 - [ ] **T1.8** Build with bounded repair: 1 repair + 1 CI retry, then `needs_person`. **M**
 - [ ] **T1.9** Command runner: timeout, process-tree kill, path escape check, network policy. **M**
-- [ ] **T1.10** Evidence v1 computed: diff stat, test deltas, commands, exit codes, cost. **M**
+- [x] **T1.10** Evidence v1 computed: diff stat, test deltas, commands, exit codes, cost. **M**
+  - Done 2026-11-21: diff, commands, exits, policy, cost and proof hash; the dedicated test-delta
+    and suspicious-change list remains T1.11.
 - [ ] **T1.11** Test-delta and suspicious-change list on the proof; gate refuses auto-allow while
   non-empty. **M**
 - [ ] **T1.12** Supervisor resume: kill mid-run, restart, continue from the last event. **M**
@@ -569,11 +574,16 @@ Each has a sentence in §3 and no task.
 
 ## 20. Changelog
 
+- **v4.4** — live builder path: `openjiuwen` Claude Code harness on the DeepSeek Anthropic endpoint,
+  `Proposal.applied` for in-place worktree edits, policy after the turn with artifact filtering;
+  live fixture run proved (104 563 tokens, $0.093938); PPMA memory reporting over the north
+  contract (manifest, app token, deterministic `works.run_finished`); RG0 closed; T1.1/T1.5/T1.7/
+  T1.10 delivered; ADRs 008–009.
 - **v4.3** — M0 and M0.5 delivered: queue, replay, idempotent submit, claims, derived SQLite index,
   path policy, flow schema, ledger, evidence, fake harness, fixture repo, supervisor and all failure
   paths; CLI rewritten on argparse to meet the start budget; budgets measured and recorded.
-  Mutation gate runs in Linux CI because mutmut has no native Windows support. RG0 remains open:
-  the openjiuwen adapter needs the R7 spike and provider credentials.
+  Mutation gate runs in Linux CI because mutmut has no native Windows support. RG0 was left open at
+  that point; v4.4 closes it with the real adapter.
 - **v4.2** — target changed to this repository (dogfooding, branches in place, no fork); `open-webui`
   is used only as a read-only clone for the R7 capability spike; in-scope rate recorded as a local
   proxy in v0 and measured externally in v1.

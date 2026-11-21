@@ -31,6 +31,9 @@ dev = [
   "mutmut>=2.4",
   "pre-commit>=3.7",
 ]
+live = [
+  "claude-agent-sdk>=0.2.121,<0.3",
+]
 
 [project.scripts]
 works = "works.cli:main_entry"
@@ -65,6 +68,12 @@ files = ["src"]
 plugins = ["pydantic.mypy"]
 warn_unreachable = true
 show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = ["openjiuwen.*"]
+ignore_missing_imports = true
+# openjiuwen is a host-provided package without a py.typed marker; the live adapter is the only
+# place that touches it and its types are isolated behind Any at that boundary.
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

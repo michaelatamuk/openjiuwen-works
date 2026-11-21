@@ -31,9 +31,30 @@ last recorded state.
 
 ## `config_error`: `no harness configured`
 
-**Why:** the live openjiuwen adapter lands in M1. v0 supports the fake harness only.
+**Why:** neither a recorded trace nor the live harness was selected.
 
-**Do:** pass `--trace fixtures/traces/fix-add.json` for a demo, or wait for M1 credentials.
+**Do:** pass `--trace fixtures/traces/fix-add.json` for a deterministic run, or `--live` with
+`ANTHROPIC_API_KEY` and an openjiuwen installation. See `docs/live-harness.md`.
+
+## The live harness refuses `claude.CMD`
+
+**See:** `Refusing to execute batch script ... Use a native claude executable instead`.
+
+**Why:** the Claude Agent SDK refuses `.cmd`/`.bat` on Windows because `cmd.exe` cannot escape
+arguments.
+
+**Do:** leave `CLAUDE_CLI` unset and let the SDK use its bundled `claude.exe`, or point
+`CLAUDE_CLI` at the npm package's `bin\claude.exe`.
+
+## A live agent edited a test file
+
+**See:** `proved` does not happen; stop reason `policy_violation` lists the path.
+
+**Why:** policy is enforced after the turn (the agent edits the worktree directly) and before
+tests; the worktree is disposable.
+
+**Do:** inspect the worktree, discard it, and start a new task. Instructions already forbid test
+edits; this is detection, not prevention until the M2 container.
 
 ## `config_error`: `a scenario set is required`
 

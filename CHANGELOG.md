@@ -28,4 +28,9 @@ Semantic Versioning.
   refused.
 - CI: ruff, mypy strict, pytest with an 80% floor, benchmark job, bandit, gitleaks; weekly
   mutation gate (71.8% on state, policy and queue) and supply-chain audit.
-- ADRs 001–007, the runbook, the M0 demo script and a benchmark script.
+- Live builder: `works run --live` drives `openjiuwen`'s Claude Code harness on the native
+  `claude.exe` and the DeepSeek Anthropic-compatible endpoint; the worktree is edited in place,
+  policy checks touched paths, and model/tokens/USD are recorded.
+- Memory: finished runs are posted to PPMA as `works.run_finished` events with deterministic ULIDs,
+  a registered manifest and an app token.
+- ADRs 008 and 009, and the runbook entries for live harness and PPMA failures.

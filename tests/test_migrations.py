@@ -47,7 +47,7 @@ def test_a_non_mapping_is_refused() -> None:
 def test_every_persisted_schema_is_printed() -> None:
     payload = all_schemas()
     assert payload["schema_version"] == 1
-    for name in ("task", "event", "run", "verdict", "ledger", "command", "evidence"):
+    for name in ("task", "event", "run", "verdict", "ledger", "command", "evidence", "proposal"):
         assert name in payload["schemas"]
         assert payload["schemas"][name]["type"] == "object"
 
