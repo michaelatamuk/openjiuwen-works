@@ -19,7 +19,7 @@
   <!-- ================= SOURCES ================= -->
   <!-- 1. DigitalMate -->
   <rect x="80" y="185" width="330" height="145" rx="18" fill="#FBFAFF" stroke="#DDD6FE" stroke-width="2" filter="url(#soft)"/>
-  <text x="104" y="213" font-size="11" font-weight="700" fill="#6D28D9" letter-spacing="1.6">WHERE THE USER DOES EVERYTHING</text>
+  <text x="104" y="213" font-size="11" font-weight="700" fill="#6D28D9" letter-spacing="1.6">NOTICED IN DIGITALMATE</text>
   <text x="104" y="245" font-size="19" font-weight="700" fill="#111827">DigitalMate</text>
   <text x="104" y="273" font-size="13" fill="#374151">Mail, maps, travel, media.</text>
   <text x="104" y="295" font-size="13" fill="#374151">Notices when one misbehaves.</text>
@@ -54,6 +54,9 @@
   <!-- gate rows highlighted -->
   <rect x="456" y="338" width="568" height="34" rx="10" fill="#FFF8E7"/>
   <rect x="456" y="482" width="568" height="34" rx="10" fill="#FFF8E7"/>
+  <!-- the outcome row: why the factory exists -->
+  <rect x="456" y="518" width="568" height="36" rx="10" fill="#ECFDF5"/>
+  <rect x="456" y="518" width="4" height="36" rx="2" fill="#047857"/>
 
   <text x="464" y="286" font-size="15.5"><tspan font-weight="700" fill="#111827">1 · Reads the signal</tspan><tspan fill="#4B5563"> — which product, scope and budget</tspan></text>
   <text x="464" y="322" font-size="15.5"><tspan font-weight="700" fill="#111827">2 · Finds the code</tspan><tspan fill="#4B5563"> — opens that product's repo</tspan></text>
@@ -62,15 +65,19 @@
   <text x="464" y="430" font-size="15.5"><tspan font-weight="700" fill="#111827">5 · Checks it</tspan><tspan fill="#4B5563"> — tests we wrote, outside the repo</tspan></text>
   <text x="464" y="466" font-size="15.5"><tspan font-weight="700" fill="#111827">6 · Writes the proof</tspan><tspan fill="#4B5563"> — one page</tspan></text>
   <text x="464" y="502" font-size="15.5"><tspan font-weight="700" fill="#111827">7 · Hands it to a person</tspan><tspan fill="#4B5563"> — in the window</tspan></text>
-  <text x="464" y="538" font-size="15.5"><tspan font-weight="700" fill="#111827">8 · Ships the fix</tspan><tspan fill="#4B5563"> — to the app, tracker or person</tspan></text>
+  <text x="464" y="538" font-size="15.5"><tspan font-weight="700" fill="#111827">8 · Delivers the fix</tspan><tspan fill="#4B5563"> — to the app, tracker or person that reported it</tspan></text>
   <text x="464" y="574" font-size="15.5"><tspan font-weight="700" fill="#111827">9 · Confirms it</tspan><tspan fill="#4B5563"> — the report closes, the user sees it</tspan></text>
   <text x="464" y="610" font-size="15.5"><tspan font-weight="700" fill="#111827">10 · Records the numbers</tspan><tspan fill="#4B5563"> — cost, speed, quality</tspan></text>
+  <text x="464" y="642" font-size="12.5" font-weight="600" fill="#047857">Delivered: the fix is back where it was seen.</text>
 
   <!-- gates -->
   <rect x="929" y="343" width="86" height="24" rx="12" fill="#FDE68A"/>
   <text x="972" y="360" font-size="10.5" font-weight="700" fill="#92400E" text-anchor="middle" letter-spacing="1">LAIX GATE</text>
   <rect x="929" y="487" width="86" height="24" rx="12" fill="#FDE68A"/>
   <text x="972" y="504" font-size="10.5" font-weight="700" fill="#92400E" text-anchor="middle" letter-spacing="1">LAIX GATE</text>
+
+  <rect x="929" y="523" width="86" height="24" rx="12" fill="#047857"/>
+  <text x="972" y="539" font-size="10.5" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="1">DELIVERED</text>
 
   <!-- ================= TOOLS ================= -->
   <text x="1100" y="171" font-size="11" font-weight="700" fill="#6B7280" letter-spacing="1.6">TOOLS IT CALLS</text>
