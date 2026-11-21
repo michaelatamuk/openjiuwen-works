@@ -10,7 +10,7 @@ from __future__ import annotations
 import io
 import re
 import shlex
-import subprocess
+import subprocess  # nosec B404
 import sys
 import time
 import tokenize
@@ -216,7 +216,7 @@ def _run_command(repo: Path, command: str, timeout_s: int) -> CheckResult:
     argv = [sys.executable if part == "{python}" else part for part in shlex.split(command)]
     started = time.monotonic()
     try:
-        completed = subprocess.run(  # noqa: S603 - the repository's own readiness config
+        completed = subprocess.run(  # nosec B603
             argv,
             cwd=repo,
             capture_output=True,

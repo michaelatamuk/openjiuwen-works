@@ -58,6 +58,7 @@ select = ["E", "F", "I", "UP", "B", "SIM", "RUF", "C4", "DTZ", "T20", "S"]
 "tests/**" = ["S101", "S310", "S603", "S607"]
 "src/works/runner.py" = ["S603", "S607"]
 "src/works/gitops.py" = ["S603", "S607"]
+"src/works/readiness.py" = ["S404", "S603"]
 "src/works/cli.py" = ["T201"]
 "scripts/**" = ["T20", "S603", "S607"]
 
