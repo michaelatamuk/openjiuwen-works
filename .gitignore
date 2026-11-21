@@ -7,6 +7,23 @@ __pycache__/
 *.pyc
 .idea/
 .venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.hypothesis/
+.coverage
+coverage.xml
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# runtime state (the workspace root can be the repository itself)
+/queue/
+/runs/
+/worktrees/
+/ledger.jsonl
+/.works-write-probe
 
 # system
 Thumbs.db

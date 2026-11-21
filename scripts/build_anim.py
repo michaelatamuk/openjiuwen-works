@@ -1,4 +1,6 @@
-import os, subprocess, shutil
+import os
+import shutil
+import subprocess
 
 OUT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FR = os.path.join(OUT, "docs", "frames")

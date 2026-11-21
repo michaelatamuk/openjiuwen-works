@@ -10,5 +10,7 @@ deleted — a superseded decision is marked as such and points to its replacemen
 | [003](003-cli-first-gui-later.md) | CLI is the first window | accepted |
 | [004](004-isolation-boundaries.md) | Worktree is not a security boundary | accepted |
 | [005](005-verifier-independence.md) | The verifier is independent in runtime and provider | accepted |
+| [006](006-sqlite-derived-index.md) | SQLite is a derived index, not the source of truth | accepted |
+| [007](007-cli-startup-budget.md) | The CLI starts without a framework | accepted |
 
 Format: context, decision, consequences, alternatives rejected.

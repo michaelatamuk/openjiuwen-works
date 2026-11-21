@@ -1,0 +1,22 @@
+name: supply-chain
+
+on:
+  schedule:
+    - cron: "30 3 * * 1"
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv python install 3.12
+      - run: uv sync --frozen --extra dev
+      - name: pip-audit
+        run: uv run pip-audit
+      - name: Bandit
+        run: uv run bandit -q -r src -c pyproject.toml

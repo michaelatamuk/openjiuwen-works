@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "name": "fix-add-sneaky",
+  "model": "fake-builder-1",
+  "provider": "fixture",
+  "tokens": 1300,
+  "usd": 0.013,
+  "patch_file": "../patches/fix-add-sneaky.diff",
+  "notes": ["passes the visible test, breaks negatives"]
+}

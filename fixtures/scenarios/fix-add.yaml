@@ -1,0 +1,19 @@
+schema_version: 1
+flow: fix-issue
+directory: scripts
+scenarios:
+  - id: add-positive
+    priority: P0
+    weight: 1.0
+    description: add returns the sum of two positive integers
+    script: add_positive.py
+  - id: add-negative
+    priority: P0
+    weight: 1.0
+    description: add handles negative integers
+    script: add_negative.py
+  - id: mul-positive
+    priority: P1
+    weight: 1.0
+    description: mul still multiplies after the fix
+    script: mul_positive.py

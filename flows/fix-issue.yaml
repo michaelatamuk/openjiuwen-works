@@ -1,0 +1,34 @@
+schema_version: 1
+flow: fix-issue
+product: openjiuwen
+nodes:
+  - id: reproduce
+    kind: deterministic
+    cmd: "{python} -m pytest -q"
+    timeout_s: 300
+  - id: build
+    kind: agentic
+    required: true
+  - id: test
+    kind: deterministic
+    cmd: "{python} -m pytest -q"
+    timeout_s: 300
+edges:
+  - [reproduce, build]
+  - [build, test]
+repair:
+  attempts: 1
+  then: needs_person
+paths:
+  allow: []
+  deny: []
+budget:
+  tokens: 400000
+  usd: 10.0
+  wall_minutes: 60
+  ci_minutes: 30
+gates:
+  - "on": plan
+    action: ask
+  - "on": release
+    action: ask
