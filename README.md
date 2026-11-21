@@ -10,7 +10,7 @@
 [![license](https://img.shields.io/badge/license-Apache--2.0-6D28D9.svg)](LICENSE)
 [![python](https://img.shields.io/badge/python-3.12-3776AB.svg)](pyproject.toml)
 
-**Local preview** · read-only by default · no hosted service · plan gate live, release gate M3
+**Local-first preview** · proof before release · the plan gate is live, release is next
 
 > Most coding agents stop at a diff. Works stops at proof: what changed, what was checked, what was **not** checked, and who decided.
 
@@ -25,7 +25,7 @@ A bug spends more time waiting than being fixed: waiting for triage, for an agen
 Works moves the waiting into an engine and keeps the judgement with people:
 
 - **Reproduce before fixing.** A deterministic command must fail on the base commit. No failing reproduction, no fix.
-- **Two human gates in the design.** The plan gate is live; the release gate lands with M3. The engine never approves itself.
+- **Two human gates in the design.** The plan gate is live; the release gate is the next milestone. The engine never approves itself.
 - **The proof is the product.** One page bound to the exact diff by SHA-256: verdict, commands, policy, cost, risk and residual gaps.
 - **No silent retry.** A blocked task stays blocked until a person changes the plan or the evidence.
 
@@ -45,8 +45,8 @@ signal → reproduce → plan gate → build → check · challenge · prove →
 | **Build** | `openjiuwen` edits a disposable git worktree; policy checks every touched path. |
 | **Check** | Repository tests, an independent challenger, then P0/P1 scenarios. |
 | **Prove** | The evidence page is computed from the run and bound to the diff. |
-| **Release gate (M3)** | A person approves the exact commit. Publishing is not wired yet. |
-| **Return (M3)** | The proof is shaped to go back to the app, tracker or person that reported it. |
+| **Release gate** | A person approves the exact commit; release and publishing are the next milestone. |
+| **Return** | The proof is shaped to return to the app, tracker or person that reported it. |
 
 Verdict rule: **all P0 pass and P1 pass rate ≥ 80%**. Anything else blocks. A blocked task is terminal until a person acts.
 
@@ -95,7 +95,7 @@ uv run works memory backfill --ppma http://127.0.0.1:8766
 uv run works memory recall --ppma http://127.0.0.1:8766
 ```
 
-## What is real today
+## What works today
 
 | Area | State |
 |---|---|
@@ -108,17 +108,15 @@ uv run works memory recall --ppma http://127.0.0.1:8766
 | **Memory** | When configured, finished runs are reported to PPMA; older runs can be backfilled; `works memory recall` reads statements. |
 | **Decision layer** | `DecisionPort` and `LaixGate` exist behind a deterministic fallback; off by default, shadow opt-in. |
 
-## Current boundaries
+## Roadmap
 
-This is a local preview, not a hosted product.
+Three things turn the preview into the full factory:
 
-- The verifier is still the local scenario runner; the independent container lands in **M2**.
-- The loop stops at `proved`. Branch, PR and issue comment land in **M3**. Nothing is auto-merged.
-- PPMA recall before interrupting a person is **T2.21**; automatic recall is not wired into the planner yet.
-- Preview video/trace/selector execution is **T2.19**. Feature coverage is in; screenshot/log/video/trace artifacts and selector execution remain.
-- LAIX must come from a local checkout: the PyPI `laix` name is an unrelated placeholder.
-- React, SSE and Playwright are later; the current preview is vanilla HTML/CSS/JS and polling.
-- Orbit is a future publish adapter; it is not wired.
+- **Independent verifier.** Move tests, scenarios and structural checks into an isolated runtime with the provider split.
+- **Release and return.** Bind approval to the commit, then publish the change and the proof back to the source.
+- **Depth in memory and evidence.** Feed PPMA recall into the planner, attach runtime artifacts, and execute feature selectors in the preview.
+
+LAIX is optional and keeps the deterministic gate as the fallback. Merging stays human.
 
 ## Engineering standard
 
