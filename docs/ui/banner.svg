@@ -28,8 +28,8 @@
   <text x="788" y="104" fill="#6D28D9" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="14" font-weight="800" letter-spacing="2">PROOF</text>
   <text x="788" y="148" fill="#047857" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="34" font-weight="800" letter-spacing="-0.5">PASS</text>
   <text x="884" y="147" fill="#4B5563" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18" font-weight="500">2/2 P0 · P1 100% · 1 file changed</text>
-  <text x="1220" y="132" fill="#6B7280" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="0.8">NOT CHECKED</text>
-  <text x="1220" y="154" fill="#111827" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18" font-weight="700">None</text>
+  <text x="1220" y="132" fill="#6B7280" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="0.8">COVERAGE</text>
+  <text x="1220" y="154" fill="#111827" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18" font-weight="700">Complete</text>
   <text x="788" y="174" fill="#9CA3AF" font-family="Cascadia Code, Consolas, monospace" font-size="13">SHA-256 4c1f…</text>
 
   <path d="M 800 268 C 845 238 890 228 930 228 C 970 228 1010 268 1060 268 C 1108 268 1145 228 1190 228 C 1230 228 1280 268 1320 268 C 1360 268 1410 238 1460 228" fill="none" stroke="#6D28D9" stroke-width="4.5" stroke-linecap="round"/>
