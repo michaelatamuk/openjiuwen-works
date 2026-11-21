@@ -17,7 +17,7 @@
   <rect x="80" y="195" width="710" height="250" rx="18" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1.5" filter="url(#soft2)"/>
   <text x="104" y="229" font-size="11" font-weight="700" fill="#6D28D9" letter-spacing="1.6">1 · WHY NOW</text>
   <text x="104" y="272" font-size="15" fill="#374151"><tspan font-weight="700" fill="#111827">Today</tspan> — people answer the agent all day, on their own laptop.</text>
-  <text x="104" y="308" font-size="15" fill="#374151"><tspan font-weight="700" fill="#111827">Next</tspan> — the agent works; people decide at the gates.</text>
+  <text x="104" y="308" font-size="15" fill="#374151"><tspan font-weight="700" fill="#111827">Next</tspan> — the agent works; LAIX decides when people are needed.</text>
   <text x="104" y="344" font-size="15" fill="#374151"><tspan font-weight="700" fill="#111827">Elsewhere</tspan> — a signal at 3am is a mergeable fix by morning.</text>
   <text x="104" y="392" font-size="14" fill="#6B7280">Security work sets the pace: findings arrive faster than people can read them.</text>
 
@@ -32,9 +32,9 @@
   <circle cx="840" cy="340" r="4" fill="#6D28D9"/>
   <text x="858" y="345" font-size="15" fill="#374151">Policy outside the agent — it cannot exceed its rights.</text>
   <circle cx="840" cy="376" r="4" fill="#6D28D9"/>
-  <text x="858" y="381" font-size="15" fill="#374151">An audit trail — every action, its reason and its result.</text>
+  <text x="858" y="381" font-size="15" fill="#374151">LAIX decides the gate — act, ask, wait or verify, with a reason.</text>
   <circle cx="840" cy="412" r="4" fill="#6D28D9"/>
-  <text x="858" y="417" font-size="15" fill="#374151">A budget per task — cost stays visible and capped.</text>
+  <text x="858" y="417" font-size="15" fill="#374151">Every decision is recorded; a budget per task caps cost.</text>
 
   <!-- 3. MANY FLOWS -->
   <rect x="80" y="470" width="710" height="250" rx="18" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1.5" filter="url(#soft2)"/>

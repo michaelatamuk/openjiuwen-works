@@ -6,7 +6,8 @@ where the bug was seen.
 **Status: M0.5 + live builder path.** The queue, policy, supervisor, evidence, ledger and CLI work
 end to end. The builder can be the real `openjiuwen` Claude Code harness on the DeepSeek
 Anthropic-compatible endpoint, and finished runs are reported to PPMA memory. The verifier is
-still the local scenario runner (M2); nothing is published yet (M3).
+still the local scenario runner (M2); nothing is published yet (M3). Gates are deterministic today;
+LAIX is the optional decision layer being added behind `DecisionPort` in shadow mode.
 
 <img src="brand/mascot/mira-primary.png" width="120" align="right" alt="Mira, a magpie courier, carrying a proof page">
 
@@ -101,6 +102,7 @@ in v0 — no silent retry, no "trust the builder".
 | Verifier | The local scenario runner stands in; the container and provider split land in M2 |
 | Release | The loop stops at `proved`; branch, PR and the issue comment land in M3 |
 | Memory | Finished runs are posted to PPMA (`works.run_finished`); recall and lessons are M4 |
+| Decision layer | Gates are deterministic. LAIX is the optional decision layer: pinned `0.18.0`, boundary in §6.7 and ADR-011, shadow mode next (T1.19); it never overrides path deny or the verifier |
 | GUI | CLI only. The 2026 window standard is in the plan, §6.5, for after M2 |
 
 The fixture bug is deliberate: `add` subtracts. The good trace fixes it, the sneaky trace passes
@@ -134,8 +136,9 @@ make bench          # re-measure the budgets
 CI adds bandit and gitleaks on every PR, a weekly mutation gate (71.8% on state, policy and queue),
 and a weekly `pip-audit`. Decisions are recorded as ADRs in `docs/adrs/`; known failures and first
 responses are in `docs/runbook.md`. The live builder is in `docs/live-harness.md`; the PPMA memory
-integration is in `docs/ppma.md`; the factory comparison that shaped v4.5 is in
-`docs/review-4-factories.md`; waits and the dispatcher are in `docs/waiting-and-dispatch.md`.
+integration is in `docs/ppma.md`; the LAIX decision layer and its boundary are in `docs/laix.md`;
+the factory comparison that shaped v4.5 is in `docs/review-4-factories.md`; waits and the
+dispatcher are in `docs/waiting-and-dispatch.md`.
 
 ---
 
@@ -150,7 +153,7 @@ integration is in `docs/ppma.md`; the factory comparison that shaped v4.5 is in
 | `docs/plan.md` | The plan: preconditions, milestones, checkboxes, standards, refactoring gates |
 | `docs/deck/` | Five slides (SVG + PNG) |
 | `docs/video/` | The 47 s concept film |
-| `docs/adrs/` | Ten architecture decisions |
+| `docs/adrs/` | Eleven architecture decisions |
 | `scripts/` | Demo, benchmark, check, mutation gate, film generators |
 
 ---

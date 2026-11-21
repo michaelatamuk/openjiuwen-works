@@ -15,5 +15,6 @@ deleted — a superseded decision is marked as such and points to its replacemen
 | [008](008-live-harness.md) | The builder is a real openjiuwen harness, not a patch generator | accepted |
 | [009](009-ppma-memory.md) | PPMA owns memory; Works reports finished runs | accepted |
 | [010](010-factory-and-attention.md) | A factory is a task graph with waits, not an org chart | accepted |
+| [011](011-laix-decision-layer.md) | LAIX is the optional decision layer, not the factory | accepted |
 
 Format: context, decision, consequences, alternatives rejected.

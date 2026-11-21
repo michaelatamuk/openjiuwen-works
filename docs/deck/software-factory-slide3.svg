@@ -28,7 +28,7 @@
     <text x="112" y="370"><tspan fill="#C4B5FD">steps:</tspan></text>
     <text x="112" y="396"><tspan fill="#E5E7EB">  - read the signal</tspan></text>
     <text x="112" y="422"><tspan fill="#E5E7EB">  - find the code</tspan></text>
-    <text x="112" y="448"><tspan fill="#E5E7EB">  - plan</tspan><tspan fill="#94A3B8">          # gate: a person</tspan></text>
+    <text x="112" y="448"><tspan fill="#E5E7EB">  - plan</tspan><tspan fill="#94A3B8">          # laix: act | ask</tspan></text>
     <text x="112" y="474"><tspan fill="#E5E7EB">  - build</tspan><tspan fill="#94A3B8">         # sandbox per task</tspan></text>
     <text x="112" y="500"><tspan fill="#E5E7EB">  - check</tspan><tspan fill="#94A3B8">         # hidden scenarios</tspan></text>
     <text x="112" y="526"><tspan fill="#E5E7EB">  - proof</tspan></text>
@@ -37,7 +37,8 @@
     <text x="112" y="598"><tspan fill="#E5E7EB">  - auth/</tspan><tspan fill="#94A3B8">     -&gt; a person</tspan></text>
     <text x="112" y="624"><tspan fill="#E5E7EB">  - docs/</tspan><tspan fill="#94A3B8">     -&gt; automatic</tspan></text>
 
-    <text x="112" y="668"><tspan fill="#C4B5FD">budget:</tspan><tspan fill="#E5E7EB"> $10</tspan></text>
+    <text x="112" y="650"><tspan fill="#C4B5FD">decision:</tspan><tspan fill="#E5E7EB"> laix</tspan></text>
+    <text x="112" y="676"><tspan fill="#C4B5FD">budget:</tspan><tspan fill="#E5E7EB"> $10</tspan></text>
   </g>
 
   <!-- Autonomy ladder -->
@@ -45,7 +46,7 @@
   <text x="834" y="229" font-size="11" font-weight="700" fill="#6D28D9" letter-spacing="1.6">THE AUTONOMY LADDER</text>
 
   <text x="834" y="272" font-size="15" fill="#374151"><tspan font-weight="700" fill="#6D28D9">1</tspan><tspan font-weight="700" fill="#111827">  Read-only</tspan> — reads and proposes; a person changes.</text>
-  <text x="834" y="310" font-size="15" fill="#374151"><tspan font-weight="700" fill="#6D28D9">2</tspan><tspan font-weight="700" fill="#111827">  Gated</tspan> — does the work; a person merges.</text>
+  <text x="834" y="310" font-size="15" fill="#374151"><tspan font-weight="700" fill="#6D28D9">2</tspan><tspan font-weight="700" fill="#111827">  Gated</tspan> — LAIX decides act or ask; a person merges.</text>
   <text x="834" y="348" font-size="15" fill="#374151"><tspan font-weight="700" fill="#6D28D9">3</tspan><tspan font-weight="700" fill="#111827">  Monitored</tspan> — merges; a person audits samples.</text>
   <text x="834" y="386" font-size="15" fill="#374151"><tspan font-weight="700" fill="#6D28D9">4</tspan><tspan font-weight="700" fill="#111827">  Automatic</tspan> — merges; no person in the loop.</text>
 

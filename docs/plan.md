@@ -1,6 +1,6 @@
 # Development plan — openJiuwen Works
 
-**Status:** v4.9 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
+**Status:** v4.10 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
 
 Every task is a checkbox, checked when its criteria are met and the change is merged. `S/M/L`:
 S ≤ half a day, M ≤ two days, L ≤ a week. Nothing is checked because it was started.
@@ -119,6 +119,7 @@ through nine commands.
 | `evidence` | computed proof page |
 | `metrics` | ledger, escape detection |
 | `policy` | paths, gates, budgets — enforced by the runner |
+| `decision` | optional LAIX adapter: `act / ask / wait / verify / escalate` at the gates and for attention routing; the deterministic gate remains the fallback |
 
 ### 6.2 Flows are node graphs (blueprints)
 
@@ -283,14 +284,15 @@ feature work starts until it closes.
   - Closed 2026-11-21: `LiveHarness` drives `openjiuwen`'s `ClaudeCodeHarness`; the fake harness is
     an explicit test double behind `--trace`; `Proposal.applied` carries worktree edits; bytecode
     artifacts are filtered before policy. CI still uses recorded traces by design.
-- [ ] **RG1** after M1 — extract the supervisor from CLI commands; unify command execution; strict
-  typing everywhere; remove dead paths. **M**
-- [ ] **RG2** after M2 — split `verify` and `evidence`; introduce ports for forge, CI and scenarios;
-  no concept leaks between them; add the adversarial challenge and the agent eval suite. **M**
+- [ ] **RG1** after M1 — extract the supervisor from CLI commands; unify command execution; put the
+  decision port and its fallback behind the supervisor; strict typing everywhere; remove dead paths. **M**
+- [ ] **RG2** after M2 — split `verify` and `evidence`; introduce ports for forge, CI, scenarios and
+  decisions; no concept leaks between them; add the adversarial challenge and the agent eval suite. **M**
 - [ ] **RG3** after M3 — consolidate adapters; audit idempotency; finalise the error taxonomy; remove
-  duplicated retry logic; move waiting states and wake events into one dispatcher. **M**
+  duplicated retry logic; move waiting states, wake events and decision outcomes into one dispatcher. **M**
 - [ ] **RG4** after M4 — cost and performance pass; consolidate prompts and flows; documentation
-  sweep; benchmark before and after; audit attention metrics from events only. **M**
+  sweep; benchmark before and after; audit attention metrics and decision calibration from events
+  only. **M**
 
 Definition of done for a gate: tests green, mutation ≥ 70% on core, no new TODOs, complexity within
 limits, benchmark not regressed, ADR if the structure changed.
@@ -300,6 +302,82 @@ limits, benchmark not regressed, ADR if the structure changed.
 file > 400 lines · function > 50 lines · cyclomatic complexity > 10 · a duplicated block in three
 places · module fan-in > 7 · an unexplained `# type: ignore` · a TODO older than 14 days · an unused
 dependency · a test slower than 2 s.
+
+### 6.7 Decision layer — LAIX
+
+**What it is.** [LAIX](https://github.com/michaelatamuk/laix) is our own decision layer: a
+dependency-free Python package (`laix==0.18.0`, Apache-2.0) that answers one question — given what is
+happening, what the app can afford and what needs approval, should it `wait`, `observe`, `guide`,
+`ask`, `act`, `verify` or `escalate`? It returns a `Decision` with a reason code, confidence, score,
+approval flag, alternatives and a trace id. It is not an agent framework, a workflow engine, a model
+or a verifier.
+
+**Why it is here.** Today a gate is a hard-coded rule (`action: ask`). That is correct but opaque: it
+cannot say *why*, how confident it is, what it would have done instead, or how much human attention
+the choice costs. LAIX makes the gate an explicit, recorded decision and gives us one ranking
+mechanism for the attention inbox. The factory already needs both (D10, D11).
+
+**The boundary — read this before touching the adapter.**
+
+| LAIX does | Works does |
+|---|---|
+| Chooses a verb and a reason for a gate | Enforces path policy, budgets and the state machine |
+| Ranks pending decisions by attention cost | Owns the queue, timers, waits and wake events |
+| Carries approvals and commitments into the next decision | Binds approval to a commit and re-checks it at publish |
+| Emits a decision record | Owns `events.jsonl`, the ledger and the proof |
+
+LAIX can never open a gate, allow a denied path, replace the verifier, skip a deterministic node or
+write state. **Path deny wins before LAIX is consulted; the verifier's verdict wins after it.** A
+missing, invalid or low-confidence decision falls back to the deterministic gate — it never fails
+open. LAIX never calls the builder or the verifier; it only reads their recorded results.
+
+**Interface.** One port, two adapters:
+
+```python
+class DecisionPort(Protocol):
+    def decide(self, request: GateContext) -> GateVerdict: ...
+
+class DeterministicGate:   # default, no dependency
+    ...
+
+class LaixGate:            # extra: works[decision]
+    ...
+```
+
+`GateContext` is built only from recorded evidence: reproduced failure, plan spec and scenario ids,
+verifier verdict, policy result, diff size, touched paths, budget left, deadline and open
+commitments. `Decision.to_dict()` is stored whole as a `decision.made` event and as the **Decision**
+section of the proof (`decision_id`, `trace_id`, `verb`, `reason_code`, `confidence`,
+`requires_approval`, `alternatives`, `constraints_applied`). Code branches on `reason_code`, never on
+`rationale`.
+
+| LAIX verb | Works transition |
+|---|---|
+| `act`, no approval | plan approved / release proceeds |
+| `act`, approval or `ask` / `guide` | `waiting_review` with a wake event and deadline |
+| `wait` | `waiting_ci` / `waiting_deploy` / `waiting_review` with a deadline and default |
+| `verify` | run the verifier or missing scenarios first, then decide again |
+| `observe` | request more evidence; do not advance |
+| `escalate` | `blocked`, needs a person |
+
+**Rollout.** `WORKS_DECISION=off | shadow | laix`, default `off` and a per-gate override.
+
+1. **Shadow** — LAIX computes the decision; Works executes the deterministic one; every difference is
+   recorded and counted. No transition changes.
+2. **Opt-in** — only the plan and release gates may consume LAIX, after the shadow comparison in
+   T2.14 shows no case where LAIX allows what policy or the verifier refuses.
+3. **Attention** — `AttentionScheduler` ranks waiting tasks and gate requests under an explicit
+   `human_attention_budget`; `works attention` and the GUI show selected and deferred decisions.
+4. **Commitments** — M3: `CommitmentGraph` carries `approved commit`, `CI green` and `return to the
+   issue`; a hard violation becomes `verify` or `ask`. Promises are not a security boundary.
+
+**Known limits of 0.18.0.** Pre-1.0 (schema 0.8.0) with external validation pending, so the adapter
+is pinned and conformance-tested rather than imported across the codebase. The default action policy
+returns `reason_code=policy_rule` for every path and does not propagate `Decision.reversible` from the
+chosen option; it also defaults to `wait` unless urgency/uncertainty are supplied. Works therefore
+derives urgency, risk and uncertainty from evidence — never from agent prose (D11) — and uses its own
+`DecisionPolicy` when richer reason codes are needed. The LAIX app kit (execution, proposal store,
+delivery) is out of scope: Works is the host and already owns those.
 
 ---
 
@@ -417,8 +495,12 @@ Internal only: nothing is published to the upstream fork until M2 is green.
   poses; used in CLI human empty states and the future window, never in JSON or error text. **S**
   - 2026-11-21: primary and avatar assets, voice/usage rules, CLI empty state. Waiting/proved/
     blocked poses land with the GUI after M1.
-- [ ] **T1.18** Brand and mascot: Mira’s SVG source, avatar, voice and empty/waiting/proved/blocked
-  poses; used in CLI human empty states and the future window, never in JSON or error text. **S**
+- [ ] **T1.19** LAIX decision port: optional `DecisionPort` with a `LaixGate` adapter for plan and
+  release; shadow mode logs disagreements before it can change a transition; decision JSON,
+  `decision_id`, `trace_id`, `reason_code`, `confidence` and `alternatives` go into the event store
+  and the proof. Deterministic gate remains the fallback. **M**
+  - Criteria: path deny wins before LAIX; a missing/invalid decision falls back, never opens a gate;
+    shadow differences are recorded for 20 cases.
 
 **Demo M1:** two real issues go from ticket to proof, twice in a row, with scenarios written first.
 
@@ -450,6 +532,9 @@ Internal only: nothing is published to the upstream fork until M2 is green.
   “understandable to an unfamiliar engineer”, kept charts and evidence-backed next step. **M**
 - [ ] **T2.13** Service identity: the verifier and builder run under scoped identities; every
   action is attributable to a run, not to the developer’s user. **M**
+- [ ] **T2.14** Decision quality: replay 20 historical gate cases through LAIX and the current
+  deterministic rule; compare verb, approval and reason code; any case where LAIX allows what the
+  policy or verifier refuses is a defect in the adapter, not a policy change. **M**
 
 **Demo M2:** a patch that passes CI and the builder's tests is caught by a sneaky-patch scenario.
 
@@ -482,6 +567,9 @@ Internal only: nothing is published to the upstream fork until M2 is green.
   signal improves; a partial recovery opens a new task with a new cause. **M**
 - [ ] **T3.14** Incident linking: one defect reported through several sources is one task with
   linked refs, grouped by product metric and ranked by impact. **M**
+- [ ] **T3.15** LAIX commitments: release and return promises (`approved commit`, `CI green`,
+  `return to issue`) enter a `CommitmentGraph`; a hard violation becomes `verify` or `ask`. Path
+  deny and the verifier remain authoritative. **M**
 
 **Demo M3:** issue → merged PR → proof → comment → green reproduction; then a forced revert attributed
 to its release.
@@ -503,6 +591,12 @@ to its release.
   fix share and rework reported together; agent count is never a target. **M**
 - [ ] **T4.11** Delivery loop: every adopted rule, prompt or model change is evaluated on the
   benchmark before and after; a regression reverts it. **M**
+- [ ] **T4.12** Attention inbox: waiting tasks and gate requests are ranked by LAIX
+  `AttentionScheduler` with a human-attention budget; `works attention` and the GUI show selected
+  and deferred decisions, not a flat queue. **M**
+- [ ] **T4.13** Decision outcomes: gate decisions, reversals and overrides feed LAIX calibration;
+  a calibration report is shown next to attention metrics, and a drift beyond the agreed band
+  reopens the policy. **M**
 
 **Demo M4:** two flows, one benchmark that chose a cheaper configuration, one failure that became a
 scenario through a reviewed PR.
@@ -519,11 +613,18 @@ gates:
   - {on: plan, action: ask}
   - {on: release, when_paths: ["backend/", "auth/"], action: ask}
   - {on: release, when_paths: ["docs/"], action: allow, unless: suspicious}
+decision:
+  provider: laix          # off | shadow | laix
+  mode: shadow            # shadow until T2.14 passes, then per-gate opt-in
+  fallback: deterministic
+  attention_budget: 3     # human decisions per day in the inbox
 budget: {tokens: 400000, usd: 10, wall_minutes: 60, ci_minutes: 30}
 ```
 
 Rules: segments normalized before matching; deny wins; `..` rejected; auto-allow refused while the
-suspicious list is non-empty; approval is bound to the commit and re-checked at publish.
+suspicious list is non-empty; approval is bound to the commit and re-checked at publish. When
+`decision.provider` is `laix`, LAIX may change *which* gate applies only after path policy and never
+in place of the verifier; an invalid decision falls back to the deterministic rule (§6.7).
 
 ---
 
@@ -575,6 +676,11 @@ and a mechanical suspicious-change list (deleted tests, new skips, broad except,
 | Escapes | attributed within 14 days per 100 releases | < 5 |
 | Cost | USD per release, verifier included | < $15 |
 | In-scope rate | share of new issues the flow can take | reported, not targeted |
+| Decision fallback rate | gate decisions that fell back to the deterministic rule | reported, < 10% |
+| Shadow disagreement | plan/release cases where LAIX and the deterministic gate differ | reported, reviewed |
+| Gate override rate | human decisions that reverse the engine's recommendation | reported, falling |
+| Decision latency | p50/p95 time spent in `DecisionPort.decide` | < 250 ms p95 |
+| Attention fit | scheduled decisions that fit the configured attention budget | 100% |
 
 ---
 
@@ -593,6 +699,11 @@ and a mechanical suspicious-change list (deleted tests, new skips, broad except,
 - Merge-result re-check: CI runs again after the branch lands.
 - Load: 10 000 tasks in the queue; `status` under 100 ms.
 - Performance: CLI start, evidence render and report timed in CI; fail on > 20% regression.
+- LAIX conformance: the pinned contract is exercised against recorded `DecisionRequest` fixtures;
+  golden decisions compare verb, reason code, approval and alternatives. Adapter tests assert that a
+  denied path is never admitted, a missing/invalid decision falls back, and a `wait` never advances.
+- Decision replay: T2.14 replays 20 historical gate cases; a case where LAIX allows what policy or
+  the verifier refuses fails the build. Shadow differences are stored, not inferred.
 - One manual end-to-end per milestone, recorded.
 
 ---
@@ -614,6 +725,10 @@ and a mechanical suspicious-change list (deleted tests, new skips, broad except,
 | Attention theater | Metrics derived from events, not agent prose; agent count is not a target |
 | Waiting-state deadlock | Every wait has a wake event, a deadline and a default; `works doctor` shows stranded waits |
 | Findings drift | Findings are append-only records with evidence refs; conflicting findings stay visible |
+| LAIX pre-1.0 churn | Pin `0.18.0`, adapt behind `DecisionPort`, conformance fixtures; a contract bump is a reviewed change |
+| Decision theater | Urgency, risk and uncertainty come from recorded evidence, never agent prose; decisions without evidence fall back |
+| LAIX allows what policy denies | Path deny and the verifier run before/after the decision; adapter tests prove fail-closed; shadow review before opt-in |
+| Attention starvation | Explicit `human_attention_budget`; deferred decisions stay visible with a deadline and a default |
 | Unbounded autonomy | Two human gates remain; autonomy expands only after evals and a green escape window |
 
 ---
@@ -651,6 +766,16 @@ All decided; revisit only with an ADR.
   human-hour and rework. Agent count is explicitly not a target.
 - [x] **D11** Findings are structured records outside any agent's context; free-form agent prose is
   never parsed into a decision.
+- [x] **D12** LAIX is the optional decision layer, not the executor, verifier or memory. It chooses
+  `act / ask / wait / verify / escalate` at the plan and release gates and ranks attention; Works
+  enforces policy, owns state and proves the result. Shadow first, then per-gate opt-in, pinned
+  `laix==0.18.0` behind `DecisionPort`; a missing or invalid decision falls back to the deterministic
+  gate. Path deny and the verifier remain authoritative. The LAIX app kit's execution, storage and
+  delivery are not used.
+- [x] **D13** Decisions consume recorded evidence only — reproduction, verifier, policy, budget,
+  deadline, commitments — never agent-supplied urgency or free-form prose. Overrides, shadow
+  disagreements, fallbacks and calibration are derived from events; an attention budget is explicit
+  and a deferred decision keeps its deadline and default.
 
 ---
 
@@ -660,8 +785,8 @@ A milestone is done when the demo runs twice, the ledger has rows, the proof is 
 narration, the limitations are written down, **the engineering standard in §6.4 holds for every
 touched file**, and **the refactoring gate that follows it (§6.6) is closed**. A factory milestone
 also passes the parity checklist: task state and findings survive outside the agent; waiting has a
-wake event; no agent grades its own work; attention metrics come from events; and the proof says
-what was not tested.
+wake event; no agent grades its own work; attention metrics come from events; the proof says what was
+not tested; and any LAIX decision is backed by recorded evidence and has a deterministic fallback.
 
 ---
 
@@ -675,6 +800,10 @@ agents, a zoo of model providers before M3, and autonomous merge without the two
 
 ## 20. Changelog
 
+- **v4.10** — LAIX as the optional decision layer: `DecisionPort` with `LaixGate` for plan/release,
+  decision events and proof section, attention routing, commitments deferred to M3; shadow first,
+  deterministic fallback, policy and verifier authoritative (§6.7, D12–D13). Deck gains LAIX as a
+  first-class integration citizen; T1.19, T2.14, T3.15, T4.12, T4.13 opened.
 - **v4.9** — adversarial challenge: separate challenger session in plan mode, versioned
   `challenge.md`, JSON verdict (`allow/reason/concerns`), fail-closed parsing, `challenge.json`,
   proof Challenge section and a blocking fixture trace; T2.9/T2.10 closed.
