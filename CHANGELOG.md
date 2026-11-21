@@ -27,5 +27,5 @@ Semantic Versioning.
 - Quarantine lists and scenario sets must live outside the repository; reading one inside is
   refused.
 - CI: ruff, mypy strict, pytest with an 80% floor, benchmark job, bandit, gitleaks; weekly
-  mutation gate and supply-chain audit.
+  mutation gate (71.8% on state, policy and queue) and supply-chain audit.
 - ADRs 001–007, the runbook, the M0 demo script and a benchmark script.

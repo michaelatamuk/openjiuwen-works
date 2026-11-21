@@ -113,9 +113,9 @@ make integration    # the whole loop, no model
 make bench          # re-measure the budgets
 ```
 
-CI adds bandit and gitleaks on every PR, a weekly mutation gate, and a weekly `pip-audit`.
-Decisions are recorded as ADRs in `docs/adrs/`; known failures and first responses are in
-`docs/runbook.md`.
+CI adds bandit and gitleaks on every PR, a weekly mutation gate (71.8% on state, policy and queue),
+and a weekly `pip-audit`. Decisions are recorded as ADRs in `docs/adrs/`; known failures and first
+responses are in `docs/runbook.md`.
 
 ---
 

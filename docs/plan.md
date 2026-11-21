@@ -331,7 +331,8 @@ dependency · a test slower than 2 s.
   - Criteria: a PR with a type error, a leaked secret, untested code or a low mutation score fails.
   - Done: `Makefile`, `scripts/check.ps1`, `.pre-commit-config.yaml`, CI + weekly mutation and
     supply-chain workflows. Mutmut has no native Windows support, so the mutation gate is verified
-    on the Linux CI job; local runs cover ruff, mypy, pytest and coverage.
+    on the Linux CI job; measured 71.8% (519/723) on state, policy and queue. Local runs cover ruff,
+    mypy, pytest and coverage.
 - [x] **T0.8b** `works schema` prints JSON Schemas for task, run, verdict, event; a fixture from the
   previous schema version loads through a migration. **S**
 - [x] **T0.8c** `--json` output and stable exit codes for every command; no interactive prompt when
