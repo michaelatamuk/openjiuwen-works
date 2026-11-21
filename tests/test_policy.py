@@ -92,6 +92,40 @@ def test_quoted_diff_paths_are_unquoted_before_the_check() -> None:
     assert check_patch(patch, PathsSpec())
 
 
+def test_an_unparseable_quoted_path_is_refused() -> None:
+    assert is_unsafe('"a/tests/broken.py')
+    assert check_paths(['"a/tests/broken.py'], PathsSpec())
+
+
+def test_a_directory_named_tests_is_denied_at_any_depth() -> None:
+    assert check_paths(["tests"], PathsSpec())
+    assert check_paths(["pkg/tests"], PathsSpec())
+    assert check_paths(["a/b/tests/c.py"], PathsSpec())
+
+
+def test_unicode_is_normalised_before_matching() -> None:
+    assert normalize_path("te\u0301sts/x") == normalize_path("tésts/x")
+    assert check_paths(["te\u0301sts/test.py"], PathsSpec()) == []
+
+
+def test_paths_from_a_rename_and_a_delete() -> None:
+    patch = "\n".join(
+        [
+            "diff --git a/old.py b/new.py",
+            "rename from old.py",
+            "rename to new.py",
+            "diff --git a/gone.py b/gone.py",
+            "deleted file mode 100644",
+            "--- a/gone.py",
+            "+++ /dev/null",
+        ]
+    )
+    paths = paths_from_patch(patch)
+    assert "new.py" in paths
+    assert "gone.py" in paths
+    assert "/dev/null" not in paths
+
+
 def test_deny_wins_over_allow() -> None:
     spec = PathsSpec(allow=["tests/"], deny=[])
     assert check_paths(["tests/test_core.py"], spec)

@@ -98,7 +98,7 @@ def _directory(path: str, pattern: str) -> bool:
     lowered = path.lower()
     if lowered == name or lowered.startswith(name + "/"):
         return True
-    return f"/{name}/" in f"/{lowered}"
+    return f"/{name}/" in f"/{lowered}/"
 
 
 def matches(path: str, patterns: tuple[str, ...] | list[str]) -> bool:

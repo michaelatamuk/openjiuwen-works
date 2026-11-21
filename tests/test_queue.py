@@ -6,7 +6,14 @@ import pytest
 
 from works.config import WorksPaths
 from works.errors import ConflictError, NotFoundError, StateError
-from works.queue import EVENTS_FILE, Queue, make_task_id, project
+from works.queue import (
+    EVENTS_FILE,
+    Queue,
+    dump_event,
+    dump_task,
+    make_task_id,
+    project,
+)
 from works.records import Budget, Source, SourceKind, TaskState
 
 
@@ -112,6 +119,62 @@ def test_missing_task_is_not_found(paths: WorksPaths) -> None:
         queue.events("t-missing")
     with pytest.raises(NotFoundError):
         queue.append("t-missing", "note", {})
+
+
+def test_ids_separate_kind_and_ref_unambiguously() -> None:
+    assert make_task_id("manual", "GH-1") != make_task_id("manual", "GH:1")
+    assert make_task_id("tracker", "1") != make_task_id("manual", "tracker:1")
+
+
+def test_iter_events_and_dump_helpers(paths: WorksPaths) -> None:
+    queue = new_queue(paths)
+    task = submit(queue)
+    events = list(queue.iter_events(task.id))
+    assert len(events) == 1
+    assert "schema_version" in dump_task(task)
+    assert "task.created" in dump_event(events[0])
+
+
+def test_an_empty_queue_lists_nothing(paths: WorksPaths) -> None:
+    assert new_queue(paths).list_tasks() == []
+
+
+def test_a_diverged_projection_is_reported(paths: WorksPaths) -> None:
+    queue = new_queue(paths)
+    task = submit(queue)
+    projection = paths.task_dir(task.id) / "task.yaml"
+    projection.write_text(
+        projection.read_text(encoding="utf-8").replace("state: queued", "state: proved"),
+        encoding="utf-8",
+        newline="\n",
+    )
+    with pytest.raises(StateError):
+        queue.verify_projection(task.id)
+
+
+def test_a_corrupt_projection_is_reported(paths: WorksPaths) -> None:
+    queue = new_queue(paths)
+    task = submit(queue)
+    (paths.task_dir(task.id) / "task.yaml").write_text("[not, a, mapping]", encoding="utf-8")
+    with pytest.raises(StateError):
+        queue.load(task.id)
+
+
+def test_a_corrupt_event_line_is_reported(paths: WorksPaths) -> None:
+    queue = new_queue(paths)
+    task = submit(queue)
+    with (paths.task_dir(task.id) / "events.jsonl").open("a", encoding="utf-8") as handle:
+        handle.write("{broken}\n")
+    with pytest.raises(StateError):
+        queue.events(task.id)
+
+
+def test_the_index_ignores_a_corrupt_task_json(paths: WorksPaths) -> None:
+    queue = new_queue(paths)
+    task = submit(queue)
+    (paths.task_dir(task.id) / "task.json").write_text("{broken", encoding="utf-8")
+    rebuilt = queue.rebuild_index()
+    assert rebuilt == []
 
 
 def test_a_missing_projection_is_rebuilt_from_events(paths: WorksPaths) -> None:
