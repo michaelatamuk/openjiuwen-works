@@ -52,6 +52,15 @@ def test_a_failing_command_is_not_ok(tmp_path) -> None:
     assert result.exit_code == 3
 
 
+def test_bytecode_writing_is_disabled(tmp_path) -> None:
+    result = SubprocessRunner().run(
+        ["python", "-c", "import os; print(os.environ['PYTHONDONTWRITEBYTECODE'])"],
+        tmp_path,
+    )
+    assert result.ok
+    assert result.stdout.strip() == "1"
+
+
 def test_timeout_kills_the_process(tmp_path) -> None:
     result = SubprocessRunner().run(
         ["python", "-c", "import time; time.sleep(30)"], tmp_path, timeout_s=1

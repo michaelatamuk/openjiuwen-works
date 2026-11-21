@@ -110,6 +110,8 @@ class SubprocessRunner:
         merged.update(env or {})
         merged.setdefault("PYTHONUNBUFFERED", "1")
         merged.setdefault("PYTHONIOENCODING", "utf-8")
+        # A same-size patch within the same second can leave a stale .pyc in the worktree.
+        merged.setdefault("PYTHONDONTWRITEBYTECODE", "1")
         merged.setdefault("NO_COLOR", "1")
         merged.setdefault("CI", "1")
         return merged
