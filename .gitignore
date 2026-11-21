@@ -1,0 +1,15 @@
+# build artifacts
+video_scenes/
+video_audio/
+scenes.txt
+anim/*.wav
+
+# python / editors
+__pycache__/
+*.pyc
+.idea/
+.venv/
+
+# system
+Thumbs.db
+.DS_Store

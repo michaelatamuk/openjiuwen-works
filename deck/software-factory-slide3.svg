@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" font-family="Inter, Segoe UI, Arial, Helvetica, sans-serif">
+  <defs>
+    <filter id="soft3" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="8" flood-color="#111827" flood-opacity="0.07"/>
+    </filter>
+  </defs>
+
+  <rect x="0" y="0" width="1600" height="900" fill="#F4F5F9"/>
+
+  <!-- Header -->
+  <text x="80" y="66" font-size="12" font-weight="700" fill="#6D28D9" letter-spacing="2.2">OPENJIUWEN WORKS · APPENDIX</text>
+  <text x="80" y="116" font-size="42" font-weight="700" fill="#111827">What one flow looks like</text>
+  <text x="80" y="150" font-size="17" fill="#4B5563">A flow is a small file: what to do, what it may touch, where a person steps in, and what it may spend.</text>
+
+  <!-- Code card -->
+  <rect x="80" y="195" width="700" height="500" rx="18" fill="#0F172A" filter="url(#soft3)"/>
+  <circle cx="112" cy="225" r="5" fill="#EF4444"/>
+  <circle cx="132" cy="225" r="5" fill="#F59E0B"/>
+  <circle cx="152" cy="225" r="5" fill="#10B981"/>
+  <text x="180" y="230" font-size="12" font-family="Consolas, Menlo, monospace" fill="#94A3B8">flow.yaml</text>
+
+  <g font-family="Consolas, Menlo, monospace" font-size="14">
+    <text x="112" y="272"><tspan fill="#C4B5FD">flow:</tspan><tspan fill="#E5E7EB"> fix-sync-loss</tspan></text>
+    <text x="112" y="298"><tspan fill="#C4B5FD">input:</tspan><tspan fill="#E5E7EB"> detector | tracker | person</tspan></text>
+    <text x="112" y="324"><tspan fill="#C4B5FD">repo:</tspan><tspan fill="#E5E7EB"> nextcloud</tspan></text>
+
+    <text x="112" y="370"><tspan fill="#C4B5FD">steps:</tspan></text>
+    <text x="112" y="396"><tspan fill="#E5E7EB">  - read the signal</tspan></text>
+    <text x="112" y="422"><tspan fill="#E5E7EB">  - find the code</tspan></text>
+    <text x="112" y="448"><tspan fill="#E5E7EB">  - plan</tspan><tspan fill="#94A3B8">          # gate: a person</tspan></text>
+    <text x="112" y="474"><tspan fill="#E5E7EB">  - build</tspan><tspan fill="#94A3B8">         # sandbox per task</tspan></text>
+    <text x="112" y="500"><tspan fill="#E5E7EB">  - check</tspan><tspan fill="#94A3B8">         # hidden scenarios</tspan></text>
+    <text x="112" y="526"><tspan fill="#E5E7EB">  - proof</tspan></text>
+
+    <text x="112" y="572"><tspan fill="#C4B5FD">rules:</tspan></text>
+    <text x="112" y="598"><tspan fill="#E5E7EB">  - auth/</tspan><tspan fill="#94A3B8">     -&gt; a person</tspan></text>
+    <text x="112" y="624"><tspan fill="#E5E7EB">  - docs/</tspan><tspan fill="#94A3B8">     -&gt; automatic</tspan></text>
+
+    <text x="112" y="668"><tspan fill="#C4B5FD">budget:</tspan><tspan fill="#E5E7EB"> $10</tspan></text>
+  </g>
+
+  <!-- Autonomy ladder -->
+  <rect x="810" y="195" width="710" height="240" rx="18" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1.5" filter="url(#soft3)"/>
+  <text x="834" y="229" font-size="11" font-weight="700" fill="#6D28D9" letter-spacing="1.6">THE AUTONOMY LADDER</text>
+
+  <text x="834" y="272" font-size="15" fill="#374151"><tspan font-weight="700" fill="#6D28D9">1</tspan><tspan font-weight="700" fill="#111827">  Read-only</tspan> — reads and proposes; a person changes.</text>
+  <text x="834" y="310" font-size="15" fill="#374151"><tspan font-weight="700" fill="#6D28D9">2</tspan><tspan font-weight="700" fill="#111827">  Gated</tspan> — does the work; a person merges.</text>
+  <text x="834" y="348" font-size="15" fill="#374151"><tspan font-weight="700" fill="#6D28D9">3</tspan><tspan font-weight="700" fill="#111827">  Monitored</tspan> — merges; a person audits samples.</text>
+  <text x="834" y="386" font-size="15" fill="#374151"><tspan font-weight="700" fill="#6D28D9">4</tspan><tspan font-weight="700" fill="#111827">  Automatic</tspan> — merges; no person in the loop.</text>
+
+  <text x="834" y="416" font-size="13" fill="#6B7280">A flow moves down only when it proves itself.</text>
+
+  <!-- Why a file -->
+  <rect x="810" y="455" width="710" height="240" rx="18" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1.5" filter="url(#soft3)"/>
+  <text x="834" y="489" font-size="11" font-weight="700" fill="#6D28D9" letter-spacing="1.6">WHY A FILE, NOT A FORM</text>
+
+  <circle cx="840" cy="528" r="4" fill="#6D28D9"/>
+  <text x="858" y="533" font-size="15" fill="#374151">Lives in the repo, next to the code it changes.</text>
+  <circle cx="840" cy="566" r="4" fill="#6D28D9"/>
+  <text x="858" y="571" font-size="15" fill="#374151">Reviewed and approved like any other change.</text>
+  <circle cx="840" cy="604" r="4" fill="#6D28D9"/>
+  <text x="858" y="609" font-size="15" fill="#374151">Rolled back by reverting one commit.</text>
+
+  <text x="834" y="660" font-size="13" fill="#6B7280">No hidden settings, no tribal knowledge.</text>
+
+  <!-- Footer -->
+  <line x1="80" y1="760" x2="1520" y2="760" stroke="#DDE2E8" stroke-width="1.5"/>
+  <text x="80" y="794" font-size="14" fill="#374151">One flow first. A second flow is the same file with different rules.</text>
+</svg>

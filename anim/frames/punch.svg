@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" font-family="Inter, Segoe UI, Arial, Helvetica, sans-serif">
+<rect width="1600" height="900" fill="#F4F5F9"/>
+
+<text x="800" y="250" font-size="34" fill="#6B7280" text-anchor="middle" letter-spacing="6">TWO MONDAYS</text>
+<text x="400" y="520" font-size="150" font-weight="800" fill="#111827" text-anchor="middle" letter-spacing="-6">4 days</text>
+<text x="400" y="580" font-size="26" fill="#6B7280" text-anchor="middle">the usual way</text>
+<text x="1200" y="520" font-size="150" font-weight="800" fill="#6D28D9" text-anchor="middle" letter-spacing="-6">1:45</text>
+<text x="1200" y="580" font-size="26" fill="#6B7280" text-anchor="middle">with openJiuwen Works</text>
+<text x="800" y="710" font-size="30" fill="#111827" text-anchor="middle">The waiting moved. The judgement stayed.</text>
+
+<rect x="0" y="300" width="1600" height="6" fill="#6D28D9"/>
+<rect x="794" y="300" width="12" height="600" fill="#6D28D9"/>
+<rect x="24" y="312" width="230" height="44" rx="22" fill="#111827"/>
+<text x="139" y="341" font-size="15" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="1.6">THE USUAL WAY</text>
+<rect x="824" y="312" width="330" height="44" rx="22" fill="#6D28D9"/>
+<text x="989" y="341" font-size="15" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="1.6">WITH OPENJIUWEN WORKS</text>
+</svg>

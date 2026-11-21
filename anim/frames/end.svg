@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" font-family="Inter, Segoe UI, Arial, Helvetica, sans-serif">
+<rect width="1600" height="900" fill="#F4F5F9"/>
+
+<text x="800" y="420" font-size="86" font-weight="800" fill="#111827" text-anchor="middle" letter-spacing="-2">openJiuwen Works</text>
+<text x="800" y="490" font-size="28" fill="#6D28D9" text-anchor="middle">Same team, same code, same tests.</text>
+
+<rect x="0" y="300" width="1600" height="6" fill="#6D28D9"/>
+<rect x="794" y="300" width="12" height="600" fill="#6D28D9"/>
+<rect x="24" y="312" width="230" height="44" rx="22" fill="#111827"/>
+<text x="139" y="341" font-size="15" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="1.6">THE USUAL WAY</text>
+<rect x="824" y="312" width="330" height="44" rx="22" fill="#6D28D9"/>
+<text x="989" y="341" font-size="15" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="1.6">WITH OPENJIUWEN WORKS</text>
+</svg>

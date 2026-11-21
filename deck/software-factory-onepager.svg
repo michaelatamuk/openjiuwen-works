@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" font-family="Inter, Segoe UI, Arial, Helvetica, sans-serif">
+  <defs>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="8" flood-color="#111827" flood-opacity="0.07"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6D28D9"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1600" height="900" fill="#F4F5F9"/>
+
+  <!-- ================= HEADER ================= -->
+  <text x="80" y="66" font-size="12" font-weight="700" fill="#6D28D9" letter-spacing="2.2">SOFTWARE FACTORY BY OPENJIUWEN</text>
+  <text x="80" y="116" font-size="46" font-weight="700" fill="#111827">openJiuwen Works</text>
+  <text x="80" y="156" font-size="17" fill="#4B5563">Today: a ticket, a queue, a person reading code. openJiuwen Works: a fix, back where it was seen.</text>
+
+  <!-- ================= SOURCES ================= -->
+  <!-- 1. DigitalMate -->
+  <rect x="80" y="185" width="330" height="145" rx="18" fill="#FBFAFF" stroke="#DDD6FE" stroke-width="2" filter="url(#soft)"/>
+  <text x="104" y="213" font-size="11" font-weight="700" fill="#6D28D9" letter-spacing="1.6">WHERE THE USER DOES EVERYTHING</text>
+  <text x="104" y="245" font-size="19" font-weight="700" fill="#111827">DigitalMate</text>
+  <text x="104" y="273" font-size="13" fill="#374151">Mail, maps, travel, media.</text>
+  <text x="104" y="295" font-size="13" fill="#374151">Notices when one misbehaves.</text>
+  <text x="104" y="317" font-size="13" fill="#374151">Files it as work — automatically.</text>
+
+  <!-- 2. Bug trackers -->
+  <rect x="80" y="350" width="330" height="145" rx="18" fill="#FBFAFF" stroke="#DDD6FE" stroke-width="2" filter="url(#soft)"/>
+  <text x="104" y="378" font-size="11" font-weight="700" fill="#6D28D9" letter-spacing="1.6">FILED IN THE TRACKER</text>
+  <text x="104" y="410" font-size="19" font-weight="700" fill="#111827">Jira, Linear, GitHub</text>
+  <text x="104" y="438" font-size="13" fill="#374151">Pulls filed bugs in through the API.</text>
+  <text x="104" y="460" font-size="13" fill="#374151">Reads the product's code and history.</text>
+  <text x="104" y="482" font-size="13" fill="#374151">Every ticket keeps its own record.</text>
+
+  <!-- 3. The person -->
+  <rect x="80" y="515" width="330" height="145" rx="18" fill="#FBFAFF" stroke="#DDD6FE" stroke-width="2" filter="url(#soft)"/>
+  <text x="104" y="543" font-size="11" font-weight="700" fill="#6D28D9" letter-spacing="1.6">REPORTED IN OPENJIUWEN WORKS</text>
+  <text x="104" y="572" font-size="19" font-weight="700" fill="#111827">A person</text>
+  <text x="104" y="596" font-size="11.5" fill="#6B7280">“The assistant forgets the files I uploaded.”</text>
+  <text x="104" y="620" font-size="13" fill="#374151">Reports it, answers questions.</text>
+  <text x="104" y="642" font-size="13" fill="#374151">Approves the release.</text>
+
+  <!-- three entrances -->
+  <line x1="414" y1="258" x2="436" y2="258" stroke="#6D28D9" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <line x1="414" y1="423" x2="436" y2="423" stroke="#6D28D9" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <line x1="414" y1="588" x2="436" y2="588" stroke="#6D28D9" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <!-- ================= ENGINE ================= -->
+  <rect x="440" y="185" width="600" height="475" rx="18" fill="#FBFAFF" stroke="#DDD6FE" stroke-width="2" filter="url(#soft)"/>
+  <text x="464" y="219" font-size="11" font-weight="700" fill="#6D28D9" letter-spacing="1.6">THE ENGINE OF OPENJIUWEN WORKS</text>
+  <text x="464" y="254" font-size="19" font-weight="700" fill="#111827">It decides what happens next</text>
+
+  <!-- gate rows highlighted -->
+  <rect x="456" y="338" width="568" height="34" rx="10" fill="#FFF8E7"/>
+  <rect x="456" y="482" width="568" height="34" rx="10" fill="#FFF8E7"/>
+
+  <text x="464" y="286" font-size="15.5"><tspan font-weight="700" fill="#111827">1 · Reads the signal</tspan><tspan fill="#4B5563"> — which product, scope and budget</tspan></text>
+  <text x="464" y="322" font-size="15.5"><tspan font-weight="700" fill="#111827">2 · Finds the code</tspan><tspan fill="#4B5563"> — opens that product's repo</tspan></text>
+  <text x="464" y="358" font-size="15.5"><tspan font-weight="700" fill="#111827">3 · Plans the fix</tspan><tspan fill="#4B5563"> — AI drafts, a person agrees</tspan></text>
+  <text x="464" y="394" font-size="15.5"><tspan font-weight="700" fill="#111827">4 · Builds it</tspan><tspan fill="#4B5563"> — one copy per task</tspan></text>
+  <text x="464" y="430" font-size="15.5"><tspan font-weight="700" fill="#111827">5 · Checks it</tspan><tspan fill="#4B5563"> — tests we wrote, outside the repo</tspan></text>
+  <text x="464" y="466" font-size="15.5"><tspan font-weight="700" fill="#111827">6 · Writes the proof</tspan><tspan fill="#4B5563"> — one page</tspan></text>
+  <text x="464" y="502" font-size="15.5"><tspan font-weight="700" fill="#111827">7 · Hands it to a person</tspan><tspan fill="#4B5563"> — in the window</tspan></text>
+  <text x="464" y="538" font-size="15.5"><tspan font-weight="700" fill="#111827">8 · Ships the fix</tspan><tspan fill="#4B5563"> — to the app, tracker or person</tspan></text>
+  <text x="464" y="574" font-size="15.5"><tspan font-weight="700" fill="#111827">9 · Confirms it</tspan><tspan fill="#4B5563"> — the report closes, the user sees it</tspan></text>
+  <text x="464" y="610" font-size="15.5"><tspan font-weight="700" fill="#111827">10 · Records the numbers</tspan><tspan fill="#4B5563"> — cost, speed, quality</tspan></text>
+
+  <!-- gates -->
+  <rect x="936" y="343" width="72" height="24" rx="12" fill="#FDE68A"/>
+  <text x="972" y="360" font-size="10.5" font-weight="700" fill="#92400E" text-anchor="middle" letter-spacing="1">GATE</text>
+  <rect x="936" y="487" width="72" height="24" rx="12" fill="#FDE68A"/>
+  <text x="972" y="504" font-size="10.5" font-weight="700" fill="#92400E" text-anchor="middle" letter-spacing="1">GATE</text>
+
+  <!-- ================= TOOLS ================= -->
+  <text x="1100" y="171" font-size="11" font-weight="700" fill="#6B7280" letter-spacing="1.6">TOOLS IT CALLS</text>
+
+  <rect x="1100" y="185" width="420" height="100" rx="14" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1.5" filter="url(#soft)"/>
+  <text x="1120" y="209" font-size="10.5" font-weight="700" fill="#9CA3AF" letter-spacing="1.2">STEP 1 · READS THE SIGNAL</text>
+  <text x="1120" y="240" font-size="19" font-weight="700" fill="#111827">PPMA</text>
+  <text x="1120" y="265" font-size="13" fill="#4B5563">The company's memory — keeps products and state.</text>
+
+  <rect x="1100" y="299" width="420" height="100" rx="14" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1.5" filter="url(#soft)"/>
+  <text x="1120" y="323" font-size="10.5" font-weight="700" fill="#9CA3AF" letter-spacing="1.2">STEP 4 · BUILDS IT</text>
+  <text x="1120" y="354" font-size="19" font-weight="700" fill="#111827">jiuwenswarm</text>
+  <text x="1120" y="379" font-size="13" fill="#4B5563">The build platform — code, CI, auto-fix.</text>
+
+  <rect x="1100" y="413" width="420" height="100" rx="14" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1.5" filter="url(#soft)"/>
+  <text x="1120" y="437" font-size="10.5" font-weight="700" fill="#9CA3AF" letter-spacing="1.2">STEP 5 · CHECKS IT</text>
+  <text x="1120" y="468" font-size="19" font-weight="700" fill="#111827">agent-core</text>
+  <text x="1120" y="493" font-size="13" fill="#4B5563">The agent runtime — runs the checking agent.</text>
+
+  <rect x="1100" y="527" width="420" height="100" rx="14" fill="#FFFFFF" stroke="#D1D5DB" stroke-width="1.5" stroke-dasharray="7 5" filter="url(#soft)"/>
+  <text x="1120" y="551" font-size="10.5" font-weight="700" fill="#9CA3AF" letter-spacing="1.2">OPTIONAL · SHARE THE PROOF</text>
+  <text x="1120" y="582" font-size="19" font-weight="700" fill="#111827">Orbit</text>
+  <text x="1120" y="607" font-size="13" fill="#4B5563">Team rooms — posts the proof where people talk.</text>
+
+  <!-- engine -> tools: usage, not flow -->
+  <circle cx="1042" cy="404" r="4" fill="#9CA3AF"/>
+  <line x1="1042" y1="404" x2="1070" y2="404" stroke="#9CA3AF" stroke-width="1.5"/>
+  <line x1="1070" y1="235" x2="1070" y2="463" stroke="#9CA3AF" stroke-width="1.5"/>
+  <line x1="1070" y1="463" x2="1070" y2="577" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <line x1="1070" y1="235" x2="1096" y2="235" stroke="#9CA3AF" stroke-width="1.5"/>
+  <line x1="1070" y1="349" x2="1096" y2="349" stroke="#9CA3AF" stroke-width="1.5"/>
+  <line x1="1070" y1="463" x2="1096" y2="463" stroke="#9CA3AF" stroke-width="1.5"/>
+  <line x1="1070" y1="577" x2="1096" y2="577" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="5 4"/>
+
+  <!-- ================= BOTTOM NOTES ================= -->
+  <rect x="80" y="686" width="1440" height="160" rx="16" fill="#EAEDF4"/>
+  <text x="104" y="716" font-size="11" font-weight="700" fill="#B45309" letter-spacing="1.6">WHEN A PERSON STEPS IN</text>
+  <text x="104" y="748" font-size="14" fill="#374151">Gates are automatic. An evaluator decides.</text>
+  <text x="104" y="776" font-size="14" fill="#374151">Path rule: payments/ → a person, docs/ → automatic.</text>
+  <text x="104" y="804" font-size="14" fill="#374151">The ask arrives prepared — one page, ready to decide.</text>
+  <text x="104" y="832" font-size="14" fill="#374151">Every decision is recorded, with its reason.</text>
+
+  <line x1="800" y1="706" x2="800" y2="826" stroke="#D8DEE9" stroke-width="1.5"/>
+
+  <text x="824" y="716" font-size="11" font-weight="700" fill="#6D28D9" letter-spacing="1.6">OPENJIUWEN WORKS IMPROVES ITSELF</text>
+  <text x="824" y="748" font-size="14" fill="#374151">Every run is recorded: cost, time, rework.</text>
+  <text x="824" y="776" font-size="14" fill="#374151">Every repeat failure becomes a rule or a test.</text>
+  <text x="824" y="804" font-size="14" fill="#374151">Documentation runs alone; payments wait for a person.</text>
+  <text x="824" y="832" font-size="14" fill="#374151">A flow earns autonomy as it proves itself.</text>
+</svg>

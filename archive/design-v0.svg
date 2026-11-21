@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="920" viewBox="0 0 1400 920" font-family="Segoe UI, Arial, Helvetica, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#5B6470"/>
+    </marker>
+    <marker id="arrowDash" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#B26A00"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1400" height="920" fill="#FFFFFF"/>
+
+  <!-- Header -->
+  <text x="70" y="58" font-size="30" font-weight="700" fill="#1B2430">Software Factory — What We Reuse, What We Build</text>
+  <text x="70" y="88" font-size="15" fill="#5B6470">One loop: a task goes in, a verified change comes out. Colour = who owns that link.</text>
+
+  <!-- Legend -->
+  <circle cx="78" cy="127" r="7" fill="#E7F5EC" stroke="#2E7D4F" stroke-width="2"/>
+  <text x="94" y="132" font-size="14" fill="#1B2430">Reuse as-is — 3 links</text>
+  <circle cx="300" cy="127" r="7" fill="#FFF4E0" stroke="#B26A00" stroke-width="2"/>
+  <text x="316" y="132" font-size="14" fill="#1B2430">Ours, but read-only — 2 links</text>
+  <circle cx="570" cy="127" r="7" fill="#FDECEC" stroke="#B3261E" stroke-width="2"/>
+  <text x="586" y="132" font-size="14" fill="#1B2430">Missing — 4 links to build</text>
+  <line x1="800" y1="127" x2="846" y2="127" stroke="#B26A00" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrowDash)"/>
+  <text x="856" y="132" font-size="14" fill="#1B2430">dashed = feedback into the next task</text>
+
+  <!-- ================= ROW 1 ================= -->
+
+  <!-- 1 Task Record (amber) -->
+  <rect x="70" y="210" width="290" height="120" rx="12" fill="#FFF4E0" stroke="#B26A00" stroke-width="2"/>
+  <text x="88" y="242" font-size="16.5" font-weight="700" fill="#1B2430">1 · Task Record</text>
+  <text x="88" y="268" font-size="12.5" fill="#3A4552">PPMA contract shape, stored by us</text>
+  <text x="88" y="288" font-size="12.5" fill="#3A4552">queue + state, no writes to PPMA</text>
+
+  <!-- 2 Stages + HITL (green) -->
+  <rect x="400" y="210" width="290" height="120" rx="12" fill="#E7F5EC" stroke="#2E7D4F" stroke-width="2"/>
+  <text x="418" y="242" font-size="16.5" font-weight="700" fill="#1B2430">2 · Stages + HITL</text>
+  <text x="418" y="268" font-size="12.5" fill="#3A4552">jiuwenswarm / swarmflow</text>
+  <text x="418" y="288" font-size="12.5" fill="#3A4552">spec → design → code + HITL</text>
+
+  <!-- 3 Agent Execution (green) -->
+  <rect x="730" y="210" width="290" height="120" rx="12" fill="#E7F5EC" stroke="#2E7D4F" stroke-width="2"/>
+  <text x="748" y="242" font-size="16.5" font-weight="700" fill="#1B2430">3 · Agent Execution</text>
+  <text x="748" y="268" font-size="12.5" fill="#3A4552">openjiuwen — HarnessProtocol</text>
+  <text x="748" y="288" font-size="12.5" fill="#3A4552">start · send · events · checkpoint</text>
+
+  <!-- 4 Deterministic Gates (green) -->
+  <rect x="1060" y="210" width="290" height="120" rx="12" fill="#E7F5EC" stroke="#2E7D4F" stroke-width="2"/>
+  <text x="1078" y="242" font-size="16.5" font-weight="700" fill="#1B2430">4 · Deterministic Gates</text>
+  <text x="1078" y="268" font-size="12.5" fill="#3A4552">target repo Makefile:</text>
+  <text x="1078" y="288" font-size="12.5" fill="#3A4552">make check · type-check · test</text>
+
+  <!-- arrows row 1 -->
+  <line x1="362" y1="270" x2="394" y2="270" stroke="#5B6470" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="692" y1="270" x2="724" y2="270" stroke="#5B6470" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="1022" y1="270" x2="1054" y2="270" stroke="#5B6470" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- turn down -->
+  <line x1="1205" y1="332" x2="1205" y2="512" stroke="#5B6470" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ================= ROW 2 ================= -->
+
+  <!-- 5 Independent Oracle (red) -->
+  <rect x="1060" y="520" width="290" height="120" rx="12" fill="#FDECEC" stroke="#B3261E" stroke-width="2"/>
+  <text x="1078" y="552" font-size="16.5" font-weight="700" fill="#1B2430">5 · Independent Oracle</text>
+  <text x="1078" y="578" font-size="12.5" fill="#3A4552">clean context, adversarial</text>
+  <text x="1078" y="598" font-size="12.5" fill="#3A4552">sees spec + scenarios only</text>
+
+  <!-- 6 Evidence Packet (red) -->
+  <rect x="730" y="520" width="290" height="120" rx="12" fill="#FDECEC" stroke="#B3261E" stroke-width="2"/>
+  <text x="748" y="552" font-size="16.5" font-weight="700" fill="#1B2430">6 · Evidence Packet</text>
+  <text x="748" y="578" font-size="12.5" fill="#3A4552">spec + diff + gate output</text>
+  <text x="748" y="598" font-size="12.5" fill="#3A4552">+ verdict + risk</text>
+
+  <!-- 7 Decision Room (amber) -->
+  <rect x="400" y="520" width="290" height="120" rx="12" fill="#FFF4E0" stroke="#B26A00" stroke-width="2"/>
+  <text x="418" y="552" font-size="16.5" font-weight="700" fill="#1B2430">7 · Decision Room</text>
+  <text x="418" y="578" font-size="12.5" fill="#3A4552">Orbit — publish only</text>
+  <text x="418" y="598" font-size="12.5" fill="#3A4552">a human decides what ships</text>
+
+  <!-- 8 Ledger (red) -->
+  <rect x="70" y="520" width="290" height="120" rx="12" fill="#FDECEC" stroke="#B3261E" stroke-width="2"/>
+  <text x="88" y="552" font-size="16.5" font-weight="700" fill="#1B2430">8 · Runs &amp; Metrics Ledger</text>
+  <text x="88" y="578" font-size="12.5" fill="#3A4552">cost · duration · escapes · rework</text>
+  <text x="88" y="598" font-size="12.5" fill="#3A4552">one row per run</text>
+
+  <!-- arrows row 2 (right to left) -->
+  <line x1="1058" y1="580" x2="1026" y2="580" stroke="#5B6470" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="728" y1="580" x2="696" y2="580" stroke="#5B6470" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="398" y1="580" x2="366" y2="580" stroke="#5B6470" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Held-out Scenarios (red) feeding the oracle -->
+  <rect x="1060" y="730" width="290" height="100" rx="12" fill="#FDECEC" stroke="#B3261E" stroke-width="2"/>
+  <text x="1078" y="762" font-size="16.5" font-weight="700" fill="#1B2430">9 · Held-out Scenarios</text>
+  <text x="1078" y="788" font-size="12.5" fill="#3A4552">outside the builder's write scope</text>
+  <text x="1078" y="808" font-size="12.5" fill="#3A4552">the real acceptance criteria</text>
+  <line x1="1205" y1="728" x2="1205" y2="648" stroke="#5B6470" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="1220" y="700" font-size="12" fill="#5B6470">cannot be</text>
+  <text x="1220" y="716" font-size="12" fill="#5B6470">edited by builder</text>
+
+  <!-- feedback loop: ledger back to task record -->
+  <line x1="215" y1="518" x2="215" y2="336" stroke="#B26A00" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrowDash)"/>
+  <text x="230" y="420" font-size="12.5" fill="#B26A00">next task, better factory</text>
+
+  <!-- Footer -->
+  <line x1="70" y1="862" x2="1350" y2="862" stroke="#DDE2E8" stroke-width="1.5"/>
+  <text x="70" y="888" font-size="13.5" fill="#3A4552">No forks, no patches: every reused link is consumed through a published contract — HarnessProtocol, the PPMA contract shape, and Orbit's publish path.</text>
+</svg>
