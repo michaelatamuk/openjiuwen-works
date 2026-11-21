@@ -35,6 +35,13 @@ class DiffStatRow(BaseModel):
         return cls(path=stat.path, added=stat.added, removed=stat.removed)
 
 
+class Artifact(BaseModel):
+    kind: str
+    path: str
+    sha256: str
+    description: str = ""
+
+
 class Evidence(BaseModel):
     schema_version: int = 1
     run_id: str
@@ -66,6 +73,8 @@ class Evidence(BaseModel):
     challenge: Challenge | None = None
     findings: list[Finding] = Field(default_factory=list)
     features: list[dict[str, Any]] = Field(default_factory=list)
+    artifacts: list[Artifact] = Field(default_factory=list)
+    memory_recall: list[str] = Field(default_factory=list)
     would_block: list[str] = Field(default_factory=list)
     not_tested: list[str] = Field(default_factory=list)
     diff: str = ""
@@ -188,6 +197,22 @@ def render_markdown(evidence: Evidence) -> str:
         lines.append("")
     else:
         lines += ["No feature map was recorded for this proof.", ""]
+    lines += ["## Artifacts", ""]
+    if evidence.artifacts:
+        lines += ["| Kind | File | SHA-256 |", "|---|---|---|"]
+        lines += [
+            f"| {_cell(item.kind)} | `{_cell(item.path)}` | `{item.sha256[:12]}` |"
+            for item in evidence.artifacts
+        ]
+        lines.append("")
+    else:
+        lines += ["No runtime artifacts were attached.", ""]
+    lines += ["## Memory recall", ""]
+    if evidence.memory_recall:
+        lines += [f"- {_cell(item)}" for item in evidence.memory_recall]
+        lines.append("")
+    else:
+        lines += ["No memory recall was recorded.", ""]
     lines += ["## Challenge", ""]
     if evidence.challenge is None:
         lines += ["No independent challenge was run.", ""]

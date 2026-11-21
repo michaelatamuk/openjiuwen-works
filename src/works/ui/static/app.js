@@ -56,6 +56,8 @@ const timelineHuman = {
   note: "Run finished",
   "memory.reported": "PPMA memory",
   "memory.failed": "PPMA memory failed",
+  "memory.recalled": "Memory recall",
+  "memory.recall_failed": "Memory recall failed",
   "readiness.checked": "Readiness checked",
 };
 
@@ -412,6 +414,35 @@ function renderFeatures(detail) {
   );
 }
 
+function renderArtifacts(evidence) {
+  const artifacts = evidence?.artifacts || [];
+  if (!artifacts.length) {
+    return card("Runtime artifacts", `<p class="muted small">No screenshot, log, video or trace was attached to this proof.</p>`);
+  }
+  const rows = artifacts
+    .map(
+      (item) => `<div class="check pass">
+        <span class="box" aria-hidden="true">✓</span>
+        <span class="feature-copy"><strong>${esc(item.kind)}</strong><em>${esc(item.path)}</em></span>
+        <span class="check-detail">${esc(item.sha256.slice(0, 12))}</span>
+      </div>`,
+    )
+    .join("");
+  return card("Runtime artifacts", rows, { actions: `${artifacts.length}` });
+}
+
+function renderMemoryRecall(evidence) {
+  const statements = evidence?.memory_recall || [];
+  if (!statements.length) {
+    return card("Memory recall", `<p class="muted small">No memory statements were used for this run.</p>`);
+  }
+  return card(
+    "Memory recall",
+    `<ul class="big-list">${statements.map((item) => `<li>${esc(item)}</li>`).join("")}</ul>`,
+    { actions: `${statements.length}` },
+  );
+}
+
 function renderFindings(evidence) {
   const rows = (evidence?.findings || []).map((finding) => [
     esc(finding.step || "—"),
@@ -507,6 +538,8 @@ function eventSummary(event) {
   if (event.type === "wait.woken") return "Woke on its event";
   if (event.type === "memory.reported") return `PPMA synced · ${data.via || "run"} · ${data.run_id || ""}`;
   if (event.type === "memory.failed") return `PPMA failed · ${data.error || "unknown error"}`;
+  if (event.type === "memory.recalled") return `recalled ${ (data.statements || []).length } statement(s)`;
+  if (event.type === "memory.recall_failed") return `recall failed · ${data.error || "unknown error"}`;
   if (event.type === "readiness.checked") return `readiness ${data.status} · ${data.passed}/${data.total}`;
   if (event.type === "step.finished") return `${data.step}: exit ${data.exit_code}`;
   if (event.type === "challenge.decided") return data.allow ? "Independent check passed" : "Independent check blocked";
@@ -703,12 +736,14 @@ function renderEvidence(detail) {
           ${renderDecision(evidence)}
           ${renderReadiness(detail)}
           ${renderFeatures(detail)}
+          ${renderArtifacts(evidence)}
+          ${renderMemoryRecall(evidence)}
           ${renderResidual(evidence)}
           ${renderCost(evidence)}
           ${renderTimeline(detail.timeline)}
         </div>
       </div>`
-    : `<div class="grid"><div class="stack">${renderEmptyProof()}</div><div class="stack">${renderReadiness(detail)}${renderFeatures(detail)}${renderTimeline(detail.timeline)}</div></div>`;
+    : `<div class="grid"><div class="stack">${renderEmptyProof()}</div><div class="stack">${renderReadiness(detail)}${renderFeatures(detail)}${renderArtifacts(evidence)}${renderMemoryRecall(evidence)}${renderTimeline(detail.timeline)}</div></div>`;
 }
 
 function stopStory() {

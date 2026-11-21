@@ -12,10 +12,11 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from .artifacts import collect_artifacts
 from .config import WorksPaths
 from .decision import DecisionPort, GateContext, GateVerdict, ShadowGate, build_decision_port
 from .errors import ConfigError, ConflictError, HarnessError, StateError, WorksError
-from .evidence import DiffStatRow, Evidence, write_evidence
+from .evidence import Artifact, DiffStatRow, Evidence, write_evidence
 from .flakes import active_flakes
 from .flow import FlowSpec, GateMode, Node, PathsSpec
 from .gitops import GitRepo
@@ -75,6 +76,8 @@ class RunContext:
     reproduce: CommandRecord | None = None
     test: CommandRecord | None = None
     preview: CommandRecord | None = None
+    artifacts: list[Artifact] = field(default_factory=list)
+    memory_recall: list[str] = field(default_factory=list)
     proposal: Proposal | None = None
     verdict: Verdict | None = None
     challenge: Challenge | None = None
@@ -243,6 +246,7 @@ class Supervisor:
                 self._stop(ctx, StopReason.NOT_REPRODUCIBLE)
                 return
             self._move(ctx, TaskState.REPRODUCED)
+            self._recall_memory(ctx)
             self._draft_plan(ctx, repo, scenario_set)
             self._move(ctx, TaskState.PLANNING)
             self._queue.append(task.id, "plan.drafted", ctx.plan)
@@ -374,6 +378,12 @@ class Supervisor:
                         self._stop(ctx, StopReason.TESTS_FAILED, detail="preview failed")
                         return
 
+        if any(node.id == "preview" for node in flow.nodes) and ctx.worktree is not None:
+            ctx.artifacts = collect_artifacts(
+                ctx.worktree / ".works" / "artifacts",
+                ctx.run_dir / "artifacts",
+            )
+
         if any(node.id == "test" for node in flow.nodes):
             test_node = flow.node("test")
             if test_node.mode is not GateMode.OFF:
@@ -439,6 +449,28 @@ class Supervisor:
         repo.worktree_add(destination, base)
         self._queue.append(ctx.task.id, "step.started", {"step": "worktree", "base": base})
         return destination
+
+    def _recall_memory(self, ctx: RunContext) -> None:
+        recall = getattr(self._memory, "recall", None)
+        if not callable(recall):
+            return
+        try:
+            statements = [str(item) for item in recall(limit=5)]
+        except Exception as exc:
+            self._queue.append(
+                ctx.task.id,
+                "memory.recall_failed",
+                {"error": str(exc)[:500]},
+            )
+            return
+        if not statements:
+            return
+        ctx.memory_recall = statements
+        self._queue.append(
+            ctx.task.id,
+            "memory.recalled",
+            {"view": "about_me", "statements": statements},
+        )
 
     def _draft_plan(self, ctx: RunContext, repo: GitRepo, scenario_set: Path | None) -> None:
         if scenario_set is None:
@@ -786,6 +818,8 @@ class Supervisor:
             reproduce=ctx.reproduce,
             test=ctx.test,
             preview=ctx.preview,
+            artifacts=ctx.artifacts,
+            memory_recall=ctx.memory_recall,
             verdict=ctx.verdict,
             challenge=ctx.challenge,
             findings=findings,

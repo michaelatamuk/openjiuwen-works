@@ -10,7 +10,7 @@
 
 **State** `proved` · **Stop reason** `completed`
 
-**Proof SHA-256** `095762876505f6056a4c56e83d06a6df0b3668716cefe4141a3b5c2a29badada`
+**Proof SHA-256** `9a05dea94b693edc0acda64154fd0f06d5f2e454e38b6efd7e8ceb32c8aae99d`
 
 ## Verdict
 
@@ -31,6 +31,14 @@
 ## Feature coverage
 
 No feature map was recorded for this proof.
+
+## Artifacts
+
+No runtime artifacts were attached.
+
+## Memory recall
+
+No memory recall was recorded.
 
 ## Challenge
 
