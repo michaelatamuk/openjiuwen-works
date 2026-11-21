@@ -27,7 +27,7 @@ A bug report waits: for triage, for an agent's answer, for a reviewer, for someo
 
 ## Built to ship.
 
-**A factory that turns a report into a fix a person can release — with proof they can inspect.**
+**A factory that turns a report into a released fix — with proof you can inspect.**
 
 Works moves the waiting into an engine and keeps the judgement with people:
 
