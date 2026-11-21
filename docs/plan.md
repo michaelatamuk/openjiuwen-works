@@ -1,6 +1,6 @@
 # Development plan — openJiuwen Works
 
-**Status:** v4.10 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
+**Status:** v4.11 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
 
 Every task is a checkbox, checked when its criteria are met and the change is merged. `S/M/L`:
 S ≤ half a day, M ≤ two days, L ≤ a week. Nothing is checked because it was started.
@@ -57,6 +57,17 @@ Detail: `docs/deck/`, `docs/video/`.
 8. **Every run records prompt hash, model id and version, cost, duration, verdict.**
 9. **Every commit carries its run id.** Trailer `Works-Run: <id>`.
 10. **A failure produces a reason**, not an endless retry.
+11. **Checks outlive changes.** Policy, flows, scenarios, review rules and risk rules are read from the
+    trusted base, never from the worktree. A change cannot edit the check that judges it; changing a
+    check is a separate task with its own proof.
+12. **A verdict is bound to the exact commit.** A new commit invalidates the verifier result,
+    challenger verdict and approval; the gate re-checks at the commit being merged.
+13. **Every new gate starts in observe mode.** It logs what it would block until its false positives
+    are reviewed; only then can it enforce.
+14. **No blocking prompt in the engine path.** A question to a person becomes a wait with a wake
+    event, a deadline and a default.
+15. **External actions are idempotent and safe to repeat.** A retry never duplicates a merge, a
+    comment, a release or a task.
 
 ---
 
@@ -285,14 +296,17 @@ feature work starts until it closes.
     an explicit test double behind `--trace`; `Proposal.applied` carries worktree edits; bytecode
     artifacts are filtered before policy. CI still uses recorded traces by design.
 - [ ] **RG1** after M1 — extract the supervisor from CLI commands; unify command execution; put the
-  decision port and its fallback behind the supervisor; strict typing everywhere; remove dead paths. **M**
-- [ ] **RG2** after M2 — split `verify` and `evidence`; introduce ports for forge, CI, scenarios and
-  decisions; no concept leaks between them; add the adversarial challenge and the agent eval suite. **M**
+  decision port, trusted-base checks and risk rating behind the supervisor; strict typing everywhere;
+  remove dead paths. **M**
+- [ ] **RG2** after M2 — split `verify` and `evidence`; introduce ports for forge, CI, scenarios,
+  decisions and preview; no concept leaks between them; add the adversarial challenge, the agent eval
+  suite and review-the-reviewers. **M**
 - [ ] **RG3** after M3 — consolidate adapters; audit idempotency; finalise the error taxonomy; remove
-  duplicated retry logic; move waiting states, wake events and decision outcomes into one dispatcher. **M**
-- [ ] **RG4** after M4 — cost and performance pass; consolidate prompts and flows; documentation
-  sweep; benchmark before and after; audit attention metrics and decision calibration from events
-  only. **M**
+  duplicated retry logic; move waiting states, wake events, decision outcomes, rollback and the stop
+  switch into one dispatcher. **M**
+- [ ] **RG4** after M4 — cost and performance pass; consolidate prompts, flows, checks and docs;
+  documentation sweep; benchmark before and after; audit attention metrics, decision calibration,
+  comprehension sample and friction map from events only. **M**
 
 Definition of done for a gate: tests green, mutation ≥ 70% on core, no new TODOs, complexity within
 limits, benchmark not regressed, ADR if the structure changed.
@@ -379,6 +393,77 @@ derives urgency, risk and uncertainty from evidence — never from agent prose (
 `DecisionPolicy` when richer reason codes are needed. The LAIX app kit (execution, proposal store,
 delivery) is out of scope: Works is the host and already owns those.
 
+### 6.8 Verification and approval boundaries
+
+The gate is the product. A change may be fast to write and cheap to test, but the factory is only
+credible if the thing that judges the change cannot be edited by it. These rules make the gate
+trustworthy; they are enforced by the engine, not requested from the model.
+
+**Trusted base.** Policy, flow definitions, scenarios, review rules, reliability checks and risk
+rules are loaded from the base commit or a trusted checkout, never from the worktree under test. The
+verifier process and its dependencies run from a separate image or installed copy. Changing a check
+is a separate task with its own plan, proof and approval; it can never ride along with the change it
+judges. This matters most in dogfooding, where the change and the factory share one repository.
+
+**Exact commit.** A verifier result, challenger verdict or human approval names the commit it was
+given for. Any new commit invalidates all three and the gate runs again. The merge is checked at the
+exact SHA being merged, not at the branch tip that was reviewed earlier.
+
+**Risk rating and code owners.** A separate risk step rates each change `low`, `medium` or `high`,
+rounding up when unsure, from the diff, touched paths, blast radius, reversibility, test coverage and
+recent incidents. The rating never replaces the two human gates; it decides what evidence and who
+the release gate needs:
+
+| Risk | Release gate |
+|---|---|
+| `low` | one owner decision, with the proof and the verifier verdict already prepared |
+| `medium` | one owner decision plus a second reader for the proof |
+| `high` | named code owner, second reviewer, deeper verification, explicit rollback plan |
+
+Code owners always approve `auth/`, `billing/`, migrations, secrets, CI/deploy configuration and
+public API contracts, regardless of risk. LAIX consumes the rating as its `risk` input and returns
+`requires_approval`; it still cannot open the gate.
+
+**Observe before enforce.** Every new policy rule, flow node, risk rule and review check has three
+modes: `off`, `observe`, `enforce`. Observe records `would_block` events and the reason; a rule is
+promoted only after its false positives are reviewed. LAIX's shadow mode is one instance of this
+rule, not a special case.
+
+**Run the change.** Verification is not only a test run. A `preview` node boots the product, drives
+one user path, and attaches the screen, log and trace to the proof. A per-product `verify` command
+is versioned, kept fast and stress-tested like production code. Property tests cover invariants;
+differential tests compare the old and new system on the same generated or sampled inputs for
+migrations and refactors. Cheap checks run before expensive ones, and the builder runs tests, build
+and lint before proposing.
+
+**Bounded repair and flaky tests.** A failing check gets at most three repair rounds; after that the
+task stops with `question.md`: what was tried, the evidence, the leading hypothesis and the options.
+A test that passes only on retry is a defect, not a green result. The factory never skips, sleeps or
+retries a flaky test to green; it records a flake, assigns an owner and either fixes it or deletes it
+with a written reason.
+
+**Review the reviewers.** The verifier, challenger and risk step are evaluated against historical
+incidents and reverts, with a size-matched clean control so false positives are visible. Track recall,
+false-positive rate and importance (`must-fix`, `should-fix`, `nit`); a technically correct finding
+that no owner would act on is noise. Do not stack reviewers: tune the primary and give later rounds
+the context of earlier failures.
+
+**Comprehension debt.** Tests can stay green while nobody understands the code. The proof records
+whether a person can explain the change: every high-risk change, and a sample of the rest, gets a
+short written explanation from a person, not the builder. If they cannot explain it, the change
+blocks and the plan is revisited. A versioned context pack — repo map, architecture notes, glossary,
+past decisions and examples of good changes — is part of the builder's input and its hash is
+recorded in the run.
+
+**Friction and cleanup.** The engine records where agents stall, where review finds the same class of
+problem and where changes need rework, per area of the codebase. A friction map compares each area
+with a typical change of the same size and produces a brief: evidence, likely cause, bounded cleanup
+and the test that keeps it fixed. Cleanup runs as its own task, never as an unreviewed drive-by.
+
+**Operations.** Release ships with a health check, a stable window and a one-call rollback; a noisy
+signal must not roll back every production pool. The supervisor has a stop switch that halts new work
+and leaves running tasks resumable. A line you cannot stop is not a factory.
+
 ---
 
 ## 7. One run
@@ -463,7 +548,8 @@ Internal only: nothing is published to the upstream fork until M2 is green.
     $0.093938, `proved`.
 - [ ] **T1.6** Reproduce step: agent writes a failing test; the runner verifies it fails on base. **L**
 - [x] **T1.7** Plan drafting, scenario ids in the spec, gate 1. **M**
-- [ ] **T1.8** Build with bounded repair: 1 repair + 1 CI retry, then `needs_person`. **M**
+- [ ] **T1.8** Build with bounded repair: at most three rounds, then `needs_person` with
+  `question.md` (what was tried, evidence, hypothesis, options). **M**
 - [ ] **T1.9** Command runner: timeout, process-tree kill, path escape check, network policy. **M**
 - [x] **T1.10** Evidence v1 computed: diff stat, test deltas, commands, exit codes, cost. **M**
   - Done 2026-11-21: diff, commands, exits, policy, cost and proof hash; the dedicated test-delta
@@ -501,6 +587,26 @@ Internal only: nothing is published to the upstream fork until M2 is green.
   and the proof. Deterministic gate remains the fallback. **M**
   - Criteria: path deny wins before LAIX; a missing/invalid decision falls back, never opens a gate;
     shadow differences are recorded for 20 cases.
+- [ ] **T1.20** Risk rating and code owners: a separate risk step rates each change
+  `low | medium | high` from diff, paths, blast radius, reversibility, coverage and recent
+  incidents, rounding up when unsure. Code owners always approve `auth/`, `billing/`, migrations,
+  secrets, CI/deploy and public API. LAIX consumes the rating as `risk`. **M**
+  - Criteria: the rating is recorded in `run.json` and the proof; it changes the evidence and the
+    reviewers, never the existence of the two gates.
+- [ ] **T1.21** Trusted-base checks and exact-commit binding: policy, flows, scenarios, review rules
+  and risk rules load from the base commit or a trusted checkout, never the worktree. A new commit
+  invalidates the verifier result, challenger verdict and approval; the merge re-checks the exact
+  SHA. **M**
+  - Criteria: a worktree edit to a check is refused; a commit after approval cannot merge on the old
+    verdict; `checks_sha` is recorded in the run and proof.
+- [ ] **T1.22** Observe mode for every gate: `off | observe | enforce` for policy rules, flow nodes,
+  risk rules and review checks; observe records `would_block` with a reason. Promotion happens only
+  after false positives are reviewed. **S**
+  - Criteria: a new rule can run for 20 changes without changing a transition; its false positives
+    are listed from events.
+- [ ] **T1.23** Flaky-test policy: a test that passes only on retry is a defect, never a green
+  result. No skip, sleep or retry-to-green; a `flake` event carries an owner and expiry, and the test
+  is fixed or deleted with a written reason. **S**
 
 **Demo M1:** two real issues go from ticket to proof, twice in a row, with scenarios written first.
 
@@ -535,6 +641,14 @@ Internal only: nothing is published to the upstream fork until M2 is green.
 - [ ] **T2.14** Decision quality: replay 20 historical gate cases through LAIX and the current
   deterministic rule; compare verb, approval and reason code; any case where LAIX allows what the
   policy or verifier refuses is a defect in the adapter, not a policy change. **M**
+- [ ] **T2.15** Run the change: a `preview` node boots the product, drives one user path and attaches
+  screen, log and trace to the proof; a per-product `verify` command is versioned, fast and
+  stress-tested. Cheap checks run before expensive ones. **M**
+- [ ] **T2.16** Property and differential tests: invariants for the changed domain; old and new
+  systems compared on generated or sampled inputs for migrations and refactors. **M**
+- [ ] **T2.17** Review the reviewers: evaluate verifier, challenger and risk step on historical
+  incidents and reverts with a size-matched clean control; track recall, false positives and
+  importance. Stamp every commit `verified: none | unit | integration | e2e | manual`. **M**
 
 **Demo M2:** a patch that passes CI and the builder's tests is caught by a sneaky-patch scenario.
 
@@ -570,6 +684,9 @@ Internal only: nothing is published to the upstream fork until M2 is green.
 - [ ] **T3.15** LAIX commitments: release and return promises (`approved commit`, `CI green`,
   `return to issue`) enter a `CommitmentGraph`; a hard violation becomes `verify` or `ask`. Path
   deny and the verifier remain authoritative. **M**
+- [ ] **T3.16** Safe operations: release carries a health check, a stable window and a one-call
+  rollback; a noisy signal cannot roll back every pool. `works stop --all` halts new work and leaves
+  running tasks resumable. **M**
 
 **Demo M3:** issue → merged PR → proof → comment → green reproduction; then a forced revert attributed
 to its release.
@@ -597,6 +714,12 @@ to its release.
 - [ ] **T4.13** Decision outcomes: gate decisions, reversals and overrides feed LAIX calibration;
   a calibration report is shown next to attention metrics, and a drift beyond the agreed band
   reopens the policy. **M**
+- [ ] **T4.14** Friction map and cleanup loop: per-area stall, review rework and repeated-finding
+  rate, compared with a size-matched typical change; a brief with evidence, cause, bounded cleanup
+  and a keeping test. Cleanup runs as its own reviewed task. **M**
+- [ ] **T4.15** Comprehension sample and context pack: every high-risk change and a sample of the
+  rest get a short human explanation in the proof; a versioned repo map, architecture notes,
+  glossary, decisions and good examples are hashed into the run. **M**
 
 **Demo M4:** two flows, one benchmark that chose a cheaper configuration, one failure that became a
 scenario through a reviewed PR.
@@ -618,13 +741,29 @@ decision:
   mode: shadow            # shadow until T2.14 passes, then per-gate opt-in
   fallback: deterministic
   attention_budget: 3     # human decisions per day in the inbox
+verification:
+  trusted_base: true      # checks, scenarios, review rules from the base commit
+  bind_to_commit: true    # a new commit invalidates verdict, challenge and approval
+  default_mode: observe   # off | observe | enforce for every new gate
+  repair_rounds: 3        # then blocked with question.md
+risk:
+  rating: computed        # low | medium | high; round up when unsure
+  owners:
+    auth: [owner]
+    billing: [owner]
+    migrations: [owner]
+    secrets: [owner]
+    ci: [owner]
+    public_api: [owner]
 budget: {tokens: 400000, usd: 10, wall_minutes: 60, ci_minutes: 30}
 ```
 
 Rules: segments normalized before matching; deny wins; `..` rejected; auto-allow refused while the
 suspicious list is non-empty; approval is bound to the commit and re-checked at publish. When
 `decision.provider` is `laix`, LAIX may change *which* gate applies only after path policy and never
-in place of the verifier; an invalid decision falls back to the deterministic rule (§6.7).
+in place of the verifier; an invalid decision falls back to the deterministic rule (§6.7). A new
+commit always invalidates the previous verdict and approval. Risk decides who and what evidence the
+release gate needs, never whether the gate exists; code owners always approve their paths.
 
 ---
 
@@ -681,6 +820,14 @@ and a mechanical suspicious-change list (deleted tests, new skips, broad except,
 | Gate override rate | human decisions that reverse the engine's recommendation | reported, falling |
 | Decision latency | p50/p95 time spent in `DecisionPort.decide` | < 250 ms p95 |
 | Attention fit | scheduled decisions that fit the configured attention budget | 100% |
+| Shipped changes | released changes per week, by flow | reported, rising |
+| Revert rate | reverts / releases, split by risk and approver | falling |
+| Review latency | ready-for-review → first decision, p50/p95 | falling |
+| Review effort | human minutes per accepted change | falling without more escapes |
+| Cost per accepted change | tokens, compute and human time / released change | falling |
+| Comprehension sample | sampled changes a person can explain in three sentences | rising or stable |
+| Risk calibration | risk rating vs actual reverts and escapes | reported, reviewed |
+| Check false positives | observe-mode blocks a reviewer judged wrong | falling before enforce |
 
 ---
 
@@ -729,6 +876,14 @@ and a mechanical suspicious-change list (deleted tests, new skips, broad except,
 | Decision theater | Urgency, risk and uncertainty come from recorded evidence, never agent prose; decisions without evidence fall back |
 | LAIX allows what policy denies | Path deny and the verifier run before/after the decision; adapter tests prove fail-closed; shadow review before opt-in |
 | Attention starvation | Explicit `human_attention_budget`; deferred decisions stay visible with a deadline and a default |
+| Self-modifying checks | Checks and review rules load from the trusted base; a check change is a separate task; exact-commit binding |
+| Review bottleneck | Risk-rated approval and prepared proofs; measure review latency; do not skip review to clear the queue |
+| Comprehension debt | Human explanation for high-risk and sampled changes; context pack; ownership map; architecture review |
+| Verification theater | Review the reviewers on incidents and reverts with a clean control; validity and importance tracked separately |
+| Flaky tests | No skip, sleep or retry-to-green; a flake event with owner and expiry; fix or delete with a written reason |
+| Blocking-prompt stall | No interactive prompt in the engine path; a question becomes a wait with a wake event and a deadline |
+| Non-idempotent action | Idempotency key on every external action; a retry never duplicates a merge, comment, release or task |
+| Rollback misfire | One-call rollback, health check and stable window; a noisy signal cannot roll back every pool |
 | Unbounded autonomy | Two human gates remain; autonomy expands only after evals and a green escape window |
 
 ---
@@ -776,6 +931,15 @@ All decided; revisit only with an ADR.
   deadline, commitments — never agent-supplied urgency or free-form prose. Overrides, shadow
   disagreements, fallbacks and calibration are derived from events; an attention budget is explicit
   and a deferred decision keeps its deadline and default.
+- [x] **D14** Checks outlive changes. Policy, flows, scenarios, review rules and risk rules are read
+  from the trusted base, not the worktree; a change cannot edit the check that judges it. Every
+  verdict and approval is bound to the exact commit and invalidated by a new one.
+- [x] **D15** Risk-rated approval. A separate risk step rates each change `low | medium | high` and
+  code owners always approve critical paths. The rating changes the evidence and the reviewers, not
+  the existence of the two human gates; LAIX consumes it as an input.
+- [x] **D16** Observe first, then enforce. Every new gate runs in `off | observe | enforce`, and the
+  verifier, challenger and risk step are themselves evaluated on historical incidents and reverts
+  with a size-matched clean control. Reviewers are tuned, not stacked.
 
 ---
 
@@ -786,7 +950,9 @@ narration, the limitations are written down, **the engineering standard in §6.4
 touched file**, and **the refactoring gate that follows it (§6.6) is closed**. A factory milestone
 also passes the parity checklist: task state and findings survive outside the agent; waiting has a
 wake event; no agent grades its own work; attention metrics come from events; the proof says what was
-not tested; and any LAIX decision is backed by recorded evidence and has a deterministic fallback.
+not tested; any LAIX decision is backed by recorded evidence and has a deterministic fallback; and
+the gate that judged the change ran from the trusted base, was bound to the exact commit and had
+passed observe mode.
 
 ---
 
@@ -800,6 +966,11 @@ agents, a zoo of model providers before M3, and autonomous merge without the two
 
 ## 20. Changelog
 
+- **v4.11** — gate integrity from the software-factory study: trusted-base checks, exact-commit
+  binding, risk-rated approval with code owners, observe-before-enforce, run-the-change preview,
+  property/differential tests, bounded repair, flaky tests as defects, review-the-reviewers,
+  comprehension sample, friction map, safe rollback and stop (§4, §6.8, §9, D14–D16). T1.20–T1.23,
+  T2.15–T2.17, T3.16, T4.14–T4.15 opened.
 - **v4.10** — LAIX as the optional decision layer: `DecisionPort` with `LaixGate` for plan/release,
   decision events and proof section, attention routing, commitments deferred to M3; shadow first,
   deterministic fallback, policy and verifier authoritative (§6.7, D12–D13). Deck gains LAIX as a

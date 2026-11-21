@@ -7,7 +7,8 @@ where the bug was seen.
 end to end. The builder can be the real `openjiuwen` Claude Code harness on the DeepSeek
 Anthropic-compatible endpoint, and finished runs are reported to PPMA memory. The verifier is
 still the local scenario runner (M2); nothing is published yet (M3). Gates are deterministic today;
-LAIX is the optional decision layer being added behind `DecisionPort` in shadow mode.
+LAIX is the optional decision layer being added behind `DecisionPort` in shadow mode. The next code
+changes harden the gate itself: trusted-base checks, exact-commit binding and a computed risk rating.
 
 <img src="brand/mascot/mira-primary.png" width="120" align="right" alt="Mira, a magpie courier, carrying a proof page">
 
@@ -103,6 +104,9 @@ in v0 — no silent retry, no "trust the builder".
 | Release | The loop stops at `proved`; branch, PR and the issue comment land in M3 |
 | Memory | Finished runs are posted to PPMA (`works.run_finished`); recall and lessons are M4 |
 | Decision layer | Gates are deterministic. LAIX is the optional decision layer: pinned `0.18.0`, boundary in §6.7 and ADR-011, shadow mode next (T1.19); it never overrides path deny or the verifier |
+| Gate integrity | Checks, flows, scenarios and review rules must load from the trusted base, and a verdict is bound to the exact commit. Land next (T1.21) |
+| Risk rating | Risk classes and code owners are policy today; a separate `low/medium/high` rating and its evidence land next (T1.20) |
+| Observe mode | LAIX has shadow; every new gate gets `off/observe/enforce` with `would_block` events next (T1.22) |
 | GUI | CLI only. The 2026 window standard is in the plan, §6.5, for after M2 |
 
 The fixture bug is deliberate: `add` subtracts. The good trace fixes it, the sneaky trace passes
@@ -137,8 +141,9 @@ CI adds bandit and gitleaks on every PR, a weekly mutation gate (71.8% on state,
 and a weekly `pip-audit`. Decisions are recorded as ADRs in `docs/adrs/`; known failures and first
 responses are in `docs/runbook.md`. The live builder is in `docs/live-harness.md`; the PPMA memory
 integration is in `docs/ppma.md`; the LAIX decision layer and its boundary are in `docs/laix.md`;
-the factory comparison that shaped v4.5 is in `docs/review-4-factories.md`; waits and the
-dispatcher are in `docs/waiting-and-dispatch.md`.
+verification and approval boundaries are in `docs/verification.md`; the factory comparison that
+shaped v4.5 is in `docs/review-4-factories.md`; waits and the dispatcher are in
+`docs/waiting-and-dispatch.md`.
 
 ---
 
@@ -153,7 +158,7 @@ dispatcher are in `docs/waiting-and-dispatch.md`.
 | `docs/plan.md` | The plan: preconditions, milestones, checkboxes, standards, refactoring gates |
 | `docs/deck/` | Five slides (SVG + PNG) |
 | `docs/video/` | The 47 s concept film |
-| `docs/adrs/` | Eleven architecture decisions |
+| `docs/adrs/` | Twelve architecture decisions |
 | `scripts/` | Demo, benchmark, check, mutation gate, film generators |
 
 ---
@@ -168,10 +173,11 @@ dispatcher are in `docs/waiting-and-dispatch.md`.
 ## Design in one paragraph
 
 A **window** and an **engine**. The window is where a person reports, watches and approves. The
-engine owns the queue, the check and the proof. Everything else is a tool it calls: `jiuwenswarm`
-builds in a worktree and runs CI, `agent-core` runs the checking agent in a clean context, `PPMA`
-keeps the project state, `Orbit` optionally shares the proof with a team room. Nothing is forked;
-every link is a published contract.
+engine owns the queue, the check and the proof. The gate reads its checks from the trusted base and
+binds every verdict to the exact commit, so the change cannot edit its judge. Everything else is a
+tool it calls: `jiuwenswarm` builds in a worktree and runs CI, `agent-core` runs the checking agent
+in a clean context, `PPMA` keeps the project state, `Orbit` optionally shares the proof with a team
+room. Nothing is forked; every link is a published contract.
 
 ---
 

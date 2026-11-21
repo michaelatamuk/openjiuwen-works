@@ -16,5 +16,6 @@ deleted — a superseded decision is marked as such and points to its replacemen
 | [009](009-ppma-memory.md) | PPMA owns memory; Works reports finished runs | accepted |
 | [010](010-factory-and-attention.md) | A factory is a task graph with waits, not an org chart | accepted |
 | [011](011-laix-decision-layer.md) | LAIX is the optional decision layer, not the factory | accepted |
+| [012](012-trusted-base-and-risk.md) | Checks outlive changes; risk decides who approves | accepted |
 
 Format: context, decision, consequences, alternatives rejected.
