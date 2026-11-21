@@ -1,26 +1,38 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 440" width="1600" height="440" role="img" aria-labelledby="title desc">
   <title id="title">openJiuwen Works</title>
-  <desc id="desc">A local-first software factory: one signal in, a released fix out.</desc>
+  <desc id="desc">A local-first software factory: one signal in, a proven fix out.</desc>
   <rect width="1600" height="440" fill="#0B0D12"/>
-  <rect x="96" y="58" width="4" height="324" rx="2" fill="#8B5CF6"/>
-  <text x="132" y="122" fill="#98A2B3" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="17" font-weight="700" letter-spacing="4">LOCAL-FIRST SOFTWARE FACTORY</text>
-  <text x="130" y="222" fill="#E8EAF0" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="78" font-weight="800" letter-spacing="-3">openJiuwen</text>
-  <text x="700" y="222" fill="#C4B5FD" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="78" font-weight="800" letter-spacing="-3">Works</text>
-  <text x="132" y="292" fill="#98A2B3" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="30" font-weight="400">One signal in. A reproduced, checked and proven fix out.</text>
-  <text x="132" y="342" fill="#8B95A7" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18" font-weight="500">One immutable proof · human judgement at every gate</text>
+  <rect x="88" y="54" width="4" height="332" rx="2" fill="#8B5CF6"/>
+  <text x="124" y="112" fill="#98A2B3" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="15" font-weight="700" letter-spacing="4">LOCAL-FIRST SOFTWARE FACTORY</text>
+  <text x="120" y="218" fill="#E8EAF0" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="72" font-weight="800" letter-spacing="-3"><tspan fill="#E8EAF0">openJiuwen</tspan><tspan fill="#C4B5FD" dx="16">Works</tspan></text>
+  <text x="124" y="286" fill="#CBD5E1" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="29" font-weight="400">One signal in. A proven fix out.</text>
+  <text x="124" y="330" fill="#98A2B3" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="16" font-weight="600" letter-spacing="1.5">REPRODUCE · CHECK · PROVE · RELEASE</text>
 
-  <path d="M 1040 262 C 1130 170 1210 330 1300 238 S 1440 160 1510 250" fill="none" stroke="#323949" stroke-width="3" stroke-dasharray="5 11"/>
-  <g font-family="Inter, Segoe UI, Arial, sans-serif" font-size="15" font-weight="700">
-    <circle cx="1040" cy="262" r="15" fill="#161A23" stroke="#8B5CF6" stroke-width="3"/>
-    <circle cx="1158" cy="200" r="15" fill="#0F2A22" stroke="#34D399" stroke-width="3"/>
-    <text x="1158" y="206" fill="#34D399" text-anchor="middle" font-size="13">✓</text>
-    <circle cx="1272" cy="276" r="15" fill="#0F2A22" stroke="#34D399" stroke-width="3"/>
-    <text x="1272" y="282" fill="#34D399" text-anchor="middle" font-size="13">✓</text>
-    <circle cx="1382" cy="204" r="15" fill="#0F2A22" stroke="#34D399" stroke-width="3"/>
-    <text x="1382" y="210" fill="#34D399" text-anchor="middle" font-size="13">✓</text>
-    <rect x="1493" y="233" width="30" height="30" rx="7" transform="rotate(45 1508 248)" fill="#2B2310" stroke="#FBBF24" stroke-width="3"/>
-    <text x="1040" y="312" fill="#8B95A7" font-size="14" font-weight="600" text-anchor="middle">signal</text>
-    <text x="1272" y="326" fill="#8B95A7" font-size="14" font-weight="600" text-anchor="middle">fixed</text>
-    <text x="1508" y="312" fill="#8B95A7" font-size="14" font-weight="600" text-anchor="middle">release</text>
+  <path d="M 880 250 C 920 210 960 200 1000 200 C 1040 200 1080 250 1120 250 C 1160 250 1200 190 1240 190 C 1280 190 1320 250 1360 250 C 1400 250 1450 210 1490 200" fill="none" stroke="#323949" stroke-width="3" stroke-dasharray="5 10"/>
+  <path d="M 880 250 C 920 210 960 200 1000 200 C 1040 200 1080 250 1120 250 C 1160 250 1200 190 1240 190 C 1280 190 1320 250 1360 250" fill="none" stroke="#8B5CF6" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="1360" cy="250" r="32" fill="#8B5CF6" opacity="0.16"/>
+
+  <g font-family="Inter, Segoe UI, Arial, sans-serif">
+    <circle cx="880" cy="250" r="7" fill="#0B0D12" stroke="#5B6475" stroke-width="2"/>
+    <text x="880" y="292" fill="#8B95A7" font-size="12" font-weight="700" letter-spacing="0.8" text-anchor="middle">SIGNAL</text>
+
+    <circle cx="1000" cy="200" r="16" fill="#0F2A22" stroke="#34D399" stroke-width="3"/>
+    <text x="1000" y="206" fill="#34D399" font-size="14" font-weight="800" text-anchor="middle">✓</text>
+    <text x="1000" y="164" fill="#98A2B3" font-size="12.5" font-weight="700" letter-spacing="0.4" text-anchor="middle">PICKED UP</text>
+
+    <circle cx="1120" cy="250" r="16" fill="#0F2A22" stroke="#34D399" stroke-width="3"/>
+    <text x="1120" y="256" fill="#34D399" font-size="14" font-weight="800" text-anchor="middle">✓</text>
+    <text x="1120" y="292" fill="#98A2B3" font-size="12.5" font-weight="700" letter-spacing="0.4" text-anchor="middle">CONFIRMED</text>
+
+    <circle cx="1240" cy="190" r="16" fill="#0F2A22" stroke="#34D399" stroke-width="3"/>
+    <text x="1240" y="196" fill="#34D399" font-size="14" font-weight="800" text-anchor="middle">✓</text>
+    <text x="1240" y="154" fill="#98A2B3" font-size="12.5" font-weight="700" letter-spacing="0.4" text-anchor="middle">FIXED</text>
+
+    <circle cx="1360" cy="250" r="20" fill="#2A2140" stroke="#8B5CF6" stroke-width="4"/>
+    <circle cx="1360" cy="250" r="6" fill="#C4B5FD"/>
+    <text x="1360" y="300" fill="#C4B5FD" font-size="12.5" font-weight="800" letter-spacing="0.4" text-anchor="middle">CHECKED</text>
+
+    <rect x="1477" y="187" width="26" height="26" rx="6" transform="rotate(45 1490 200)" fill="#2B2310" stroke="#FBBF24" stroke-width="3"/>
+    <text x="1490" y="164" fill="#98A2B3" font-size="12.5" font-weight="700" letter-spacing="0.4" text-anchor="middle">READY</text>
   </g>
 </svg>

@@ -25,6 +25,10 @@
 
 A bug report waits: for triage, for an agent's answer, for a reviewer, for someone to prove the change works. Writing the fix is the short part.
 
+## The solution
+
+**A factory that turns a report into a proof, then lets a person decide.**
+
 Works moves the waiting into an engine and keeps the judgement with people:
 
 - **Reproduce before fixing.** A deterministic command must fail on the base commit. No failing reproduction, no fix.
