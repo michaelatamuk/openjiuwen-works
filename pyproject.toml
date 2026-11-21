@@ -90,7 +90,8 @@ only_mutate = [
   "src/works/policy.py",
   "src/works/queue.py",
 ]
-pytest_add_cli_args_test_selection = ["tests"]
+pytest_add_cli_args_test_selection = ["tests", "--ignore=tests/integration"]
+also_copy = ["flows", "fixtures"]
 debug = true
 
 
