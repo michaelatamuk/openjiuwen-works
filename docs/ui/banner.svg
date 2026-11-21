@@ -1,38 +1,71 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 440" width="1600" height="440" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 480" width="1600" height="480" role="img" aria-labelledby="title desc">
   <title id="title">openJiuwen Works</title>
   <desc id="desc">A local-first software factory: one signal in, a proven fix out.</desc>
-  <rect width="1600" height="440" fill="#F4F5F9"/>
-  <rect x="88" y="54" width="4" height="332" rx="2" fill="#6D28D9"/>
-  <text x="124" y="112" fill="#6B7280" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="15" font-weight="700" letter-spacing="4">LOCAL-FIRST SOFTWARE FACTORY</text>
-  <text x="120" y="218" fill="#111827" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="72" font-weight="800" letter-spacing="-3"><tspan fill="#111827">openJiuwen</tspan><tspan fill="#6D28D9" dx="16">Works</tspan></text>
-  <text x="124" y="286" fill="#374151" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="29" font-weight="400">One signal in. A proven fix out.</text>
-  <text x="124" y="330" fill="#6B7280" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="16" font-weight="600" letter-spacing="1.5">REPRODUCE · CHECK · PROVE · RELEASE</text>
+  <defs>
+    <radialGradient id="wash" cx="84%" cy="14%" r="60%">
+      <stop offset="0" stop-color="#6D28D9" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#6D28D9" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="card" x="-20%" y="-20%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="10" stdDeviation="16" flood-color="#111827" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+  <rect width="1600" height="480" fill="#F4F5F9"/>
+  <rect width="1600" height="480" fill="url(#wash)"/>
 
-  <path d="M 880 250 C 920 210 960 200 1000 200 C 1040 200 1080 250 1120 250 C 1160 250 1200 190 1240 190 C 1280 190 1320 250 1360 250 C 1400 250 1450 210 1490 200" fill="none" stroke="#CFD6E4" stroke-width="3" stroke-dasharray="5 10"/>
-  <path d="M 880 250 C 920 210 960 200 1000 200 C 1040 200 1080 250 1120 250 C 1160 250 1200 190 1240 190 C 1280 190 1320 250 1360 250" fill="none" stroke="#6D28D9" stroke-width="4" stroke-linecap="round"/>
-  <circle cx="1360" cy="250" r="32" fill="#6D28D9" opacity="0.10"/>
+  <rect x="80" y="74" width="46" height="46" rx="12" fill="#6D28D9"/>
+  <text x="103" y="105" fill="#FFFFFF" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="25" font-weight="800" text-anchor="middle">W</text>
+  <text x="138" y="105" fill="#111827" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="27" font-weight="800" letter-spacing="-0.6"><tspan fill="#111827">openJiuwen</tspan><tspan fill="#6D28D9" dx="7">Works</tspan></text>
+  <text x="80" y="158" fill="#6B7280" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="2.6">LOCAL-FIRST SOFTWARE FACTORY</text>
+
+  <text x="78" y="250" fill="#111827" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="54" font-weight="800" letter-spacing="-2">One signal in.</text>
+  <text x="78" y="310" fill="#111827" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="54" font-weight="800" letter-spacing="-2">A proven fix out.</text>
+  <text x="80" y="360" fill="#4B5563" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="21" font-weight="500">Reproduce · check · prove · decide.</text>
+  <text x="80" y="396" fill="#6B7280" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="16" font-weight="500">Two human gates. No silent retry.</text>
+
+  <g filter="url(#card)">
+    <rect x="748" y="56" width="772" height="368" rx="24" fill="#FFFFFF" stroke="#E3E7EF"/>
+  </g>
+  <text x="788" y="104" fill="#6D28D9" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="14" font-weight="800" letter-spacing="2">PROOF</text>
+  <text x="788" y="148" fill="#047857" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="34" font-weight="800" letter-spacing="-0.5">PASS</text>
+  <text x="884" y="147" fill="#4B5563" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18" font-weight="500">2/2 P0 · 1 file changed</text>
+  <text x="1220" y="132" fill="#6B7280" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="0.8">NOT CHECKED</text>
+  <text x="1220" y="154" fill="#111827" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18" font-weight="700">0 gaps recorded</text>
+  <text x="788" y="174" fill="#9CA3AF" font-family="Cascadia Code, Consolas, monospace" font-size="13">SHA-256 4c1f…</text>
+
+  <path d="M 800 268 C 845 238 890 228 930 228 C 970 228 1010 268 1060 268 C 1108 268 1145 228 1190 228 C 1230 228 1280 268 1320 268 C 1360 268 1410 238 1460 228" fill="none" stroke="#CFD6E4" stroke-width="3" stroke-dasharray="5 9"/>
+  <path d="M 800 268 C 845 238 890 228 930 228 C 970 228 1010 268 1060 268 C 1108 268 1145 228 1190 228 C 1230 228 1280 268 1320 268" fill="none" stroke="#6D28D9" stroke-width="4.5" stroke-linecap="round"/>
+  <circle cx="1320" cy="268" r="28" fill="#6D28D9" opacity="0.12"/>
 
   <g font-family="Inter, Segoe UI, Arial, sans-serif">
-    <circle cx="880" cy="250" r="7" fill="#FFFFFF" stroke="#9CA3AF" stroke-width="2"/>
-    <text x="880" y="292" fill="#9CA3AF" font-size="12" font-weight="700" letter-spacing="0.8" text-anchor="middle">SIGNAL</text>
+    <circle cx="800" cy="268" r="10" fill="#FFFFFF" stroke="#9CA3AF" stroke-width="2.5"/>
+    <text x="800" y="312" fill="#6B7280" font-size="14" font-weight="700" letter-spacing="0.5" text-anchor="middle">REPORTED</text>
 
-    <circle cx="1000" cy="200" r="16" fill="#E8F8F1" stroke="#047857" stroke-width="3"/>
-    <text x="1000" y="206" fill="#047857" font-size="14" font-weight="800" text-anchor="middle">✓</text>
-    <text x="1000" y="164" fill="#6B7280" font-size="12.5" font-weight="700" letter-spacing="0.4" text-anchor="middle">PICKED UP</text>
+    <circle cx="930" cy="228" r="15" fill="#E8F8F1" stroke="#047857" stroke-width="3"/>
+    <text x="930" y="234" fill="#047857" font-size="13" font-weight="800" text-anchor="middle">✓</text>
+    <text x="930" y="197" fill="#6B7280" font-size="14" font-weight="700" letter-spacing="0.5" text-anchor="middle">PICKED UP</text>
 
-    <circle cx="1120" cy="250" r="16" fill="#E8F8F1" stroke="#047857" stroke-width="3"/>
-    <text x="1120" y="256" fill="#047857" font-size="14" font-weight="800" text-anchor="middle">✓</text>
-    <text x="1120" y="292" fill="#6B7280" font-size="12.5" font-weight="700" letter-spacing="0.4" text-anchor="middle">CONFIRMED</text>
+    <circle cx="1060" cy="268" r="15" fill="#E8F8F1" stroke="#047857" stroke-width="3"/>
+    <text x="1060" y="274" fill="#047857" font-size="13" font-weight="800" text-anchor="middle">✓</text>
+    <text x="1060" y="312" fill="#6B7280" font-size="14" font-weight="700" letter-spacing="0.5" text-anchor="middle">CONFIRMED</text>
 
-    <circle cx="1240" cy="190" r="16" fill="#E8F8F1" stroke="#047857" stroke-width="3"/>
-    <text x="1240" y="196" fill="#047857" font-size="14" font-weight="800" text-anchor="middle">✓</text>
-    <text x="1240" y="154" fill="#6B7280" font-size="12.5" font-weight="700" letter-spacing="0.4" text-anchor="middle">FIXED</text>
+    <circle cx="1190" cy="228" r="15" fill="#E8F8F1" stroke="#047857" stroke-width="3"/>
+    <text x="1190" y="234" fill="#047857" font-size="13" font-weight="800" text-anchor="middle">✓</text>
+    <text x="1190" y="197" fill="#6B7280" font-size="14" font-weight="700" letter-spacing="0.5" text-anchor="middle">FIXED</text>
 
-    <circle cx="1360" cy="250" r="20" fill="#F1EDFF" stroke="#6D28D9" stroke-width="4"/>
-    <circle cx="1360" cy="250" r="6" fill="#6D28D9"/>
-    <text x="1360" y="300" fill="#4C1D95" font-size="12.5" font-weight="800" letter-spacing="0.4" text-anchor="middle">CHECKED</text>
+    <circle cx="1320" cy="268" r="20" fill="#F1EDFF" stroke="#6D28D9" stroke-width="4"/>
+    <circle cx="1320" cy="268" r="6" fill="#6D28D9"/>
+    <text x="1320" y="318" fill="#4C1D95" font-size="14" font-weight="800" letter-spacing="0.5" text-anchor="middle">CHECKED</text>
 
-    <rect x="1477" y="187" width="26" height="26" rx="6" transform="rotate(45 1490 200)" fill="#FFF7E6" stroke="#B45309" stroke-width="3"/>
-    <text x="1490" y="164" fill="#6B7280" font-size="12.5" font-weight="700" letter-spacing="0.4" text-anchor="middle">READY</text>
+    <rect x="1444" y="214" width="26" height="26" rx="6" transform="rotate(45 1457 227)" fill="#FFF7E6" stroke="#B45309" stroke-width="3"/>
+    <text x="1457" y="197" fill="#6B7280" font-size="14" font-weight="700" letter-spacing="0.5" text-anchor="middle">READY</text>
+  </g>
+
+  <g font-family="Inter, Segoe UI, Arial, sans-serif" font-size="14" font-weight="700">
+    <rect x="788" y="350" width="13" height="13" rx="3" transform="rotate(45 794 356)" fill="#FFF7E6" stroke="#B45309" stroke-width="2"/>
+    <text x="812" y="362" fill="#6B7280">PLAN GATE · a person</text>
+    <rect x="1088" y="350" width="13" height="13" rx="3" transform="rotate(45 1094 356)" fill="#FFF7E6" stroke="#B45309" stroke-width="2"/>
+    <text x="1112" y="362" fill="#6B7280">RELEASE GATE · a person</text>
+    <text x="1457" y="362" fill="#6B7280" text-anchor="middle">ready for a person</text>
   </g>
 </svg>
