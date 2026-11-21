@@ -97,7 +97,7 @@ in v0 — no silent retry, no "trust the builder".
 
 | Area | State |
 |---|---|
-| Live harness | Works: `openjiuwen` + bundled `claude.exe` + DeepSeek Anthropic endpoint; measured 115.6 s / 104 563 tokens / $0.094 for the fixture fix |
+| Live harness | Works: `openjiuwen` + bundled `claude.exe` + DeepSeek Anthropic endpoint; builder+challenger measured 88.6 s / 180 604 tokens / $0.193 for the fixture fix |
 | Verifier | The local scenario runner stands in; the container and provider split land in M2 |
 | Release | The loop stops at `proved`; branch, PR and the issue comment land in M3 |
 | Memory | Finished runs are posted to PPMA (`works.run_finished`); recall and lessons are M4 |

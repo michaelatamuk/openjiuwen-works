@@ -51,9 +51,14 @@ The proof records the challenge, its concerns and the prompt hash.
 
 | Run | Time | Tokens | USD | Result |
 |---|---|---|---|---|
-| `LIVE-2` on the fixture | 115.6 s | 104 563 | 0.093938 | `proved`, all P0/P1 pass |
+| Builder only (`LIVE-2`) | 115.6 s | 104 563 | 0.093938 | `proved`, no challenger |
+| Builder + challenger (`LIVE-4`) | 88.6 s | 180 604 | 0.192889 | `proved`, challenge ALLOW |
 
-Proof: `74a2f1b3d729cbfdc01b291e10769af8eb2a1cb96213993b74302b805d0f19d9`.
+Builder proof: `74a2f1b3d729cbfdc01b291e10769af8eb2a1cb96213993b74302b805d0f19d9`.
+
+The challenger runs in a **disposable git worktree** with the builder's diff applied. It cannot
+touch the builder's worktree; its edits, if any, are discarded with the worktree. It runs with the
+same provider today (DeepSeek); the provider split is T2.3.
 
 ## What it is not
 

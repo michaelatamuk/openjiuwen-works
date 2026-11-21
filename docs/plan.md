@@ -440,8 +440,9 @@ Internal only: nothing is published to the upstream fork until M2 is green.
 - [x] **T2.10** Adversarial challenge: a separate session, on a different provider where possible,
   tries to disprove the diagnosis and then the fix; the verdict is recorded and a send-back blocks.
   **M**
-  - Done 2026-11-21: separate challenger prompt/session, plan mode, JSON verdict, fail-closed;
-    `challenge.json`, proof section and a blocking fake trace. Provider split still T2.3.
+  - Done 2026-11-21: separate challenger prompt/session, own disposable worktree with the builder
+    diff applied, JSON verdict, fail-closed; `challenge.json`, proof section and a blocking fake
+    trace. Live run: challenge ALLOW, 88.6 s, 180 604 tokens, $0.192889. Provider split still T2.3.
 - [ ] **T2.11** Agent eval suite: backtest past runs with the answer stripped; score investigation
   and handoff separately; refuse cases whose metrics/traces would leak the cause; scan transcripts
   for spoilers. **L**

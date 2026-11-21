@@ -8,9 +8,12 @@ This is deliberately not a patch-producing adapter: Claude Code works by editing
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import os
 import re
+import shutil
+import tempfile
 from collections.abc import Callable
 from dataclasses import replace
 from pathlib import Path
@@ -203,23 +206,34 @@ class LiveHarness:
     async def challenge(self, request: ProposalRequest, proposal: Proposal) -> Challenge:
         if self._challenge_prompt is None:
             raise ConfigError("the flow asks for a challenge but no challenge prompt is configured")
-        if self._factory is not None:
-            harness = self._factory(request.worktree)
-        else:
-            harness = self._make_harness(request.worktree, permission_mode="plan")
-        context, input_type, kind_type, lifecycle_type = self._protocol_types(request)
-        context = replace(
-            context,
-            system_prompt=(
-                "You are an independent reviewer. Never edit files. "
-                "Return only the JSON object the user asks for."
-            ),
-        )
+        repo = GitRepo(request.worktree)
+        root = Path(tempfile.mkdtemp(prefix="works-challenge-"))
+        target = root / "repo"
+        harness: Any = None
         terminal: Any = None
-        await harness.start(context)
+        tokens = 0
+        usd = 0.0
+        text = ""
         try:
+            repo.worktree_add(target, request.base_commit)
+            diff = repo.diff_text(request.worktree)
+            if diff.strip():
+                repo.apply_patch(target, diff, root / "proposal.diff")
+            context, input_type, kind_type, lifecycle_type = self._protocol_types(request)
+            context = replace(
+                context,
+                cwd=str(target),
+                system_prompt=(
+                    "You are an independent reviewer. Never edit files. "
+                    "Return only the JSON object the user asks for."
+                ),
+            )
+            harness = (
+                self._factory(target) if self._factory is not None else self._make_harness(target)
+            )
+            await harness.start(context)
             prompt = self._challenge_prompt.render(
-                worktree=str(request.worktree),
+                worktree=str(target),
                 ref=request.source_ref,
                 title=request.title.strip() or request.source_ref,
             )
@@ -232,14 +246,22 @@ class LiveHarness:
                         and payload.kind is not kind_type.STARTED
                     ):
                         terminal = payload
-        except TimeoutError as exc:
-            raise HarnessError(f"the challenger did not finish within {self._timeout_s}s") from exc
+        except Exception as exc:
+            return Challenge(
+                allow=False,
+                reason=f"challenger could not run: {exc}",
+                model=self._model,
+                provider=self.provider,
+                prompt_sha256=self._challenge_prompt.sha256,
+            )
         finally:
-            await harness.stop()
+            if harness is not None:
+                with contextlib.suppress(Exception):
+                    await harness.stop()
+            with contextlib.suppress(Exception):
+                repo.worktree_remove(target)
+            shutil.rmtree(root, ignore_errors=True)
 
-        tokens = 0
-        usd = 0.0
-        text = ""
         if terminal is not None and terminal.result is not None:
             result = terminal.result
             if result.usage is not None:
