@@ -808,6 +808,49 @@ def cmd_ui(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_memory_backfill(args: argparse.Namespace) -> int:
+    from .memory import NullMemory, PpmaMemory
+    from .memory_ops import backfill_runs
+
+    url = args.ppma or os.environ.get("WORKS_PPMA_URL")
+    if not url and not args.dry_run:
+        raise ConfigError("PPMA url is required; pass --ppma or set WORKS_PPMA_URL")
+    memory = NullMemory() if args.dry_run else PpmaMemory(url or "", space=args.space)
+    entries = backfill_runs(_paths(args), memory, limit=args.limit, dry_run=args.dry_run)
+    counts = {
+        status: sum(1 for entry in entries if entry.status == status)
+        for status in ("reported", "skipped", "failed")
+    }
+    payload = {
+        "url": url,
+        "dry_run": args.dry_run,
+        "reported": counts["reported"],
+        "skipped": counts["skipped"],
+        "failed": counts["failed"],
+        "runs": [entry.as_dict() for entry in entries],
+    }
+    if args.json:
+        print(
+            json.dumps(
+                {"ok": counts["failed"] == 0, **payload},
+                ensure_ascii=False,
+                default=str,
+                separators=(",", ":"),
+            )
+        )
+    elif args.dry_run:
+        print(f"PPMA backfill dry run: {len(entries)} readable run(s); nothing was sent.")
+    else:
+        print(
+            f"PPMA backfill: {counts['reported']} reported, "
+            f"{counts['skipped']} skipped, {counts['failed']} failed."
+        )
+        for entry in entries:
+            if entry.status == "failed":
+                print(f"  {entry.run_id}: {entry.error}", file=sys.stderr)
+    return EXIT_INTERNAL if counts["failed"] else 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="works", description=DESCRIPTION)
     parser.add_argument("--home", type=Path, default=None, help="Workspace root")
@@ -936,6 +979,16 @@ def build_parser() -> argparse.ArgumentParser:
     metrics = sub.add_parser("metrics", help="Attention and cost metrics")
     metrics.add_argument("--json", action="store_true")
     metrics.set_defaults(func=cmd_metrics)
+
+    memory = sub.add_parser("memory", help="PPMA memory tools")
+    memory_sub = memory.add_subparsers(dest="memory_command", required=True)
+    backfill = memory_sub.add_parser("backfill", help="Report already-finished runs to PPMA")
+    backfill.add_argument("--ppma", default=None, help="PPMA base URL")
+    backfill.add_argument("--space", default="me")
+    backfill.add_argument("--limit", type=int, default=None)
+    backfill.add_argument("--dry-run", action="store_true")
+    backfill.add_argument("--json", action="store_true")
+    backfill.set_defaults(func=cmd_memory_backfill)
 
     risk = sub.add_parser("risk", help="Show the latest risk rating")
     risk.add_argument("task_id")

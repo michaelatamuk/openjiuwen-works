@@ -5,8 +5,11 @@ gate: given the recorded evidence, the budget and what needs approval, should th
 `observe`, `guide`, `ask`, `act`, `verify` or `escalate`? Works keeps the queue, state machine,
 policy, verifier, ledger and proof.
 
-**Status: planned and pinned, not wired yet.** The deterministic gate is what runs today. T1.19 adds
-`DecisionPort` and `LaixGate` in shadow mode; the design is in the plan §6.7 and ADR-011.
+**Status: adapter implemented, runtime not active.** `DecisionPort`, `DeterministicGate`,
+`ShadowGate`, `LaixGate` and `works decision replay` exist and are tested with a fake LAIX module;
+the `laix` package is not installed by default, there is no `decision` extra yet, and
+`WORKS_DECISION` defaults to `off`. The deterministic gate is what runs today. Real pinned-LAIX
+shadow replay and the extra land with T2.14.
 
 ## Boundary
 

@@ -69,6 +69,7 @@ the ledger row. No model and no network are used.
 | `works run <task> --scenarios … --trace …` | Reproduce → plan → build → test → scenarios → proof (recorded) |
 | `works run <task> --live …` | The same loop with the real `openjiuwen` Claude Code harness |
 | `works run <task> --ppma URL` | Report the finished run to PPMA memory over its north contract |
+| `works memory backfill --ppma URL` | Send already-finished local runs to PPMA; `--dry-run`, idempotent |
 | `works wait <task> --on review` | Wait for a review/CI/deploy event instead of blocking |
 | `works wake <task> --event …` | Wake a waiting task and advance to its next state |
 | `works dispatch` | Claim and run ready tasks; `--watch` keeps the loop alive |
@@ -106,8 +107,8 @@ in v0 — no silent retry, no "trust the builder".
 | Live harness | Works: `openjiuwen` + bundled `claude.exe` + DeepSeek Anthropic endpoint; builder+challenger measured 88.6 s / 180 604 tokens / $0.193 for the fixture fix |
 | Verifier | The local scenario runner stands in; the container and provider split land in M2 |
 | Release | The loop stops at `proved`; branch, PR and the issue comment land in M3 |
-| Memory | Finished runs are posted to PPMA (`works.run_finished`); recall and lessons are M4 |
-| Decision layer | `DecisionPort` + `LaixGate` in shadow mode; `works decision replay` runs 20 fixture cases. Release-gate opt-in waits for the real historical replay (T2.14) |
+| Memory | Finished runs are posted to PPMA (`works.run_finished`) and `works memory backfill` sends older local runs; recall and lessons are T2.21 |
+| Decision layer | `DecisionPort` + `LaixGate` off by default, shadow opt-in; `works decision replay` runs 20 fixture cases with a fake adapter. Real pinned LAIX replay is T2.14 |
 | Gate integrity | Trusted-base flows/checks, `checks_sha`, exact-commit approval and a separate `check-change` task kind are in; the trusted verifier image lands with M2 |
 | Risk rating | `low/medium/high`, owners, required reviewers and deeper verification are computed and shown by `works risk`; release-gate routing still open |
 | Observe mode | `off/observe/enforce` for policy, nodes and risk; `works gate report` lists decisions and `would_block`; review checks land with T2.17 |

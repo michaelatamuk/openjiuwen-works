@@ -20,13 +20,18 @@ has an append-only queue and ledger; replacing them would violate ADR-002 and bl
 - The payload carries task, source, state, stop reason, verdict, tokens, USD, duration, base
   commit and the proof SHA-256; the evidence page is referenced as `works://`.
 - Memory is a side effect: an unreachable PPMA is logged and never turns `proved` into `blocked`.
-- Works does **not** read PPMA back yet. Recalling similar past failures and lessons is M4 work;
-  the read routes (`/memory/views`, `/plans`, `/dispatches`) are already verified.
+- Works does **not** read PPMA back yet. Recalling similar past failures and lessons moved from M4
+  to T2.21 because recall is the point of the memory product; the read routes (`/memory/views`,
+  `/plans`, `/dispatches`) are already verified.
+- Already-finished local runs are not stranded: `works memory backfill` sends the same idempotent
+  event from `run.json` + `evidence.json`, with a dry run and per-run failures.
 
 ## Consequences
 
 - Verified against `ppma serve --profile fake --auth dev`: manifest `200`, token `200`, event
   `202`, memory view version advanced.
+- 2026-11-21: `works memory backfill` reported three demo runs to the local fake PPMA; all three
+  `POST /v0/spaces/me/messages` calls returned `202`.
 - PPMA can be down while the factory keeps working; the ledger remains the local record.
 - A strict PPMA needs a real owner token; the default `dev` only works with `--auth dev`.
 - Two stores exist on purpose: the ledger is the factory's evidence, PPMA is the project's memory.

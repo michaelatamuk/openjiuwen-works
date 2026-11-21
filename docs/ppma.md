@@ -52,8 +52,30 @@ memory write is logged and never changes the run's verdict.
 ```
 
 Verified against the fake PPMA: manifest `200`, token `200`, event `202`, memory view version
-advanced. The read side (`/v0/spaces/me/memory/views`, `/plans`, `/dispatches`) is available for
-the M4 learning loop; Works does not read it back yet.
+advanced.
+
+## Backfill already-finished runs
+
+A run created before PPMA was configured is not lost: `run.json` and `evidence.json` are enough.
+
+```powershell
+works --home C:\path\to\workspace memory backfill --ppma http://127.0.0.1:8766 --dry-run
+works --home C:\path\to\workspace memory backfill --ppma http://127.0.0.1:8766
+```
+
+- scans `runs/*/run.json` newest first, pairs each run with its task projection and evidence;
+- sends the same `works.run_finished` event the live path sends, so the deterministic ULID makes a
+  second backfill a duplicate rather than a second memory;
+- a run without `evidence.json` is skipped and a broken run is reported without hiding the rest;
+- `--dry-run` lists what would be sent and calls no PPMA; `--json` returns per-run status.
+
+Verified on 2026-11-21 against `ppma serve --profile fake --auth dev`: three demo runs were accepted
+on `POST /v0/spaces/me/messages`.
+
+## Read side
+
+The read side (`/v0/spaces/me/memory/views`, `/plans`, `/dispatches`) is available for the memory
+loop. Works does not read it back yet; recall before interrupting a person is T2.21.
 
 ## Failure behaviour
 

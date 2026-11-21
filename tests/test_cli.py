@@ -259,6 +259,15 @@ def test_schema_and_ledger_speak_json(paths) -> None:
     assert payload(ledger)["rows"] == []
 
 
+def test_memory_backfill_has_a_dry_run(paths) -> None:
+    result = invoke(paths, "memory", "backfill", "--dry-run", "--json")
+    assert result.exit_code == 0, result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["ok"] is True
+    assert payload["dry_run"] is True
+    assert payload["runs"] == []
+
+
 def test_doctor_reports_without_crashing(paths, repo) -> None:
     result = invoke(paths, "doctor", "--repo", str(repo.path), "--json")
     assert result.exit_code == 0, result.stdout

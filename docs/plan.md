@@ -1,6 +1,6 @@
 # Development plan — openJiuwen Works
 
-**Status:** v4.19 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
+**Status:** v4.20 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
 
 Every task is a checkbox, checked when its criteria are met and the change is merged. `S/M/L`:
 S ≤ half a day, M ≤ two days, L ≤ a week. Nothing is checked because it was started.
@@ -673,6 +673,12 @@ Internal only: nothing is published to the upstream fork until M2 is green.
     the middle of the check. The full React/Vite window, SSE and Playwright are later.
 - [ ] **T1.25** Verification cost split: builder, challenger and verifier tokens/USD in `run.json`
   and the proof; verification share is reported next to the total. **S**
+- [x] **T1.26** PPMA memory backfill: `works memory backfill` reports already-finished runs from
+  `runs/*/run.json` and `evidence.json` without re-running the factory; newest first, `--dry-run`,
+  per-run failures, idempotent ULIDs. **S**
+  - Done 2026-11-21: verified against `ppma serve --profile fake --auth dev`: three demo runs
+    accepted on `POST /v0/spaces/me/messages`; a run without evidence is skipped, not failed.
+  - Still open: automatic E2E in CI, a memory badge in Story, and recall (T2.21).
 
 **Demo M1:** two real issues go from ticket to proof, twice in a row, with scenarios written first.
 
@@ -704,9 +710,11 @@ Internal only: nothing is published to the upstream fork until M2 is green.
   “understandable to an unfamiliar engineer”, kept charts and evidence-backed next step. **M**
 - [ ] **T2.13** Service identity: the verifier and builder run under scoped identities; every
   action is attributable to a run, not to the developer’s user. **M**
-- [ ] **T2.14** Decision quality: replay 20 historical gate cases through LAIX and the current
-  deterministic rule; compare verb, approval and reason code; any case where LAIX allows what the
-  policy or verifier refuses is a defect in the adapter, not a policy change. **M**
+- [ ] **T2.14** Decision quality: install the pinned `laix==0.18.0` behind the `works[decision]`
+  extra, run 20 historical gate cases through real LAIX and the current deterministic rule; compare
+  verb, approval and reason code; any case where LAIX allows what the policy or verifier refuses is
+  a defect in the adapter, not a policy change. Adapter tests with a fake `LaixGate` are necessary
+  but not enough; CI and docs must show the real package. **M**
 - [ ] **T2.15** Run the change: a `preview` node boots the product, drives one user path and attaches
   screen, log and trace to the proof; a per-product `verify` command is versioned, fast and
   stress-tested. Cheap checks run before expensive ones. **M**
@@ -722,6 +730,14 @@ Internal only: nothing is published to the upstream fork until M2 is green.
 - [ ] **T2.19** Feature map and runtime artifacts: versioned `features/<product>.yaml` with id, user
   path, selectors or command and expected observation; `preview` attaches screenshot, video, log and
   trace; proof shows covered and uncovered features. **M**
+- [ ] **T2.20** Real-mode acceptance: one pinned, small OSS repository with a known bug and a
+  failing scenario; an opt-in `--live` openjiuwen run with a token/USD budget cap produces a proof
+  and a release dry-run. The default CI stays deterministic and free; this job proves the real path,
+  not only the fixture. **M**
+- [ ] **T2.21** Memory before interruption: PPMA recall of similar past failures and decisions is
+  offered to the planner before any question reaches a person; every recall is recorded. Without a
+  reachable PPMA the run continues and says “memory unavailable”. Moved up from T4.8 because recall
+  is the point of the memory product, not a late add-on. **M**
 
 **Demo M2:** a patch that passes CI and the builder's tests is caught by a sneaky-patch scenario.
 
@@ -777,8 +793,10 @@ to its release.
   — lint rule, structural test, API change or scenario — as a reviewed PR; old occurrences are
   cleaned up in the same change or a linked task. Never automatic, never a "next time" comment. **L**
 - [ ] **T4.7** In-scope rate measured on new issues; report next to the metrics. **S**
-- [ ] **T4.8** Memory before interruption: PPMA recall of similar past failures and decisions is
-  offered to the planner before any question reaches a person; every recall is recorded. **M**
+- [ ] **T4.8** Memory before interruption — the first recall slice moved up to T2.21; M4 keeps
+  lesson extraction, calibration and memory-quality benchmarks. **M**
+- [ ] **T4.16** Orbit publish adapter: optional, owner-approved publishing of a proof to a team
+  room through a contract; never a second source of truth, never automatic. **M**
 - [ ] **T4.9** Self-repair: a daily scan of run logs finds repeated tool/permission failures and
   opens a bounded repair task; the fix is reviewed like any other. **M**
 - [ ] **T4.10** Attention dashboard: cost and time per released fix, human touches, waiting time,
@@ -1077,6 +1095,11 @@ agents, a zoo of model providers before M3, and autonomous merge without the two
 
 ## 20. Changelog
 
+- **v4.20** — PPMA becomes a usable integration, not only a side effect: `works memory backfill`
+  reports already-finished runs from `run.json` + `evidence.json` with a dry run and per-run
+  failures, and was verified against a local PPMA fake profile (three demo runs accepted). Plan
+  adds real-mode acceptance (T2.20), memory recall before interruption (T2.21, moved from T4.8),
+  real LAIX replay in T2.14 and an optional Orbit publish adapter (T4.16).
 - **v4.19** — the route becomes a journey: a gray **Reported** origin (not part of Mira's path)
   followed by five Mira stops, each with not-started / in-the-middle / done / stopped states and
   state-aware labels (“Mira is fixing it”, “Fixed”, “Mira stopped while fixing”). Adds a
