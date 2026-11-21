@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import sys
+import types
+
 import pytest
 
 from works.decision import (
     DeterministicGate,
     GateContext,
+    LaixGate,
     ShadowGate,
     build_decision_port,
 )
@@ -84,3 +88,71 @@ def test_off_is_the_default(monkeypatch) -> None:
     monkeypatch.delenv("WORKS_DECISION", raising=False)
     gate = build_decision_port()
     assert gate.mode == "off"
+
+
+def test_laix_gate_maps_a_decision(monkeypatch) -> None:
+    module = types.ModuleType("laix")
+
+    class Option:
+        def __init__(self, **values) -> None:
+            self.__dict__.update(values)
+
+    class Decision:
+        verb = "act"
+        reason_code = "policy_rule"
+        confidence = 0.99
+        requires_approval = True
+        decision_id = "DEC-1"
+        trace_id = "TRC-1"
+        alternatives = (types.SimpleNamespace(action_id="ask"),)
+
+        def to_dict(self) -> dict:
+            return {"verb": self.verb, "reason_code": self.reason_code}
+
+    module.ActionOption = Option
+    module.Belief = Option
+    module.DecisionRequest = Option
+    module.Situation = Option
+    module.decide = lambda request: [Decision()]
+    monkeypatch.setitem(sys.modules, "laix", module)
+
+    gate = LaixGate()
+    verdict = gate.decide(context(gate="release"))
+    assert verdict.source == "laix"
+    assert verdict.verb == "act"
+    assert verdict.action == "ask"
+    assert verdict.decision_id == "DEC-1"
+    assert verdict.alternatives == ["ask"]
+
+
+def test_shadow_records_a_successful_laix_decision(monkeypatch) -> None:
+    module = types.ModuleType("laix")
+
+    class Option:
+        def __init__(self, **values) -> None:
+            self.__dict__.update(values)
+
+    class Decision:
+        verb = "act"
+        reason_code = "policy_rule"
+        confidence = 0.99
+        requires_approval = True
+        decision_id = "DEC-2"
+        trace_id = "TRC-2"
+        alternatives = ()
+
+        def to_dict(self) -> dict:
+            return {"verb": self.verb}
+
+    module.ActionOption = Option
+    module.Belief = Option
+    module.DecisionRequest = Option
+    module.Situation = Option
+    module.decide = lambda request: [Decision()]
+    monkeypatch.setitem(sys.modules, "laix", module)
+
+    gate = ShadowGate()
+    verdict = gate.decide(context(gate="release"))
+    assert verdict.source == "deterministic"
+    assert gate.last_shadow is not None
+    assert gate.agrees(verdict) is False

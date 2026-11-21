@@ -10,6 +10,7 @@ from works.cli import main
 from works.gitops import GitRepo
 from works.queue import Queue
 from works.records import TaskState
+from works.risk import RiskLevel, RiskRating
 
 
 @dataclass(frozen=True)
@@ -150,6 +151,65 @@ def test_version_speaks_json(paths) -> None:
     result = invoke(paths, "version", "--json")
     assert result.exit_code == 0
     assert payload(result)["version"] == "0.0.1"
+
+
+def test_risk_gate_flake_and_decision_replay(paths, repo, factory_root) -> None:
+    submitted = submit_cli(paths, repo)
+    task_id = submitted["task"]["id"]
+    queue = Queue(paths)
+    rating = RiskRating(
+        level=RiskLevel.HIGH,
+        reasons=["critical path: auth/login.py"],
+        owners=["michael"],
+        required_reviewers=2,
+        deeper_verification=True,
+    )
+    queue.append(task_id, "risk.rated", rating.model_dump(mode="json"))
+    queue.append(task_id, "would_block", {"gate": "policy", "reason": "denied"})
+    queue.append(
+        task_id,
+        "decision.made",
+        {"gate": "plan", "action": "ask", "mode": "off"},
+    )
+
+    risk = invoke(paths, "risk", task_id, "--json")
+    assert risk.exit_code == 0
+    assert payload(risk)["risk"]["level"] == "high"
+
+    report = invoke(paths, "gate", "report", "--json")
+    assert report.exit_code == 0
+    assert payload(report)["report"][0]["gates"]["policy"]["would_block"] == 1
+
+    added = invoke(
+        paths,
+        "flake",
+        "add",
+        task_id,
+        "--scenario",
+        "add-negative",
+        "--owner",
+        "michael",
+        "--reason",
+        "times out on Windows",
+        "--json",
+    )
+    assert added.exit_code == 0
+    listed = invoke(paths, "flake", "list", "--active", "--json")
+    assert listed.exit_code == 0
+    assert len(payload(listed)["flakes"]) == 1
+
+    replay = invoke(
+        paths,
+        "decision",
+        "replay",
+        "--cases",
+        str(factory_root / "fixtures" / "decision-cases.jsonl"),
+        "--provider",
+        "off",
+        "--json",
+    )
+    assert replay.exit_code == 0
+    assert payload(replay)["cases"] == 20
 
 
 def test_findings_and_metrics_speak_json(paths, repo) -> None:
