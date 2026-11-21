@@ -1,21 +1,63 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
-  <title id="title">Mira</title>
-  <desc id="desc">Mira's head: a magpie with a violet scarf.</desc>
-  <rect width="256" height="256" rx="56" fill="#F4F5F9"/>
-  <g transform="translate(128 128) scale(0.78) translate(-256 -184)">
-    <path d="M 241 80 C 231 52 209 42 191 46 C 214 51 223 64 225 84 Z" fill="#111827"/>
-    <path d="M 257 78 C 260 47 277 34 296 37 C 275 45 269 59 266 80 Z" fill="#111827"/>
-    <circle cx="256" cy="184" r="109" fill="#111827"/>
-    <circle cx="216" cy="177" r="28" fill="#FFFFFF"/>
-    <circle cx="296" cy="177" r="28" fill="#FFFFFF"/>
-    <circle cx="222" cy="181" r="13.5" fill="#111827"/>
-    <circle cx="302" cy="181" r="13.5" fill="#111827"/>
-    <circle cx="227" cy="175" r="5" fill="#FFFFFF"/>
-    <circle cx="307" cy="175" r="5" fill="#FFFFFF"/>
-    <ellipse cx="186" cy="219" rx="18" ry="9" fill="#6D28D9" opacity="0.22"/>
-    <ellipse cx="326" cy="219" rx="18" ry="9" fill="#6D28D9" opacity="0.22"/>
-    <path d="M 238 205 Q 256 194 274 205 L 263 231 Q 256 241 249 231 Z" fill="#D97706"/>
-    <path d="M 247 210 Q 256 206 265 210" stroke="#FBBF24" stroke-width="3" stroke-linecap="round" fill="none"/>
-    <path d="M 168 252 C 201 270 311 270 345 252 L 337 289 C 302 307 210 307 175 289 Z" fill="#6D28D9"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Mira, the magpie courier</title>
+  <desc id="desc">A round black-and-white magpie with a violet scarf, holding a proof page.</desc>
+
+  <!-- tail, behind the body -->
+  <path d="M 294 390 C 350 405 402 440 434 478 C 419 491 395 485 373 468 C 344 446 318 418 286 405 Z" fill="#111827"/>
+  <path d="M 386 454 C 407 472 423 483 434 478 C 426 489 409 486 394 473 Z" fill="#F4F5F9" opacity="0.92"/>
+  <path d="M 360 432 C 381 448 397 459 409 465 C 400 472 384 466 371 453 Z" fill="#6D28D9" opacity="0.30"/>
+
+  <!-- feet, behind the body -->
+  <g stroke="#4B5563" stroke-width="9" stroke-linecap="round" fill="none">
+    <path d="M 211 431 L 206 457 M 206 457 L 190 466 M 206 457 L 207 470 M 206 457 L 222 466"/>
+    <path d="M 301 431 L 306 457 M 306 457 L 290 466 M 306 457 L 307 470 M 306 457 L 322 466"/>
   </g>
+
+  <!-- body -->
+  <ellipse cx="256" cy="327" rx="126" ry="132" fill="#111827"/>
+  <ellipse cx="256" cy="349" rx="88" ry="99" fill="#F4F5F9"/>
+
+  <!-- wings -->
+  <path d="M 143 280 C 116 320 122 390 164 423 C 185 439 205 428 204 399 C 203 358 186 306 169 280 Z" fill="#1F2937"/>
+  <path d="M 365 277 C 391 310 397 369 369 403 C 351 424 331 414 331 390 C 331 349 346 304 355 281 Z" fill="#1F2937"/>
+  <path d="M 159 318 C 149 346 151 374 162 395" stroke="#F4F5F9" stroke-width="9" stroke-linecap="round" opacity="0.9" fill="none"/>
+  <path d="M 161 322 C 151 351 154 384 168 405" stroke="#F4F5F9" stroke-width="5" stroke-linecap="round" opacity="0.35" fill="none"/>
+
+  <!-- scarf -->
+  <path d="M 167 252 C 201 270 311 270 345 252 L 337 289 C 302 307 210 307 175 289 Z" fill="#6D28D9"/>
+  <path d="M 332 277 C 361 291 373 326 355 344 C 343 356 328 343 333 328 C 338 313 328 300 318 292 Z" fill="#4C1D95"/>
+
+  <!-- head -->
+  <circle cx="256" cy="184" r="109" fill="#111827"/>
+
+  <!-- tuft -->
+  <path d="M 241 80 C 231 52 209 42 191 46 C 214 51 223 64 225 84 Z" fill="#111827"/>
+  <path d="M 257 78 C 260 47 277 34 296 37 C 275 45 269 59 266 80 Z" fill="#111827"/>
+
+  <!-- eyes -->
+  <circle cx="216" cy="177" r="28" fill="#FFFFFF"/>
+  <circle cx="296" cy="177" r="28" fill="#FFFFFF"/>
+  <circle cx="222" cy="181" r="13.5" fill="#111827"/>
+  <circle cx="302" cy="181" r="13.5" fill="#111827"/>
+  <circle cx="227" cy="175" r="5" fill="#FFFFFF"/>
+  <circle cx="307" cy="175" r="5" fill="#FFFFFF"/>
+
+  <!-- blush -->
+  <ellipse cx="186" cy="219" rx="18" ry="9" fill="#6D28D9" opacity="0.22"/>
+  <ellipse cx="326" cy="219" rx="18" ry="9" fill="#6D28D9" opacity="0.22"/>
+
+  <!-- beak -->
+  <path d="M 238 205 Q 256 194 274 205 L 263 231 Q 256 241 249 231 Z" fill="#D97706"/>
+  <path d="M 247 210 Q 256 206 265 210" stroke="#FBBF24" stroke-width="3" stroke-linecap="round" fill="none"/>
+
+  <!-- strap and proof page -->
+  <path d="M 331 278 C 353 302 362 345 351 389" stroke="#4C1D95" stroke-width="9" stroke-linecap="round" fill="none"/>
+  <g transform="translate(338 292) rotate(8)">
+    <rect x="0" y="0" width="88" height="108" rx="11" fill="#FFFFFF" stroke="#DDD6FE" stroke-width="3"/>
+    <path d="M 14 26 H 74 M 14 43 H 61 M 14 60 H 69" stroke="#9CA3AF" stroke-width="5" stroke-linecap="round"/>
+    <path d="M 47 79 L 57 89 L 76 67" stroke="#6D28D9" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- sparkle -->
+  <path d="M 403 156 l 6 14 14 6 -14 6 -6 14 -6 -14 -14 -6 14 -6 z" fill="#6D28D9" opacity="0.65"/>
 </svg>

@@ -1,6 +1,9 @@
 # ADR-014 — One proof, two readings
 
-**Status:** accepted · 2026-11-21
+**Status:** superseded in part by [ADR-015](015-story-line.md) · 2026-11-21
+
+The one-proof/two-readings rule still holds. The default reading is now **Story**; the human
+Summary tab is folded into the Story hero and receipt strip, and **Evidence** stays one click away.
 
 ## Context
 

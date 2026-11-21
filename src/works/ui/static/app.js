@@ -7,7 +7,11 @@ const state = {
   detail: null,
   filter: "all",
   query: "",
-  view: localStorage.getItem("works.view") || "summary",
+  view: localStorage.getItem("works.view.v3") || "story",
+  lineMode: "story",
+  storyAt: null,
+  storySelected: null,
+  storyTimer: null,
 };
 
 const stateHuman = {
@@ -18,7 +22,7 @@ const stateHuman = {
   plan_approved: "Plan approved",
   building: "Building the fix",
   checking: "Checking the fix",
-  proved: "Fixed and verified",
+  proved: "Ready for release",
   waiting_review: "Waiting for a person",
   waiting_ci: "Running checks",
   waiting_deploy: "Delivering the fix",
@@ -26,6 +30,9 @@ const stateHuman = {
   released: "Delivered",
   reverted: "Reverted",
   blocked: "Needs attention",
+  done: "Done",
+  active: "In progress",
+  pending: "Not yet",
 };
 
 const timelineHuman = {
@@ -50,9 +57,9 @@ const timelineHuman = {
 };
 
 const groupDefs = [
-  ["needs", "Needs you", ["blocked", "waiting_review", "waiting_ci", "waiting_deploy"]],
-  ["working", "Working", ["queued", "reproducing", "reproduced", "planning", "plan_approved", "building", "checking", "releasing"]],
-  ["ready", "Ready", ["proved"]],
+  ["needs", "Needs you", ["blocked", "waiting_review", "waiting_ci", "waiting_deploy", "proved"]],
+  ["working", "In progress", ["reproducing", "reproduced", "planning", "plan_approved", "building", "checking", "releasing"]],
+  ["queued", "Queued", ["queued"]],
   ["done", "Done", ["released", "reverted"]],
 ];
 
@@ -222,10 +229,9 @@ function applyDensity(density) {
 function renderTasks() {
   const list = $("#task-list");
   const query = state.query.trim().toLowerCase();
+  const states = Object.fromEntries(groupDefs.map(([id, , group]) => [id, group]));
   const tasks = state.tasks.filter((task) => {
-    if (state.filter === "waiting" && !String(task.state).startsWith("waiting")) return false;
-    if (state.filter === "blocked" && !["blocked", "reverted", "flaky_test"].includes(task.state)) return false;
-    if (state.filter === "proved" && !["proved", "released"].includes(task.state)) return false;
+    if (state.filter !== "all" && !(states[state.filter] || []).includes(task.state)) return false;
     if (!query) return true;
     return [task.title, task.id, task.source, task.product, task.flow, stateLabel(task.state)]
       .join(" ")
@@ -237,28 +243,29 @@ function renderTasks() {
     return;
   }
   const html = groupDefs
-    .map(([id, label, states]) => {
-      const group = tasks.filter((task) => states.includes(task.state));
-      if (!group.length) return "";
-      const rows = group
+    .map(([id, label, group]) => {
+      const rows = tasks.filter((task) => group.includes(task.state));
+      if (!rows.length) return "";
+      const items = rows
         .map((task) => {
           const active = task.id === state.selected ? " active" : "";
-          const risk = task.risk ? pill(riskLabel(task.risk), riskTone(task.risk)) : "";
+          const risk = task.risk && task.risk !== "low" ? pill(riskLabel(task.risk), riskTone(task.risk)) : "";
           const title = task.title || `Task ${task.id}`;
-          const meta = `${sourceLabel(task.source.split(":")[0])} · ${task.product} · ${stateLabel(task.state)}`;
+          const mark = `<span class="product-mark ${esc(task.state)}" aria-hidden="true">${esc((task.product || "?")[0])}</span>`;
+          const meta = `${esc(task.product)} · ${esc(stateLabel(task.state))}`;
           return `<button type="button" class="task${active}" data-id="${esc(task.id)}"${
             active ? ' aria-current="true"' : ""
           }>
-            <span class="dot ${esc(task.state)}" aria-hidden="true"></span>
+            ${mark}
             <span class="task-main">
               <span class="task-title">${esc(title)}</span>
-              <span class="task-meta">${esc(meta)}</span>
+              <span class="task-meta">${meta}</span>
             </span>
             <span class="task-side">${risk}<span class="time">${esc(timeAgo(task.updated_at))}</span></span>
           </button>`;
         })
         .join("");
-      return `<div class="group-label">${esc(label)}<span>${group.length}</span></div>${rows}`;
+      return `<div class="group-label">${esc(label)}<span>${rows.length}</span></div>${items}`;
     })
     .join("");
   list.innerHTML = html || `<p class="muted small" style="padding:16px 12px">No tasks match.</p>`;
@@ -519,14 +526,22 @@ function summaryChecks(detail) {
 }
 
 function summaryWho(detail) {
-  const gate = (detail.timeline || []).find((event) => event.type === "gate.decided");
-  if (gate) {
-    const by = gate.data.by === "cli" ? "a person" : "the flow";
-    return `Approved by ${by} ${timeAgo(gate.ts)}.`;
+  const state = detail.task.state;
+  const gates = (detail.timeline || []).filter((event) => event.type === "gate.decided");
+  const release = gates.find((event) => event.data.gate === "release");
+  const plan = gates.find((event) => event.data.gate !== "release");
+  const by = (gate) => (gate.data.by === "cli" ? "a person" : "the flow");
+  if (state === "blocked") return "A person decides the next step.";
+  if (state === "reverted") return "A person decides whether to retry.";
+  if (state === "proved") return "A person releases it. Not released yet.";
+  if (state === "released") {
+    return release ? `Released by ${by(release)} ${timeAgo(release.ts)}.` : "A person released it.";
   }
+  if (state === "queued") return "A person approves the plan before any fix.";
+  if (plan) return `Plan approved by ${by(plan)} ${timeAgo(plan.ts)}.`;
   const decision = detail.evidence?.decision;
-  if (decision) return `${decision.requires_approval ? "A person still needs to approve." : "No approval was required."}`;
-  return "No approval has been recorded yet.";
+  if (decision) return decision.requires_approval ? "A person still needs to approve." : "No approval was required.";
+  return "A person approves the plan before any fix.";
 }
 
 function summaryAction(detail) {
@@ -627,8 +642,13 @@ function renderTimeline(timeline) {
 
 function renderEvidence(detail) {
   const evidence = detail.evidence;
+  const pipeline = detail.pipeline?.technical
+    ? card("Pipeline · 10 steps", renderLine(detail, detail.pipeline.technical, "technical"), {
+        tight: true,
+      })
+    : "";
   return evidence
-    ? `${renderEvidenceMeta(detail)}<div class="grid">
+    ? `${pipeline}${renderEvidenceMeta(detail)}<div class="grid">
         <div class="stack">
           ${renderVerdict(evidence)}
           ${renderFindings(evidence)}
@@ -650,10 +670,447 @@ function renderEvidence(detail) {
     : `<div class="grid"><div class="stack">${renderEmptyProof()}</div><div class="stack">${renderReadiness(detail)}${renderFeatures(detail)}${renderTimeline(detail.timeline)}</div></div>`;
 }
 
+function stopStory() {
+  if (state.storyTimer) {
+    window.clearInterval(state.storyTimer);
+    state.storyTimer = null;
+  }
+}
+
+function storyStageId(technical) {
+  return {
+    signal: "reported",
+    reproduce: "confirmed",
+    plan: "fixed",
+    plan_gate: "fixed",
+    build: "fixed",
+    check: "checked",
+    proof: "checked",
+    release_gate: "delivered",
+    deliver: "delivered",
+    confirm: "delivered",
+  }[technical] || technical;
+}
+
+function activeStage(detail, stages) {
+  if (state.storyAt != null) {
+    const scene = (detail.pipeline?.replay || [])[state.storyAt];
+    if (scene) {
+      const mapped = state.lineMode === "story" ? storyStageId(scene.stage) : scene.stage;
+      if (stages.some((stage) => stage.id === mapped)) return mapped;
+    }
+  }
+  const current = stages.find((stage) => stage.state === "active")
+    || stages.find((stage) => stage.state === "blocked")
+    || [...stages].reverse().find((stage) => stage.state === "done")
+    || stages[0];
+  return current?.id;
+}
+
+function displayedState(stage, position, activeIndex, replaying) {
+  if (!replaying) return stage.state || "pending";
+  if (position < activeIndex) return "done";
+  if (position === activeIndex) return "active";
+  return "pending";
+}
+
+function renderLine(detail, stages, mode = "story") {
+  if (!stages?.length) return `<p class="muted small">No pipeline recorded.</p>`;
+  const active = activeStage(detail, stages);
+  const index = Math.max(0, stages.findIndex((stage) => stage.id === active));
+  const pct = ((index + 0.5) / stages.length) * 100;
+  const selected = state.storySelected || active;
+  const replaying = state.storyAt != null;
+  const nodes = stages
+    .map((stage, position) => {
+      const stateName = displayedState(stage, position, index, replaying);
+      const node = stateName === "done" ? "✓"
+        : stateName === "blocked" ? "!"
+        : stage.kind === "gate" ? "◆"
+        : stateName === "active" ? "●"
+        : String(position + 1);
+      const classes = `station ${stateName}${stage.kind === "gate" ? " gate" : ""}${stage.id === selected ? " selected" : ""}`;
+      return `<button type="button" class="${classes}" data-story-stage="${esc(stage.id)}" aria-label="${esc(stage.label)}: ${esc(stateName)}">
+        <span class="node">${node}</span>
+        <span class="station-label">${esc(stage.label)}</span>
+        <span class="station-time">${esc(stage.at ? timeAgo(stage.at) : "—")}</span>
+      </button>`;
+    })
+    .join("");
+  return `<div class="line-scroll">
+    <div class="line ${mode === "technical" ? "technical" : "story"}" style="--count:${stages.length}">
+      <div class="rail"></div>
+      <div class="rail-done" style="left:5%; width:${Math.max(0, pct - 5)}%"></div>
+      <div class="stations">${nodes}</div>
+      <div class="mira-marker" style="left:${pct}%">
+        <img src="/mira.svg" alt="" width="44" height="44" />
+        <span>Mira</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderStoryStage(detail, stages) {
+  const selected = state.storySelected || activeStage(detail, stages);
+  const position = stages.findIndex((item) => item.id === selected);
+  const stage = stages[position];
+  if (!stage) return "";
+  const active = activeStage(detail, stages);
+  const activeIndex = Math.max(0, stages.findIndex((item) => item.id === active));
+  const stateName = displayedState(stage, position, activeIndex, state.storyAt != null);
+  const scene = state.storyAt != null ? detail.pipeline?.replay?.[state.storyAt] : null;
+  const caption = scene ? `${timelineLabel(scene.type)} — ${eventSummary(scene)}` : stage.caption;
+  const artifacts = (stage.artifacts || []).map((item) => `<code>${esc(item)}</code>`).join(" · ");
+  return card(
+    state.lineMode === "technical" ? "Station" : "On the line",
+    `<div class="split">
+      <div><div class="big">${esc(stage.label)}</div><p class="muted small" style="margin:6px 0 0">${esc(caption || "")}</p></div>
+      ${pill(stateLabel(stateName), stateTone(stateName))}
+    </div>
+    <div class="pill-row">${artifacts || '<span class="muted small">No artifacts at this station yet.</span>'}</div>`,
+    { actions: stage.at ? timeAgo(stage.at) : "" },
+  );
+}
+
+function renderStoryReplay(detail) {
+  const replay = detail.pipeline?.replay || [];
+  if (!replay.length) return "";
+  const at = state.storyAt == null ? replay.length - 1 : state.storyAt;
+  const scene = replay[at];
+  const playing = Boolean(state.storyTimer);
+  return card(
+    "Steps",
+    `<div class="replay-row">
+      <button type="button" class="btn ghost" data-story-step="-1" aria-label="Previous event">←</button>
+      <button type="button" class="btn" data-story-play>${playing ? "Pause" : "Play"}</button>
+      <button type="button" class="btn ghost" data-story-step="1" aria-label="Next event">→</button>
+      <input id="story-range" type="range" min="0" max="${replay.length - 1}" value="${at}" aria-label="Replay position" />
+      <button type="button" class="btn ghost" data-story-live>Now</button>
+    </div>
+    <p class="small muted" style="margin:10px 0 0" aria-live="polite">
+      ${esc(scene ? `${timelineLabel(scene.type)} · ${eventSummary(scene)}` : "Current position")}
+      <span class="faint"> · ${at + 1} / ${replay.length}</span>
+    </p>`,
+    { actions: `${replay.length} steps` },
+  );
+}
+
+function renderRoute(detail, stages) {
+  const label = stages.map((stage) => `${stage.label}: ${stage.state}`).join(", ");
+  return `<div class="route-scroll">
+    <div class="route-wrap" role="img" aria-label="Fix route — ${esc(label)}">
+      <svg class="route-svg" viewBox="0 0 1200 380" preserveAspectRatio="none" aria-hidden="true">
+        <path id="route-base" class="route-base" d="M 160 260 C 320 150 460 320 600 250 S 880 150 1040 260"/>
+        <path id="route-progress" class="route-progress" d="M 160 260 C 320 150 460 320 600 250 S 880 150 1040 260"/>
+      </svg>
+      <div class="route-points" id="route-points"></div>
+      <div class="route-mira" id="route-mira" aria-hidden="true"><img src="/mira.svg" alt="" width="52" height="52" /></div>
+    </div>
+  </div>`;
+}
+
+function milestoneLabel(stage, display) {
+  if (display === "blocked") return "Mira stopped at a check";
+  if (display === "active") {
+    return {
+      reported: "Mira picked it up",
+      confirmed: "Mira confirmed it",
+      fixed: "Mira fixed it",
+      checked: "Mira checked it",
+      delivered: stage.label.startsWith("Release")
+        ? "Mira is ready to release"
+        : "Mira is delivering it",
+    }[stage.id] || stage.label;
+  }
+  if (stage.id === "delivered" && stage.state === "done") return "Mira released it";
+  return stage.label;
+}
+
+function layoutRoute(detail) {
+  const path = document.getElementById("route-base");
+  const progress = document.getElementById("route-progress");
+  const points = document.getElementById("route-points");
+  const mira = document.getElementById("route-mira");
+  const stages = detail.pipeline?.story || [];
+  if (!path || !progress || !points || !mira || !stages.length) return;
+  const length = path.getTotalLength();
+  const active = activeStage(detail, stages);
+  const activeIndex = Math.max(0, stages.findIndex((stage) => stage.id === active));
+  const replaying = state.storyAt != null;
+  const hasCurrent = stages.some(
+    (stage) => stage.state === "active" || stage.state === "blocked",
+  );
+  const allDone = stages.every((stage) => stage.state === "done");
+  const queued = detail.task?.state === "queued";
+  const showMira = !queued && (replaying || hasCurrent || allDone);
+  points.innerHTML = "";
+  stages.forEach((stage, index) => {
+    const point = path.getPointAtLength((length * index) / Math.max(1, stages.length - 1));
+    const display = displayedState(stage, index, activeIndex, replaying);
+    const node = display === "done" ? "✓"
+      : display === "blocked" ? "!"
+      : display === "active" && stage.kind === "gate" ? "◆"
+      : display === "active" ? "●"
+      : String(index + 1);
+    const item = document.createElement("div");
+    const side = index === activeIndex ? "above" : index % 2 === 0 ? "above" : "below";
+    item.className = `milestone ${display} ${side}${stage.kind === "gate" ? " gate" : ""}`;
+    item.style.left = `${(point.x / 1200) * 100}%`;
+    item.style.top = `${(point.y / 380) * 100}%`;
+    item.innerHTML = `<span class="m-node">${node}</span><span class="m-copy"><strong>${esc(queued ? stage.label : milestoneLabel(stage, display))}</strong><em>${esc(stage.at ? timeAgo(stage.at) : "—")}</em></span>`;
+    points.append(item);
+  });
+  const activePoint = path.getPointAtLength(
+    (length * activeIndex) / Math.max(1, stages.length - 1),
+  );
+  mira.hidden = !showMira;
+  mira.style.left = `${(activePoint.x / 1200) * 100}%`;
+  mira.style.top = `${(activePoint.y / 380) * 100}%`;
+  progress.style.strokeDasharray = String(length);
+  progress.style.strokeDashoffset = String(length - (length * activeIndex) / Math.max(1, stages.length - 1));
+  progress.classList.toggle("blocked", stages[activeIndex]?.state === "blocked");
+}
+
+function renderReceipt(detail) {
+  const evidence = detail.evidence;
+  const blocked = detail.task.state === "blocked";
+  const changed = blocked
+    ? "No change released"
+    : evidence?.files_changed?.length
+      ? `${evidence.files_changed.length} file${evidence.files_changed.length === 1 ? "" : "s"} changed`
+      : "No change yet";
+  const outcomes = evidence?.verdict?.outcomes || [];
+  const must = outcomes.filter((item) => item.priority === "P0");
+  const mustPassed = must.filter((item) => item.passed).length;
+  const checked = must.length
+    ? mustPassed === must.length
+      ? `${mustPassed} of ${must.length} must-pass checks passed`
+      : `${must.length - mustPassed} of ${must.length} must-pass checks failed`
+    : "No checks yet";
+  const notChecked = evidence?.not_tested?.length ? evidence.not_tested[0] : "No gaps recorded";
+  const checkedNote = !evidence?.verdict
+    ? "No checks yet"
+    : evidence.verdict.allow
+      ? evidence.challenge?.allow
+        ? "Independent review passed"
+        : "No independent review"
+      : "A must-pass check failed";
+  const who = blocked ? "A person on the fix team (not named yet)" : summaryWho(detail);
+  return `<div class="receipt">
+    <div><span>Changed</span><strong>${esc(changed)}</strong><p>${esc(summaryChanged(detail))}</p></div>
+    <div><span>Checked</span><strong>${esc(checked)}</strong><p>${esc(checkedNote)}</p></div>
+    <div><span>Not checked</span><strong>${esc(notChecked)}</strong><p>The proof says what was not covered.</p></div>
+    <div><span>Decides</span><strong>${esc(who)}</strong><p>Human gates stay human.</p></div>
+  </div>`;
+}
+
+function renderStoryRail(detail, stages, blocked) {
+  const state = detail.task.state;
+  const active = stages.find((stage) => stage.id === activeStage(detail, stages));
+  const title = blocked
+    ? "What we need"
+    : state === "proved"
+      ? "What happens next"
+      : state === "released"
+        ? "Delivered"
+        : "Where it stands";
+  const body = blocked
+    ? `<p class="rail-kicker">Needs a person</p>
+       <p class="rail-big">One check failed.</p>
+       <p>${esc(blocked.why)}</p>
+       <dl class="rail-facts">
+         <dt>Failed check</dt><dd><code>${esc(blocked.check || "must-pass check")}</code></dd>
+         <dt>Impact</dt><dd>${esc(blocked.impact || `Nothing was released to ${detail.task.product}.`)}</dd>
+       </dl>
+       <p class="rail-next">${esc(blocked.next)}</p>`
+    : state === "proved"
+      ? `<p class="rail-kicker">Ready for a person</p>
+         <p class="rail-big">Release to ${esc(detail.task.product)}</p>
+         <p>The fix is built and checked. A person needs to release it back to ${esc(detail.task.product)}.</p>
+         <dl class="rail-facts"><dt>Current step</dt><dd>${esc(active?.label || "Release")}</dd></dl>`
+      : state === "queued"
+        ? `<p class="rail-kicker">Waiting</p><p class="rail-big">In the queue</p><p>The factory has not started yet. Mira will pick it up.</p>`
+        : `<p class="rail-kicker">In progress</p><p class="rail-big">${esc(stateLabel(state))}</p><p>The factory is working on the reported problem.</p>`;
+  return `<aside class="story-rail"${blocked ? ' id="blocked"' : ""}>
+    <div class="rail-title">${esc(title)}</div>
+    ${body}
+    <div class="rail-actions">
+      <button type="button" class="btn ghost" data-action="copy">Copy link</button>
+      <button type="button" class="btn ghost" data-action="cinema">Present</button>
+      <button type="button" class="btn ghost" data-action="evidence">Open evidence</button>
+    </div>
+  </aside>`;
+}
+
+function storyHeadline(detail) {
+  const state = detail.task.state;
+  if (state === "blocked") return "Not fixed yet";
+  if (state === "proved") return "Ready for release";
+  if (state === "released") return `Fixed and back in ${detail.task.product}`;
+  if (state === "reverted") return "Reverted";
+  if (state === "queued") return "In the queue";
+  return stateLabel(state);
+}
+
+function storyHeroText(detail) {
+  const state = detail.task.state;
+  const product = detail.task.product;
+  const blocked = detail.pipeline?.blocked;
+  if (state === "blocked" && blocked) {
+    const impact = blocked.impact || `Nothing was released to ${product}. The problem is still there.`;
+    return `${impact} A person needs to decide the next step.`;
+  }
+  if (state === "proved") {
+    return `The fix is built and checked. A person needs to release it back to ${product}.`;
+  }
+  if (state === "released") {
+    return `The fix is back where it was seen. The report can close.`;
+  }
+  if (state === "queued") {
+    return `The factory has not started yet. Mira will pick it up.`;
+  }
+  if (state === "reverted") {
+    return `The fix was reverted; a person is looking at why.`;
+  }
+  return summarySentence(detail);
+}
+
+function storyPrimary(detail) {
+  const state = detail.task.state;
+  if (state === "blocked") {
+    return `<button type="button" class="btn" data-action="blocked">See what failed</button>`;
+  }
+  if (state === "proved" || state === "reverted") {
+    return `<button type="button" class="btn" data-action="evidence">Open evidence</button>`;
+  }
+  return "";
+}
+
+function reportedAt(detail) {
+  return (
+    detail?.pipeline?.story?.find((stage) => stage.id === "reported")?.at
+    || detail?.task?.created_at
+    || detail?.task?.updated_at
+  );
+}
+
+function renderStory(detail) {
+  const pipeline = detail.pipeline;
+  if (!pipeline) return renderSummary(detail);
+  const stages = pipeline.story;
+  const task = detail.task;
+  const risk = detail.evidence?.risk?.level || detail.summary.risk;
+  const blocked = pipeline.blocked;
+  const riskChip = risk && risk !== "low"
+    ? `<span>Risk <strong>${esc(risk[0].toUpperCase() + risk.slice(1))}</strong></span>`
+    : "";
+  const hero = `<section class="story-main">
+    <div class="story-hero-copy">
+      <div class="eyebrow">${esc(task.product)} · report</div>
+      <h2 class="story-answer">${esc(storyHeadline(detail))}</h2>
+      <p class="story-lede">${esc(storyHeroText(detail))}</p>
+      <div class="story-meta">
+        <span><strong>${esc(task.product)}</strong></span>
+        <span>Reported <strong>${esc(timeAgo(reportedAt(detail)))}</strong></span>
+        ${riskChip}
+      </div>
+      <div class="hero-actions">${storyPrimary(detail)}<button type="button" class="btn ghost" data-action="copy">Copy link</button></div>
+    </div>
+    <img class="story-mira" src="/mira.svg" alt="Mira, the courier" width="140" height="140" />
+  </section>`;
+  const receipt = state.storyAt == null
+    ? renderReceipt(detail)
+    : `<div class="replay-banner">Replaying history · ${state.storyAt + 1} / ${(pipeline.replay || []).length} · press <strong>Now</strong> for the final result.</div>`;
+  const replay = `<details class="replay-details">
+    <summary>How we got here · ${(pipeline.replay || []).length} step${(pipeline.replay || []).length === 1 ? "" : "s"}</summary>
+    ${renderStoryReplay(detail)}
+  </details>`;
+  return `<div class="story-body">
+    <div class="story-left">${hero}${renderRoute(detail, stages)}${receipt}${replay}</div>
+    ${renderStoryRail(detail, stages, blocked)}
+  </div>`;
+}
+
+function bindStory() {
+  $$("#detail [data-action='blocked']").forEach((button) => {
+    button.addEventListener("click", () => {
+      const target = $("#blocked");
+      if (!target) return;
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      target.classList.add("pulse");
+      window.setTimeout(() => target.classList.remove("pulse"), 1200);
+    });
+  });
+  $$("#detail [data-story-step]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const replay = state.detail?.pipeline?.replay || [];
+      if (!replay.length) return;
+      const current = state.storyAt == null ? replay.length - 1 : state.storyAt;
+      setStoryAt(current + Number(button.dataset.storyStep));
+    });
+  });
+  $$("#detail [data-story-play]").forEach((button) => button.addEventListener("click", toggleStoryPlay));
+  $$("#detail [data-story-live]").forEach((button) => {
+    button.addEventListener("click", () => {
+      stopStory();
+      state.storyAt = null;
+      renderDetail();
+      history.replaceState(null, "", taskHash(state.selected));
+    });
+  });
+  const range = $("#story-range");
+  if (range) {
+    range.addEventListener("change", (event) => setStoryAt(Number(event.target.value)));
+  }
+  $$("#detail [data-action='cinema']").forEach((button) => {
+    button.addEventListener("click", toggleCinema);
+  });
+}
+
+function setStoryAt(index) {
+  const replay = state.detail?.pipeline?.replay || [];
+  if (!replay.length) return;
+  stopStory();
+  state.storyAt = Math.max(0, Math.min(replay.length - 1, index));
+  renderDetail();
+  history.replaceState(null, "", taskHash(state.selected));
+}
+
+function toggleStoryPlay() {
+  if (state.storyTimer) {
+    stopStory();
+    renderDetail();
+    return;
+  }
+  const replay = state.detail?.pipeline?.replay || [];
+  if (!replay.length) return;
+  if (state.storyAt == null || state.storyAt >= replay.length - 1) state.storyAt = 0;
+  state.storyTimer = window.setInterval(() => {
+    const scenes = state.detail?.pipeline?.replay || [];
+    if (!scenes.length) {
+      stopStory();
+      return;
+    }
+    if (state.storyAt == null || state.storyAt >= scenes.length - 1) {
+      stopStory();
+      renderDetail();
+      return;
+    }
+    state.storyAt += 1;
+    renderDetail();
+  }, 850);
+  renderDetail();
+}
+
+function toggleCinema() {
+  const active = document.body.dataset.cinema === "true";
+  document.body.dataset.cinema = active ? "false" : "true";
+  toast(active ? "Present mode off" : "Present mode on — Esc to exit.");
+}
 function renderTabs() {
   return `<div class="view-tabs" role="tablist" aria-label="Detail view">
-    <button type="button" class="view-tab ${state.view === "summary" ? "active" : ""}" data-view="summary" role="tab" aria-selected="${state.view === "summary"}">Summary</button>
-    <button type="button" class="view-tab ${state.view === "evidence" ? "active" : ""}" data-view="evidence" role="tab" aria-selected="${state.view === "evidence"}">Evidence</button>
+    <button type="button" class="view-tab ${state.view === "story" ? "active" : ""}" data-view="story" role="tab" aria-selected="${state.view === "story"}">Story</button>
+    <button type="button" class="view-tab ${state.view === "evidence" ? "active" : ""}" data-view="evidence" role="tab" aria-selected="${state.view === "evidence"}">Evidence <span class="faint">for engineers</span></button>
   </div>`;
 }
 
@@ -677,16 +1134,21 @@ function bindView() {
 }
 
 function setView(view) {
-  state.view = view === "evidence" ? "evidence" : "summary";
-  localStorage.setItem("works.view", state.view);
+  state.view = view === "evidence" ? "evidence" : "story";
+  localStorage.setItem("works.view.v3", state.view);
   if (state.selected) {
     history.replaceState(null, "", taskHash(state.selected));
   }
+  stopStory();
   renderDetail();
 }
 
 function taskHash(id) {
-  return `#/task/${encodeURIComponent(id)}${state.view === "evidence" ? "/evidence" : ""}`;
+  const suffix = state.view === "evidence" ? "/evidence" : "/story";
+  const params = new URLSearchParams();
+  if (state.view === "story" && state.storyAt != null) params.set("at", String(state.storyAt));
+  const query = params.toString() ? `?${params.toString()}` : "";
+  return `#/task/${encodeURIComponent(id)}${suffix}${query}`;
 }
 
 function renderDetail() {
@@ -698,24 +1160,32 @@ function renderDetail() {
   }
   const task = detail.task;
   const title = task.source?.title || `Task ${task.id}`;
-  $("#crumb").innerHTML = `<button type="button" class="crumb-link" id="crumb-home">Queue</button><span class="crumb-sep">/</span>Fix report`;
+  const label = state.view === "evidence" ? "Evidence" : "Story";
+  $("#crumb").innerHTML = `<button type="button" class="crumb-link" id="crumb-home">Queue</button><span class="crumb-sep">/</span>${esc(label)}`;
   $("#crumb-home").addEventListener("click", () => clearSelection());
   $("#title").textContent = title;
-  $("#subtitle").textContent = `${sourceLabel(task.source.kind)} · ${stateLabel(task.state)} · ${timeAgo(task.updated_at)}`;
-  const body = state.view === "evidence" ? renderEvidence(detail) : renderSummary(detail);
+  $("#subtitle").textContent = `${stateLabel(task.state)} · reported ${timeAgo(reportedAt(detail))}`;
+  const body = state.view === "evidence" ? renderEvidence(detail) : renderStory(detail);
   $("#detail").innerHTML = `${renderTabs()}${body}`;
   $("#empty").hidden = true;
   $("#detail").hidden = false;
   bindView();
+  if (state.view === "story") {
+    bindStory();
+    window.requestAnimationFrame(() => layoutRoute(detail));
+  }
 }
 
 function clearSelection(updateHash = true) {
+  stopStory();
   state.selected = null;
   state.detail = null;
+  state.storyAt = null;
+  state.storySelected = null;
   if (updateHash) history.replaceState(null, "", "#/");
   $("#crumb").textContent = "Queue";
   $("#title").textContent = "A signal in, a released fix out";
-  $("#subtitle").textContent = "Select a report to read its Summary or Evidence.";
+  $("#subtitle").textContent = "Select a report to read its story, summary or evidence.";
   renderTasks();
   renderDetail();
 }
@@ -748,8 +1218,13 @@ async function loadDetail(id) {
   }
 }
 
-function selectTask(id) {
+function selectTask(id, preserve = false) {
   if (!id) return;
+  if (!preserve) {
+    stopStory();
+    state.storyAt = null;
+    state.storySelected = null;
+  }
   state.selected = id;
   history.replaceState(null, "", taskHash(id));
   renderTasks();
@@ -764,11 +1239,14 @@ function nextTask(step) {
 }
 
 function applyHash() {
-  const match = location.hash.match(/^#\/task\/([^/]+)(?:\/(summary|evidence))?$/);
-  if (match && match[2]) state.view = match[2];
+  const match = location.hash.match(/^#\/task\/([^/?]+)(?:\/(story|summary|evidence))?(?:\?(.*))?$/);
+  if (match && match[2]) state.view = match[2] === "evidence" ? "evidence" : "story";
+  const params = new URLSearchParams(match && match[3] ? match[3] : "");
+  state.storyAt = params.has("at") ? Number(params.get("at")) : null;
+  state.lineMode = "story";
   loadTasks().then(() => {
     if (match) {
-      selectTask(decodeURIComponent(match[1]));
+      selectTask(decodeURIComponent(match[1]), true);
     } else {
       clearSelection(false);
     }
@@ -866,6 +1344,15 @@ function bind() {
     }
     if ($("#palette").open) {
       if (event.key === "Escape") $("#palette").close();
+      return;
+    }
+    if (event.key === "Escape" && document.body.dataset.cinema === "true") {
+      document.body.dataset.cinema = "false";
+      return;
+    }
+    if (event.key === "c" && !typing) {
+      event.preventDefault();
+      toggleCinema();
       return;
     }
     if (event.key === "?" && !typing) {

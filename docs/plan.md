@@ -1,6 +1,6 @@
 # Development plan — openJiuwen Works
 
-**Status:** v4.15 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
+**Status:** v4.18 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
 
 Every task is a checkbox, checked when its criteria are met and the change is merged. `S/M/L`:
 S ≤ half a day, M ≤ two days, L ≤ a week. Nothing is checked because it was started.
@@ -664,9 +664,12 @@ Internal only: nothing is published to the upstream fork until M2 is green.
 - [x] **T1.24** Read-only GUI preview: queue, task detail, proof, risk, decision, `would_block`,
   readiness and feature coverage in one window; `works ui --read-only`; no write actions. **M**
   - Done 2026-11-21: `works ui` serves a dark/light, keyboard-first preview from the queue and run
-    artifacts; API is GET-only, POST returns 405. Summary/Evidence split, human status labels,
-    Needs you/Working/Ready/Done groups, `⌘K` palette and deep links. The full React/Vite window,
-    SSE and Playwright are later.
+    artifacts; API is GET-only, POST returns 405. Story is the default and only human reading, with
+    full-body Mira at the current milestone, five plain-language milestones, a receipt strip and a
+    specific blocked rail; the 10-step technical line lives in Evidence; replay sits behind “How we
+    got here”; Present mode, human status labels, Needs you/In progress/Queued/Done groups, `Ctrl+K`
+    palette and deep links. Demo uses Firefox, LibreOffice, GIMP and Joplin. The full React/Vite
+    window, SSE and Playwright are later.
 - [ ] **T1.25** Verification cost split: builder, challenger and verifier tokens/USD in `run.json`
   and the proof; verification share is reported next to the total. **S**
 
@@ -1036,9 +1039,13 @@ All decided; revisit only with an ADR.
 - [x] **D19** Verification artifacts are the review unit. The proof carries feature coverage,
   screenshots, video, logs, traces and property/formal results where used. Formal methods are
   optional high-risk layers, never a substitute for the verifier or the two human gates.
-- [x] **D20** One proof, two readings. Summary is the default for a reporter, support or product;
-  Evidence is one click away for an engineer. Both are computed from the same proof; technical
-  states and reason codes stay in Evidence.
+- [x] **D20** One proof, two readings. Story is the default for a reporter, support or product;
+  Evidence is one click away for an engineer. Both are computed from the same proof, and the human
+  answer (changed, checked, not checked, who decides) lives in the Story hero and receipt strip;
+  technical states and reason codes stay in Evidence.
+- [x] **D21** The task is a line. Story is the default view: five human milestones with Mira at the
+  current one only (never on future milestones), a ten-milestone technical line inside Evidence,
+  replay from real events, and no animation that is not backed by an event.
 
 ---
 
@@ -1052,8 +1059,8 @@ wake event; no agent grades its own work; attention metrics come from events; th
 not tested; any LAIX decision is backed by recorded evidence and has a deterministic fallback; and
 the gate that judged the change ran from the trusted base, was bound to the exact commit and had
 passed observe mode; and readiness is green with the feature map exercised in the proof. The proof
-also answers a reporter's question — “was my problem fixed?” — in Summary, with Evidence one click
-away.
+also answers a reporter's question — “was my problem fixed?” — in the Story hero and receipt strip,
+with Evidence one click away.
 
 ---
 
@@ -1067,6 +1074,19 @@ agents, a zoo of model providers before M3, and autonomous merge without the two
 
 ## 20. Changelog
 
+- **v4.18** — Story becomes the only human reading: five plain-language milestones (Reported →
+  Confirmed → Fixed → Checked → Released), Mira at the current milestone only with sentence labels
+  (“Mira confirmed it”, “Mira is ready to release”), full-body Mira never clipped or overlapping,
+  a receipt strip replacing the Summary tab, “How we got here” replay, Present mode, a specific
+  blocked rail, queue groups Needs you/In progress/Queued/Done, and one reported time shared by the
+  header, hero and route. The ten-step technical line moves into Evidence.
+- **v4.17** — Story polish: full-body Mira without a square background, prominent in the hero and
+  on the current station; future stages dimmed; blocked “why it stopped” callout; human story
+  artifacts; realistic demo on four products with spread event times; removed the empty “Mira is
+  watching the queue” strip.
+- **v4.16** — Story line: 5 human stations with Mira, 10-station technical line, replay scrubber,
+  event-derived gates/artifacts, Cinema mode, deep links `?at=` and `?line=technical`; Story is the
+  default view.
 - **v4.15** — one proof, two readings: Summary/Evidence split in the preview, human status labels,
   Needs you/Working/Ready/Done groups, `⌘K` palette, deep links and run metadata; ADR-014 and D20.
 - **v4.14** — read-only GUI preview: `works ui` serves the queue, task, proof, risk, decision,

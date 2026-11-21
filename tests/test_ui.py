@@ -39,7 +39,7 @@ def test_static_page_and_assets(paths) -> None:
         status, body = get(base, "/")
         assert status == 200
         assert "openJiuwen Works" in body
-        assert "READ-ONLY PREVIEW" in body
+        assert "LOCAL PREVIEW" in body
         status, script = get(base, "/app.js")
         assert status == 200
         assert "boot()" in script
@@ -79,6 +79,16 @@ def test_task_detail_includes_readiness_and_timeline(paths, submit) -> None:
         assert detail["readiness"]["available"] is True
         assert detail["features"]["available"] is False
         assert detail["timeline"][0]["type"] == "task.created"
+        assert detail["pipeline"]["story"][0]["label"] == "Reported"
+        assert [item["label"] for item in detail["pipeline"]["story"]] == [
+            "Reported",
+            "Confirmed",
+            "Fixed",
+            "Checked",
+            "Deliver to openjiuwen",
+        ]
+        assert len(detail["pipeline"]["technical"]) == 10
+        assert detail["pipeline"]["replay"]
 
 
 def test_task_detail_includes_a_run_and_evidence(paths, submit) -> None:

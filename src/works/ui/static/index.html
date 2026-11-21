@@ -14,7 +14,7 @@
           <div class="mark" aria-hidden="true">W</div>
           <div class="brand-copy">
             <strong>openJiuwen Works</strong>
-            <span class="preview">READ-ONLY PREVIEW</span>
+            <span class="preview">LOCAL PREVIEW</span>
           </div>
           <button class="icon-btn" id="theme" type="button" aria-label="Toggle theme" title="Theme">◐</button>
         </header>
@@ -26,14 +26,9 @@
 
         <div class="filters" role="group" aria-label="Filter tasks">
           <button type="button" class="filter active" data-filter="all">All</button>
-          <button type="button" class="filter" data-filter="waiting">Waiting</button>
-          <button type="button" class="filter" data-filter="blocked">Blocked</button>
-          <button type="button" class="filter" data-filter="proved">Proved</button>
-        </div>
-
-        <div class="mira-strip">
-          <img src="/mira.svg" alt="" width="22" height="22" />
-          <span>Mira is watching the queue.</span>
+          <button type="button" class="filter" data-filter="needs">Needs you</button>
+          <button type="button" class="filter" data-filter="working">In progress</button>
+          <button type="button" class="filter" data-filter="done">Done</button>
         </div>
 
         <div id="task-list" class="task-list" aria-live="polite"></div>
@@ -47,17 +42,17 @@
             <p id="subtitle">Select a task to read its proof, risk and decision.</p>
           </div>
           <div class="head-actions">
-            <button class="btn ghost" id="cmdk" type="button" aria-label="Command palette" title="Command palette">⌘K</button>
+            <button class="btn ghost" id="cmdk" type="button" aria-label="Command palette" title="Command palette">Ctrl K</button>
             <button class="btn ghost" id="density" type="button" aria-label="Toggle density" title="Density">☷</button>
-            <button class="btn" id="refresh" type="button">Refresh</button>
+            <button class="btn ghost" id="refresh" type="button">Refresh</button>
           </div>
         </header>
 
         <section class="content" id="content">
           <div class="empty" id="empty">
-            <img src="/mira.svg" alt="" width="88" height="88" />
+            <img src="/mira.svg" alt="" width="132" height="132" />
             <h2>Nothing selected</h2>
-            <p>Pick a report on the left. Mira is watching the queue and will carry the proof here.</p>
+            <p>Pick a report on the left. Mira will carry its story here.</p>
           </div>
           <div id="detail" hidden></div>
         </section>
@@ -78,6 +73,7 @@
         <dt><kbd>/</kbd></dt><dd>Focus search</dd>
         <dt><kbd>r</kbd></dt><dd>Refresh</dd>
         <dt><kbd>t</kbd></dt><dd>Toggle theme</dd>
+        <dt><kbd>c</kbd></dt><dd>Present mode</dd>
         <dt><kbd>?</kbd></dt><dd>This help</dd>
         <dt><kbd>Esc</kbd></dt><dd>Clear search or close help</dd>
       </dl>

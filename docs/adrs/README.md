@@ -18,6 +18,7 @@ deleted — a superseded decision is marked as such and points to its replacemen
 | [011](011-laix-decision-layer.md) | LAIX is the optional decision layer, not the factory | accepted |
 | [012](012-trusted-base-and-risk.md) | Checks outlive changes; risk decides who approves | accepted |
 | [013](013-readiness-before-autonomy.md) | Readiness before autonomy; the codebase is the agent's largest input | accepted |
-| [014](014-one-proof-two-readings.md) | One proof, two readings: Summary for people, Evidence for engineers | accepted |
+| [014](014-one-proof-two-readings.md) | One proof, two readings: Story for people, Evidence for engineers | superseded in part by 015 |
+| [015](015-story-line.md) | The task is a line; Mira is the courier | accepted |
 
 Format: context, decision, consequences, alternatives rejected.
