@@ -28,7 +28,7 @@ from .records import (
     TaskState,
     utcnow,
 )
-from .state import require_transition
+from .state import WAITING, require_transition
 
 EVENTS_FILE = "events.jsonl"
 TASK_FILE = "task.yaml"
@@ -91,6 +91,58 @@ def _apply(task: Task | None, event: Event) -> Task:
 
     if event.type == "attempt.started":
         return task.model_copy(update={"attempts": task.attempts + 1, "updated_at": event.ts})
+
+    if event.type == "wait.started":
+        target = event.data.get("state")
+        if not isinstance(target, str):
+            raise StateError(f"unknown waiting state {target!r}")
+        try:
+            target_state = TaskState(target)
+        except (TypeError, ValueError) as exc:
+            raise StateError(f"unknown waiting state {target!r}") from exc
+        require_transition(task.state, target_state)
+        deadline_raw = event.data.get("deadline")
+        deadline = (
+            datetime.fromisoformat(deadline_raw) if isinstance(deadline_raw, str) else deadline_raw
+        )
+        next_raw = event.data.get("next")
+        default_raw = event.data.get("default")
+        wake_next = TaskState(next_raw) if isinstance(next_raw, str) else None
+        wake_default = TaskState(default_raw) if isinstance(default_raw, str) else None
+        return task.model_copy(
+            update={
+                "state": target_state,
+                "updated_at": event.ts,
+                "waiting_on": event.data.get("on"),
+                "wake_on": event.data.get("wake_on"),
+                "wake_deadline": deadline,
+                "wake_next": wake_next,
+                "wake_default": wake_default,
+            }
+        )
+
+    if event.type in ("wait.woken", "wait.expired"):
+        if task.state not in WAITING:
+            raise StateError(f"task is {task.state.value}, not waiting")
+        target = event.data.get("to")
+        if not isinstance(target, str):
+            raise StateError(f"unknown wake target {target!r}")
+        try:
+            target_state = TaskState(target)
+        except (TypeError, ValueError) as exc:
+            raise StateError(f"unknown wake target {target!r}") from exc
+        require_transition(task.state, target_state)
+        return task.model_copy(
+            update={
+                "state": target_state,
+                "updated_at": event.ts,
+                "waiting_on": None,
+                "wake_on": None,
+                "wake_deadline": None,
+                "wake_next": None,
+                "wake_default": None,
+            }
+        )
 
     if event.type in (
         "note",
@@ -294,6 +346,69 @@ class Queue:
         if replayed != stored:
             raise StateError(f"projection for {task_id} diverges from its events")
         return stored
+
+    def wait(
+        self,
+        task_id: str,
+        *,
+        on: str,
+        wake_on: str,
+        next_state: TaskState,
+        deadline: datetime | None = None,
+        default: TaskState = TaskState.BLOCKED,
+    ) -> Event:
+        targets = {
+            "review": TaskState.WAITING_REVIEW,
+            "ci": TaskState.WAITING_CI,
+            "deploy": TaskState.WAITING_DEPLOY,
+        }
+        target = targets.get(on)
+        if target is None:
+            raise StateError(f"unknown wait {on!r}; expected review, ci or deploy")
+        current = self.load(task_id)
+        require_transition(current.state, target)
+        require_transition(target, next_state)
+        return self.append(
+            task_id,
+            "wait.started",
+            {
+                "on": on,
+                "state": target.value,
+                "wake_on": wake_on,
+                "deadline": deadline.isoformat() if deadline else None,
+                "next": next_state.value,
+                "default": default.value,
+            },
+        )
+
+    def wake(self, task_id: str, event: str) -> Event:
+        current = self.load(task_id)
+        if current.state not in WAITING:
+            raise StateError(f"task {task_id} is {current.state.value}, not waiting")
+        if current.wake_on != event:
+            raise StateError(f"task {task_id} waits on {current.wake_on!r}, not {event!r}")
+        if current.wake_next is None:
+            raise StateError(f"task {task_id} has no wake target")
+        return self.append(
+            task_id,
+            "wait.woken",
+            {"event": event, "to": current.wake_next.value},
+        )
+
+    def expire_wait(self, task_id: str, *, now: datetime | None = None) -> Event | None:
+        current = self.load(task_id)
+        if current.state not in WAITING or current.wake_deadline is None:
+            return None
+        moment = now or utcnow()
+        deadline = current.wake_deadline
+        if moment < deadline:
+            return None
+        target = current.wake_default or TaskState.BLOCKED
+        return self.append(
+            task_id,
+            "wait.expired",
+            {"to": target.value, "deadline": deadline.isoformat()},
+        )
 
     def list_tasks(self) -> list[Task]:
         tasks: list[Task] = []

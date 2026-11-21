@@ -64,6 +64,9 @@ the ledger row. No model and no network are used.
 | `works run <task> --scenarios … --trace …` | Reproduce → plan → build → test → scenarios → proof (recorded) |
 | `works run <task> --live …` | The same loop with the real `openjiuwen` Claude Code harness |
 | `works run <task> --ppma URL` | Report the finished run to PPMA memory over its north contract |
+| `works wait <task> --on review` | Wait for a review/CI/deploy event instead of blocking |
+| `works wake <task> --event …` | Wake a waiting task and advance to its next state |
+| `works dispatch` | Claim and run ready tasks; `--watch` keeps the loop alive |
 | `works policy check <paths>` | Refuses test paths and escapes before any command runs |
 | `works finding add/list <task>` | Structured findings with confidence and uncertainty |
 | `works metrics` | Attention, waiting time and cost derived from events and the ledger |
@@ -131,7 +134,7 @@ CI adds bandit and gitleaks on every PR, a weekly mutation gate (71.8% on state,
 and a weekly `pip-audit`. Decisions are recorded as ADRs in `docs/adrs/`; known failures and first
 responses are in `docs/runbook.md`. The live builder is in `docs/live-harness.md`; the PPMA memory
 integration is in `docs/ppma.md`; the factory comparison that shaped v4.5 is in
-`docs/review-4-factories.md`.
+`docs/review-4-factories.md`; waits and the dispatcher are in `docs/waiting-and-dispatch.md`.
 
 ---
 

@@ -15,14 +15,18 @@ ALLOWED: dict[TaskState, frozenset[TaskState]] = {
     S.PLAN_APPROVED: frozenset({S.BUILDING, S.BLOCKED}),
     S.BUILDING: frozenset({S.CHECKING, S.BLOCKED}),
     S.CHECKING: frozenset({S.PROVED, S.BLOCKED}),
-    S.PROVED: frozenset({S.RELEASING, S.BLOCKED}),
-    S.RELEASING: frozenset({S.RELEASED, S.BLOCKED}),
+    S.PROVED: frozenset({S.RELEASING, S.WAITING_REVIEW, S.BLOCKED}),
+    S.WAITING_REVIEW: frozenset({S.RELEASING, S.BLOCKED}),
+    S.RELEASING: frozenset({S.RELEASED, S.WAITING_CI, S.BLOCKED}),
+    S.WAITING_CI: frozenset({S.WAITING_DEPLOY, S.RELEASED, S.BLOCKED}),
+    S.WAITING_DEPLOY: frozenset({S.RELEASED, S.WAITING_REVIEW, S.BLOCKED}),
     S.RELEASED: frozenset({S.REVERTED}),
     S.BLOCKED: frozenset(),
     S.REVERTED: frozenset(),
 }
 
 TERMINAL = frozenset({S.BLOCKED, S.REVERTED})
+WAITING = frozenset({S.WAITING_REVIEW, S.WAITING_CI, S.WAITING_DEPLOY})
 
 
 def can_transition(current: TaskState, target: TaskState) -> bool:

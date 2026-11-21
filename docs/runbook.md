@@ -56,6 +56,24 @@ tests; the worktree is disposable.
 **Do:** inspect the worktree, discard it, and start a new task. Instructions already forbid test
 edits; this is detection, not prevention until the M2 container.
 
+## A task waits on the wrong event
+
+**See:** `task … waits on 'ci_passed', not 'ci_failed'`.
+
+**Why:** a wake must match the subscription recorded when the task started waiting.
+
+**Do:** send the recorded event, or let the deadline/default move the task. Do not edit the event
+file; if the subscription is wrong, start a new wait from a state the machine allows.
+
+## A dispatch conflict
+
+**See:** `task … is owned by …` and that task is skipped for this pass.
+
+**Why:** another dispatcher or supervisor holds the claim.
+
+**Do:** nothing if the other process is alive; it will release the claim. If it died, follow the
+dead-owner procedure above. `works dispatch` never runs a claimed task twice.
+
 ## `config_error`: `a scenario set is required`
 
 **Why:** scenarios are written before the build; the plan cannot be judged without them.

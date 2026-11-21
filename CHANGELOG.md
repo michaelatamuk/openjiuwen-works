@@ -36,5 +36,7 @@ Semantic Versioning.
 - Factory parity: versioned prompt registry with a recorded hash; structured findings with
   confidence/uncertainty; `works metrics` for attention, waiting and cost; proof sections for
   findings and residual risk; Mira, the magpie courier, as the product mascot.
+- Waiting states and wake events; `works wait/wake`; `works dispatch` with claims, `--limit`,
+  `--watch` and per-task reporting.
 - ADRs 008–010, the runbook entries for live harness and PPMA failures, and
-  `docs/review-4-factories.md`.
+  `docs/review-4-factories.md`; waits and dispatch in `docs/waiting-and-dispatch.md`.

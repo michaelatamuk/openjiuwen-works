@@ -230,10 +230,13 @@ def _supervisor(args: argparse.Namespace) -> Supervisor:
     elif args.live:
         from .harness.openjiuwen import LiveHarness
 
-        task = _queue(args).load(args.task_id)
-        prompt_path = args.prompt
+        task_id = getattr(args, "task_id", None)
+        flow = "fix-issue"
+        if task_id:
+            flow = _queue(args).load(task_id).flow
+        prompt_path = getattr(args, "prompt", None)
         if prompt_path is None:
-            candidate = paths.flows / task.flow / "prompts" / "build.md"
+            candidate = paths.flows / flow / "prompts" / "build.md"
             prompt_path = candidate if candidate.exists() else None
         harness = LiveHarness(
             model=args.model,
@@ -332,6 +335,110 @@ def cmd_policy_check(args: argparse.Namespace) -> int:
     else:
         print(f"{len(args.paths)} path(s) allowed")
     return EXIT_POLICY if violations else 0
+
+
+def cmd_wait(args: argparse.Namespace) -> int:
+    from datetime import datetime
+
+    from .records import TaskState
+
+    next_by_kind = {
+        "review": TaskState.RELEASING,
+        "ci": TaskState.WAITING_DEPLOY,
+        "deploy": TaskState.RELEASED,
+    }
+    deadline = datetime.fromisoformat(args.deadline) if args.deadline else None
+    next_state = TaskState(args.next) if args.next else next_by_kind[args.on]
+    default = TaskState(args.default) if args.default else TaskState.BLOCKED
+    event = _queue(args).wait(
+        args.task_id,
+        on=args.on,
+        wake_on=args.wake_on,
+        next_state=next_state,
+        deadline=deadline,
+        default=default,
+    )
+    task = _queue(args).load(args.task_id)
+    if args.json:
+        _emit({"event": event.model_dump(mode="json"), "task": task.model_dump(mode="json")})
+    else:
+        print(
+            f"{task.id} is {task.state.value}, waiting for {task.wake_on} "
+            f"(next: {next_state.value})"
+        )
+    return 0
+
+
+def cmd_wake(args: argparse.Namespace) -> int:
+    event = _queue(args).wake(args.task_id, args.event)
+    task = _queue(args).load(args.task_id)
+    if args.json:
+        _emit({"event": event.model_dump(mode="json"), "task": task.model_dump(mode="json")})
+    else:
+        print(f"{task.id} woke on {args.event}: {task.state.value}")
+    return 0
+
+
+def cmd_dispatch(args: argparse.Namespace) -> int:
+    import asyncio
+    import time
+
+    from .records import TaskState
+
+    queue = _queue(args)
+    scenarios = Path(args.scenarios) if args.scenarios else None
+    quarantine = Path(args.quarantine) if args.quarantine else None
+    while True:
+        ready = [task for task in queue.list_tasks() if task.state is TaskState.QUEUED][
+            : args.limit
+        ]
+        if not ready:
+            if args.watch:
+                time.sleep(args.interval)
+                continue
+            if args.json:
+                _emit({"runs": [], "selected": 0})
+            else:
+                print("No ready tasks. Mira is watching the queue.")
+            return 0
+        supervisor = _supervisor(args)
+        records: list[dict[str, Any]] = []
+        blocked = False
+        for task in ready:
+            try:
+                record = asyncio.run(
+                    supervisor.run(
+                        task.id,
+                        approve_plan=args.approve_plan,
+                        scenario_set=scenarios,
+                        quarantine=quarantine,
+                    )
+                )
+                records.append({"task_id": task.id, "run": record.model_dump(mode="json")})
+                blocked = blocked or record.state is TaskState.BLOCKED
+            except WorksError as exc:
+                records.append(
+                    {
+                        "task_id": task.id,
+                        "error": {"code": exc.code, "message": str(exc)},
+                    }
+                )
+                blocked = True
+        if args.json:
+            _emit({"runs": records, "selected": len(ready)})
+        else:
+            for item in records:
+                if "run" in item:
+                    run = item["run"]
+                    print(
+                        f"{item['task_id']}: {run['state']} ({run['stop_reason']}) · "
+                        f"{run['duration_ms']} ms · {run['tokens']} tokens"
+                    )
+                else:
+                    error = item["error"]
+                    print(f"{item['task_id']}: {error['code']} — {error['message']}")
+        if not args.watch:
+            return 8 if blocked else 0
 
 
 def cmd_finding_add(args: argparse.Namespace) -> int:
@@ -539,6 +646,39 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--ppma-space", default="me")
     run.add_argument("--json", action="store_true")
     run.set_defaults(func=cmd_run)
+
+    wait = sub.add_parser("wait", help="Put a task into a waiting state")
+    wait.add_argument("task_id")
+    wait.add_argument("--on", choices=("review", "ci", "deploy"), required=True)
+    wait.add_argument("--wake-on", required=True)
+    wait.add_argument("--deadline", default=None)
+    wait.add_argument("--next", default=None)
+    wait.add_argument("--default", default=None)
+    wait.add_argument("--json", action="store_true")
+    wait.set_defaults(func=cmd_wait)
+
+    wake = sub.add_parser("wake", help="Wake a waiting task on its event")
+    wake.add_argument("task_id")
+    wake.add_argument("--event", required=True)
+    wake.add_argument("--json", action="store_true")
+    wake.set_defaults(func=cmd_wake)
+
+    dispatch = sub.add_parser("dispatch", help="Claim and run ready tasks")
+    dispatch.add_argument("--limit", type=int, default=10)
+    dispatch.add_argument("--watch", action="store_true")
+    dispatch.add_argument("--interval", type=int, default=10)
+    dispatch.add_argument("--approve-plan", action="store_true")
+    dispatch.add_argument("--scenarios", default=None)
+    dispatch.add_argument("--quarantine", default=None)
+    dispatch.add_argument("--trace", type=Path, default=None)
+    dispatch.add_argument("--live", action="store_true")
+    dispatch.add_argument("--model", default=None)
+    dispatch.add_argument("--model-base", default=None)
+    dispatch.add_argument("--prompt", type=Path, default=None)
+    dispatch.add_argument("--ppma", default=None)
+    dispatch.add_argument("--ppma-space", default="me")
+    dispatch.add_argument("--json", action="store_true")
+    dispatch.set_defaults(func=cmd_dispatch)
 
     policy = sub.add_parser("policy", help="Path policy")
     policy_sub = policy.add_subparsers(dest="policy_command", required=True)

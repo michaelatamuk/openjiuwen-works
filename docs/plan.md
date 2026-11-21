@@ -1,6 +1,6 @@
 # Development plan — openJiuwen Works
 
-**Status:** v4.7 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
+**Status:** v4.8 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
 
 Every task is a checkbox, checked when its criteria are met and the change is merged. `S/M/L`:
 S ≤ half a day, M ≤ two days, L ≤ a week. Nothing is checked because it was started.
@@ -460,11 +460,16 @@ Internal only: nothing is published to the upstream fork until M2 is green.
   touching the same paths attributes a row to the release. **L**
 - [ ] **T3.7** Revert path: revert PR, note, post-mortem, ledger row. **M**
 - [ ] **T3.8** Human minutes from gate timestamps. **S**
-- [ ] **T3.9** Waiting states and wake subscriptions: `waiting_review`, `waiting_ci`,
+- [x] **T3.9** Waiting states and wake subscriptions: `waiting_review`, `waiting_ci`,
   `waiting_deploy`; a PR comment, CI result, deploy or issue update wakes the task instead of
   making it terminal. **L**
-- [ ] **T3.10** Dispatch loop: `works dispatch` claims ready tasks, advances one step, releases,
+  - Done 2026-11-21: `Queue.wait/wake/expire_wait`, stored wake event, deadline and default;
+    `works wait` / `works wake`; wrong events refused; projections replay.
+- [x] **T3.10** Dispatch loop: `works dispatch` claims ready tasks, advances one step, releases,
   and is safe to kill; no task is run twice. **L**
+  - Done 2026-11-21: one-pass dispatcher with `O_EXCL` claims, `--limit`, `--watch`, per-task
+    errors and a JSON/human report; two dispatchers cannot own one task. Real forge/CI webhooks
+    are still pending the ports.
 - [ ] **T3.11** Clean-environment matrix: tests on clean Windows, macOS and Linux (or the supported
   subset), with no developer state. **M**
 - [ ] **T3.12** Merge-result re-check: after a branch lands, CI runs on the merged result; two green
@@ -666,6 +671,9 @@ agents, a zoo of model providers before M3, and autonomous merge without the two
 
 ## 20. Changelog
 
+- **v4.8** — waiting states and wake events (`waiting_review/ci/deploy`, deadline + default,
+  replayable), `works wait/wake`, and `works dispatch` with claims, `--limit`, `--watch` and
+  per-task reporting; T3.9/T3.10 closed.
 - **v4.7** — first parity batch delivered: versioned prompt with hash, structured findings and
   `works finding`, attention metrics and `works metrics`, proof rubric with residual risk; Mira
   primary/avatar assets and CLI empty state. T1.14–T1.17 closed; T1.18 poses defer to the GUI.

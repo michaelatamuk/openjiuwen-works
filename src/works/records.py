@@ -30,6 +30,9 @@ class TaskState(StrEnum):
     BUILDING = "building"
     CHECKING = "checking"
     PROVED = "proved"
+    WAITING_REVIEW = "waiting_review"
+    WAITING_CI = "waiting_ci"
+    WAITING_DEPLOY = "waiting_deploy"
     RELEASING = "releasing"
     RELEASED = "released"
     REVERTED = "reverted"
@@ -91,6 +94,11 @@ class Task(BaseModel):
     created_at: datetime = Field(default_factory=utcnow)
     updated_at: datetime = Field(default_factory=utcnow)
     attempts: int = 0
+    waiting_on: str | None = None
+    wake_on: str | None = None
+    wake_deadline: datetime | None = None
+    wake_next: TaskState | None = None
+    wake_default: TaskState | None = None
 
 
 class Event(BaseModel):

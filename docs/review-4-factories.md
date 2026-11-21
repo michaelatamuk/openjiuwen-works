@@ -16,8 +16,8 @@ evidence, not as targets.
 | Mechanism | OpenAI | Alex | Works today |
 |---|---|---|---|
 | Persistent task with state and findings | task service + configurable workflow | task graph, brief, report, evidence | task events/projection/evidence; findings now added |
-| Dispatcher | dispatch loop, cloud Codex turn | orchestrator + scheduler | one-shot CLI; dispatcher planned |
-| Waiting / wake | subscriptions on PR, CI, deploy | supervisor checks every lane | `blocked` terminal; waiting states planned |
+| Dispatcher | dispatch loop, cloud Codex turn | orchestrator + scheduler | `works dispatch` one pass or `--watch` |
+| Waiting / wake | subscriptions on PR, CI, deploy | supervisor checks every lane | `waiting_review/ci/deploy` + `works wait/wake`; real webhooks pending |
 | Independent challenge | adversarial session tries to disprove diagnosis and fix | reviewers on other model families; 6/10 send back | verifier planned in M2; challenge planned |
 | Human attention | reviewed summaries, grouped incidents, impact rank | held decisions with default/deadline; 67 sessions/day without a message | proof page and two gates; grouping/ranking planned |
 | Memory | task record, not raw profiling data | Total Recall, proactive recall 2,500+ times/month | PPMA reporting; recall planned |
