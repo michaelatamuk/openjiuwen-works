@@ -39,6 +39,12 @@ def test_submit_is_idempotent(paths: WorksPaths) -> None:
     assert len(queue.list_tasks()) == 1
 
 
+def test_submit_projection_matches_replay_immediately(paths: WorksPaths) -> None:
+    queue = new_queue(paths)
+    task = submit(queue)
+    assert queue.load(task.id) == project(queue.events(task.id))
+
+
 def test_ids_depend_only_on_kind_and_ref() -> None:
     assert make_task_id("manual", "GH-1") == make_task_id("manual", "GH-1")
     assert make_task_id("manual", "GH-1") != make_task_id("tracker", "GH-1")

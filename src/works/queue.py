@@ -148,6 +148,7 @@ class Queue:
                 return self.load(task_id), False
             directory = self._dir(task_id)
             directory.mkdir(parents=True, exist_ok=True)
+            now = utcnow()
             task = Task(
                 id=task_id,
                 flow=flow,
@@ -156,10 +157,13 @@ class Queue:
                 source=source,
                 budget=budget or Budget(),
                 scope=scope or Scope(),
+                created_at=now,
+                updated_at=now,
             )
             event = Event(
                 schema_version=SCHEMA_VERSION,
                 seq=1,
+                ts=now,
                 type="task.created",
                 data={"task": task.model_dump(mode="json")},
             )
