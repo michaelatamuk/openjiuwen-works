@@ -9,9 +9,8 @@ Anthropic-compatible endpoint, and finished runs are reported to PPMA memory. Th
 still the local scenario runner (M2); nothing is published yet (M3). Gate hardening is in:
 trusted-base flows and checks, exact-commit approval, `check-change` tasks, risk rating, flake
 enforcement and the LAIX `DecisionPort` in shadow mode. The read-only preview is in: `works ui`
-opens the queue, proof, risk, decision and readiness from real artifacts. Next: readiness (T2.18)
-and the feature map (T2.19). The trust pyramid and the slop lesson are in
-`docs/review-5-slop.md`.
+opens a Summary for reporters and Evidence for engineers. Next: readiness (T2.18) and the feature
+map (T2.19). The trust pyramid and the slop lesson are in `docs/review-5-slop.md`.
 
 <img src="brand/mascot/mira-primary.png" width="120" align="right" alt="Mira, a magpie courier, carrying a proof page">
 
@@ -114,7 +113,7 @@ in v0 — no silent retry, no "trust the builder".
 | Readiness | `works readiness` (lint, types, fast tests, architecture, suppressions, verify, feature map) lands with T2.18; a red gate will refuse automation |
 | Feature map | User-facing feature map and runtime artifacts in the proof land with T2.19 |
 | Verification cost | Builder/challenger/verifier split in the proof lands with T1.25 |
-| GUI | Read-only preview is in: `works ui` opens the queue, proof, risk, decision and readiness from real artifacts. Write actions, the full React/Vite window, SSE and Playwright are later |
+| GUI | Read-only preview is in: `works ui` opens a Summary for reporters and an Evidence tab for engineers; Needs you/Working/Ready/Done groups and `⌘K` palette. Write actions, the full React/Vite window, SSE and Playwright are later |
 
 The fixture bug is deliberate: `add` subtracts. The good trace fixes it, the sneaky trace passes
 the visible test but fails a P0 holdout, and the test-edit trace is refused by policy.
@@ -167,7 +166,7 @@ slop/readiness talk is in `docs/review-5-slop.md`; waits and the dispatcher are 
 | `docs/plan.md` | The plan: preconditions, milestones, checkboxes, standards, refactoring gates |
 | `docs/deck/` | Five slides (SVG + PNG) |
 | `docs/video/` | The 47 s concept film |
-| `docs/adrs/` | Thirteen architecture decisions |
+| `docs/adrs/` | Fourteen architecture decisions |
 | `scripts/` | Demo, benchmark, check, mutation gate, film generators |
 
 ---

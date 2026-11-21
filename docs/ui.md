@@ -10,14 +10,27 @@ works --home C:\path\to\workspace ui --port 8765
 
 Global `--home` comes before the subcommand. Use `--no-open` to avoid launching a browser.
 
+## One proof, two readings
+
+The same evidence page serves two audiences without a second data source:
+
+- **Summary** (default): the answer for a reporter, support or product — was it fixed, what changed,
+  what was checked, what was not, who decided, where it goes next, what to do.
+- **Evidence** (one click): the answer for an engineer — run metadata, verdict and scenarios, risk,
+  decision, commands, diff, policy, residual risk and timeline.
+
+The Summary is derived from the same proof; it never hides a contradiction. Every technical detail
+is one tab away. Deep links carry the view: `#/task/<id>` and `#/task/<id>/evidence`.
+
 ## What it shows
 
-- **Queue** — every task, state, source, product, flow, risk and decision; filter by waiting,
-  blocked and proved; search; `j`/`k` navigation.
-- **Proof** — verdict, scenario table, findings, challenge, commands, change and diff, policy,
-  residual risk, cost and timeline.
-- **Risk and decision** — level, reasons, owners, required reviewers, verb, reason code, confidence,
-  approval and alternatives.
+- **Queue** — grouped into **Needs you**, **Working**, **Ready** and **Done**; filter, search and
+  `j`/`k` navigation.
+- **Summary** — human state (`Fixed and verified`, `Needs attention`, `Waiting for a person`),
+  what changed, what was checked, what was not, who decided, next step and action.
+- **Evidence** — run metadata (task/run id, base commit, rules version, evidence fingerprint, model,
+  provider), verdict, findings, challenge, commands, change/diff, policy, risk, decision, readiness,
+  feature map, residual risk, cost and timeline.
 - **Readiness** — a basic preview (git, flow, project, tests, repository map); the full gate is
   T2.18.
 - **Feature coverage** — a placeholder until the feature map lands with T2.19.
@@ -25,8 +38,9 @@ Global `--home` comes before the subcommand. Use `--no-open` to avoid launching 
 ## Design and interaction
 
 Dark and light themes, comfortable and compact density, one violet accent, borders instead of
-decorative shadows, visible focus, text labels for every status, `prefers-reduced-motion`, and Mira
-in the empty state. Deep links use `#/task/<id>`.
+decorative gradients, visible focus, text labels for every status, `prefers-reduced-motion`, and
+Mira in the empty state. `⌘K` / `Ctrl+K` opens a command palette; `/` focuses search; `t` toggles
+the theme; `?` shows the keyboard help.
 
 ## Read-only by construction
 

@@ -47,6 +47,7 @@
             <p id="subtitle">Select a task to read its proof, risk and decision.</p>
           </div>
           <div class="head-actions">
+            <button class="btn ghost" id="cmdk" type="button" aria-label="Command palette" title="Command palette">⌘K</button>
             <button class="btn ghost" id="density" type="button" aria-label="Toggle density" title="Density">☷</button>
             <button class="btn" id="refresh" type="button">Refresh</button>
           </div>
@@ -63,9 +64,16 @@
       </main>
     </div>
 
+    <dialog id="palette" aria-labelledby="palette-title">
+      <h2 id="palette-title">Jump to</h2>
+      <input id="palette-input" type="search" placeholder="Task, action or view" aria-label="Command palette search" autocomplete="off" />
+      <div id="palette-results" class="palette-results"></div>
+    </dialog>
+
     <dialog id="help" aria-labelledby="help-title">
       <h2 id="help-title">Keyboard</h2>
       <dl>
+        <dt><kbd>⌘K</kbd> / <kbd>Ctrl K</kbd></dt><dd>Command palette</dd>
         <dt><kbd>j</kbd> / <kbd>k</kbd></dt><dd>Next / previous task</dd>
         <dt><kbd>/</kbd></dt><dd>Focus search</dd>
         <dt><kbd>r</kbd></dt><dd>Refresh</dd>
