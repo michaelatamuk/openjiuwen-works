@@ -54,6 +54,7 @@ const timelineHuman = {
   note: "Run finished",
   "memory.reported": "PPMA memory",
   "memory.failed": "PPMA memory failed",
+  "readiness.checked": "Readiness checked",
 };
 
 const groupDefs = [
@@ -349,10 +350,15 @@ function renderReadiness(detail) {
   const readiness = detail.readiness;
   if (!readiness?.available) return card("Readiness", `<p class="muted small">Not available.</p>`);
   const checks = (readiness.checks || [])
-    .map((check) => `<div class="check ${check.ok ? "pass" : "fail"}">
-      <span class="box" aria-hidden="true">${check.ok ? "✓" : "!"}</span>
+    .map((check) => {
+      const stateClass = check.status || (check.ok ? "pass" : "fail");
+      const mark = stateClass === "skip" ? "–" : stateClass === "pass" ? "✓" : "!";
+      return `<div class="check ${stateClass}">
+      <span class="box" aria-hidden="true">${mark}</span>
       <span>${esc(check.label)}</span>
-    </div>`)
+      ${check.detail ? `<span class="check-detail" title="${esc(check.detail)}">${esc(check.detail)}</span>` : ""}
+    </div>`;
+    })
     .join("");
   const ratio = readiness.total ? Math.round((readiness.passed / readiness.total) * 100) : 0;
   return card(
@@ -470,6 +476,7 @@ function eventSummary(event) {
   if (event.type === "wait.woken") return "Woke on its event";
   if (event.type === "memory.reported") return `PPMA synced · ${data.via || "run"} · ${data.run_id || ""}`;
   if (event.type === "memory.failed") return `PPMA failed · ${data.error || "unknown error"}`;
+  if (event.type === "readiness.checked") return `readiness ${data.status} · ${data.passed}/${data.total}`;
   if (event.type === "step.finished") return `${data.step}: exit ${data.exit_code}`;
   if (event.type === "challenge.decided") return data.allow ? "Independent check passed" : "Independent check blocked";
   if (event.type === "note") return "The proof is ready.";

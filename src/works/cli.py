@@ -25,6 +25,7 @@ from .errors import (
     EXIT_STATE,
     ConfigError,
     NotImplementedYet,
+    PolicyError,
     WorksError,
     exit_code_for,
 )
@@ -300,6 +301,28 @@ def cmd_run(args: argparse.Namespace) -> int:
             "no harness configured: pass --trace PATH for a recorded run "
             "or --live for the real openjiuwen harness"
         )
+
+    task = _queue(args).load(args.task_id)
+    repository = Path(task.repo)
+    if (repository / ".works" / "readiness.yaml").exists():
+        from .readiness import assess
+
+        report = assess(repository, run_commands=True)
+        _queue(args).append(
+            task.id,
+            "readiness.checked",
+            {
+                "status": report.status,
+                "passed": report.passed,
+                "failed": report.failed,
+                "total": report.total,
+            },
+        )
+        if report.status == "fail":
+            failed = ", ".join(check.id for check in report.checks if check.status == "fail")
+            raise PolicyError(
+                f"readiness is red ({failed}); run `works readiness` before automation"
+            )
 
     if not args.approve_plan and not _is_ci() and sys.stdin.isatty():
         preview = supervisor.plan_run(args.task_id, scenario_set=scenarios)
@@ -851,6 +874,28 @@ def cmd_memory_backfill(args: argparse.Namespace) -> int:
     return EXIT_INTERNAL if counts["failed"] else 0
 
 
+def cmd_readiness(args: argparse.Namespace) -> int:
+    from .readiness import assess
+
+    repo = Path(args.repo or ".").expanduser()
+    report = assess(repo, run_commands=not args.no_run, timeout_s=args.timeout)
+    if args.json:
+        payload = {"ok": report.status != "fail", **report.as_dict()}
+        print(json.dumps(payload, ensure_ascii=False, default=str, separators=(",", ":")))
+    else:
+        print(f"Readiness: {report.status.upper()} ({report.passed}/{report.total})")
+        for check in report.checks:
+            mark = "✓" if check.status == "pass" else "!" if check.status == "fail" else "-"
+            detail = f" - {check.detail}" if check.detail else ""
+            print(f"  {mark} {check.label}{detail}")
+        if report.unknown_suppressions:
+            print("  Unknown suppressions:")
+            for item in report.unknown_suppressions[:20]:
+                print(f"    {item.location}  {item.text}")
+        print(f"  {report.note}")
+    return EXIT_BLOCKED if report.status == "fail" else 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="works", description=DESCRIPTION)
     parser.add_argument("--home", type=Path, default=None, help="Workspace root")
@@ -1048,6 +1093,15 @@ def build_parser() -> argparse.ArgumentParser:
     doctor.add_argument("--repo", type=Path, default=None)
     doctor.add_argument("--json", action="store_true")
     doctor.set_defaults(func=cmd_doctor)
+
+    readiness = sub.add_parser(
+        "readiness", help="Decide whether a repository is ready for autonomous work"
+    )
+    readiness.add_argument("--repo", type=Path, default=None)
+    readiness.add_argument("--no-run", action="store_true", help="Static checks only")
+    readiness.add_argument("--timeout", type=int, default=120)
+    readiness.add_argument("--json", action="store_true")
+    readiness.set_defaults(func=cmd_readiness)
     return parser
 
 

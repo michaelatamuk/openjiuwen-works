@@ -1,6 +1,6 @@
 # Development plan — openJiuwen Works
 
-**Status:** v4.21 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
+**Status:** v4.22 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
 
 Every task is a checkbox, checked when its criteria are met and the change is merged. `S/M/L`:
 S ≤ half a day, M ≤ two days, L ≤ a week. Nothing is checked because it was started.
@@ -729,6 +729,10 @@ Internal only: nothing is published to the upstream fork until M2 is green.
   types, the fast test path, architecture boundaries, known suppressions, `verify` and a feature
   map; a red gate refuses automation. Import boundaries, dependency graph and structural tests run
   in the verifier. **M**
+  - 2026-11-21: `.works/readiness.yaml`, `works readiness`, exact suppression audit, feature-map
+    presence, `EXIT_BLOCKED` red gate, `readiness.checked` event, run-time refusal for configured
+    repositories, and the Evidence panel are in. Open: import-graph/structural checks inside the
+    independent verifier and the feature-map content check (T2.19).
 - [ ] **T2.19** Feature map and runtime artifacts: versioned `features/<product>.yaml` with id, user
   path, selectors or command and expected observation; `preview` attaches screenshot, video, log and
   trace; proof shows covered and uncovered features. **M**
@@ -1097,6 +1101,11 @@ agents, a zoo of model providers before M3, and autonomous merge without the two
 
 ## 20. Changelog
 
+- **v4.22** — the readiness gate: `.works/readiness.yaml`, `works readiness` with lint, format,
+  types, fast tests, product verify and architecture commands, an exact suppression allowlist, a
+  feature-map presence check, `EXIT_BLOCKED` on red, `readiness.checked` events, a run-time refusal
+  for configured repositories, and the Evidence panel. Import-graph checks and map content remain
+  open.
 - **v4.21** — memory becomes visible and the preview becomes mobile-honest: runs record
   `memory.reported`/`memory.failed`, and Story/Evidence show “PPMA synced”, “PPMA failed” or “Not
   recorded” instead of a config badge. The route turns into a vertical list under 720 px with real

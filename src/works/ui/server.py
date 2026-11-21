@@ -62,22 +62,9 @@ def _run_index(paths: WorksPaths) -> dict[str, tuple[str, Path]]:
 
 
 def readiness(repo: Path) -> dict[str, Any]:
-    checks = [
-        ("git", "Git repository", (repo / ".git").exists()),
-        ("flow", "Flow definition", (repo / "flows").exists()),
-        ("project", "Python project", (repo / "pyproject.toml").exists()),
-        ("tests", "Test suite", (repo / "tests").exists()),
-        ("readme", "Repository map", (repo / "README.md").exists()),
-    ]
-    passed = sum(1 for _, _, ok in checks if ok)
-    return {
-        "available": True,
-        "status": "pass" if passed == len(checks) else "fail",
-        "passed": passed,
-        "total": len(checks),
-        "checks": [{"id": key, "label": label, "ok": ok} for key, label, ok in checks],
-        "note": "Basic preview; the full readiness gate is T2.18.",
-    }
+    from ..readiness import assess
+
+    return assess(repo, run_commands=False).as_dict()
 
 
 def feature_map(repo: Path) -> dict[str, Any]:

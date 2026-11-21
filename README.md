@@ -10,8 +10,8 @@ still the local scenario runner (M2); nothing is published yet (M3). Gate harden
 trusted-base flows and checks, exact-commit approval, `check-change` tasks, risk rating, flake
 enforcement and the LAIX `DecisionPort` in shadow mode. The read-only preview is in: `works ui`
 opens Story — the line of one fix with Mira — and keeps Evidence for engineers one click away. The
-human Summary is folded into the Story receipt block. Next: readiness (T2.18) and the feature map
-(T2.19). The trust pyramid and the slop lesson are in `docs/review-5-slop.md`.
+human Summary is folded into the Story receipt block. Next: the feature map (T2.19) and the real-mode
+acceptance run (T2.20). The trust pyramid and the slop lesson are in `docs/review-5-slop.md`.
 
 <img src="brand/mascot/mira-primary.png" width="120" align="right" alt="Mira, a magpie courier, carrying a proof page">
 
@@ -80,6 +80,7 @@ the ledger row. No model and no network are used.
 | `works ledger` | Reads the append-only ledger |
 | `works schema --json` | Prints every persisted JSON Schema and its version |
 | `works doctor` | Checks Python, git, workspace, flow, harness, container, credentials, isolation |
+| `works readiness --repo …` | Runs the repository's lint/format/types/tests/verify/architecture gate; red exits 8 |
 
 Every command takes `--json` and returns a stable exit code: `0` ok, `2` usage, `3` policy,
 `4` state, `5` not found, `6` config, `7` conflict, `8` blocked, `1` internal.
@@ -112,7 +113,7 @@ in v0 — no silent retry, no "trust the builder".
 | Gate integrity | Trusted-base flows/checks, `checks_sha`, exact-commit approval and a separate `check-change` task kind are in; the trusted verifier image lands with M2 |
 | Risk rating | `low/medium/high`, owners, required reviewers and deeper verification are computed and shown by `works risk`; release-gate routing still open |
 | Observe mode | `off/observe/enforce` for policy, nodes and risk; `works gate report` lists decisions and `would_block`; review checks land with T2.17 |
-| Readiness | `works readiness` (lint, types, fast tests, architecture, suppressions, verify, feature map) lands with T2.18; a red gate will refuse automation |
+| Readiness | `works readiness` runs lint, format, types, fast tests, product verify and architecture from `.works/readiness.yaml`, audits suppressions and requires a feature map; a red gate exits 8 and refuses autonomous runs. Import-graph checks in the verifier remain M2 |
 | Feature map | User-facing feature map and runtime artifacts in the proof land with T2.19 |
 | Verification cost | Builder/challenger/verifier split in the proof lands with T1.25 |
 | GUI | `works ui` opens **Story** (default) for people — a gray **Reported** origin, then five Mira stops: **Picked up → Confirmed → Fixed → Checked → Delivered**, each not started / Mira is here / done / stopped; full-body Mira at the current stop, Present mode, replay behind “How we got here”, and a specific blocked rail — with **Evidence** for engineers one click away. Write actions, the full React/Vite window, SSE and Playwright are later |
@@ -149,7 +150,8 @@ CI adds bandit and gitleaks on every PR, a weekly mutation gate (71.8% on state,
 and a weekly `pip-audit`. Decisions are recorded as ADRs in `docs/adrs/`; known failures and first
 responses are in `docs/runbook.md`. The live builder is in `docs/live-harness.md`; the PPMA memory
 integration is in `docs/ppma.md`; the LAIX decision layer and its boundary are in `docs/laix.md`;
-verification and approval boundaries are in `docs/verification.md`; the read-only preview is in
+verification and approval boundaries are in `docs/verification.md`; readiness is in
+`docs/readiness.md`; the read-only preview is in
 `docs/ui.md`; the factory comparison that shaped v4.5 is in `docs/review-4-factories.md`; the
 slop/readiness talk is in `docs/review-5-slop.md`; waits and the dispatcher are in
 `docs/waiting-and-dispatch.md`.
