@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 from pathlib import Path
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -64,6 +65,7 @@ class Evidence(BaseModel):
     verdict: Verdict | None = None
     challenge: Challenge | None = None
     findings: list[Finding] = Field(default_factory=list)
+    features: list[dict[str, Any]] = Field(default_factory=list)
     would_block: list[str] = Field(default_factory=list)
     not_tested: list[str] = Field(default_factory=list)
     diff: str = ""
@@ -167,6 +169,25 @@ def render_markdown(evidence: Evidence) -> str:
         lines.append("")
     else:
         lines += ["No structured findings were recorded.", ""]
+    lines += ["## Feature coverage", ""]
+    if evidence.features:
+        lines += ["| Feature | Status | Scenarios |", "|---|---|---|"]
+        for feature in evidence.features:
+            status = (
+                "covered"
+                if feature.get("passed")
+                else "failed"
+                if feature.get("covered")
+                else "not covered"
+            )
+            scenarios = ", ".join(str(item) for item in feature.get("scenarios") or []) or "-"
+            lines.append(
+                f"| {_cell(feature.get('name') or feature.get('id') or '?')} | {status} | "
+                f"{_cell(scenarios)} |"
+            )
+        lines.append("")
+    else:
+        lines += ["No feature map was recorded for this proof.", ""]
     lines += ["## Challenge", ""]
     if evidence.challenge is None:
         lines += ["No independent challenge was run.", ""]

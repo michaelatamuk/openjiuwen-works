@@ -79,14 +79,19 @@ Replay updates the route and receipt in place. `Ctrl+K` opens a command palette;
 Times have one source: the hero, the header and the route all read the reported time from the same
 `task.created` event, so the page cannot show two different “Reported” moments.
 
-## Read-only by construction
+## Read-only by default, writes on request
 
-The server binds to `127.0.0.1` by default and only serves GET/HEAD. A POST returns `405` with a
-plain explanation. It reads `queue/` and `runs/`; it never writes them.
+The server binds to `127.0.0.1` and serves GET/HEAD. A POST returns `405` in the default mode; it
+reads `queue/` and `runs/` and never writes them.
+
+`works ui --write` opens the first write path: a **+ Report a bug** button in the task list context.
+It creates only a `queued` task through `POST /api/tasks` (local-only, `X-Works-Write`, repo/.git,
+reference and title validation), never starts a run and never approves a gate. The same mode lets
+the Evidence readiness panel run `works readiness` through a local POST.
 
 ## Limits
 
-- Basic readiness, no feature map yet.
+- Readiness commands run only in `--write`; the default preview shows static checks.
 - Polling every 15 s, not SSE.
 - No auth; local-only preview.
 - Vanilla HTML/CSS/JS for the preview; the final window is React 19 + TypeScript + Vite + Tailwind +

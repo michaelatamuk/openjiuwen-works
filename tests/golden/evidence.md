@@ -10,7 +10,7 @@
 
 **State** `proved` · **Stop reason** `completed`
 
-**Proof SHA-256** `de79451852989516ee489ef4968a05d19fa46efeedc8845507deca59710bf04a`
+**Proof SHA-256** `095762876505f6056a4c56e83d06a6df0b3668716cefe4141a3b5c2a29badada`
 
 ## Verdict
 
@@ -27,6 +27,10 @@
 | Step | Finding | Confidence | Remaining uncertainty |
 |---|---|---|---|
 | build | add subtracted instead of adding | 0.95 | none observed |
+
+## Feature coverage
+
+No feature map was recorded for this proof.
 
 ## Challenge
 

@@ -304,7 +304,7 @@ def cmd_run(args: argparse.Namespace) -> int:
 
     task = _queue(args).load(args.task_id)
     repository = Path(task.repo)
-    if (repository / ".works" / "readiness.yaml").exists():
+    if args.live:
         from .readiness import assess
 
         report = assess(repository, run_commands=True)
@@ -321,7 +321,8 @@ def cmd_run(args: argparse.Namespace) -> int:
         if report.status == "fail":
             failed = ", ".join(check.id for check in report.checks if check.status == "fail")
             raise PolicyError(
-                f"readiness is red ({failed}); run `works readiness` before automation"
+                f"readiness is red ({failed}); add .works/readiness.yaml "
+                "and run `works readiness` before automation"
             )
 
     if not args.approve_plan and not _is_ci() and sys.stdin.isatty():
@@ -807,17 +808,18 @@ def cmd_ui(args: argparse.Namespace) -> int:
 
     from .ui.server import serve
 
-    if args.write:
-        raise NotImplementedYet("the preview is read-only; write actions land with the full window")
-    server = serve(_paths(args), host=args.host, port=args.port)
+    if args.write and args.read_only:
+        raise ConfigError("use either --write or --read-only, not both")
+    server = serve(_paths(args), host=args.host, port=args.port, write=args.write)
     address = server.server_address
     host = str(address[0])
     port = int(address[1])
     url = f"http://{host}:{port}/"
+    mode = "read-write" if args.write else "read-only"
     if args.json:
-        _emit({"url": url, "readonly": True})
+        _emit({"url": url, "readonly": not args.write, "write": bool(args.write)})
     else:
-        print(f"openJiuwen Works read-only preview: {url}")
+        print(f"openJiuwen Works {mode} preview: {url}")
         print("Press Ctrl+C to stop.")
     if not args.no_open:
         webbrowser.open(url)
@@ -832,14 +834,31 @@ def cmd_ui(args: argparse.Namespace) -> int:
 
 
 def cmd_memory_backfill(args: argparse.Namespace) -> int:
+    from datetime import UTC, datetime
+
     from .memory import NullMemory, PpmaMemory
     from .memory_ops import backfill_runs
 
     url = args.ppma or os.environ.get("WORKS_PPMA_URL")
     if not url and not args.dry_run:
         raise ConfigError("PPMA url is required; pass --ppma or set WORKS_PPMA_URL")
+    since = None
+    if args.since:
+        try:
+            since = datetime.fromisoformat(args.since.replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise ConfigError(f"invalid --since value {args.since!r}") from exc
+        if since.tzinfo is None:
+            since = since.replace(tzinfo=UTC)
     memory = NullMemory() if args.dry_run else PpmaMemory(url or "", space=args.space)
-    entries = backfill_runs(_paths(args), memory, limit=args.limit, dry_run=args.dry_run)
+    entries = backfill_runs(
+        _paths(args),
+        memory,
+        limit=args.limit,
+        dry_run=args.dry_run,
+        task_id=args.task,
+        since=since,
+    )
     counts = {
         status: sum(1 for entry in entries if entry.status == status)
         for status in ("reported", "skipped", "failed")
@@ -894,6 +913,27 @@ def cmd_readiness(args: argparse.Namespace) -> int:
                 print(f"    {item.location}  {item.text}")
         print(f"  {report.note}")
     return EXIT_BLOCKED if report.status == "fail" else 0
+
+
+def cmd_memory_recall(args: argparse.Namespace) -> int:
+    from .memory import PpmaMemory
+
+    url = args.ppma or os.environ.get("WORKS_PPMA_URL")
+    if not url:
+        raise ConfigError("PPMA url is required; pass --ppma or set WORKS_PPMA_URL")
+    memory = PpmaMemory(url, space=args.space)
+    try:
+        statements = memory.recall(view=args.view, limit=args.limit)
+    except RuntimeError as exc:
+        raise ConfigError(str(exc)) from exc
+    if args.json:
+        _emit({"view": args.view, "statements": statements})
+    elif not statements:
+        print("No memory statements.")
+    else:
+        for statement in statements:
+            print(f"- {statement}")
+    return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1031,9 +1071,18 @@ def build_parser() -> argparse.ArgumentParser:
     backfill.add_argument("--ppma", default=None, help="PPMA base URL")
     backfill.add_argument("--space", default="me")
     backfill.add_argument("--limit", type=int, default=None)
+    backfill.add_argument("--task", default=None)
+    backfill.add_argument("--since", default=None)
     backfill.add_argument("--dry-run", action="store_true")
     backfill.add_argument("--json", action="store_true")
     backfill.set_defaults(func=cmd_memory_backfill)
+    recall = memory_sub.add_parser("recall", help="Read PPMA memory statements")
+    recall.add_argument("--ppma", default=None, help="PPMA base URL")
+    recall.add_argument("--space", default="me")
+    recall.add_argument("--view", default="about_me")
+    recall.add_argument("--limit", type=int, default=8)
+    recall.add_argument("--json", action="store_true")
+    recall.set_defaults(func=cmd_memory_recall)
 
     risk = sub.add_parser("risk", help="Show the latest risk rating")
     risk.add_argument("task_id")

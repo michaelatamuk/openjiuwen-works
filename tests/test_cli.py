@@ -153,10 +153,10 @@ def test_version_speaks_json(paths) -> None:
     assert payload(result)["version"] == "0.0.1"
 
 
-def test_ui_write_is_refused(paths) -> None:
-    result = invoke(paths, "ui", "--write", "--json")
-    assert result.exit_code == 2
-    assert "read-only" in result.stdout
+def test_ui_write_and_read_only_are_exclusive(paths) -> None:
+    result = invoke(paths, "ui", "--write", "--read-only", "--json")
+    assert result.exit_code == 6
+    assert "either --write or --read-only" in result.stdout
 
 
 def test_risk_gate_flake_and_decision_replay(paths, repo, factory_root) -> None:

@@ -1,6 +1,6 @@
 # Development plan — openJiuwen Works
 
-**Status:** v4.23 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
+**Status:** v4.24 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
 
 Every task is a checkbox, checked when its criteria are met and the change is merged. `S/M/L`:
 S ≤ half a day, M ≤ two days, L ≤ a week. Nothing is checked because it was started.
@@ -681,6 +681,11 @@ Internal only: nothing is published to the upstream fork until M2 is green.
     Each send records `memory.reported` (or `memory.failed`), and Story/Evidence show the honest
     memory status; a second backfill does not duplicate the local event.
   - Still open: automatic PPMA E2E in CI and recall (T2.21).
+- [x] **T1.27** GUI report intake: `works ui --write`, `POST /api/tasks`, a `+ Report a bug` button
+  in the task list context and a form that creates only a `queued` task. **S**
+  - Done 2026-11-21: local-only POST, `X-Works-Write` header, repo/.git/ref/title validation,
+    duplicate source returns the existing task, read-only mode still returns 405. The button is
+    hidden unless write mode is on; no run or gate is started from the form.
 
 **Demo M1:** two real issues go from ticket to proof, twice in a row, with scenarios written first.
 
@@ -712,11 +717,12 @@ Internal only: nothing is published to the upstream fork until M2 is green.
   “understandable to an unfamiliar engineer”, kept charts and evidence-backed next step. **M**
 - [ ] **T2.13** Service identity: the verifier and builder run under scoped identities; every
   action is attributable to a run, not to the developer’s user. **M**
-- [ ] **T2.14** Decision quality: install the pinned `laix==0.18.0` behind the `works[decision]`
-  extra, run 20 historical gate cases through real LAIX and the current deterministic rule; compare
-  verb, approval and reason code; any case where LAIX allows what the policy or verifier refuses is
-  a defect in the adapter, not a policy change. Adapter tests with a fake `LaixGate` are necessary
-  but not enough; CI and docs must show the real package. **M**
+- [ ] **T2.14** Decision quality: install the pinned `laix==0.18.0` from the local checkout (the PyPI
+  `laix` name is an unrelated `0.0.0` placeholder), run 20 historical gate cases through real LAIX
+  and the current deterministic rule; compare verb, approval and reason code; any case where LAIX
+  allows what the policy or verifier refuses is a defect in the adapter, not a policy change.
+  Adapter tests with a fake `LaixGate` are necessary but not enough; CI and docs must show the real
+  package. **M**
 - [ ] **T2.15** Run the change: a `preview` node boots the product, drives one user path and attaches
   screen, log and trace to the proof; a per-product `verify` command is versioned, fast and
   stress-tested. Cheap checks run before expensive ones. **M**
@@ -731,8 +737,9 @@ Internal only: nothing is published to the upstream fork until M2 is green.
   in the verifier. **M**
   - 2026-11-21: `.works/readiness.yaml`, `works readiness`, exact suppression audit, feature-map
     presence, `EXIT_BLOCKED` red gate, `readiness.checked` event, run-time refusal for configured
-    repositories, and the Evidence panel are in. Open: import-graph/structural checks inside the
-    independent verifier and the feature-map content check (T2.19).
+    repositories, and the Evidence panel are in. Live runs now require a green gate even without a
+    config; the Evidence panel can run the checks in `--write` mode. Open: import-graph/structural
+    checks inside the independent verifier and the feature-map content check (T2.19).
 - [ ] **T2.19** Feature map and runtime artifacts: versioned `features/<product>.yaml` with id, user
   path, selectors or command and expected observation; `preview` attaches screenshot, video, log and
   trace; proof shows covered and uncovered features. **M**
@@ -1104,6 +1111,11 @@ agents, a zoo of model providers before M3, and autonomous merge without the two
 
 ## 20. Changelog
 
+- **v4.24** — report intake and readiness execution: `works ui --write` adds a sidebar
+  `+ Report a bug` form that creates only a queued task (local POST, header, repo/.git validation,
+  duplicate idempotency), while read-only remains 405. Live runs now require a green readiness gate;
+  Evidence can run the checks in write mode. The LAIX `decision` extra is declared, and the demo
+  script falls back to an unlocked sibling workspace on Windows.
 - **v4.23** — feature maps become evidence: versioned `features/<product>.yaml` with user paths,
   expected observations and scenario ids; the loader validates them, readiness fails on an invalid
   or empty map, and Evidence shows each feature as covered, failed or not covered by the proof.

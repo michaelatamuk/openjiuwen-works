@@ -760,7 +760,7 @@ class Supervisor:
                 findings.append(Finding.model_validate(event.data))
             except ValidationError as exc:
                 LOG.warning("ignoring a malformed finding: %s", exc)
-        evidence = Evidence(
+        draft = Evidence(
             run_id=ctx.run_id,
             task_id=ctx.task.id,
             flow=ctx.flow.flow,
@@ -791,7 +791,11 @@ class Supervisor:
             findings=findings,
             would_block=ctx.would_block,
             diff=diff,
-        ).bind()
+        )
+        from .features import feature_summary
+
+        features = feature_summary(Path(ctx.task.repo), draft.model_dump(mode="json"))["features"]
+        evidence = draft.model_copy(update={"features": features}).bind()
         _, md_path = write_evidence(ctx.run_dir, evidence)
         last_decision = ctx.decisions[-1] if ctx.decisions else None
         record = RunRecord(

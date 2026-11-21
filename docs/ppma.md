@@ -75,7 +75,8 @@ on `POST /v0/spaces/me/messages`.
 ## Read side
 
 The read side (`/v0/spaces/me/memory/views`, `/plans`, `/dispatches`) is available for the memory
-loop. Works does not read it back yet; recall before interrupting a person is T2.21.
+loop. `works memory recall --ppma URL --view about_me` reads memory statements for an operator;
+automatic recall before interrupting a person is T2.21.
 
 ## Failure behaviour
 

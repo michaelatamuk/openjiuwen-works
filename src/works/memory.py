@@ -188,6 +188,26 @@ class PpmaMemory:
             ],
         }
 
+    def recall(self, *, view: str = "about_me", limit: int = 8) -> list[str]:
+        """Read memory statements for a human-readable recall; never invents an answer."""
+        status, payload = self._call(
+            "GET",
+            f"/v0/spaces/{self._space}/memory/views/{view}",
+            None,
+            self._owner_token,
+        )
+        if status != 200 or not isinstance(payload, dict):
+            raise RuntimeError(f"PPMA refused a recall: {status} {payload}")
+        statements = payload.get("statements")
+        if not isinstance(statements, list):
+            return []
+        texts = [
+            str(item.get("text"))
+            for item in statements
+            if isinstance(item, dict) and item.get("text")
+        ]
+        return texts[: max(0, limit)]
+
     def record(self, *, task: Task, record: RunRecord, evidence: Evidence) -> None:
         if self._app_token is None:
             self._register()

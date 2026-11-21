@@ -31,6 +31,8 @@
           <button type="button" class="filter" data-filter="done">Done</button>
         </div>
 
+        <button class="btn report-btn" id="report" type="button" hidden>+ Report a bug</button>
+
         <div id="task-list" class="task-list" aria-live="polite"></div>
       </aside>
 
@@ -65,6 +67,29 @@
       <div id="palette-results" class="palette-results"></div>
     </dialog>
 
+    <dialog id="report-dialog" aria-labelledby="report-title">
+      <h2 id="report-title">Report a bug</h2>
+      <form id="report-form">
+        <label>Repository
+          <input name="repo" required placeholder="C:\path\to\repo" autocomplete="off" />
+        </label>
+        <label>Product
+          <input name="product" value="openjiuwen" required />
+        </label>
+        <label>Reference
+          <input name="ref" required placeholder="GH-123" autocomplete="off" />
+        </label>
+        <label>Title
+          <input name="title" required placeholder="What went wrong?" autocomplete="off" />
+        </label>
+        <p class="small muted">This only adds a queued task. It never starts a run or approves a gate.</p>
+        <div class="dialog-actions">
+          <button type="button" class="btn ghost" id="report-cancel">Cancel</button>
+          <button type="submit" class="btn">Create task</button>
+        </div>
+      </form>
+    </dialog>
+
     <dialog id="help" aria-labelledby="help-title">
       <h2 id="help-title">Keyboard</h2>
       <dl>
@@ -74,6 +99,7 @@
         <dt><kbd>r</kbd></dt><dd>Refresh</dd>
         <dt><kbd>t</kbd></dt><dd>Toggle theme</dd>
         <dt><kbd>c</kbd></dt><dd>Present mode</dd>
+        <dt><kbd>n</kbd></dt><dd>Report a bug (write mode)</dd>
         <dt><kbd>?</kbd></dt><dd>This help</dd>
         <dt><kbd>Esc</kbd></dt><dd>Clear search or close help</dd>
       </dl>

@@ -9,7 +9,7 @@ import pytest
 
 from works.cli import main
 from works.errors import PolicyError
-from works.readiness import assess, ensure_ready
+from works.readiness import BoundaryRule, assess, ensure_ready, import_violations
 
 
 def _repo(tmp_path: Path, *, command: str | None = None, allow: list[str] | None = None) -> Path:
@@ -54,7 +54,7 @@ def test_a_configured_repository_is_green(tmp_path) -> None:
     report = assess(_repo(tmp_path))
 
     assert report.status == "pass"
-    assert report.passed == report.total == 10
+    assert report.passed == report.total == 11
     assert all(check.status == "pass" for check in report.checks)
 
 
@@ -104,3 +104,15 @@ def test_ensure_ready_refuses_a_red_repository(tmp_path) -> None:
 
     with pytest.raises(PolicyError, match="readiness is red"):
         ensure_ready(repo)
+
+
+def test_import_boundaries_find_a_denied_edge(tmp_path) -> None:
+    (tmp_path / "src" / "works" / "ui").mkdir(parents=True)
+    (tmp_path / "src" / "works" / "ui" / "app.py").write_text(
+        "from works.supervisor import Supervisor\n", encoding="utf-8"
+    )
+    rule = BoundaryRule(**{"from": "works.ui", "deny": ["works.supervisor"]})
+
+    violations = import_violations(tmp_path, [rule])
+
+    assert violations == ["works.ui.app imports works.supervisor (denied by works.ui)"]

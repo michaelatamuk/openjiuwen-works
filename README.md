@@ -70,6 +70,7 @@ the ledger row. No model and no network are used.
 | `works run <task> --live …` | The same loop with the real `openjiuwen` Claude Code harness |
 | `works run <task> --ppma URL` | Report the finished run to PPMA memory over its north contract |
 | `works memory backfill --ppma URL` | Send already-finished local runs to PPMA; `--dry-run`, idempotent |
+| `works memory recall --ppma URL` | Read PPMA memory statements for an operator |
 | `works wait <task> --on review` | Wait for a review/CI/deploy event instead of blocking |
 | `works wake <task> --event …` | Wake a waiting task and advance to its next state |
 | `works dispatch` | Claim and run ready tasks; `--watch` keeps the loop alive |
@@ -77,6 +78,7 @@ the ledger row. No model and no network are used.
 | `works finding add/list <task>` | Structured findings with confidence and uncertainty |
 | `works metrics` | Attention, waiting time and cost derived from events and the ledger |
 | `works ui` | Opens the read-only preview: queue, proof, risk, decision, readiness |
+| `works ui --write` | Adds report intake (`+ Report a bug`, queued only) and readiness execution |
 | `works ledger` | Reads the append-only ledger |
 | `works schema --json` | Prints every persisted JSON Schema and its version |
 | `works doctor` | Checks Python, git, workspace, flow, harness, container, credentials, isolation |
@@ -109,14 +111,14 @@ in v0 — no silent retry, no "trust the builder".
 | Verifier | The local scenario runner stands in; the container and provider split land in M2 |
 | Release | The loop stops at `proved`; branch, PR and the issue comment land in M3 |
 | Memory | Finished runs are posted to PPMA (`works.run_finished`), `works memory backfill` sends older local runs, and Story/Evidence show the recorded sync status; recall and lessons are T2.21 |
-| Decision layer | `DecisionPort` + `LaixGate` off by default, shadow opt-in; `works decision replay` runs 20 fixture cases with a fake adapter. Real pinned LAIX replay is T2.14 |
+| Decision layer | `DecisionPort` + `LaixGate` are off by default, shadow opt-in; `works decision replay` runs 20 fixture cases. Real LAIX must come from the local checkout because the PyPI `laix` name is an unrelated placeholder; T2.14 |
 | Gate integrity | Trusted-base flows/checks, `checks_sha`, exact-commit approval and a separate `check-change` task kind are in; the trusted verifier image lands with M2 |
 | Risk rating | `low/medium/high`, owners, required reviewers and deeper verification are computed and shown by `works risk`; release-gate routing still open |
 | Observe mode | `off/observe/enforce` for policy, nodes and risk; `works gate report` lists decisions and `would_block`; review checks land with T2.17 |
 | Readiness | `works readiness` runs lint, format, types, fast tests, product verify and architecture from `.works/readiness.yaml`, audits suppressions and requires a feature map; a red gate exits 8 and refuses autonomous runs. Import-graph checks in the verifier remain M2 |
 | Feature map | `features/<product>.yaml` declares user paths and expected observations; Evidence shows covered/failed/not-covered from the proof's scenarios. Preview artifacts and selector checks remain T2.19 |
 | Verification cost | Builder/challenger/verifier split in the proof lands with T1.25 |
-| GUI | `works ui` opens **Story** (default) for people — a gray **Reported** origin, then five Mira stops: **Picked up → Confirmed → Fixed → Checked → Delivered**, each not started / Mira is here / done / stopped; full-body Mira at the current stop, Present mode, replay behind “How we got here”, and a specific blocked rail — with **Evidence** for engineers one click away. Write actions, the full React/Vite window, SSE and Playwright are later |
+| GUI | `works ui` opens **Story** (default) for people — a gray **Reported** origin, then five Mira stops: **Picked up → Confirmed → Fixed → Checked → Delivered**, each not started / Mira is here / done / stopped; full-body Mira at the current stop, Present mode, replay behind “How we got here”, and a specific blocked rail — with **Evidence** for engineers one click away. `--write` adds `+ Report a bug` (queued only) and a readiness runner. The full React/Vite window, SSE and Playwright are later |
 
 The fixture bug is deliberate: `add` subtracts. The good trace fixes it, the sneaky trace passes
 the visible test but fails a P0 holdout, and the test-edit trace is refused by policy.

@@ -41,9 +41,10 @@ works readiness --repo . --no-run     # static checks only
 Exit code `0` is green, `8` (`EXIT_BLOCKED`) is red. `--json` returns every check, the suppression
 list, unknown suppressions and the feature files.
 
-`works run` also checks readiness before an autonomous run when the repository has
-`.works/readiness.yaml`; a red gate appends `readiness.checked` and refuses with `policy_error`
-before the builder starts. Repositories without the config keep the old behaviour until they opt in.
+`works run --live` also checks readiness before an autonomous run; a red gate appends
+`readiness.checked` and refuses with `policy_error` before the builder starts. Without
+`.works/readiness.yaml` every command check is red, so a live run is refused until the repository
+opts in. Recorded (`--trace`) runs are not gated.
 
 ## What is checked
 
@@ -58,7 +59,9 @@ before the builder starts. Repositories without the config keep the old behaviou
 | Product verify | the product's own smoke/verify command |
 | Architecture boundaries | the repository's structural check |
 
-The GUI Evidence panel shows the static result; commands are not run from a GET request.
+The GUI Evidence panel shows the static result; commands are not run from a GET request. In
+`works ui --write` it also offers **Run checks**, which runs the full gate through a local-only
+`POST /api/readiness` and replaces the panel with the result.
 
 ## Open
 

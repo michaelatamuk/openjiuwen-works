@@ -9,6 +9,7 @@ later.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
@@ -71,45 +72,51 @@ def backfill_runs(
     *,
     limit: int | None = None,
     dry_run: bool = False,
+    task_id: str | None = None,
+    since: datetime | None = None,
 ) -> list[BackfillEntry]:
     """Report every readable finished run, newest first, and never stop at the first bad one."""
     run_files = sorted(paths.runs.glob("*/run.json"), reverse=True)
-    if limit is not None:
-        run_files = run_files[: max(0, limit)]
     entries: list[BackfillEntry] = []
     for run_file in run_files:
         run_id = run_file.parent.name
-        task_id = ""
+        task_id_found = ""
         try:
             record, evidence, task = _read_run(paths, run_file)
-            task_id = record.task_id
+            task_id_found = record.task_id
+            if task_id is not None and record.task_id != task_id:
+                continue
+            if since is not None and record.finished_at < since:
+                continue
+            if limit is not None and len(entries) >= max(0, limit):
+                break
             if dry_run:
-                entries.append(BackfillEntry(run_id, task_id, "dry-run"))
+                entries.append(BackfillEntry(run_id, task_id_found, "dry-run"))
                 continue
             try:
                 memory.record(task=task, record=record, evidence=evidence)
             except Exception as exc:
                 _append_memory_event(
                     paths,
-                    task_id,
+                    task_id_found,
                     "memory.failed",
                     record.run_id,
                     error=str(exc)[:500],
                     via="backfill",
                 )
-                entries.append(BackfillEntry(run_id, task_id, "failed", str(exc)))
+                entries.append(BackfillEntry(run_id, task_id_found, "failed", str(exc)))
                 continue
             _append_memory_event(
                 paths,
-                task_id,
+                task_id_found,
                 "memory.reported",
                 record.run_id,
                 app="ppma",
                 via="backfill",
             )
-            entries.append(BackfillEntry(run_id, task_id, "reported"))
+            entries.append(BackfillEntry(run_id, task_id_found, "reported"))
         except FileNotFoundError:
-            entries.append(BackfillEntry(run_id, task_id, "skipped", "no evidence.json"))
+            entries.append(BackfillEntry(run_id, task_id_found, "skipped", "no evidence.json"))
         except Exception as exc:  # one bad run must not hide the rest
-            entries.append(BackfillEntry(run_id, task_id, "failed", str(exc)))
+            entries.append(BackfillEntry(run_id, task_id_found, "failed", str(exc)))
     return entries

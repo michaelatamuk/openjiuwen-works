@@ -7,6 +7,7 @@ refusal, not a warning; the caller decides whether to block an autonomous run.
 
 from __future__ import annotations
 
+import ast
 import io
 import re
 import shlex
@@ -20,7 +21,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from .errors import ConfigError, PolicyError
 from .features import feature_files as mapped_feature_files
@@ -71,11 +72,23 @@ class Suppressions(BaseModel):
     allow: list[str] = Field(default_factory=list)
 
 
+class BoundaryRule(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    source: str = Field(alias="from", min_length=1)
+    deny: list[str] = Field(default_factory=list)
+
+
+class Boundaries(BaseModel):
+    rules: list[BoundaryRule] = Field(default_factory=list)
+
+
 class ReadinessSpec(BaseModel):
     schema_version: int = 1
     features: str = "features"
     commands: Commands = Field(default_factory=Commands)
     suppressions: Suppressions = Field(default_factory=Suppressions)
+    boundaries: Boundaries = Field(default_factory=Boundaries)
 
 
 @dataclass(frozen=True)
@@ -201,6 +214,41 @@ def find_suppressions(repo: Path) -> list[SuppressionFinding]:
     return found
 
 
+def _module_name(repo: Path, path: Path) -> str:
+    relative = path.relative_to(repo)
+    parts = list(relative.with_suffix("").parts)
+    if parts and parts[0] in ("src", "lib"):
+        parts = parts[1:]
+    if parts and parts[-1] == "__init__":
+        parts = parts[:-1]
+    return ".".join(parts)
+
+
+def import_violations(repo: Path, rules: list[BoundaryRule]) -> list[str]:
+    if not rules:
+        return []
+    violations: list[str] = []
+    for path, _relative in _iter_python_files(repo):
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8", errors="replace"))
+        except (OSError, SyntaxError):
+            continue
+        module = _module_name(repo, path)
+        imported: list[str] = []
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                imported.extend(alias.name for alias in node.names)
+            elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
+                imported.append(node.module)
+        for rule in rules:
+            if not module.startswith(rule.source):
+                continue
+            for name in imported:
+                if any(name == denied or name.startswith(f"{denied}.") for denied in rule.deny):
+                    violations.append(f"{module} imports {name} (denied by {rule.source})")
+    return sorted(set(violations))
+
+
 def _run_command(repo: Path, command: str, timeout_s: int) -> CheckResult:
     argv = [sys.executable if part == "{python}" else part for part in shlex.split(command)]
     started = time.monotonic()
@@ -286,6 +334,17 @@ def assess(
             "Known suppressions",
             "pass" if not unknown else "fail",
             f"{len(suppressions)} found, {len(unknown)} unknown" if suppressions else "none found",
+        )
+    )
+
+    rules = spec.boundaries.rules if spec is not None else []
+    violations = import_violations(repo, rules)
+    checks.append(
+        CheckResult(
+            "imports",
+            "Import boundaries",
+            "pass" if not violations else "fail",
+            f"{len(violations)} violation(s)" if violations else f"{len(rules)} rule(s)",
         )
     )
 

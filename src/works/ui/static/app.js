@@ -8,8 +8,10 @@ const state = {
   filter: "all",
   query: "",
   view: localStorage.getItem("works.view.v3") || "story",
-  storyAt: null,  storySelected: null,
+  storyAt: null,
+  storySelected: null,
   storyTimer: null,
+  writable: false,
 };
 
 const stateHuman = {
@@ -202,11 +204,17 @@ function diffBlock(diff) {
   return `<pre class="diff">${lines.join("\n")}</pre>`;
 }
 
-async function api(path) {
-  const response = await fetch(path, { headers: { Accept: "application/json" } });
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(body.error || `${response.status} ${response.statusText}`);
-  return body;
+async function api(path, options = {}) {
+  const headers = { Accept: "application/json", ...(options.headers || {}) };
+  let body = options.body;
+  if (body && typeof body !== "string") {
+    headers["Content-Type"] = "application/json";
+    body = JSON.stringify(body);
+  }
+  const response = await fetch(path, { ...options, headers, body });
+  const parsed = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(parsed.error || `${response.status} ${response.statusText}`);
+  return parsed;
 }
 
 function toast(message) {
@@ -361,11 +369,15 @@ function renderReadiness(detail) {
     })
     .join("");
   const ratio = readiness.total ? Math.round((readiness.passed / readiness.total) * 100) : 0;
+  const run = state.writable
+    ? `<button type="button" class="btn ghost" data-action="run-readiness">Run checks</button>`
+    : "";
   return card(
     "Readiness",
     `${checks}
     <div class="progress"><i style="width:${ratio}%"></i></div>
-    <p class="muted small" style="margin:10px 0 0">${esc(readiness.note)}</p>`,
+    <p class="muted small" style="margin:10px 0 0">${esc(readiness.note)}</p>
+    ${run}`,
     { actions: `${esc(readiness.passed)}/${esc(readiness.total)}` },
   );
 }
@@ -1240,6 +1252,26 @@ function bindView() {
       }
     });
   });
+  $$("#detail [data-action='run-readiness']").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const detail = state.detail;
+      if (!detail || !state.writable) return;
+      button.disabled = true;
+      try {
+        const result = await api("/api/readiness", {
+          method: "POST",
+          headers: { "X-Works-Write": "1" },
+          body: { repo: detail.task.repo },
+        });
+        detail.readiness = result;
+        toast(result.status === "pass" ? "Readiness is green." : "Readiness is red.");
+        renderDetail();
+      } catch (error) {
+        toast(`Readiness failed: ${error.message}`);
+        button.disabled = false;
+      }
+    });
+  });
 }
 
 function setView(view) {
@@ -1297,6 +1329,55 @@ function clearSelection(updateHash = true) {
   $("#subtitle").textContent = "Select a report to read its story and evidence.";
   renderTasks();
   renderDetail();
+}
+
+async function loadHealth() {
+  const health = await api("/api/health");
+  state.writable = Boolean(health.write);
+  $("#report").hidden = !state.writable;
+  if (state.detail) renderDetail();
+}
+
+function openReport() {
+  if (!state.writable) return;
+  const dialog = $("#report-dialog");
+  const form = $("#report-form");
+  form.elements.repo.value =
+    state.detail?.task?.repo || localStorage.getItem("works.repo") || "";
+  dialog.showModal();
+  form.elements.repo.focus();
+}
+
+async function submitReport(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const button = form.querySelector("button[type='submit']");
+  const data = new FormData(form);
+  const body = {
+    repo: String(data.get("repo") || "").trim(),
+    product: String(data.get("product") || "").trim(),
+    ref: String(data.get("ref") || "").trim(),
+    title: String(data.get("title") || "").trim(),
+    kind: "manual",
+  };
+  button.disabled = true;
+  try {
+    const result = await api("/api/tasks", {
+      method: "POST",
+      headers: { "X-Works-Write": "1" },
+      body,
+    });
+    localStorage.setItem("works.repo", body.repo);
+    $("#report-dialog").close();
+    form.reset();
+    await loadTasks();
+    selectTask(result.task.id);
+    toast(result.created ? `Reported ${result.task.id}. It is queued.` : `${result.task.id} was already reported.`);
+  } catch (error) {
+    toast(`Report failed: ${error.message}`);
+  } finally {
+    button.disabled = false;
+  }
 }
 
 async function loadTasks() {
@@ -1420,6 +1501,9 @@ function bind() {
   $("#theme").addEventListener("click", toggleTheme);
   $("#density").addEventListener("click", toggleDensity);
   $("#cmdk").addEventListener("click", openPalette);
+  $("#report").addEventListener("click", openReport);
+  $("#report-cancel").addEventListener("click", () => $("#report-dialog").close());
+  $("#report-form").addEventListener("submit", submitReport);
   $("#palette-input").addEventListener("input", (event) => renderPalette(event.target.value));
   $("#palette-input").addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
@@ -1463,6 +1547,11 @@ function bind() {
       toggleCinema();
       return;
     }
+    if (event.key === "n" && !typing && state.writable) {
+      event.preventDefault();
+      openReport();
+      return;
+    }
     if (event.key === "?" && !typing) {
       event.preventDefault();
       $("#help").showModal();
@@ -1504,6 +1593,7 @@ function boot() {
   applyTheme(storedTheme || (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark"));
   applyDensity(storedDensity || "comfortable");
   bind();
+  void loadHealth().catch(() => {});
   applyHash();
 }
 

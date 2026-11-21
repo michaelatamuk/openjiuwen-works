@@ -13,8 +13,8 @@ from works.ui.server import serve
 
 
 @contextmanager
-def running(paths) -> Iterator[str]:
-    server = serve(paths, host="127.0.0.1", port=0)
+def running(paths, *, write: bool = False) -> Iterator[str]:
+    server = serve(paths, host="127.0.0.1", port=0, write=write)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     host, port = server.server_address[:2]
@@ -29,6 +29,23 @@ def running(paths) -> Iterator[str]:
 def get(base: str, path: str) -> tuple[int, str]:
     try:
         with urlopen(f"{base}{path}", timeout=10) as response:
+            return response.status, response.read().decode("utf-8")
+    except HTTPError as exc:
+        return exc.code, exc.read().decode("utf-8")
+
+
+def post(base: str, path: str, payload: dict, *, header: bool = True) -> tuple[int, str]:
+    headers = {"Content-Type": "application/json"}
+    if header:
+        headers["X-Works-Write"] = "1"
+    request = Request(
+        f"{base}{path}",
+        data=json.dumps(payload).encode("utf-8"),
+        headers=headers,
+        method="POST",
+    )
+    try:
+        with urlopen(request, timeout=10) as response:
             return response.status, response.read().decode("utf-8")
     except HTTPError as exc:
         return exc.code, exc.read().decode("utf-8")
@@ -150,3 +167,68 @@ def test_unknown_task_is_a_404(paths) -> None:
         status, body = get(base, "/api/tasks/t-absent")
         assert status == 404
         assert "error" in json.loads(body)
+
+
+def test_report_intake_is_refused_in_read_only(paths, repo) -> None:
+    with running(paths) as base:
+        status, body = post(
+            base,
+            "/api/tasks",
+            {"repo": str(repo.path), "ref": "BUG-1", "title": "It broke"},
+        )
+        assert status == 405
+        assert "read-only" in json.loads(body)["error"]
+
+
+def test_report_intake_creates_only_a_queued_task(paths, repo) -> None:
+    payload = {
+        "repo": str(repo.path),
+        "product": "Blender",
+        "ref": "BLENDER-1",
+        "title": "The preview flickers",
+    }
+    with running(paths, write=True) as base:
+        status, health = get(base, "/api/health")
+        assert status == 200
+        assert json.loads(health)["write"] is True
+
+        status, body = post(base, "/api/tasks", payload)
+        assert status == 201, body
+        created = json.loads(body)
+        assert created["created"] is True
+        assert created["task"]["state"] == "queued"
+        assert created["task"]["product"] == "Blender"
+
+        status, body = post(base, "/api/tasks", payload)
+        assert status == 200
+        assert json.loads(body)["created"] is False
+
+
+def test_report_requires_the_write_header_and_a_repository(paths, repo) -> None:
+    with running(paths, write=True) as base:
+        status, _ = post(
+            base,
+            "/api/tasks",
+            {"repo": str(repo.path), "ref": "BUG-1", "title": "It broke"},
+            header=False,
+        )
+        assert status == 403
+        status, body = post(
+            base,
+            "/api/tasks",
+            {"repo": str(paths.root / "absent"), "ref": "BUG-1", "title": "It broke"},
+        )
+        assert status == 400
+        assert "does not exist" in json.loads(body)["error"]
+
+
+def test_readiness_runs_only_in_write_mode(paths, repo) -> None:
+    with running(paths, write=True) as base:
+        status, body = post(base, "/api/readiness", {"repo": str(repo.path)})
+        assert status == 200, body
+        report = json.loads(body)
+        assert report["status"] == "fail"
+        assert report["checks"]
+    with running(paths) as base:
+        status, _ = post(base, "/api/readiness", {"repo": str(repo.path)})
+        assert status == 405

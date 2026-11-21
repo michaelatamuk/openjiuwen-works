@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -11,10 +12,11 @@ from typing import Any, cast
 from urllib.parse import parse_qs, unquote, urlparse
 
 from ..config import WorksPaths
+from ..errors import ConfigError
 from ..ledger import Ledger
 from ..metrics import collect
 from ..queue import Queue
-from ..records import Event, Task
+from ..records import Event, Source, SourceKind, Task, TaskKind
 
 LOG = logging.getLogger("works.ui")
 STATIC = {
@@ -509,6 +511,8 @@ def _tasks(queue: Queue, limit: int) -> list[dict[str, Any]]:
 
 class WorksHTTPServer(ThreadingHTTPServer):
     paths: WorksPaths
+    writable: bool = False
+    write_lock: threading.Lock
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -518,6 +522,10 @@ class Handler(BaseHTTPRequestHandler):
     @property
     def paths(self) -> WorksPaths:
         return cast(WorksHTTPServer, self.server).paths
+
+    @property
+    def writable(self) -> bool:
+        return cast(WorksHTTPServer, self.server).writable
 
     def do_HEAD(self) -> None:
         self._static(head=True)
@@ -530,9 +538,106 @@ class Handler(BaseHTTPRequestHandler):
             self._static()
 
     def do_POST(self) -> None:
+        if not self.writable:
+            self._json(
+                HTTPStatus.METHOD_NOT_ALLOWED,
+                {"ok": False, "error": "read-only preview; start `works ui --write` to report"},
+            )
+            return
+        if urlparse(self.path).path not in ("/api/tasks", "/api/readiness"):
+            self._json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "unknown endpoint"})
+            return
+        if self.client_address[0] not in ("127.0.0.1", "::1"):
+            self._json(HTTPStatus.FORBIDDEN, {"ok": False, "error": "local requests only"})
+            return
+        if self.headers.get("X-Works-Write") != "1":
+            self._json(
+                HTTPStatus.FORBIDDEN,
+                {"ok": False, "error": "missing X-Works-Write header"},
+            )
+            return
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            length = 0
+        if length <= 0 or length > 65_536:
+            self._json(HTTPStatus.BAD_REQUEST, {"ok": False, "error": "invalid body size"})
+            return
+        try:
+            payload = json.loads(self.rfile.read(length).decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            self._json(HTTPStatus.BAD_REQUEST, {"ok": False, "error": "invalid JSON"})
+            return
+        if not isinstance(payload, dict):
+            self._json(HTTPStatus.BAD_REQUEST, {"ok": False, "error": "body must be an object"})
+            return
+        try:
+            if urlparse(self.path).path == "/api/readiness":
+                self._run_readiness(payload)
+            else:
+                self._create_task(payload)
+        except (ConfigError, ValueError) as exc:
+            self._json(HTTPStatus.BAD_REQUEST, {"ok": False, "error": str(exc)})
+        except Exception as exc:  # a write failure must not leak a trace
+            LOG.warning("report failed: %s", exc, exc_info=True)
+            self._json(HTTPStatus.INTERNAL_SERVER_ERROR, {"ok": False, "error": str(exc)})
+
+    def _run_readiness(self, payload: dict[str, Any]) -> None:
+        from ..readiness import assess
+
+        repo_raw = str(payload.get("repo") or "").strip()
+        if not repo_raw:
+            raise ValueError("repository path is required")
+        repo = Path(repo_raw).expanduser()
+        repo = (Path.cwd() / repo).resolve() if not repo.is_absolute() else repo.resolve()
+        if not repo.is_dir():
+            raise ValueError(f"repository does not exist: {repo}")
+        report = assess(repo, run_commands=True)
+        self._json(HTTPStatus.OK, {"ok": report.status != "fail", **report.as_dict()})
+
+    def _create_task(self, payload: dict[str, Any]) -> None:
+        repo_raw = str(payload.get("repo") or "").strip()
+        ref = str(payload.get("ref") or "").strip()
+        title = str(payload.get("title") or "").strip()
+        product = str(payload.get("product") or "openjiuwen").strip()
+        flow = str(payload.get("flow") or "fix-issue").strip()
+        if not repo_raw:
+            raise ValueError("repository path is required")
+        repo = Path(repo_raw).expanduser()
+        repo = (Path.cwd() / repo).resolve() if not repo.is_absolute() else repo.resolve()
+        if not repo.is_dir():
+            raise ValueError(f"repository does not exist: {repo}")
+        if not (repo / ".git").exists():
+            raise ValueError(f"not a git repository: {repo}")
+        if not ref or not title:
+            raise ValueError("reference and title are required")
+        if len(ref) > 120 or len(title) > 240:
+            raise ValueError("reference or title is too long")
+        try:
+            source_kind = SourceKind(str(payload.get("kind") or "manual"))
+        except ValueError as exc:
+            raise ValueError("kind must be manual, tracker or detector") from exc
+        try:
+            task_kind = TaskKind(str(payload.get("task_kind") or "fix"))
+        except ValueError as exc:
+            raise ValueError("task_kind must be fix or check-change") from exc
+        queue = Queue(self.paths)
+        with cast(WorksHTTPServer, self.server).write_lock:
+            task, created = queue.submit(
+                source=Source(kind=source_kind, ref=ref, title=title),
+                flow=flow,
+                product=product,
+                repo=str(repo),
+                task_kind=task_kind,
+            )
         self._json(
-            HTTPStatus.METHOD_NOT_ALLOWED,
-            {"ok": False, "error": "read-only preview; no write actions"},
+            HTTPStatus.CREATED if created else HTTPStatus.OK,
+            {
+                "ok": True,
+                "created": created,
+                "task": task.model_dump(mode="json"),
+                "url": f"#/task/{task.id}/story",
+            },
         )
 
     def _api(self, path: str, query: dict[str, list[str]]) -> None:
@@ -543,7 +648,8 @@ class Handler(BaseHTTPRequestHandler):
                     HTTPStatus.OK,
                     {
                         "ok": True,
-                        "readonly": True,
+                        "readonly": not self.writable,
+                        "write": self.writable,
                         "root": str(self.paths.root),
                         "version": "0.0.1",
                     },
@@ -617,7 +723,15 @@ def _content_type(path: Path) -> str:
     }.get(path.suffix, "application/octet-stream")
 
 
-def serve(paths: WorksPaths, *, host: str = "127.0.0.1", port: int = 8765) -> WorksHTTPServer:
+def serve(
+    paths: WorksPaths,
+    *,
+    host: str = "127.0.0.1",
+    port: int = 8765,
+    write: bool = False,
+) -> WorksHTTPServer:
     server = WorksHTTPServer((host, port), Handler)
     server.paths = paths
+    server.writable = write
+    server.write_lock = threading.Lock()
     return server

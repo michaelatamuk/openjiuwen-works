@@ -7,9 +7,9 @@ policy, verifier, ledger and proof.
 
 **Status: adapter implemented, runtime not active.** `DecisionPort`, `DeterministicGate`,
 `ShadowGate`, `LaixGate` and `works decision replay` exist and are tested with a fake LAIX module;
-the `laix` package is not installed by default, there is no `decision` extra yet, and
-`WORKS_DECISION` defaults to `off`. The deterministic gate is what runs today. Real pinned-LAIX
-shadow replay and the extra land with T2.14.
+`WORKS_DECISION` defaults to `off`. The deterministic gate is what runs today. The pinned
+`laix==0.18.0` cannot be a normal extra yet: the `laix` name on PyPI is an unrelated `0.0.0`
+placeholder, so T2.14 must install the local LAIX checkout or publish the real package first.
 
 ## Boundary
 

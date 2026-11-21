@@ -187,6 +187,21 @@ def _backdate(
         write_evidence(run_dir, evidence.model_copy(update={"duration_ms": duration_ms}).bind())
 
 
+def _clean_root(root: Path) -> Path:
+    if not root.exists():
+        return root
+    try:
+        shutil.rmtree(root)
+        return root
+    except PermissionError:
+        for index in range(2, 10):
+            alternative = root.with_name(f"{root.name}-{index}")
+            if not alternative.exists():
+                print(f"{root} is locked; using {alternative} instead.")
+                return alternative
+        raise
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -196,8 +211,7 @@ def main() -> None:
     )
     args = parser.parse_args()
     root: Path = args.root.expanduser().resolve()
-    if root.exists():
-        shutil.rmtree(root)
+    root = _clean_root(root)
     workspace = WorksPaths(root).ensure()
     _copy_flows(workspace)
     repo = _repo(root)
