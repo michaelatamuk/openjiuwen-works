@@ -40,6 +40,8 @@ def test_static_page_and_assets(paths) -> None:
         assert status == 200
         assert "openJiuwen Works" in body
         assert "LOCAL PREVIEW" in body
+        assert "Nothing selected" not in body
+        assert "Start with a report" in body
         status, script = get(base, "/app.js")
         assert status == 200
         assert "boot()" in script

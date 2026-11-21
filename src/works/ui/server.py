@@ -67,14 +67,10 @@ def readiness(repo: Path) -> dict[str, Any]:
     return assess(repo, run_commands=False).as_dict()
 
 
-def feature_map(repo: Path) -> dict[str, Any]:
-    directory = repo / "features"
-    files = sorted(directory.glob("*.yaml")) if directory.exists() else []
-    return {
-        "available": bool(files),
-        "files": [path.name for path in files],
-        "note": "Feature coverage lands with T2.19." if not files else "",
-    }
+def feature_map(repo: Path, evidence: dict[str, Any] | None = None) -> dict[str, Any]:
+    from ..features import feature_summary
+
+    return feature_summary(repo, evidence)
 
 
 def _first(events: list[Event], kind: str, *, step: str | None = None) -> Event | None:
@@ -500,7 +496,7 @@ def _task_detail(queue: Queue, paths: WorksPaths, task_id: str) -> dict[str, Any
         "timeline": timeline,
         "pipeline": _pipeline(task, events, evidence),
         "readiness": readiness(Path(task.repo)),
-        "features": feature_map(Path(task.repo)),
+        "features": feature_map(Path(task.repo), evidence),
     }
 
 

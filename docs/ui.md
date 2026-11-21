@@ -64,7 +64,8 @@ without a failure or a finished run. The runs are local fixtures, not upstream f
   policy, risk, decision, readiness, feature map, residual risk, cost and timeline.
 - **Readiness** — a basic preview (git, flow, project, tests, repository map); the full gate is
   T2.18.
-- **Feature coverage** — a placeholder until the feature map lands with T2.19.
+- **Feature coverage** — every declared feature is shown as covered, failed or not covered by the
+  proof's scenarios; runtime artifacts and selector checks are the remaining T2.19 work.
 
 ## Design and interaction
 

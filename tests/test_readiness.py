@@ -16,7 +16,19 @@ def _repo(tmp_path: Path, *, command: str | None = None, allow: list[str] | None
     (tmp_path / ".git").mkdir()
     (tmp_path / "pyproject.toml").write_text("[project]\nname='demo'\n", encoding="utf-8")
     (tmp_path / "features").mkdir()
-    (tmp_path / "features" / "demo.yaml").write_text("features: []\n", encoding="utf-8")
+    (tmp_path / "features" / "demo.yaml").write_text(
+        """
+schema_version: 1
+product: demo
+features:
+  - id: demo
+    name: Demo
+    user_path: A person uses the product
+    expected: It works
+    command: "true"
+""",
+        encoding="utf-8",
+    )
     (tmp_path / ".works").mkdir()
     ok = command or '{python} -c "raise SystemExit(0)"'
     allowed = allow or []

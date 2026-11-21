@@ -375,9 +375,28 @@ function renderFeatures(detail) {
   if (!features?.available) {
     return card("Feature coverage", `<p class="muted small">${esc(features?.note || "No feature map yet.")}</p>`);
   }
+  if (features.error) {
+    return card("Feature coverage", `<p class="muted small">${esc(features.error)}</p>`);
+  }
+  const rows = (features.features || [])
+    .map((feature) => {
+      const stateClass = feature.passed ? "pass" : feature.covered ? "fail" : "skip";
+      const mark = feature.passed ? "✓" : feature.covered ? "!" : "–";
+      const status = feature.passed ? "covered" : feature.covered ? "failed" : "not covered";
+      return `<div class="check ${stateClass}">
+        <span class="box" aria-hidden="true">${mark}</span>
+        <span class="feature-copy"><strong>${esc(feature.name)}</strong><em>${esc(feature.expected)}</em></span>
+        <span class="check-detail">${esc(status)}</span>
+      </div>`;
+    })
+    .join("");
+  const ratio = features.total ? Math.round((features.covered / features.total) * 100) : 0;
   return card(
     "Feature coverage",
-    `<p class="muted small">Feature maps: ${features.files.map((file) => `<code>${esc(file)}</code>`).join(", ")}</p>`,
+    `${rows}
+    <div class="progress"><i style="width:${ratio}%"></i></div>
+    <p class="muted small" style="margin:10px 0 0">${esc(features.note)}</p>`,
+    { actions: `${features.covered}/${features.total}` },
   );
 }
 
@@ -1275,7 +1294,7 @@ function clearSelection(updateHash = true) {
   if (updateHash) history.replaceState(null, "", "#/");
   $("#crumb").textContent = "Queue";
   $("#title").textContent = "A signal in, a released fix out";
-  $("#subtitle").textContent = "Select a report to read its story, summary or evidence.";
+  $("#subtitle").textContent = "Select a report to read its story and evidence.";
   renderTasks();
   renderDetail();
 }

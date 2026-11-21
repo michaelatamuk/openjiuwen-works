@@ -23,6 +23,8 @@ import yaml
 from pydantic import BaseModel, Field
 
 from .errors import ConfigError, PolicyError
+from .features import feature_files as mapped_feature_files
+from .features import load_feature_maps
 
 CheckStatus = Literal["pass", "fail", "skip"]
 ReportStatus = Literal["pass", "fail", "partial"]
@@ -199,19 +201,6 @@ def find_suppressions(repo: Path) -> list[SuppressionFinding]:
     return found
 
 
-def _feature_files(repo: Path, spec: ReadinessSpec | None) -> list[str]:
-    root = repo / (spec.features if spec is not None else "features")
-    if root.is_file():
-        return [root.name]
-    if not root.exists():
-        return []
-    return sorted(
-        path.relative_to(repo).as_posix()
-        for path in root.rglob("*")
-        if path.suffix in (".yaml", ".yml") and path.is_file()
-    )
-
-
 def _run_command(repo: Path, command: str, timeout_s: int) -> CheckResult:
     argv = [sys.executable if part == "{python}" else part for part in shlex.split(command)]
     started = time.monotonic()
@@ -272,15 +261,21 @@ def assess(
         )
     )
 
-    features = _feature_files(repo, spec)
-    checks.append(
-        CheckResult(
+    feature_root = spec.features if spec is not None else "features"
+    features = [path.name for path in mapped_feature_files(repo, feature_root)]
+    try:
+        maps = load_feature_maps(repo, feature_root)
+    except ConfigError as exc:
+        feature_check = CheckResult("features", "Feature map", "fail", str(exc))
+    else:
+        count = sum(len(feature_map.features) for feature_map in maps)
+        feature_check = CheckResult(
             "features",
             "Feature map",
-            "pass" if features else "fail",
-            f"{len(features)} feature file(s)" if features else "no features/*.yaml",
+            "pass" if count else "fail",
+            f"{count} feature(s) in {len(features)} file(s)" if count else "no features declared",
         )
-    )
+    checks.append(feature_check)
 
     suppressions = find_suppressions(repo)
     allow = set(spec.suppressions.allow) if spec is not None else set()

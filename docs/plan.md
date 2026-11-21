@@ -1,6 +1,6 @@
 # Development plan — openJiuwen Works
 
-**Status:** v4.22 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
+**Status:** v4.23 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
 
 Every task is a checkbox, checked when its criteria are met and the change is merged. `S/M/L`:
 S ≤ half a day, M ≤ two days, L ≤ a week. Nothing is checked because it was started.
@@ -736,6 +736,9 @@ Internal only: nothing is published to the upstream fork until M2 is green.
 - [ ] **T2.19** Feature map and runtime artifacts: versioned `features/<product>.yaml` with id, user
   path, selectors or command and expected observation; `preview` attaches screenshot, video, log and
   trace; proof shows covered and uncovered features. **M**
+  - 2026-11-21: schema, loader, validation, readiness content check, proof-scenario coverage and the
+    Evidence covered/failed/not-covered panel are in. Open: preview attaches screenshot/video/log/
+    trace and executes selectors or commands at run time.
 - [ ] **T2.20** Real-mode acceptance: one pinned, small OSS repository with a known bug and a
   failing scenario; an opt-in `--live` openjiuwen run with a token/USD budget cap produces a proof
   and a release dry-run. The default CI stays deterministic and free; this job proves the real path,
@@ -1101,6 +1104,10 @@ agents, a zoo of model providers before M3, and autonomous merge without the two
 
 ## 20. Changelog
 
+- **v4.23** — feature maps become evidence: versioned `features/<product>.yaml` with user paths,
+  expected observations and scenario ids; the loader validates them, readiness fails on an invalid
+  or empty map, and Evidence shows each feature as covered, failed or not covered by the proof.
+  Preview artifacts and selector execution remain open.
 - **v4.22** — the readiness gate: `.works/readiness.yaml`, `works readiness` with lint, format,
   types, fast tests, product verify and architecture commands, an exact suppression allowlist, a
   feature-map presence check, `EXIT_BLOCKED` on red, `readiness.checked` events, a run-time refusal

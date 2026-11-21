@@ -10,8 +10,8 @@ still the local scenario runner (M2); nothing is published yet (M3). Gate harden
 trusted-base flows and checks, exact-commit approval, `check-change` tasks, risk rating, flake
 enforcement and the LAIX `DecisionPort` in shadow mode. The read-only preview is in: `works ui`
 opens Story — the line of one fix with Mira — and keeps Evidence for engineers one click away. The
-human Summary is folded into the Story receipt block. Next: the feature map (T2.19) and the real-mode
-acceptance run (T2.20). The trust pyramid and the slop lesson are in `docs/review-5-slop.md`.
+human Summary is folded into the Story receipt block. Next: preview artifacts and real-mode
+acceptance (T2.20). The trust pyramid and the slop lesson are in `docs/review-5-slop.md`.
 
 <img src="brand/mascot/mira-primary.png" width="120" align="right" alt="Mira, a magpie courier, carrying a proof page">
 
@@ -114,7 +114,7 @@ in v0 — no silent retry, no "trust the builder".
 | Risk rating | `low/medium/high`, owners, required reviewers and deeper verification are computed and shown by `works risk`; release-gate routing still open |
 | Observe mode | `off/observe/enforce` for policy, nodes and risk; `works gate report` lists decisions and `would_block`; review checks land with T2.17 |
 | Readiness | `works readiness` runs lint, format, types, fast tests, product verify and architecture from `.works/readiness.yaml`, audits suppressions and requires a feature map; a red gate exits 8 and refuses autonomous runs. Import-graph checks in the verifier remain M2 |
-| Feature map | User-facing feature map and runtime artifacts in the proof land with T2.19 |
+| Feature map | `features/<product>.yaml` declares user paths and expected observations; Evidence shows covered/failed/not-covered from the proof's scenarios. Preview artifacts and selector checks remain T2.19 |
 | Verification cost | Builder/challenger/verifier split in the proof lands with T1.25 |
 | GUI | `works ui` opens **Story** (default) for people — a gray **Reported** origin, then five Mira stops: **Picked up → Confirmed → Fixed → Checked → Delivered**, each not started / Mira is here / done / stopped; full-body Mira at the current stop, Present mode, replay behind “How we got here”, and a specific blocked rail — with **Evidence** for engineers one click away. Write actions, the full React/Vite window, SSE and Playwright are later |
 
@@ -151,7 +151,7 @@ and a weekly `pip-audit`. Decisions are recorded as ADRs in `docs/adrs/`; known 
 responses are in `docs/runbook.md`. The live builder is in `docs/live-harness.md`; the PPMA memory
 integration is in `docs/ppma.md`; the LAIX decision layer and its boundary are in `docs/laix.md`;
 verification and approval boundaries are in `docs/verification.md`; readiness is in
-`docs/readiness.md`; the read-only preview is in
+`docs/readiness.md`; feature maps are in `docs/features.md`; the read-only preview is in
 `docs/ui.md`; the factory comparison that shaped v4.5 is in `docs/review-4-factories.md`; the
 slop/readiness talk is in `docs/review-5-slop.md`; waits and the dispatcher are in
 `docs/waiting-and-dispatch.md`.
