@@ -1,24 +1,45 @@
 # Verification and approval boundaries
 
-The gate is the product. This note is the implementation reference for plan §6.8 and ADR-012.
+The gate is the product. This note is the implementation reference for plan §6.8–§6.9 and
+ADR-012/013.
 
-**Status: v4.11 design.** Trusted-base checks, risk rating and observe mode are the next code
-changes (T1.20–T1.23). The current gate is deterministic and does not yet enforce all of this.
+**Status: v4.13.** Trusted-base checks, risk rating, observe mode, flake enforcement and the
+decision port are in. Agent readiness, feature map, architecture guardrails and the verification
+cost split are next (T2.18–T2.19, T1.25).
 
 ## Principles
 
 | Principle | Enforcement |
 |---|---|
+| Readiness before autonomy | Lint, format, types, fast tests, architecture, suppressions, `verify` and a feature map must pass before a flow runs |
 | Checks outlive changes | Policy, flows, scenarios, review rules and risk rules load from the base commit or a trusted checkout, never the worktree |
+| Every correction becomes a check | Repeated findings, escapes and reverts become a lint rule, structural test, API change or scenario |
 | Exact commit | Verdict, challenge and approval name a SHA; a new commit invalidates them; merge re-checks the SHA |
 | Observe first | Every new rule is `off`, `observe`, then `enforce`; `observe` records `would_block` |
 | Risk decides the evidence | Risk rating and code owners decide who and what the release gate needs, never whether the gate exists |
-| Run the change | A preview node boots the product and drives a user path; unit tests alone are not verification |
+| Run the change | A preview node boots the product, drives a user path and attaches artifacts; unit tests alone are not verification |
+| Feature coverage is evidence | A versioned feature map drives preview and the proof shows covered and uncovered features |
 | Bounded repair | Three rounds, then `question.md`; no endless retry |
 | Flaky tests are defects | No skip, sleep or retry-to-green; a flake has an owner and an expiry |
 | Review the reviewers | Verifier, challenger and risk step are evaluated on incidents and reverts with a clean control |
 | Comprehension is evidence | A person explains high-risk and sampled changes; a versioned context pack is part of the run |
 | Stop and roll back | One-call rollback, health check, stable window, `works stop --all` |
+
+## Trust pyramid and agent readiness
+
+Strongest first: deterministic code (APIs, architecture, lint, types, compilers, tests), then
+verification (runtime, property, formal), then prose (rules, skills, `AGENTS.md`, comments).
+
+`works readiness` refuses automation until:
+
+- lint, format and types pass;
+- the fast test path is green;
+- import boundaries and structural tests pass;
+- no unowned suppression is present;
+- a `verify` command and a feature map exist.
+
+A red gate produces the missing check, not another prompt. The codebase is the agent's largest
+input: a repeated correction becomes a check, and old occurrences are cleaned up.
 
 ## Risk rating
 
@@ -27,6 +48,8 @@ changes (T1.20–T1.23). The current gate is deterministic and does not yet enfo
   "risk": "medium",
   "reasons": ["touches auth/", "5 files", "no migration", "coverage 84%"],
   "owners": ["michael"],
+  "required_reviewers": 2,
+  "deeper_verification": false,
   "rounded_up": true
 }
 ```
@@ -68,6 +91,27 @@ mode: observe   # off | observe | enforce
 - Differential tests: old system is the oracle for migrations and refactors.
 - Cheap checks first; the builder runs tests, build and lint before proposing.
 
+## Feature map and runtime artifacts
+
+- `features/<product>.yaml`: id, user-facing name, path or command, selectors, expected observation.
+- The preview drives a feature id and attaches screenshot, video, log and trace.
+- The proof shows covered and uncovered features; a stale id fails the scenario.
+- Review reads artifacts, not every diff.
+
+## Architecture guardrails
+
+- Import boundaries and dependency-graph rules live in the repository.
+- Module fan-in and structural tests run in the verifier.
+- A new suppression (`noqa`, type ignore, lint disable, skip, xfail) needs an owner, reason and
+  expiry; it is a suspicious change.
+- Workaround comments and new timers are flagged, not silently accepted.
+
+## Verification cost
+
+- `run.json` splits builder, challenger and verifier tokens/USD.
+- The proof reports the verification share next to the total.
+- A mature line often spends most tokens on verification; this is a measurement, not a target.
+
 ## Repair and flaky tests
 
 - At most three repair rounds; each records a new hypothesis.
@@ -106,8 +150,10 @@ mode: observe   # off | observe | enforce
 
 | Command | Purpose |
 |---|---|
+| `works readiness [--repo PATH]` | Check whether a repository is ready for automation |
+| `works feature list` | Show the feature map and coverage |
 | `works risk <task>` | Show the computed risk, reasons and required owners |
-| `works gate observe <rule>` | Run a rule in observe mode and list `would_block` |
+| `works gate report` | Decisions, `would_block`, disagreements |
 | `works verify <task>` | Run the preview/verify command and attach evidence |
 | `works review <task>` | Review-the-reviewers report for the run |
 | `works friction` | Per-area stall and rework map |

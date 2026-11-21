@@ -1,12 +1,13 @@
 # Development plan — openJiuwen Works
 
-**Status:** v4.12 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
+**Status:** v4.13 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
 
 Every task is a checkbox, checked when its criteria are met and the change is merged. `S/M/L`:
 S ≤ half a day, M ≤ two days, L ≤ a week. Nothing is checked because it was started.
 
 Revisions and the reasons behind them: §20. External critiques: `docs/review-1-self.md`,
-`docs/review-2-industry.md`, `docs/review-3-external.md`.
+`docs/review-2-industry.md`, `docs/review-3-external.md`, `docs/review-4-factories.md`,
+`docs/review-5-slop.md`.
 
 ---
 
@@ -299,14 +300,14 @@ feature work starts until it closes.
   decision port, trusted-base checks and risk rating behind the supervisor; strict typing everywhere;
   remove dead paths. **M**
 - [ ] **RG2** after M2 — split `verify` and `evidence`; introduce ports for forge, CI, scenarios,
-  decisions and preview; no concept leaks between them; add the adversarial challenge, the agent eval
-  suite and review-the-reviewers. **M**
+  decisions, readiness and preview; no concept leaks between them; add the adversarial challenge,
+  the agent eval suite, review-the-reviewers, readiness and the feature map. **M**
 - [ ] **RG3** after M3 — consolidate adapters; audit idempotency; finalise the error taxonomy; remove
   duplicated retry logic; move waiting states, wake events, decision outcomes, rollback and the stop
   switch into one dispatcher. **M**
 - [ ] **RG4** after M4 — cost and performance pass; consolidate prompts, flows, checks and docs;
   documentation sweep; benchmark before and after; audit attention metrics, decision calibration,
-  comprehension sample and friction map from events only. **M**
+  comprehension sample, friction map, verification cost share and slop signals from events only. **M**
 
 Definition of done for a gate: tests green, mutation ≥ 70% on core, no new TODOs, complexity within
 limits, benchmark not regressed, ADR if the structure changed.
@@ -464,6 +465,46 @@ and the test that keeps it fixed. Cleanup runs as its own task, never as an unre
 signal must not roll back every production pool. The supervisor has a stop switch that halts new work
 and leaves running tasks resumable. A line you cannot stop is not a factory.
 
+### 6.9 Agent readiness and the trust pyramid
+
+The codebase is the agent's largest input. Agents copy what is already there — including workarounds,
+deprecated patterns and comments that justify a shortcut. The order of investment follows the trust
+pyramid from Lauren Tan's SpaceX SI talk (`docs/review-5-slop.md`):
+
+1. **Deterministic code**: API design, architecture, refactoring, lint rules, type systems,
+   compilers, structural tests.
+2. **Verification**: runtime checks, property-based tests, formal methods where they fit.
+3. **Prose**: rules, skills, `AGENTS.md`, comments. Useful, but the weakest layer.
+
+**Readiness before autonomy.** Before a flow runs on a repository, `works readiness` checks lint,
+format, types, the fast test path, architecture boundaries, known suppressions and the presence of a
+`verify` command and feature map. A red readiness gate refuses automation; the next task is the
+missing check, not another prompt. A repo that produces slop at the inner loop produces more slop
+when automated.
+
+**Every correction becomes a check.** When a reviewer, challenger, escape or incident finds a
+repeated problem, the fix is a deterministic check, a structural test or a better API — not a
+comment or a new line in `AGENTS.md`. Existing occurrences are cleaned up in the same change or a
+linked cleanup task. A suppression (`# noqa`, `# type: ignore`, `eslint-disable`, `skip`, `xfail`)
+needs an owner, a reason and an expiry; it is a suspicious change, not a silent pass.
+
+**Feature map and runtime artifacts.** A versioned `features/<product>.yaml` lists features from
+the user's point of view: id, path, selectors or command, expected observation. A `preview` node
+boots the product, drives the feature and attaches a screenshot, video, log and trace. The proof
+shows which features were exercised and which were not. Review reads artifacts, not every diff.
+
+**Architecture guardrails.** Import boundaries, dependency-graph rules, module fan-in and structural
+tests live in the repository and run deterministically. They remove a class of review comments
+instead of asking a model to remember it.
+
+**Verification cost is visible.** The run splits builder, challenger and verifier tokens/USD. In a
+mature line verification is often the largest share; that is a measurement, not a failure.
+
+**Formal methods are a layer, not a silver bullet.** TLA+ for critical user flows, Lean for
+algorithms and property-based UI testing are optional high-risk checks. They are never a substitute
+for the verifier, the feature map or the two human gates. Auto-merge remains out of scope until
+readiness, evals and a green escape window hold.
+
 ---
 
 ## 7. One run
@@ -555,7 +596,9 @@ Internal only: nothing is published to the upstream fork until M2 is green.
   - Done 2026-11-21: diff, commands, exits, policy, cost and proof hash; the dedicated test-delta
     and suspicious-change list remains T1.11.
 - [ ] **T1.11** Test-delta and suspicious-change list on the proof; gate refuses auto-allow while
-  non-empty. **M**
+  non-empty. The list flags new `# noqa`, `# type: ignore`, `eslint-disable`, `@ts-ignore`,
+  coverage pragmas, `skip`/`xfail`, comments that justify a workaround, new timers and architecture
+  bypasses. A suppression needs an owner, a reason and an expiry. **M**
 - [ ] **T1.12** Supervisor resume: kill mid-run, restart, continue from the last event. **M**
 - [ ] **T1.13** Two of three candidate issues complete end to end. **L**
 - [x] **T1.14** Prompt registry: every step prompt is a versioned file under
@@ -618,9 +661,11 @@ Internal only: nothing is published to the upstream fork until M2 is green.
   is fixed or deleted with a written reason. **S**
   - 2026-11-21: `works flake add/list`, active flakes block the verdict with `flaky_test`, and the
     engine never retries a scenario to green.
-- [ ] **T1.24** Read-only GUI preview: queue, task detail, proof, risk, decision and `would_block`
-  in one window; `works ui --read-only`; no write actions. **M**
-  - Next deliverable after the T1.19–T1.23 batch, before the rest of M1.
+- [ ] **T1.24** Read-only GUI preview: queue, task detail, proof, risk, decision, `would_block`,
+  readiness and feature coverage in one window; `works ui --read-only`; no write actions. **M**
+  - Next deliverable after the T1.19-T1.23 batch, before the rest of M1.
+- [ ] **T1.25** Verification cost split: builder, challenger and verifier tokens/USD in `run.json`
+  and the proof; verification share is reported next to the total. **S**
 
 **Demo M1:** two real issues go from ticket to proof, twice in a row, with scenarios written first.
 
@@ -663,6 +708,13 @@ Internal only: nothing is published to the upstream fork until M2 is green.
 - [ ] **T2.17** Review the reviewers: evaluate verifier, challenger and risk step on historical
   incidents and reverts with a size-matched clean control; track recall, false positives and
   importance. Stamp every commit `verified: none | unit | integration | e2e | manual`. **M**
+- [ ] **T2.18** Agent readiness and architecture guardrails: `works readiness` checks lint, format,
+  types, the fast test path, architecture boundaries, known suppressions, `verify` and a feature
+  map; a red gate refuses automation. Import boundaries, dependency graph and structural tests run
+  in the verifier. **M**
+- [ ] **T2.19** Feature map and runtime artifacts: versioned `features/<product>.yaml` with id, user
+  path, selectors or command and expected observation; `preview` attaches screenshot, video, log and
+  trace; proof shows covered and uncovered features. **M**
 
 **Demo M2:** a patch that passes CI and the builder's tests is caught by a sneaky-patch scenario.
 
@@ -701,6 +753,8 @@ Internal only: nothing is published to the upstream fork until M2 is green.
 - [ ] **T3.16** Safe operations: release carries a health check, a stable window and a one-call
   rollback; a noisy signal cannot roll back every pool. `works stop --all` halts new work and leaves
   running tasks resumable. **M**
+- [ ] **T3.17** Performance budget: startup, interaction and key-flow latency are scenarios with a
+  declared budget; a regression blocks the proof and is attributed to the release. **M**
 
 **Demo M3:** issue → merged PR → proof → comment → green reproduction; then a forced revert attributed
 to its release.
@@ -712,7 +766,9 @@ to its release.
 - [ ] **T4.3** Scorers: rubric on a 25% sample, separate from the verdict. **M**
 - [ ] **T4.4** Benchmark suite: five past tasks replayed at their initial state. **L**
 - [ ] **T4.5** Prompt/model comparison using the benchmark before any change is adopted. **M**
-- [ ] **T4.6** Learning loop: repeated failure → proposed rule/test/scenario as a PR; never automatic. **L**
+- [ ] **T4.6** Learning loop: every repeated finding, escape or revert becomes a deterministic check
+  — lint rule, structural test, API change or scenario — as a reviewed PR; old occurrences are
+  cleaned up in the same change or a linked task. Never automatic, never a "next time" comment. **L**
 - [ ] **T4.7** In-scope rate measured on new issues; report next to the metrics. **S**
 - [ ] **T4.8** Memory before interruption: PPMA recall of similar past failures and decisions is
   offered to the planner before any question reaches a person; every recall is recorded. **M**
@@ -842,6 +898,13 @@ and a mechanical suspicious-change list (deleted tests, new skips, broad except,
 | Comprehension sample | sampled changes a person can explain in three sentences | rising or stable |
 | Risk calibration | risk rating vs actual reverts and escapes | reported, reviewed |
 | Check false positives | observe-mode blocks a reviewer judged wrong | falling before enforce |
+| Readiness | repositories that pass `works readiness` / repositories onboarded | 100% before automation |
+| Feature coverage | features exercised by scenarios / features in the map | rising, reported |
+| Verification cost share | verifier tokens and USD / total run cost | reported, not targeted |
+| Suppression delta | new `noqa`/type-ignore/skip/xfail per accepted change | falling |
+| Architecture checks | pass rate of import and structural checks | 100% |
+| Performance budget | scenarios within their declared latency budget | 100% |
+| Suspicious changes | flags per 100 accepted changes | falling |
 
 ---
 
@@ -898,6 +961,13 @@ and a mechanical suspicious-change list (deleted tests, new skips, broad except,
 | Blocking-prompt stall | No interactive prompt in the engine path; a question becomes a wait with a wake event and a deadline |
 | Non-idempotent action | Idempotency key on every external action; a retry never duplicates a merge, comment, release or task |
 | Rollback misfire | One-call rollback, health check and stable window; a noisy signal cannot roll back every pool |
+| Slop propagation | Readiness gate; every correction becomes a deterministic check; clean old occurrences, not only new ones |
+| Readiness theater | Readiness checks are mechanical and sampled; a green checklist without architecture tests is a finding |
+| Comment/rule escape hatch | Flag workaround comments and suppressions; an exemption needs an owner, a reason and an expiry |
+| Verification cost blow-up | Split builder/challenger/verifier cost; cap per run; prefer deterministic checks and cached artifacts |
+| Formal verification overreach | High-risk flows only; a layer, not a substitute for the verifier or the gates |
+| Feature map drift | Versioned map, exercised in preview, reviewed with the proof; stale ids fail the scenario |
+| Auto-merge too early | Two human gates until readiness, evals and a green escape window hold |
 | Unbounded autonomy | Two human gates remain; autonomy expands only after evals and a green escape window |
 
 ---
@@ -954,6 +1024,15 @@ All decided; revisit only with an ADR.
 - [x] **D16** Observe first, then enforce. Every new gate runs in `off | observe | enforce`, and the
   verifier, challenger and risk step are themselves evaluated on historical incidents and reverts
   with a size-matched clean control. Reviewers are tuned, not stacked.
+- [x] **D17** Readiness before autonomy. Works refuses to automate a repository that fails the
+  readiness gate: lint, format, types, fast tests, architecture boundaries, known suppressions,
+  `verify` and a feature map. A red gate produces the missing check, not another prompt.
+- [x] **D18** Every correction becomes a deterministic check. Repeated findings, escapes and
+  reverts become a lint rule, structural test, API change or scenario, reviewed like code. Comments
+  and rules are the weakest layer; a suppression needs an owner, a reason and an expiry.
+- [x] **D19** Verification artifacts are the review unit. The proof carries feature coverage,
+  screenshots, video, logs, traces and property/formal results where used. Formal methods are
+  optional high-risk layers, never a substitute for the verifier or the two human gates.
 
 ---
 
@@ -966,7 +1045,7 @@ also passes the parity checklist: task state and findings survive outside the ag
 wake event; no agent grades its own work; attention metrics come from events; the proof says what was
 not tested; any LAIX decision is backed by recorded evidence and has a deterministic fallback; and
 the gate that judged the change ran from the trusted base, was bound to the exact commit and had
-passed observe mode.
+passed observe mode; and readiness is green with the feature map exercised in the proof.
 
 ---
 
@@ -980,6 +1059,10 @@ agents, a zoo of model providers before M3, and autonomous merge without the two
 
 ## 20. Changelog
 
+- **v4.13** — trust pyramid and agent readiness from Lauren Tan's SpaceX SI talk: `works readiness`
+  gate, feature map and runtime artifacts, architecture guardrails, suppression-aware suspicious
+  list, verification cost split, performance budgets, correction → deterministic check (D17–D19,
+  §6.9); T1.25, T2.18, T2.19, T3.17 opened.
 - **v4.12** — group 1 of the gate hardening: `check-change` task kind and check-path refusal,
   flake enforcement (`flaky_test`), risk routing requirements, risk observe mode, `works gate
   report`, 20-case `works decision replay`, and a read-only GUI preview queued as T1.24.

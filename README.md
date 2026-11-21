@@ -9,7 +9,8 @@ Anthropic-compatible endpoint, and finished runs are reported to PPMA memory. Th
 still the local scenario runner (M2); nothing is published yet (M3). Gate hardening is in:
 trusted-base flows and checks, exact-commit approval, `check-change` tasks, risk rating, flake
 enforcement and the LAIX `DecisionPort` in shadow mode. Next deliverable: the read-only GUI preview
-(T1.24).
+(T1.24), then readiness and the feature map. The trust pyramid and the slop lesson are in
+`docs/review-5-slop.md`.
 
 <img src="brand/mascot/mira-primary.png" width="120" align="right" alt="Mira, a magpie courier, carrying a proof page">
 
@@ -108,7 +109,10 @@ in v0 — no silent retry, no "trust the builder".
 | Gate integrity | Trusted-base flows/checks, `checks_sha`, exact-commit approval and a separate `check-change` task kind are in; the trusted verifier image lands with M2 |
 | Risk rating | `low/medium/high`, owners, required reviewers and deeper verification are computed and shown by `works risk`; release-gate routing still open |
 | Observe mode | `off/observe/enforce` for policy, nodes and risk; `works gate report` lists decisions and `would_block`; review checks land with T2.17 |
-| GUI | CLI only. The read-only preview (queue, task, proof, risk/decision) is the next deliverable (T1.24); the full window follows M1/M2 |
+| Readiness | `works readiness` (lint, types, fast tests, architecture, suppressions, verify, feature map) lands with T2.18; a red gate will refuse automation |
+| Feature map | User-facing feature map and runtime artifacts in the proof land with T2.19 |
+| Verification cost | Builder/challenger/verifier split in the proof lands with T1.25 |
+| GUI | CLI only. The read-only preview (queue, task, proof, risk/decision, readiness, feature coverage) is the next deliverable (T1.24); the full window follows M1/M2 |
 
 The fixture bug is deliberate: `add` subtracts. The good trace fixes it, the sneaky trace passes
 the visible test but fails a P0 holdout, and the test-edit trace is refused by policy.
@@ -143,8 +147,8 @@ and a weekly `pip-audit`. Decisions are recorded as ADRs in `docs/adrs/`; known 
 responses are in `docs/runbook.md`. The live builder is in `docs/live-harness.md`; the PPMA memory
 integration is in `docs/ppma.md`; the LAIX decision layer and its boundary are in `docs/laix.md`;
 verification and approval boundaries are in `docs/verification.md`; the factory comparison that
-shaped v4.5 is in `docs/review-4-factories.md`; waits and the dispatcher are in
-`docs/waiting-and-dispatch.md`.
+shaped v4.5 is in `docs/review-4-factories.md`; the slop/readiness talk is in
+`docs/review-5-slop.md`; waits and the dispatcher are in `docs/waiting-and-dispatch.md`.
 
 ---
 
@@ -154,12 +158,12 @@ shaped v4.5 is in `docs/review-4-factories.md`; waits and the dispatcher are in
 |---|---|
 | `src/works/` | The engine: state, queue, index, policy, flow, supervisor, evidence, harness port |
 | `tests/` | Unit, property-based, CLI and integration tests; golden evidence page |
-| `fixtures/` | A planted-bug repository, three scenarios and four recorded traces |
+| `fixtures/` | A planted-bug repository, three scenarios, six recorded traces and 20 decision cases |
 | `flows/fix-issue.yaml` | The first flow as a node graph with gates and policy |
 | `docs/plan.md` | The plan: preconditions, milestones, checkboxes, standards, refactoring gates |
 | `docs/deck/` | Five slides (SVG + PNG) |
 | `docs/video/` | The 47 s concept film |
-| `docs/adrs/` | Twelve architecture decisions |
+| `docs/adrs/` | Thirteen architecture decisions |
 | `scripts/` | Demo, benchmark, check, mutation gate, film generators |
 
 ---
