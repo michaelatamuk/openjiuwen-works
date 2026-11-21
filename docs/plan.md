@@ -1,6 +1,6 @@
 # Development plan — openJiuwen Works
 
-**Status:** v4.4 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
+**Status:** v4.7 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
 
 Every task is a checkbox, checked when its criteria are met and the change is merged. `S/M/L`:
 S ≤ half a day, M ≤ two days, L ≤ a week. Nothing is checked because it was started.
@@ -217,6 +217,11 @@ decision, an ADR is added or amended.
 - Cost per step is captured from harness events and attributed to the run budget.
 - Injection guard: issue text is fenced as data; the policy engine, not the model, enforces paths.
 - A prompt change and a model change are never shipped in the same commit.
+- Findings that drive a decision are structured records with evidence refs; free-form prose is
+  never parsed into one.
+- No agent grades its own work: challengers and verifiers are separate sessions and, where
+  possible, separate providers.
+- Every prompt is a versioned file with a hash; the hash is recorded in the run and the proof.
 
 **Observability**
 
@@ -251,7 +256,10 @@ TanStack Query; SSE for live runs; Playwright + axe for tests; visual snapshots 
 - Keyboard-first: `⌘K` command palette, `g` sequences, visible focus, escape everywhere.
 - Streaming run progress over SSE; skeletons instead of spinners; optimistic updates with rollback.
 - Inline diff with syntax highlighting; every run, step and artifact has a deep link.
-- Empty, loading, error and blocked states designed, not defaulted.
+- Empty, loading, error and blocked states designed, not defaulted. Mira (the magpie courier)
+  appears in empty, waiting, proved and blocked states, never as a chat avatar, never instead of
+  status text, and never inside an error message as a joke; motion stops under
+  `prefers-reduced-motion`.
 
 **Accessibility and performance**
 
@@ -278,11 +286,11 @@ feature work starts until it closes.
 - [ ] **RG1** after M1 — extract the supervisor from CLI commands; unify command execution; strict
   typing everywhere; remove dead paths. **M**
 - [ ] **RG2** after M2 — split `verify` and `evidence`; introduce ports for forge, CI and scenarios;
-  no concept leaks between them. **M**
+  no concept leaks between them; add the adversarial challenge and the agent eval suite. **M**
 - [ ] **RG3** after M3 — consolidate adapters; audit idempotency; finalise the error taxonomy; remove
-  duplicated retry logic. **M**
+  duplicated retry logic; move waiting states and wake events into one dispatcher. **M**
 - [ ] **RG4** after M4 — cost and performance pass; consolidate prompts and flows; documentation
-  sweep; benchmark before and after. **M**
+  sweep; benchmark before and after; audit attention metrics from events only. **M**
 
 Definition of done for a gate: tests green, mutation ≥ 70% on core, no new TODOs, complexity within
 limits, benchmark not regressed, ADR if the structure changed.
@@ -386,6 +394,31 @@ Internal only: nothing is published to the upstream fork until M2 is green.
   non-empty. **M**
 - [ ] **T1.12** Supervisor resume: kill mid-run, restart, continue from the last event. **M**
 - [ ] **T1.13** Two of three candidate issues complete end to end. **L**
+- [x] **T1.14** Prompt registry: every step prompt is a versioned file under
+  `flows/<flow>/prompts/`, rendered with safe substitution, hashed, and written to the run/proof.
+  A prompt change without a benchmark run is refused by review. **S**
+  - Done 2026-11-21: `flows/fix-issue/prompts/build.md`, `works.prompts`, hash in `harness.json`
+    and the proof; `$` in issue text is not re-interpreted.
+- [x] **T1.15** Structured findings: a `finding` event (`summary`, `evidence_refs`, `confidence`,
+  `uncertainty`) that survives outside the agent context; the proof has “What we know / What
+  remains uncertain”. No free-text parsing. **M**
+  - Done 2026-11-21: `Finding` record, `works finding add/list`, proof Findings and Residual risk.
+- [x] **T1.16** Attention metrics: `works metrics` derives human gate touches, waiting time,
+  agent-hours per human-hour, runs without intervention, rework and fix share from events; never
+  from agent self-reports. **M**
+  - Done 2026-11-21: `works metrics` reports tasks, human touches, waiting, runs without human,
+    median duration, tokens and USD from events and the ledger. Agent-hours need the dispatcher;
+    they arrive with T3.10.
+- [x] **T1.17** Proof quality rubric: a golden check that an engineer unfamiliar with the run can
+  answer what changed, why, what proves it, and what remains risky. **S**
+  - Done 2026-11-21: golden page plus a heading/rubric test for verdict, findings, commands,
+    change, policy, residual risk and cost.
+- [ ] **T1.18** Brand and mascot: Mira’s SVG source, avatar, voice and empty/waiting/proved/blocked
+  poses; used in CLI human empty states and the future window, never in JSON or error text. **S**
+  - 2026-11-21: primary and avatar assets, voice/usage rules, CLI empty state. Waiting/proved/
+    blocked poses land with the GUI after M1.
+- [ ] **T1.18** Brand and mascot: Mira’s SVG source, avatar, voice and empty/waiting/proved/blocked
+  poses; used in CLI human empty states and the future window, never in JSON or error text. **S**
 
 **Demo M1:** two real issues go from ticket to proof, twice in a row, with scenarios written first.
 
@@ -403,6 +436,16 @@ Internal only: nothing is published to the upstream fork until M2 is green.
   block if disagreement > 2. **M**
 - [ ] **T2.8** Verdict rule: all P0 pass, P1 ≥ 80%, else block. **S**
 - [ ] **T2.9** Evidence v2: verdict, failures, cost, **what was not tested**. **M**
+- [ ] **T2.10** Adversarial challenge: a separate session, on a different provider where possible,
+  tries to disprove the diagnosis and then the fix; the verdict is recorded and a send-back blocks.
+  **M**
+- [ ] **T2.11** Agent eval suite: backtest past runs with the answer stripped; score investigation
+  and handoff separately; refuse cases whose metrics/traces would leak the cause; scan transcripts
+  for spoilers. **L**
+- [ ] **T2.12** Summary grader: snapshots of saved tasks scored by a separate grader for
+  “understandable to an unfamiliar engineer”, kept charts and evidence-backed next step. **M**
+- [ ] **T2.13** Service identity: the verifier and builder run under scoped identities; every
+  action is attributable to a run, not to the developer’s user. **M**
 
 **Demo M2:** a patch that passes CI and the builder's tests is caught by a sneaky-patch scenario.
 
@@ -417,6 +460,19 @@ Internal only: nothing is published to the upstream fork until M2 is green.
   touching the same paths attributes a row to the release. **L**
 - [ ] **T3.7** Revert path: revert PR, note, post-mortem, ledger row. **M**
 - [ ] **T3.8** Human minutes from gate timestamps. **S**
+- [ ] **T3.9** Waiting states and wake subscriptions: `waiting_review`, `waiting_ci`,
+  `waiting_deploy`; a PR comment, CI result, deploy or issue update wakes the task instead of
+  making it terminal. **L**
+- [ ] **T3.10** Dispatch loop: `works dispatch` claims ready tasks, advances one step, releases,
+  and is safe to kill; no task is run twice. **L**
+- [ ] **T3.11** Clean-environment matrix: tests on clean Windows, macOS and Linux (or the supported
+  subset), with no developer state. **M**
+- [ ] **T3.12** Merge-result re-check: after a branch lands, CI runs on the merged result; two green
+  branches may not break `main`. **S**
+- [ ] **T3.13** Post-release confirmation beyond reproduction: the live metric, download or issue
+  signal improves; a partial recovery opens a new task with a new cause. **M**
+- [ ] **T3.14** Incident linking: one defect reported through several sources is one task with
+  linked refs, grouped by product metric and ranked by impact. **M**
 
 **Demo M3:** issue → merged PR → proof → comment → green reproduction; then a forced revert attributed
 to its release.
@@ -430,6 +486,14 @@ to its release.
 - [ ] **T4.5** Prompt/model comparison using the benchmark before any change is adopted. **M**
 - [ ] **T4.6** Learning loop: repeated failure → proposed rule/test/scenario as a PR; never automatic. **L**
 - [ ] **T4.7** In-scope rate measured on new issues; report next to the metrics. **S**
+- [ ] **T4.8** Memory before interruption: PPMA recall of similar past failures and decisions is
+  offered to the planner before any question reaches a person; every recall is recorded. **M**
+- [ ] **T4.9** Self-repair: a daily scan of run logs finds repeated tool/permission failures and
+  opens a bounded repair task; the fix is reviewed like any other. **M**
+- [ ] **T4.10** Attention dashboard: cost and time per released fix, human touches, waiting time,
+  fix share and rework reported together; agent count is never a target. **M**
+- [ ] **T4.11** Delivery loop: every adopted rule, prompt or model change is evaluated on the
+  benchmark before and after; a regression reverts it. **M**
 
 **Demo M4:** two flows, one benchmark that chose a cheaper configuration, one failure that became a
 scenario through a reviewed PR.
@@ -492,6 +556,13 @@ and a mechanical suspicious-change list (deleted tests, new skips, broad except,
 | Time to fix | signal → merged + confirmed | < 1 working day |
 | Proof coverage | releases with a computed proof | 100% |
 | Human minutes | sum of gate durations | < 15 |
+| Human touches | gate decisions + steering messages per release | < 3 |
+| Waiting time | time in each waiting state, p50/p95 | reported |
+| Agent leverage | agent-hours per human-hour | reported, rising |
+| Runs without intervention | runs with no human message | reported, rising |
+| Rework | fixes that reopen, revert or fail confirmation | < 10% |
+| Fix share | fix commits / all commits | falling |
+| CI failure rate | red runs / all runs on `main` | < 5% |
 | Escapes | attributed within 14 days per 100 releases | < 5 |
 | Cost | USD per release, verifier included | < $15 |
 | In-scope rate | share of new issues the flow can take | reported, not targeted |
@@ -506,7 +577,11 @@ and a mechanical suspicious-change list (deleted tests, new skips, broad except,
 - Golden files: evidence rendering, so a page change is a reviewed diff.
 - Integration: fixture repo + fake harness, the whole loop in CI.
 - Mutation and sneaky-patch suites in CI; mutation ≥ 70% on core.
+- Agent evals: past tasks replayed with the answer stripped; investigation and handoff scored
+  separately; transcripts checked for spoilers; saved task snapshots used as stable backtests.
 - Leak test: grep every builder-readable artifact for scenario strings.
+- Clean-environment matrix: Windows, macOS and Linux (or the supported subset), no developer state.
+- Merge-result re-check: CI runs again after the branch lands.
 - Load: 10 000 tasks in the queue; `status` under 100 ms.
 - Performance: CLI start, evidence render and report timed in CI; fail on > 20% regression.
 - One manual end-to-end per milestone, recorded.
@@ -526,6 +601,11 @@ and a mechanical suspicious-change list (deleted tests, new skips, broad except,
 | Target repo drift (v1) | Sync before run; divergence in evidence |
 | Dogfooding hides real-world mess | R7 runs on an unfamiliar codebase, not ours |
 | Solo bottleneck | R7 spike first; S/M/L sizing |
+| Builder grades itself | Separate challenger and verifier roles; provider split; no self-reported done |
+| Attention theater | Metrics derived from events, not agent prose; agent count is not a target |
+| Waiting-state deadlock | Every wait has a wake event, a deadline and a default; `works doctor` shows stranded waits |
+| Findings drift | Findings are append-only records with evidence refs; conflicting findings stay visible |
+| Unbounded autonomy | Two human gates remain; autonomy expands only after evals and a green escape window |
 
 ---
 
@@ -554,6 +634,14 @@ All decided; revisit only with an ADR.
 - [x] **D5** Release gate: Michael owns it; from M3 a second reviewer is required for `auth/`.
 - [x] **D6** Isolation: verifier in a container; builder on host with pinned cwd (v0).
 - [x] **D7** Forge: GitHub first; a GitCode adapter interface exists but is unimplemented in v0.
+- [x] **D8** Factory shape: a task state machine with a dispatcher and wake subscriptions, not an
+  org chart of role-playing agents. Work decides its own shape.
+- [x] **D9** No agent grades its own work: builders, challengers and verifiers are separate roles,
+  preferably separate providers. A self-reported "done" is never evidence.
+- [x] **D10** Attention is the primary metric: human touches, waiting time, agent-hours per
+  human-hour and rework. Agent count is explicitly not a target.
+- [x] **D11** Findings are structured records outside any agent's context; free-form agent prose is
+  never parsed into a decision.
 
 ---
 
@@ -561,19 +649,35 @@ All decided; revisit only with an ADR.
 
 A milestone is done when the demo runs twice, the ledger has rows, the proof is readable without
 narration, the limitations are written down, **the engineering standard in §6.4 holds for every
-touched file**, and **the refactoring gate that follows it (§6.6) is closed**.
+touched file**, and **the refactoring gate that follows it (§6.6) is closed**. A factory milestone
+also passes the parity checklist: task state and findings survive outside the agent; waiting has a
+wake event; no agent grades its own work; attention metrics come from events; and the proof says
+what was not tested.
 
 ---
 
 ## 19. Not in this plan, on purpose
 
 Detector ingestion, person channel beyond CLI, deploy/canary, web UI, multi-repo, multi-tenant.
-Each has a sentence in §3 and no task.
+Each has a sentence in §3 and no task. Also explicitly not planned: an org chart of role-playing
+agents, a zoo of model providers before M3, and autonomous merge without the two gates.
 
 ---
 
 ## 20. Changelog
 
+- **v4.7** — first parity batch delivered: versioned prompt with hash, structured findings and
+  `works finding`, attention metrics and `works metrics`, proof rubric with residual risk; Mira
+  primary/avatar assets and CLI empty state. T1.14–T1.17 closed; T1.18 poses defer to the GUI.
+- **v4.6** — brand: Mira, the magpie courier; primary and avatar SVG assets, voice and usage rules
+  (`docs/brand/mascot.md`); T1.18; Mira in empty/waiting/proved/blocked states, never as a chat
+  avatar or status substitute.
+- **v4.5** — factory parity from OpenAI Performance Factory and Alex Greenshpun's essay: waiting
+  states and wake subscriptions; dispatch loop; structured findings; versioned prompt registry;
+  adversarial challenge; agent eval suite with answer-stripped backtests and leak checks; summary
+  grader; clean-OS matrix; merge-result re-check; post-release metric confirmation; incident
+  linking and impact ranking; PPMA recall before interrupting a person; self-repair; attention
+  metrics and dashboard; decisions D8–D11. See `docs/review-4-factories.md`.
 - **v4.4** — live builder path: `openjiuwen` Claude Code harness on the DeepSeek Anthropic endpoint,
   `Proposal.applied` for in-place worktree edits, policy after the turn with artifact filtering;
   live fixture run proved (104 563 tokens, $0.093938); PPMA memory reporting over the north

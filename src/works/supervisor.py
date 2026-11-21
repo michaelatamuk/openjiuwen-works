@@ -10,6 +10,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from pydantic import ValidationError
+
 from .config import WorksPaths
 from .errors import ConfigError, HarnessError, StateError, WorksError
 from .evidence import DiffStatRow, Evidence, write_evidence
@@ -25,6 +27,7 @@ from .quarantine import load as load_quarantine
 from .queue import Queue
 from .records import (
     CommandRecord,
+    Finding,
     LedgerRow,
     RunRecord,
     ScenarioOutcome,
@@ -508,6 +511,14 @@ class Supervisor:
                 LOG.warning("could not collect the diff: %s", exc)
         proposal = ctx.proposal
         tokens = proposal.tokens if proposal else 0
+        findings: list[Finding] = []
+        for event in self._queue.events(ctx.task.id):
+            if event.type != "finding":
+                continue
+            try:
+                findings.append(Finding.model_validate(event.data))
+            except ValidationError as exc:
+                LOG.warning("ignoring a malformed finding: %s", exc)
         evidence = Evidence(
             run_id=ctx.run_id,
             task_id=ctx.task.id,
@@ -519,6 +530,8 @@ class Supervisor:
             stop_reason=ctx.stop_reason,
             model=proposal.model if proposal else None,
             provider=proposal.provider if proposal else None,
+            prompt_name=proposal.prompt_name if proposal else None,
+            prompt_sha256=proposal.prompt_sha256 if proposal else None,
             tokens=tokens,
             usd=proposal.usd if proposal else 0.0,
             duration_ms=duration_ms,
@@ -528,6 +541,7 @@ class Supervisor:
             reproduce=ctx.reproduce,
             test=ctx.test,
             verdict=ctx.verdict,
+            findings=findings,
             diff=diff,
         ).bind()
         _, md_path = write_evidence(ctx.run_dir, evidence)

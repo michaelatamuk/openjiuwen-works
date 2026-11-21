@@ -33,7 +33,14 @@ The agent edits the worktree directly. The supervisor:
 1. checks every touched path against policy, ignoring bytecode/tool caches;
 2. blocks on a test, migration, workflow or scenario edit;
 3. runs the repository tests and the P0/P1 scenarios;
-4. computes the proof and records model, provider, tokens and USD.
+4. computes the proof and records model, provider, tokens, USD and the prompt hash.
+
+## Prompts
+
+The builder prompt is a versioned file: `flows/fix-issue/prompts/build.md`. It is rendered with
+safe substitution for `$worktree`, `$ref` and `$title`; the defect title is fenced as data. The
+SHA-256 of the prompt is written to `harness.json` and the proof, so a prompt change is visible in
+review and cannot hide behind a model change.
 
 ## Measured on the development host
 

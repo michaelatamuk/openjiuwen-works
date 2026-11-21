@@ -33,4 +33,8 @@ Semantic Versioning.
   policy checks touched paths, and model/tokens/USD are recorded.
 - Memory: finished runs are posted to PPMA as `works.run_finished` events with deterministic ULIDs,
   a registered manifest and an app token.
-- ADRs 008 and 009, and the runbook entries for live harness and PPMA failures.
+- Factory parity: versioned prompt registry with a recorded hash; structured findings with
+  confidence/uncertainty; `works metrics` for attention, waiting and cost; proof sections for
+  findings and residual risk; Mira, the magpie courier, as the product mascot.
+- ADRs 008–010, the runbook entries for live harness and PPMA failures, and
+  `docs/review-4-factories.md`.

@@ -138,6 +138,9 @@ def cmd_status(args: argparse.Namespace) -> int:
     if args.json:
         _emit({"tasks": items})
         return 0
+    if not items:
+        print("No tasks yet. Mira is watching the queue.")
+        return 0
     rows = [
         (
             item.get("id", ""),
@@ -227,7 +230,16 @@ def _supervisor(args: argparse.Namespace) -> Supervisor:
     elif args.live:
         from .harness.openjiuwen import LiveHarness
 
-        harness = LiveHarness(model=args.model, base_url=args.model_base)
+        task = _queue(args).load(args.task_id)
+        prompt_path = args.prompt
+        if prompt_path is None:
+            candidate = paths.flows / task.flow / "prompts" / "build.md"
+            prompt_path = candidate if candidate.exists() else None
+        harness = LiveHarness(
+            model=args.model,
+            base_url=args.model_base,
+            prompt_path=prompt_path,
+        )
     memory = None
     ppma_url = args.ppma or os.environ.get("WORKS_PPMA_URL")
     if ppma_url:
@@ -320,6 +332,101 @@ def cmd_policy_check(args: argparse.Namespace) -> int:
     else:
         print(f"{len(args.paths)} path(s) allowed")
     return EXIT_POLICY if violations else 0
+
+
+def cmd_finding_add(args: argparse.Namespace) -> int:
+    from .records import Finding
+
+    try:
+        confidence = float(args.confidence) if args.confidence is not None else None
+    except ValueError as exc:
+        raise ConfigError(
+            f"confidence must be a number between 0 and 1: {args.confidence}"
+        ) from exc
+    finding = Finding(
+        step=args.step,
+        summary=args.summary,
+        confidence=confidence,
+        uncertainty=args.uncertainty,
+        evidence=args.evidence or [],
+    )
+    _queue(args).append(args.task_id, "finding", finding.model_dump(mode="json"))
+    if args.json:
+        _emit({"finding": finding.model_dump(mode="json")})
+    else:
+        print(f"finding recorded for {args.task_id}: {finding.summary}")
+    return 0
+
+
+def cmd_finding_list(args: argparse.Namespace) -> int:
+    from .records import Finding
+
+    events = _queue(args).events(args.task_id)
+    findings = [Finding.model_validate(event.data) for event in events if event.type == "finding"]
+    if args.json:
+        _emit({"findings": [finding.model_dump(mode="json") for finding in findings]})
+        return 0
+    print(
+        table(
+            ("step", "finding", "confidence", "uncertainty"),
+            [
+                (
+                    finding.step or "-",
+                    finding.summary,
+                    "-" if finding.confidence is None else f"{finding.confidence:.2f}",
+                    finding.uncertainty or "-",
+                )
+                for finding in findings
+            ],
+        )
+    )
+    return 0
+
+
+def cmd_metrics(args: argparse.Namespace) -> int:
+    from .ledger import Ledger
+    from .metrics import collect
+
+    metrics = collect(_queue(args), Ledger(_paths(args).ledger))
+    if args.json:
+        _emit({"metrics": metrics.model_dump(mode="json")})
+        return 0
+    print(
+        table(
+            ("metric", "value"),
+            [
+                ("tasks", metrics.tasks),
+                ("proved", metrics.proved),
+                ("blocked", metrics.blocked),
+                ("human touches", metrics.human_touches),
+                ("runs without human", metrics.runs_without_human),
+                ("waiting (ms)", metrics.waiting_ms),
+                ("median duration (ms)", metrics.median_duration_ms or "-"),
+                ("tokens", metrics.tokens),
+                ("usd", f"{metrics.usd:.4f}"),
+            ],
+        )
+    )
+    if metrics.per_task:
+        print()
+        print(
+            table(
+                ("task", "state", "ms", "touches", "waiting ms", "tokens", "usd"),
+                [
+                    (
+                        item.task_id,
+                        item.state.value,
+                        item.duration_ms,
+                        item.human_touches,
+                        item.waiting_ms,
+                        item.tokens,
+                        f"{item.usd:.4f}",
+                    )
+                    for item in metrics.per_task
+                ],
+            )
+        )
+    return 0
 
 
 def cmd_ledger(args: argparse.Namespace) -> int:
@@ -427,6 +534,7 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--live", action="store_true")
     run.add_argument("--model", default=None)
     run.add_argument("--model-base", default=None)
+    run.add_argument("--prompt", type=Path, default=None)
     run.add_argument("--ppma", default=None)
     run.add_argument("--ppma-space", default="me")
     run.add_argument("--json", action="store_true")
@@ -443,6 +551,26 @@ def build_parser() -> argparse.ArgumentParser:
     ledger = sub.add_parser("ledger", help="Read the append-only ledger")
     ledger.add_argument("--json", action="store_true")
     ledger.set_defaults(func=cmd_ledger)
+
+    finding = sub.add_parser("finding", help="Structured findings for a task")
+    finding_sub = finding.add_subparsers(dest="finding_command", required=True)
+    finding_add = finding_sub.add_parser("add", help="Record a finding")
+    finding_add.add_argument("task_id")
+    finding_add.add_argument("--summary", required=True)
+    finding_add.add_argument("--step", default="")
+    finding_add.add_argument("--confidence", default=None)
+    finding_add.add_argument("--uncertainty", default="")
+    finding_add.add_argument("--evidence", action="append", default=[])
+    finding_add.add_argument("--json", action="store_true")
+    finding_add.set_defaults(func=cmd_finding_add)
+    finding_list = finding_sub.add_parser("list", help="List findings")
+    finding_list.add_argument("task_id")
+    finding_list.add_argument("--json", action="store_true")
+    finding_list.set_defaults(func=cmd_finding_list)
+
+    metrics = sub.add_parser("metrics", help="Attention and cost metrics")
+    metrics.add_argument("--json", action="store_true")
+    metrics.set_defaults(func=cmd_metrics)
 
     schema = sub.add_parser("schema", help="Print every persisted schema")
     schema.add_argument("--json", action="store_true")

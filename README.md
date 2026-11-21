@@ -8,6 +8,11 @@ end to end. The builder can be the real `openjiuwen` Claude Code harness on the 
 Anthropic-compatible endpoint, and finished runs are reported to PPMA memory. The verifier is
 still the local scenario runner (M2); nothing is published yet (M3).
 
+<img src="brand/mascot/mira-primary.png" width="120" align="right" alt="Mira, a magpie courier, carrying a proof page">
+
+Mira is the product's mascot: a magpie courier who carries the signal in and the proof back. Brand
+notes and poses are in [`docs/brand/mascot.md`](docs/brand/mascot.md).
+
 ---
 
 ## The idea
@@ -60,6 +65,8 @@ the ledger row. No model and no network are used.
 | `works run <task> --live …` | The same loop with the real `openjiuwen` Claude Code harness |
 | `works run <task> --ppma URL` | Report the finished run to PPMA memory over its north contract |
 | `works policy check <paths>` | Refuses test paths and escapes before any command runs |
+| `works finding add/list <task>` | Structured findings with confidence and uncertainty |
+| `works metrics` | Attention, waiting time and cost derived from events and the ledger |
 | `works ledger` | Reads the append-only ledger |
 | `works schema --json` | Prints every persisted JSON Schema and its version |
 | `works doctor` | Checks Python, git, workspace, flow, harness, container, credentials, isolation |
@@ -123,7 +130,8 @@ make bench          # re-measure the budgets
 CI adds bandit and gitleaks on every PR, a weekly mutation gate (71.8% on state, policy and queue),
 and a weekly `pip-audit`. Decisions are recorded as ADRs in `docs/adrs/`; known failures and first
 responses are in `docs/runbook.md`. The live builder is in `docs/live-harness.md`; the PPMA memory
-integration is in `docs/ppma.md`.
+integration is in `docs/ppma.md`; the factory comparison that shaped v4.5 is in
+`docs/review-4-factories.md`.
 
 ---
 
@@ -138,7 +146,7 @@ integration is in `docs/ppma.md`.
 | `docs/plan.md` | The plan: preconditions, milestones, checkboxes, standards, refactoring gates |
 | `docs/deck/` | Five slides (SVG + PNG) |
 | `docs/video/` | The 47 s concept film |
-| `docs/adrs/` | Nine architecture decisions |
+| `docs/adrs/` | Ten architecture decisions |
 | `scripts/` | Demo, benchmark, check, mutation gate, film generators |
 
 ---

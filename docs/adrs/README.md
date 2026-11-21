@@ -14,5 +14,6 @@ deleted — a superseded decision is marked as such and points to its replacemen
 | [007](007-cli-startup-budget.md) | The CLI starts without a framework | accepted |
 | [008](008-live-harness.md) | The builder is a real openjiuwen harness, not a patch generator | accepted |
 | [009](009-ppma-memory.md) | PPMA owns memory; Works reports finished runs | accepted |
+| [010](010-factory-and-attention.md) | A factory is a task graph with waits, not an org chart | accepted |
 
 Format: context, decision, consequences, alternatives rejected.

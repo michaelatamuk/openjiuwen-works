@@ -92,7 +92,14 @@ def _apply(task: Task | None, event: Event) -> Task:
     if event.type == "attempt.started":
         return task.model_copy(update={"attempts": task.attempts + 1, "updated_at": event.ts})
 
-    if event.type in ("note", "plan.drafted", "gate.decided", "step.started", "step.finished"):
+    if event.type in (
+        "note",
+        "plan.drafted",
+        "gate.decided",
+        "step.started",
+        "step.finished",
+        "finding",
+    ):
         return task.model_copy(update={"updated_at": event.ts})
 
     raise StateError(f"unknown event type {event.type!r}")

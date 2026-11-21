@@ -11,6 +11,7 @@ from .gitops import DiffStat
 from .policy import PolicyReport, Violation
 from .records import (
     CommandRecord,
+    Finding,
     Priority,
     StopReason,
     TaskState,
@@ -42,6 +43,8 @@ class Evidence(BaseModel):
     stop_reason: StopReason
     model: str | None = None
     provider: str | None = None
+    prompt_name: str | None = None
+    prompt_sha256: str | None = None
     tokens: int = 0
     usd: float = 0.0
     duration_ms: int = 0
@@ -51,6 +54,8 @@ class Evidence(BaseModel):
     reproduce: CommandRecord | None = None
     test: CommandRecord | None = None
     verdict: Verdict | None = None
+    findings: list[Finding] = Field(default_factory=list)
+    not_tested: list[str] = Field(default_factory=list)
     diff: str = ""
     diff_sha256: str = ""
     proof_sha256: str = ""
@@ -105,6 +110,31 @@ def render_markdown(evidence: Evidence) -> str:
                 f"{_result(outcome.passed)} | {outcome.exit_code} | {outcome.duration_ms} |"
             )
         lines.append("")
+    lines += ["## Findings", ""]
+    if evidence.findings:
+        lines += [
+            "| Step | Finding | Confidence | Remaining uncertainty |",
+            "|---|---|---|---|",
+        ]
+        for finding in evidence.findings:
+            confidence = "—" if finding.confidence is None else f"{finding.confidence:.2f}"
+            lines.append(
+                f"| {_cell(finding.step)} | {_cell(finding.summary)} | {confidence} | "
+                f"{_cell(finding.uncertainty or '—')} |"
+            )
+        lines.append("")
+    else:
+        lines += ["No structured findings were recorded.", ""]
+    lines += ["## Residual risk", ""]
+    if evidence.not_tested:
+        lines += [f"- Not tested: `{_cell(item)}`" for item in evidence.not_tested]
+    else:
+        lines.append("- Not tested: none recorded.")
+    if not evidence.policy.ok:
+        lines.append("- Policy violations block this change.")
+    if evidence.verdict is None:
+        lines.append("- No verdict: the change was not judged.")
+    lines.append("")
     lines += ["## Commands", ""]
     commands = [command for command in (evidence.reproduce, evidence.test) if command is not None]
     if not commands:
@@ -152,6 +182,7 @@ def render_markdown(evidence: Evidence) -> str:
         f"- usd: `{evidence.usd:.4f}`",
         f"- wall: `{evidence.duration_ms} ms`",
         f"- model: `{evidence.model or '—'}` · provider: `{evidence.provider or '—'}`",
+        f"- prompt: `{evidence.prompt_name or '—'}` · sha256: `{evidence.prompt_sha256 or '—'}`",
         "",
     ]
     if evidence.diff.strip():

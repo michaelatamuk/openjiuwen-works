@@ -6,7 +6,7 @@
 
 **State** `proved` · **Stop reason** `completed`
 
-**Proof SHA-256** `017754fd09b5b0846077a552a5f06b4809cff12bffc6c5cbba25b2282d286340`
+**Proof SHA-256** `1fa09412de1798ef710cff822a32f4c37956f3edcf6a867e927f918f80b55121`
 
 ## Verdict
 
@@ -17,6 +17,16 @@
 | `add-negative` | P0 | PASS | 0 | 90 |
 | `add-positive` | P0 | PASS | 0 | 80 |
 | `mul-positive` | P1 | PASS | 0 | 70 |
+
+## Findings
+
+| Step | Finding | Confidence | Remaining uncertainty |
+|---|---|---|---|
+| build | add subtracted instead of adding | 0.95 | none observed |
+
+## Residual risk
+
+- Not tested: `Windows-specific path handling`
 
 ## Commands
 
@@ -45,6 +55,7 @@ No violations.
 - usd: `0.0120`
 - wall: `4321 ms`
 - model: `fake-builder-1` · provider: `fixture`
+- prompt: `build` · sha256: `ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff`
 
 ## Diff
 

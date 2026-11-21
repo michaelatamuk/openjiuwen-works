@@ -12,6 +12,7 @@ from .records import (
     SCHEMA_VERSION,
     CommandRecord,
     Event,
+    Finding,
     LedgerRow,
     RunRecord,
     Task,
@@ -29,6 +30,7 @@ def all_schemas() -> dict[str, Any]:
         "command": CommandRecord,
         "evidence": Evidence,
         "proposal": Proposal,
+        "finding": Finding,
     }
     return {
         "schema_version": SCHEMA_VERSION,

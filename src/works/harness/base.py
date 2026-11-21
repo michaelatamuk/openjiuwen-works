@@ -21,6 +21,8 @@ class Proposal(BaseModel):
     applied: bool = False
     touched_paths: list[str] = Field(default_factory=list)
     trace: list[str] = Field(default_factory=list)
+    prompt_name: str | None = None
+    prompt_sha256: str | None = None
     model: str = "unknown"
     provider: str = "unknown"
     tokens: int = Field(default=0, ge=0)

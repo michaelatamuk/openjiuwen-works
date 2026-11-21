@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import os
+from datetime import UTC, datetime
 from pathlib import Path
 
 from works.evidence import DiffStatRow, Evidence, render_markdown
 from works.policy import PolicyReport, Violation
 from works.records import (
     CommandRecord,
+    Finding,
     Priority,
     ScenarioOutcome,
     StopReason,
@@ -72,6 +74,8 @@ def fixed_evidence() -> Evidence:
         stop_reason=StopReason.COMPLETED,
         model="fake-builder-1",
         provider="fixture",
+        prompt_name="build",
+        prompt_sha256="f" * 64,
         tokens=1200,
         usd=0.012,
         duration_ms=4321,
@@ -81,6 +85,17 @@ def fixed_evidence() -> Evidence:
         reproduce=command("reproduce", 1, "a"),
         test=command("test", 0, "e"),
         verdict=verdict,
+        findings=[
+            Finding(
+                step="build",
+                summary="add subtracted instead of adding",
+                confidence=0.95,
+                uncertainty="none observed",
+                evidence=["calc/core.py:5"],
+                created_at=datetime(2026, 1, 1, tzinfo=UTC),
+            )
+        ],
+        not_tested=["Windows-specific path handling"],
         diff=(
             "diff --git a/calc/core.py b/calc/core.py\n"
             "--- a/calc/core.py\n"
@@ -141,6 +156,23 @@ def test_no_change_is_stated_not_implied() -> None:
     )
     page = render_markdown(evidence)
     assert "No change was produced." in page
+
+
+def test_the_page_answers_the_four_questions() -> None:
+    page = render_markdown(fixed_evidence().bind())
+    for heading in (
+        "## Verdict",
+        "## Findings",
+        "## Commands",
+        "## Change",
+        "## Policy",
+        "## Residual risk",
+        "## Cost",
+    ):
+        assert heading in page
+    assert "Not tested" in page
+    assert "add subtracted instead of adding" in page
+    assert "sha256" in page
 
 
 def test_golden_page(factory_root: Path) -> None:

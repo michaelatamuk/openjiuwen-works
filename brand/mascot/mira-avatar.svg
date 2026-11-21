@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Mira</title>
+  <desc id="desc">Mira's head: a magpie with a violet scarf.</desc>
+  <rect width="256" height="256" rx="56" fill="#F4F5F9"/>
+  <g transform="translate(128 128) scale(0.78) translate(-256 -184)">
+    <path d="M 241 80 C 231 52 209 42 191 46 C 214 51 223 64 225 84 Z" fill="#111827"/>
+    <path d="M 257 78 C 260 47 277 34 296 37 C 275 45 269 59 266 80 Z" fill="#111827"/>
+    <circle cx="256" cy="184" r="109" fill="#111827"/>
+    <circle cx="216" cy="177" r="28" fill="#FFFFFF"/>
+    <circle cx="296" cy="177" r="28" fill="#FFFFFF"/>
+    <circle cx="222" cy="181" r="13.5" fill="#111827"/>
+    <circle cx="302" cy="181" r="13.5" fill="#111827"/>
+    <circle cx="227" cy="175" r="5" fill="#FFFFFF"/>
+    <circle cx="307" cy="175" r="5" fill="#FFFFFF"/>
+    <ellipse cx="186" cy="219" rx="18" ry="9" fill="#6D28D9" opacity="0.22"/>
+    <ellipse cx="326" cy="219" rx="18" ry="9" fill="#6D28D9" opacity="0.22"/>
+    <path d="M 238 205 Q 256 194 274 205 L 263 231 Q 256 241 249 231 Z" fill="#D97706"/>
+    <path d="M 247 210 Q 256 206 265 210" stroke="#FBBF24" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <path d="M 168 252 C 201 270 311 270 345 252 L 337 289 C 302 307 210 307 175 289 Z" fill="#6D28D9"/>
+  </g>
+</svg>

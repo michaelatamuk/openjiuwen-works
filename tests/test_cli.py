@@ -147,6 +147,38 @@ def test_version_speaks_json(paths) -> None:
     assert payload(result)["version"] == "0.0.1"
 
 
+def test_findings_and_metrics_speak_json(paths, repo) -> None:
+    submitted = submit_cli(paths, repo)
+    task_id = submitted["task"]["id"]
+    added = invoke(
+        paths,
+        "finding",
+        "add",
+        task_id,
+        "--summary",
+        "add subtracts",
+        "--step",
+        "build",
+        "--confidence",
+        "0.9",
+        "--uncertainty",
+        "none",
+        "--evidence",
+        "calc/core.py:5",
+        "--json",
+    )
+    assert added.exit_code == 0, added.stdout
+    listed = invoke(paths, "finding", "list", task_id, "--json")
+    assert listed.exit_code == 0
+    findings = payload(listed)["findings"]
+    assert findings and findings[0]["summary"] == "add subtracts"
+    metrics = invoke(paths, "metrics", "--json")
+    assert metrics.exit_code == 0
+    body = payload(metrics)["metrics"]
+    assert body["tasks"] == 1
+    assert body["per_task"][0]["human_touches"] == 0
+
+
 def test_schema_and_ledger_speak_json(paths) -> None:
     schema = invoke(paths, "schema", "--json")
     assert schema.exit_code == 0
@@ -168,6 +200,12 @@ def test_the_cli_never_requires_a_tty(paths, repo) -> None:
     result = invoke(paths, "status", submitted["task"]["id"])
     assert result.exit_code == 0
     assert "queued" in result.stdout
+
+
+def test_an_empty_queue_greets_the_operator_like_a_product(paths) -> None:
+    result = invoke(paths, "status")
+    assert result.exit_code == 0
+    assert "Mira is watching the queue" in result.stdout
 
 
 def test_a_clean_checkout_is_not_dirty(repo) -> None:
