@@ -84,7 +84,8 @@ show_missing = true
 fail_under = 80
 
 [tool.mutmut]
-source_paths = [
+source_paths = ["src/works"]
+only_mutate = [
   "src/works/state.py",
   "src/works/policy.py",
   "src/works/queue.py",
