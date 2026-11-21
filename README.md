@@ -18,7 +18,7 @@
 > Most coding agents stop at a diff. Works stops at proof: what changed, what was checked, what was **not** checked, and who decided.
 
 <div align="center">
-  <img src="docs/ui/story.png" alt="openJiuwen Works Story view: Reported → Picked up → Confirmed → Fixed → Checked → Delivered, with Mira at the current milestone and Evidence one click away" width="100%" />
+  <img src="docs/ui/story.png" alt="openJiuwen Works Story view: Reported → Picked up → Confirmed → Fixed → Checked, with Mira at the ready-to-release gate and Evidence one click away" width="100%" />
 </div>
 
 ## The problem
