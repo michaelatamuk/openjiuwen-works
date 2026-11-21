@@ -22,6 +22,10 @@ The same evidence page serves two audiences without a second data source:
 The Summary is derived from the same proof; it never hides a contradiction. Every technical detail
 is one tab away. Deep links carry the view: `#/task/<id>` and `#/task/<id>/evidence`.
 
+The preview opens with **no task selected**: the queue is visible and Mira waits in the main empty
+state, with a small “Mira is watching the queue” strip in the sidebar. Selecting a report opens its
+Summary; the breadcrumb returns to the queue.
+
 ## What it shows
 
 - **Queue** — grouped into **Needs you**, **Working**, **Ready** and **Done**; filter, search and

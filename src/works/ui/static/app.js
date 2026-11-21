@@ -698,7 +698,8 @@ function renderDetail() {
   }
   const task = detail.task;
   const title = task.source?.title || `Task ${task.id}`;
-  $("#crumb").textContent = "Fix report";
+  $("#crumb").innerHTML = `<button type="button" class="crumb-link" id="crumb-home">Queue</button><span class="crumb-sep">/</span>Fix report`;
+  $("#crumb-home").addEventListener("click", () => clearSelection());
   $("#title").textContent = title;
   $("#subtitle").textContent = `${sourceLabel(task.source.kind)} · ${stateLabel(task.state)} · ${timeAgo(task.updated_at)}`;
   const body = state.view === "evidence" ? renderEvidence(detail) : renderSummary(detail);
@@ -708,19 +709,28 @@ function renderDetail() {
   bindView();
 }
 
-async function loadTasks({ keepSelection = true, selectFirst = true } = {}) {
+function clearSelection(updateHash = true) {
+  state.selected = null;
+  state.detail = null;
+  if (updateHash) history.replaceState(null, "", "#/");
+  $("#crumb").textContent = "Queue";
+  $("#title").textContent = "A signal in, a released fix out";
+  $("#subtitle").textContent = "Select a report to read its Summary or Evidence.";
+  renderTasks();
+  renderDetail();
+}
+
+async function loadTasks() {
   try {
     const data = await api("/api/tasks?limit=200");
     state.tasks = data.tasks || [];
-    renderTasks();
-    const exists = state.tasks.some((task) => task.id === state.selected);
-    if (!exists && keepSelection && state.tasks.length) {
-      if (selectFirst) selectTask(state.tasks[0].id);
-    } else if (!state.tasks.length) {
+    const exists = state.selected && state.tasks.some((task) => task.id === state.selected);
+    if (state.selected && !exists) {
       state.selected = null;
       state.detail = null;
-      renderDetail();
     }
+    renderTasks();
+    if (!state.selected) renderDetail();
   } catch (error) {
     toast(`Queue unavailable: ${error.message}`);
   }
@@ -756,11 +766,11 @@ function nextTask(step) {
 function applyHash() {
   const match = location.hash.match(/^#\/task\/([^/]+)(?:\/(summary|evidence))?$/);
   if (match && match[2]) state.view = match[2];
-  loadTasks({ keepSelection: false, selectFirst: false }).then(() => {
+  loadTasks().then(() => {
     if (match) {
       selectTask(decodeURIComponent(match[1]));
-    } else if (state.tasks.length) {
-      selectTask(state.tasks[0].id);
+    } else {
+      clearSelection(false);
     }
   });
 }
@@ -832,7 +842,7 @@ function bind() {
     }
   });
   $("#refresh").addEventListener("click", () => {
-    loadTasks({ keepSelection: true });
+    loadTasks();
     if (state.selected) loadDetail(state.selected);
   });
   $("#search").addEventListener("input", (event) => {
@@ -888,7 +898,7 @@ function bind() {
   });
   window.addEventListener("hashchange", applyHash);
   window.setInterval(() => {
-    loadTasks({ keepSelection: true, selectFirst: false });
+    loadTasks();
     if (state.selected) loadDetail(state.selected);
   }, 15_000);
 }

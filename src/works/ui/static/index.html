@@ -31,12 +31,12 @@
           <button type="button" class="filter" data-filter="proved">Proved</button>
         </div>
 
-        <div id="task-list" class="task-list" aria-live="polite"></div>
-
-        <footer class="sidebar-foot">
-          <img src="/mira.svg" alt="" width="28" height="28" />
+        <div class="mira-strip">
+          <img src="/mira.svg" alt="" width="22" height="22" />
           <span>Mira is watching the queue.</span>
-        </footer>
+        </div>
+
+        <div id="task-list" class="task-list" aria-live="polite"></div>
       </aside>
 
       <main class="main">
@@ -56,8 +56,8 @@
         <section class="content" id="content">
           <div class="empty" id="empty">
             <img src="/mira.svg" alt="" width="88" height="88" />
-            <h2>No run selected</h2>
-            <p>Pick a task on the left. The proof is computed, not narrated.</p>
+            <h2>Nothing selected</h2>
+            <p>Pick a report on the left. Mira is watching the queue and will carry the proof here.</p>
           </div>
           <div id="detail" hidden></div>
         </section>
