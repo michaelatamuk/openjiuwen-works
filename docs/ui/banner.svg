@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 480" width="1600" height="480" role="img" aria-labelledby="title desc">
   <title id="title">openJiuwen Works</title>
-  <desc id="desc">A local-first software factory: one signal in, a proven fix out.</desc>
+  <desc id="desc">A local-first software factory: one signal in, a released fix out.</desc>
   <defs>
     <radialGradient id="wash" cx="84%" cy="14%" r="60%">
       <stop offset="0" stop-color="#6D28D9" stop-opacity="0.10"/>
@@ -19,8 +19,8 @@
   <text x="80" y="158" fill="#6B7280" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="2.6">LOCAL-FIRST SOFTWARE FACTORY</text>
 
   <text x="78" y="250" fill="#111827" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="54" font-weight="800" letter-spacing="-2">One signal in.</text>
-  <text x="78" y="310" fill="#111827" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="54" font-weight="800" letter-spacing="-2">A proven fix out.</text>
-  <text x="80" y="360" fill="#4B5563" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="21" font-weight="500">Reproduce · check · prove · decide.</text>
+  <text x="78" y="310" fill="#111827" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="54" font-weight="800" letter-spacing="-2">A released fix out.</text>
+  <text x="80" y="360" fill="#4B5563" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="21" font-weight="500">Reproduce · check · prove · release.</text>
   <text x="80" y="396" fill="#6B7280" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="16" font-weight="500">Two human gates. No silent retry.</text>
 
   <g filter="url(#card)">
@@ -33,9 +33,8 @@
   <text x="1220" y="154" fill="#111827" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18" font-weight="700">0 gaps recorded</text>
   <text x="788" y="174" fill="#9CA3AF" font-family="Cascadia Code, Consolas, monospace" font-size="13">SHA-256 4c1f…</text>
 
-  <path d="M 800 268 C 845 238 890 228 930 228 C 970 228 1010 268 1060 268 C 1108 268 1145 228 1190 228 C 1230 228 1280 268 1320 268 C 1360 268 1410 238 1460 228" fill="none" stroke="#CFD6E4" stroke-width="3" stroke-dasharray="5 9"/>
-  <path d="M 800 268 C 845 238 890 228 930 228 C 970 228 1010 268 1060 268 C 1108 268 1145 228 1190 228 C 1230 228 1280 268 1320 268" fill="none" stroke="#6D28D9" stroke-width="4.5" stroke-linecap="round"/>
-  <circle cx="1320" cy="268" r="28" fill="#6D28D9" opacity="0.12"/>
+  <path d="M 800 268 C 845 238 890 228 930 228 C 970 228 1010 268 1060 268 C 1108 268 1145 228 1190 228 C 1230 228 1280 268 1320 268 C 1360 268 1410 238 1460 228" fill="none" stroke="#6D28D9" stroke-width="4.5" stroke-linecap="round"/>
+  <circle cx="1460" cy="228" r="30" fill="#047857" opacity="0.10"/>
 
   <g font-family="Inter, Segoe UI, Arial, sans-serif">
     <circle cx="800" cy="268" r="10" fill="#FFFFFF" stroke="#9CA3AF" stroke-width="2.5"/>
@@ -53,19 +52,20 @@
     <text x="1190" y="234" fill="#047857" font-size="13" font-weight="800" text-anchor="middle">✓</text>
     <text x="1190" y="197" fill="#6B7280" font-size="14" font-weight="700" letter-spacing="0.5" text-anchor="middle">FIXED</text>
 
-    <circle cx="1320" cy="268" r="20" fill="#F1EDFF" stroke="#6D28D9" stroke-width="4"/>
-    <circle cx="1320" cy="268" r="6" fill="#6D28D9"/>
-    <text x="1320" y="318" fill="#4C1D95" font-size="14" font-weight="800" letter-spacing="0.5" text-anchor="middle">CHECKED</text>
+    <circle cx="1320" cy="268" r="15" fill="#E8F8F1" stroke="#047857" stroke-width="3"/>
+    <text x="1320" y="274" fill="#047857" font-size="13" font-weight="800" text-anchor="middle">✓</text>
+    <text x="1320" y="312" fill="#6B7280" font-size="14" font-weight="700" letter-spacing="0.5" text-anchor="middle">CHECKED</text>
 
-    <rect x="1444" y="214" width="26" height="26" rx="6" transform="rotate(45 1457 227)" fill="#FFF7E6" stroke="#B45309" stroke-width="3"/>
-    <text x="1457" y="197" fill="#6B7280" font-size="14" font-weight="700" letter-spacing="0.5" text-anchor="middle">READY</text>
+    <circle cx="1460" cy="228" r="20" fill="#E8F8F1" stroke="#047857" stroke-width="4"/>
+    <text x="1460" y="235" fill="#047857" font-size="15" font-weight="800" text-anchor="middle">✓</text>
+    <text x="1460" y="197" fill="#047857" font-size="14" font-weight="800" letter-spacing="0.5" text-anchor="middle">RELEASED</text>
   </g>
 
   <g font-family="Inter, Segoe UI, Arial, sans-serif" font-size="14" font-weight="700">
-    <rect x="788" y="350" width="13" height="13" rx="3" transform="rotate(45 794 356)" fill="#FFF7E6" stroke="#B45309" stroke-width="2"/>
-    <text x="812" y="362" fill="#6B7280">PLAN GATE · a person</text>
-    <rect x="1088" y="350" width="13" height="13" rx="3" transform="rotate(45 1094 356)" fill="#FFF7E6" stroke="#B45309" stroke-width="2"/>
-    <text x="1112" y="362" fill="#6B7280">RELEASE GATE · a person</text>
-    <text x="1457" y="362" fill="#6B7280" text-anchor="middle">ready for a person</text>
+    <rect x="788" y="350" width="13" height="13" rx="3" transform="rotate(45 794 356)" fill="#E8F8F1" stroke="#047857" stroke-width="2"/>
+    <text x="812" y="362" fill="#047857">PLAN GATE · approved</text>
+    <rect x="1088" y="350" width="13" height="13" rx="3" transform="rotate(45 1094 356)" fill="#E8F8F1" stroke="#047857" stroke-width="2"/>
+    <text x="1112" y="362" fill="#047857">RELEASE GATE · approved</text>
+    <text x="1512" y="362" fill="#047857" text-anchor="end">back in the product</text>
   </g>
 </svg>
