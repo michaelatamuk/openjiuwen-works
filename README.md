@@ -1,5 +1,8 @@
 <div align="center">
-  <img src="docs/ui/banner.svg" alt="openJiuwen Works — one signal in, a reproduced, checked and proven fix out" width="100%" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/ui/banner-dark.svg" />
+    <img src="docs/ui/banner.svg" alt="openJiuwen Works — one signal in, a reproduced, checked and proven fix out" width="100%" />
+  </picture>
 </div>
 
 # openJiuwen Works
@@ -18,9 +21,9 @@
   <img src="docs/ui/story.png" alt="openJiuwen Works Story view: Reported → Picked up → Confirmed → Fixed → Checked → Delivered, with Mira at the current milestone and Evidence one click away" width="100%" />
 </div>
 
-## Why this exists
+## The problem
 
-A bug spends more time waiting than being fixed: waiting for triage, for an agent's answer, for a reviewer, for someone to prove the change works. Writing the code is the short part.
+A bug report waits: for triage, for an agent's answer, for a reviewer, for someone to prove the change works. Writing the fix is the short part.
 
 Works moves the waiting into an engine and keeps the judgement with people:
 
