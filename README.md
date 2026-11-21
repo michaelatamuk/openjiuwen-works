@@ -1,7 +1,7 @@
 <div align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/ui/banner-dark.svg" />
-    <img src="docs/ui/banner.svg" alt="openJiuwen Works — one signal in, a reproduced, checked and proven fix out" width="100%" />
+    <img src="docs/ui/banner.svg" alt="openJiuwen Works — one signal in, a released fix out, back in the product" width="100%" />
   </picture>
 </div>
 
