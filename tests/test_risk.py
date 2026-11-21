@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 from works.flow import find_flow, load_flow
 from works.gitops import DiffStat
 from works.risk import RiskLevel, rate_risk

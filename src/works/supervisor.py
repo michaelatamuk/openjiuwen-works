@@ -573,9 +573,7 @@ class Supervisor:
             {"gate": gate, "reason": detail, "mode": GateMode.OBSERVE.value},
         )
 
-    def _decide(
-        self, ctx: RunContext, gate: str, *, already_approved: bool = False
-    ) -> GateVerdict:
+    def _decide(self, ctx: RunContext, gate: str, *, already_approved: bool = False) -> GateVerdict:
         evidence: list[str] = []
         if ctx.reproduce is not None:
             evidence.append("the reproduction failed on the base commit")
@@ -614,9 +612,7 @@ class Supervisor:
                 "decision.shadow",
                 {
                     "gate": gate,
-                    "agree": None
-                    if shadow is None
-                    else verdict.action == shadow.action,
+                    "agree": None if shadow is None else verdict.action == shadow.action,
                     "shadow": None if shadow is None else shadow.model_dump(mode="json"),
                     "error": self._decision.last_error,
                 },

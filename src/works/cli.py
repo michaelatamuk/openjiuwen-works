@@ -635,15 +635,20 @@ def cmd_gate_list(args: argparse.Namespace) -> int:
     if args.json:
         _emit({"task_id": args.task_id, "events": decisions})
         return 0
-    print(table(("seq", "type", "gate", "detail"), [
-        (
-            item["seq"],
-            item["type"],
-            item.get("gate", "-"),
-            item.get("action") or item.get("reason") or item.get("agree") or "-",
+    print(
+        table(
+            ("seq", "type", "gate", "detail"),
+            [
+                (
+                    item["seq"],
+                    item["type"],
+                    item.get("gate", "-"),
+                    item.get("action") or item.get("reason") or item.get("agree") or "-",
+                )
+                for item in decisions
+            ],
         )
-        for item in decisions
-    ]))
+    )
     return 0
 
 
@@ -672,20 +677,22 @@ def cmd_flake_list(args: argparse.Namespace) -> int:
     if args.json:
         _emit({"flakes": [flake.model_dump(mode="json") for flake in flakes]})
         return 0
-    print(table(
-        ("id", "task", "scenario", "owner", "expires", "status"),
-        [
-            (
-                flake.id,
-                flake.task_id,
-                flake.scenario_id,
-                flake.owner,
-                flake.expires_at.isoformat(timespec="seconds") if flake.expires_at else "-",
-                flake.status.value,
-            )
-            for flake in flakes
-        ],
-    ))
+    print(
+        table(
+            ("id", "task", "scenario", "owner", "expires", "status"),
+            [
+                (
+                    flake.id,
+                    flake.task_id,
+                    flake.scenario_id,
+                    flake.owner,
+                    flake.expires_at.isoformat(timespec="seconds") if flake.expires_at else "-",
+                    flake.status.value,
+                )
+                for flake in flakes
+            ],
+        )
+    )
     return 0
 
 
