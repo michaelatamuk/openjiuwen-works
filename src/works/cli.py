@@ -779,6 +779,35 @@ def cmd_decision_replay(args: argparse.Namespace) -> int:
     return EXIT_POLICY if payload["unsafe_allow"] else 0
 
 
+def cmd_ui(args: argparse.Namespace) -> int:
+    import webbrowser
+
+    from .ui.server import serve
+
+    if args.write:
+        raise NotImplementedYet("the preview is read-only; write actions land with the full window")
+    server = serve(_paths(args), host=args.host, port=args.port)
+    address = server.server_address
+    host = str(address[0])
+    port = int(address[1])
+    url = f"http://{host}:{port}/"
+    if args.json:
+        _emit({"url": url, "readonly": True})
+    else:
+        print(f"openJiuwen Works read-only preview: {url}")
+        print("Press Ctrl+C to stop.")
+    if not args.no_open:
+        webbrowser.open(url)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.shutdown()
+        server.server_close()
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="works", description=DESCRIPTION)
     parser.add_argument("--home", type=Path, default=None, help="Workspace root")
@@ -948,6 +977,15 @@ def build_parser() -> argparse.ArgumentParser:
     decision_replay.add_argument("--provider", choices=("off", "shadow", "laix"), default="laix")
     decision_replay.add_argument("--json", action="store_true")
     decision_replay.set_defaults(func=cmd_decision_replay)
+
+    ui = sub.add_parser("ui", help="Open the read-only preview window")
+    ui.add_argument("--host", default="127.0.0.1")
+    ui.add_argument("--port", type=int, default=8765)
+    ui.add_argument("--read-only", action="store_true", help="Only supported mode")
+    ui.add_argument("--write", action="store_true", help="Not implemented")
+    ui.add_argument("--no-open", action="store_true", help="Do not open a browser")
+    ui.add_argument("--json", action="store_true")
+    ui.set_defaults(func=cmd_ui)
 
     schema = sub.add_parser("schema", help="Print every persisted schema")
     schema.add_argument("--json", action="store_true")

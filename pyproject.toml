@@ -55,7 +55,7 @@ extend-exclude = ["archive", "scripts", "fixtures"]
 select = ["E", "F", "I", "UP", "B", "SIM", "RUF", "C4", "DTZ", "T20", "S"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "S603", "S607"]
+"tests/**" = ["S101", "S310", "S603", "S607"]
 "src/works/runner.py" = ["S603", "S607"]
 "src/works/gitops.py" = ["S603", "S607"]
 "src/works/cli.py" = ["T201"]

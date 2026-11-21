@@ -8,8 +8,9 @@ end to end. The builder can be the real `openjiuwen` Claude Code harness on the 
 Anthropic-compatible endpoint, and finished runs are reported to PPMA memory. The verifier is
 still the local scenario runner (M2); nothing is published yet (M3). Gate hardening is in:
 trusted-base flows and checks, exact-commit approval, `check-change` tasks, risk rating, flake
-enforcement and the LAIX `DecisionPort` in shadow mode. Next deliverable: the read-only GUI preview
-(T1.24), then readiness and the feature map. The trust pyramid and the slop lesson are in
+enforcement and the LAIX `DecisionPort` in shadow mode. The read-only preview is in: `works ui`
+opens the queue, proof, risk, decision and readiness from real artifacts. Next: readiness (T2.18)
+and the feature map (T2.19). The trust pyramid and the slop lesson are in
 `docs/review-5-slop.md`.
 
 <img src="brand/mascot/mira-primary.png" width="120" align="right" alt="Mira, a magpie courier, carrying a proof page">
@@ -74,6 +75,7 @@ the ledger row. No model and no network are used.
 | `works policy check <paths>` | Refuses test paths and escapes before any command runs |
 | `works finding add/list <task>` | Structured findings with confidence and uncertainty |
 | `works metrics` | Attention, waiting time and cost derived from events and the ledger |
+| `works ui` | Opens the read-only preview: queue, proof, risk, decision, readiness |
 | `works ledger` | Reads the append-only ledger |
 | `works schema --json` | Prints every persisted JSON Schema and its version |
 | `works doctor` | Checks Python, git, workspace, flow, harness, container, credentials, isolation |
@@ -112,7 +114,7 @@ in v0 — no silent retry, no "trust the builder".
 | Readiness | `works readiness` (lint, types, fast tests, architecture, suppressions, verify, feature map) lands with T2.18; a red gate will refuse automation |
 | Feature map | User-facing feature map and runtime artifacts in the proof land with T2.19 |
 | Verification cost | Builder/challenger/verifier split in the proof lands with T1.25 |
-| GUI | CLI only. The read-only preview (queue, task, proof, risk/decision, readiness, feature coverage) is the next deliverable (T1.24); the full window follows M1/M2 |
+| GUI | Read-only preview is in: `works ui` opens the queue, proof, risk, decision and readiness from real artifacts. Write actions, the full React/Vite window, SSE and Playwright are later |
 
 The fixture bug is deliberate: `add` subtracts. The good trace fixes it, the sneaky trace passes
 the visible test but fails a P0 holdout, and the test-edit trace is refused by policy.
@@ -146,9 +148,10 @@ CI adds bandit and gitleaks on every PR, a weekly mutation gate (71.8% on state,
 and a weekly `pip-audit`. Decisions are recorded as ADRs in `docs/adrs/`; known failures and first
 responses are in `docs/runbook.md`. The live builder is in `docs/live-harness.md`; the PPMA memory
 integration is in `docs/ppma.md`; the LAIX decision layer and its boundary are in `docs/laix.md`;
-verification and approval boundaries are in `docs/verification.md`; the factory comparison that
-shaped v4.5 is in `docs/review-4-factories.md`; the slop/readiness talk is in
-`docs/review-5-slop.md`; waits and the dispatcher are in `docs/waiting-and-dispatch.md`.
+verification and approval boundaries are in `docs/verification.md`; the read-only preview is in
+`docs/ui.md`; the factory comparison that shaped v4.5 is in `docs/review-4-factories.md`; the
+slop/readiness talk is in `docs/review-5-slop.md`; waits and the dispatcher are in
+`docs/waiting-and-dispatch.md`.
 
 ---
 
@@ -157,6 +160,7 @@ shaped v4.5 is in `docs/review-4-factories.md`; the slop/readiness talk is in
 | Path | What it is |
 |---|---|
 | `src/works/` | The engine: state, queue, index, policy, flow, supervisor, evidence, harness port |
+| `src/works/ui/` | The read-only preview server, HTML, CSS and JS |
 | `tests/` | Unit, property-based, CLI and integration tests; golden evidence page |
 | `fixtures/` | A planted-bug repository, three scenarios, six recorded traces and 20 decision cases |
 | `flows/fix-issue.yaml` | The first flow as a node graph with gates and policy |

@@ -1,6 +1,6 @@
 # Development plan — openJiuwen Works
 
-**Status:** v4.13 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
+**Status:** v4.14 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
 
 Every task is a checkbox, checked when its criteria are met and the change is merged. `S/M/L`:
 S ≤ half a day, M ≤ two days, L ≤ a week. Nothing is checked because it was started.
@@ -661,9 +661,11 @@ Internal only: nothing is published to the upstream fork until M2 is green.
   is fixed or deleted with a written reason. **S**
   - 2026-11-21: `works flake add/list`, active flakes block the verdict with `flaky_test`, and the
     engine never retries a scenario to green.
-- [ ] **T1.24** Read-only GUI preview: queue, task detail, proof, risk, decision, `would_block`,
+- [x] **T1.24** Read-only GUI preview: queue, task detail, proof, risk, decision, `would_block`,
   readiness and feature coverage in one window; `works ui --read-only`; no write actions. **M**
-  - Next deliverable after the T1.19-T1.23 batch, before the rest of M1.
+  - Done 2026-11-21: `works ui` serves a dark/light, keyboard-first preview from the queue and run
+    artifacts; API is GET-only, POST returns 405; readiness and feature coverage are basic previews.
+    The full React/Vite window, SSE and Playwright are later.
 - [ ] **T1.25** Verification cost split: builder, challenger and verifier tokens/USD in `run.json`
   and the proof; verification share is reported next to the total. **S**
 
@@ -1059,6 +1061,9 @@ agents, a zoo of model providers before M3, and autonomous merge without the two
 
 ## 20. Changelog
 
+- **v4.14** — read-only GUI preview: `works ui` serves the queue, task, proof, risk, decision,
+  readiness and feature-map placeholders from events and run artifacts; dark/light, density,
+  keyboard navigation and deep links; GET-only API.
 - **v4.13** — trust pyramid and agent readiness from Lauren Tan's SpaceX SI talk: `works readiness`
   gate, feature map and runtime artifacts, architecture guardrails, suppression-aware suspicious
   list, verification cost split, performance budgets, correction → deterministic check (D17–D19,

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-density="comfortable">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <title>openJiuwen Works — read-only preview</title>
+    <link rel="stylesheet" href="/app.css" />
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar" aria-label="Queue">
+        <header class="brand">
+          <div class="mark" aria-hidden="true">W</div>
+          <div class="brand-copy">
+            <strong>openJiuwen Works</strong>
+            <span class="preview">READ-ONLY PREVIEW</span>
+          </div>
+          <button class="icon-btn" id="theme" type="button" aria-label="Toggle theme" title="Theme">◐</button>
+        </header>
+
+        <div class="search">
+          <input id="search" type="search" placeholder="Search tasks" aria-label="Search tasks" autocomplete="off" />
+          <kbd>/</kbd>
+        </div>
+
+        <div class="filters" role="group" aria-label="Filter tasks">
+          <button type="button" class="filter active" data-filter="all">All</button>
+          <button type="button" class="filter" data-filter="waiting">Waiting</button>
+          <button type="button" class="filter" data-filter="blocked">Blocked</button>
+          <button type="button" class="filter" data-filter="proved">Proved</button>
+        </div>
+
+        <div id="task-list" class="task-list" aria-live="polite"></div>
+
+        <footer class="sidebar-foot">
+          <img src="/mira.svg" alt="" width="28" height="28" />
+          <span>Mira is watching the queue.</span>
+        </footer>
+      </aside>
+
+      <main class="main">
+        <header class="main-head">
+          <div class="head-copy">
+            <div class="crumb" id="crumb">Queue</div>
+            <h1 id="title">A signal in, a released fix out</h1>
+            <p id="subtitle">Select a task to read its proof, risk and decision.</p>
+          </div>
+          <div class="head-actions">
+            <button class="btn ghost" id="density" type="button" aria-label="Toggle density" title="Density">☷</button>
+            <button class="btn" id="refresh" type="button">Refresh</button>
+          </div>
+        </header>
+
+        <section class="content" id="content">
+          <div class="empty" id="empty">
+            <img src="/mira.svg" alt="" width="88" height="88" />
+            <h2>No run selected</h2>
+            <p>Pick a task on the left. The proof is computed, not narrated.</p>
+          </div>
+          <div id="detail" hidden></div>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="help" aria-labelledby="help-title">
+      <h2 id="help-title">Keyboard</h2>
+      <dl>
+        <dt><kbd>j</kbd> / <kbd>k</kbd></dt><dd>Next / previous task</dd>
+        <dt><kbd>/</kbd></dt><dd>Focus search</dd>
+        <dt><kbd>r</kbd></dt><dd>Refresh</dd>
+        <dt><kbd>t</kbd></dt><dd>Toggle theme</dd>
+        <dt><kbd>?</kbd></dt><dd>This help</dd>
+        <dt><kbd>Esc</kbd></dt><dd>Clear search or close help</dd>
+      </dl>
+      <form method="dialog"><button class="btn">Close</button></form>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="/app.js"></script>
+  </body>
+</html>
