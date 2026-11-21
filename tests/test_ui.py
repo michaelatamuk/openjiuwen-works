@@ -82,6 +82,7 @@ def test_task_detail_includes_readiness_and_timeline(paths, submit) -> None:
         assert detail["pipeline"]["story"][0]["label"] == "Reported"
         assert [item["label"] for item in detail["pipeline"]["story"]] == [
             "Reported",
+            "Picked up",
             "Confirmed",
             "Fixed",
             "Checked",

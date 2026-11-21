@@ -20,8 +20,8 @@ const stateHuman = {
   reproduced: "Problem confirmed",
   planning: "Planning the fix",
   plan_approved: "Plan approved",
-  building: "Building the fix",
-  checking: "Checking the fix",
+  building: "Fixing it now",
+  checking: "Checking it now",
   proved: "Ready for release",
   waiting_review: "Waiting for a person",
   waiting_ci: "Running checks",
@@ -797,33 +797,64 @@ function renderStoryReplay(detail) {
 
 function renderRoute(detail, stages) {
   const label = stages.map((stage) => `${stage.label}: ${stage.state}`).join(", ");
-  return `<div class="route-scroll">
-    <div class="route-wrap" role="img" aria-label="Fix route — ${esc(label)}">
-      <svg class="route-svg" viewBox="0 0 1200 380" preserveAspectRatio="none" aria-hidden="true">
-        <path id="route-base" class="route-base" d="M 160 260 C 320 150 460 320 600 250 S 880 150 1040 260"/>
-        <path id="route-progress" class="route-progress" d="M 160 260 C 320 150 460 320 600 250 S 880 150 1040 260"/>
-      </svg>
-      <div class="route-points" id="route-points"></div>
-      <div class="route-mira" id="route-mira" aria-hidden="true"><img src="/mira.svg" alt="" width="52" height="52" /></div>
+  return `<section class="route-block" aria-label="Fix route">
+    <div class="route-head">
+      <span class="route-title">The fix route</span>
+      <span class="route-legend">
+        <span><i class="legend-dot pending" aria-hidden="true"></i>Not started</span>
+        <span><i class="legend-dot active" aria-hidden="true"></i>Mira is here</span>
+        <span><i class="legend-dot waiting" aria-hidden="true"></i>Waits for you</span>
+        <span><i class="legend-dot done" aria-hidden="true"></i>Done</span>
+        <span><i class="legend-dot blocked" aria-hidden="true"></i>Stopped</span>
+      </span>
     </div>
-  </div>`;
+    <div class="route-scroll">
+      <div class="route-wrap" role="img" aria-label="Fix route — ${esc(label)}">
+        <svg class="route-svg" viewBox="0 0 1200 380" preserveAspectRatio="none" aria-hidden="true">
+          <path id="route-base" class="route-base" d="M 160 260 C 320 150 460 320 600 250 S 880 150 1040 260"/>
+          <path id="route-progress" class="route-progress" d="M 160 260 C 320 150 460 320 600 250 S 880 150 1040 260"/>
+        </svg>
+        <div class="route-points" id="route-points"></div>
+        <div class="route-mira" id="route-mira" aria-hidden="true"><img src="/mira.svg" alt="" width="52" height="52" /></div>
+      </div>
+    </div>
+  </section>`;
 }
 
-function milestoneLabel(stage, display) {
-  if (display === "blocked") return "Mira stopped at a check";
-  if (display === "active") {
-    return {
-      reported: "Mira picked it up",
-      confirmed: "Mira confirmed it",
-      fixed: "Mira fixed it",
-      checked: "Mira checked it",
-      delivered: stage.label.startsWith("Release")
+function milestoneLabel(stage, display, detail) {
+  const product = detail?.task?.product || "the product";
+  const stops = {
+    picked_up: {
+      active: "Mira is picking it up",
+      done: "Picked up",
+      blocked: "Mira could not pick it up",
+    },
+    confirmed: {
+      active: "Mira is confirming it",
+      done: "Confirmed",
+      blocked: "Mira could not confirm it",
+    },
+    fixed: {
+      active: "Mira is fixing it",
+      done: "Fixed",
+      blocked: "Mira stopped while fixing",
+    },
+    checked: {
+      active: "Mira is checking it",
+      done: "Checked",
+      blocked: "Mira stopped at a check",
+    },
+    delivered: {
+      active: stage.label.startsWith("Release")
         ? "Mira is ready to release"
         : "Mira is delivering it",
-    }[stage.id] || stage.label;
-  }
-  if (stage.id === "delivered" && stage.state === "done") return "Mira released it";
-  return stage.label;
+      done: `Delivered to ${product}`,
+      blocked: "Mira stopped before delivery",
+    },
+  };
+  const stop = stops[stage.id];
+  if (!stop) return stage.label;
+  return stop[display] || stage.label;
 }
 
 function layoutRoute(detail) {
@@ -842,32 +873,40 @@ function layoutRoute(detail) {
   );
   const allDone = stages.every((stage) => stage.state === "done");
   const queued = detail.task?.state === "queued";
-  const showMira = !queued && (replaying || hasCurrent || allDone);
+  const showMira = !queued && activeIndex > 0 && (replaying || hasCurrent || allDone);
   points.innerHTML = "";
   stages.forEach((stage, index) => {
     const point = path.getPointAtLength((length * index) / Math.max(1, stages.length - 1));
-    const display = displayedState(stage, index, activeIndex, replaying);
+    const display = index === 0 ? "source" : displayedState(stage, index, activeIndex, replaying);
     const node = display === "done" ? "✓"
       : display === "blocked" ? "!"
       : display === "active" && stage.kind === "gate" ? "◆"
       : display === "active" ? "●"
-      : String(index + 1);
+      : "";
     const item = document.createElement("div");
-    const side = index === activeIndex ? "above" : index % 2 === 0 ? "above" : "below";
+    const side = index % 2 === 0 ? "above" : "below";
     item.className = `milestone ${display} ${side}${stage.kind === "gate" ? " gate" : ""}`;
     item.style.left = `${(point.x / 1200) * 100}%`;
     item.style.top = `${(point.y / 380) * 100}%`;
-    item.innerHTML = `<span class="m-node">${node}</span><span class="m-copy"><strong>${esc(queued ? stage.label : milestoneLabel(stage, display))}</strong><em>${esc(stage.at ? timeAgo(stage.at) : "—")}</em></span>`;
+    const copy = display === "source" ? "Reported" : milestoneLabel(stage, display, detail);
+    item.innerHTML = `<span class="m-node">${node}</span><span class="m-copy"><strong>${esc(copy)}</strong>${
+      stage.at && display !== "pending" ? `<em>${esc(timeAgo(stage.at))}</em>` : ""
+    }</span>`;
     points.append(item);
   });
   const activePoint = path.getPointAtLength(
     (length * activeIndex) / Math.max(1, stages.length - 1),
   );
   mira.hidden = !showMira;
+  mira.classList.toggle("above-node", activeIndex % 2 === 1);
   mira.style.left = `${(activePoint.x / 1200) * 100}%`;
   mira.style.top = `${(activePoint.y / 380) * 100}%`;
-  progress.style.strokeDasharray = String(length);
-  progress.style.strokeDashoffset = String(length - (length * activeIndex) / Math.max(1, stages.length - 1));
+  const segments = Math.max(1, stages.length - 1);
+  const start = length / segments;
+  const end = (length * Math.max(0, activeIndex)) / segments;
+  const visible = Math.max(0, end - start);
+  progress.style.strokeDasharray = `${visible} ${length}`;
+  progress.style.strokeDashoffset = `${-start}`;
   progress.classList.toggle("blocked", stages[activeIndex]?.state === "blocked");
 }
 
@@ -930,7 +969,11 @@ function renderStoryRail(detail, stages, blocked) {
          <dl class="rail-facts"><dt>Current step</dt><dd>${esc(active?.label || "Release")}</dd></dl>`
       : state === "queued"
         ? `<p class="rail-kicker">Waiting</p><p class="rail-big">In the queue</p><p>The factory has not started yet. Mira will pick it up.</p>`
-        : `<p class="rail-kicker">In progress</p><p class="rail-big">${esc(stateLabel(state))}</p><p>The factory is working on the reported problem.</p>`;
+        : state === "building" || state === "plan_approved"
+          ? `<p class="rail-kicker">In progress</p><p class="rail-big">Mira is fixing it</p><p>The fix is being written now. Checks have not run yet.</p>`
+          : state === "checking"
+            ? `<p class="rail-kicker">In progress</p><p class="rail-big">Mira is checking it</p><p>The fix is built; the checks are running now.</p>`
+            : `<p class="rail-kicker">In progress</p><p class="rail-big">${esc(stateLabel(state))}</p><p>The factory is working on the reported problem.</p>`;
   return `<aside class="story-rail"${blocked ? ' id="blocked"' : ""}>
     <div class="rail-title">${esc(title)}</div>
     ${body}
@@ -949,6 +992,8 @@ function storyHeadline(detail) {
   if (state === "released") return `Fixed and back in ${detail.task.product}`;
   if (state === "reverted") return "Reverted";
   if (state === "queued") return "In the queue";
+  if (state === "building" || state === "plan_approved") return "Fixing it now";
+  if (state === "checking") return "Checking it now";
   return stateLabel(state);
 }
 
@@ -968,6 +1013,12 @@ function storyHeroText(detail) {
   }
   if (state === "queued") {
     return `The factory has not started yet. Mira will pick it up.`;
+  }
+  if (state === "building" || state === "plan_approved") {
+    return `Mira is writing the fix for ${product}. No checks have run yet.`;
+  }
+  if (state === "checking") {
+    return `The fix is built. Mira is running the checks now.`;
   }
   if (state === "reverted") {
     return `The fix was reverted; a person is looking at why.`;

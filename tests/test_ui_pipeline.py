@@ -50,14 +50,48 @@ def evidence(*, allow: bool, stop: str) -> dict:
     }
 
 
-def test_a_proved_pipeline_has_five_story_stations() -> None:
+def test_a_proved_pipeline_has_six_story_stations() -> None:
     pipeline = _pipeline(task(TaskState.PROVED), events(), evidence(allow=True, stop="completed"))
     labels = [item["label"] for item in pipeline["story"]]
-    assert labels == ["Reported", "Confirmed", "Fixed", "Checked", "Release to DigitalMate"]
-    assert [item["state"] for item in pipeline["story"]][:4] == ["done", "done", "done", "done"]
+    assert labels == [
+        "Reported",
+        "Picked up",
+        "Confirmed",
+        "Fixed",
+        "Checked",
+        "Release to DigitalMate",
+    ]
+    assert [item["state"] for item in pipeline["story"]][:5] == [
+        "done",
+        "done",
+        "done",
+        "done",
+        "done",
+    ]
     assert pipeline["story"][-1]["state"] == "active"
     assert len(pipeline["technical"]) == 10
     assert pipeline["blocked"] is None
+
+
+def test_a_building_pipeline_shows_mira_in_the_middle_of_the_fix() -> None:
+    pipeline = _pipeline(task(TaskState.BUILDING), events(), None)
+    states = {item["id"]: item["state"] for item in pipeline["story"]}
+    assert states == {
+        "reported": "done",
+        "picked_up": "done",
+        "confirmed": "done",
+        "fixed": "active",
+        "checked": "pending",
+        "delivered": "pending",
+    }
+
+
+def test_a_checking_pipeline_keeps_the_fix_done_and_the_check_active() -> None:
+    pipeline = _pipeline(task(TaskState.CHECKING), events(), None)
+    states = {item["id"]: item["state"] for item in pipeline["story"]}
+    assert states["fixed"] == "done"
+    assert states["checked"] == "active"
+    assert states["delivered"] == "pending"
 
 
 def test_a_blocked_pipeline_explains_why_in_plain_language() -> None:

@@ -1,6 +1,6 @@
 # Development plan — openJiuwen Works
 
-**Status:** v4.18 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
+**Status:** v4.19 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
 
 Every task is a checkbox, checked when its criteria are met and the change is merged. `S/M/L`:
 S ≤ half a day, M ≤ two days, L ≤ a week. Nothing is checked because it was started.
@@ -665,11 +665,12 @@ Internal only: nothing is published to the upstream fork until M2 is green.
   readiness and feature coverage in one window; `works ui --read-only`; no write actions. **M**
   - Done 2026-11-21: `works ui` serves a dark/light, keyboard-first preview from the queue and run
     artifacts; API is GET-only, POST returns 405. Story is the default and only human reading, with
-    full-body Mira at the current milestone, five plain-language milestones, a receipt strip and a
-    specific blocked rail; the 10-step technical line lives in Evidence; replay sits behind “How we
-    got here”; Present mode, human status labels, Needs you/In progress/Queued/Done groups, `Ctrl+K`
-    palette and deep links. Demo uses Firefox, LibreOffice, GIMP and Joplin. The full React/Vite
-    window, SSE and Playwright are later.
+    a gray Reported origin and five Mira stops (Picked up, Confirmed, Fixed, Checked, Delivered),
+    four stop states, full-body Mira at the current stop, a receipt strip and a specific blocked
+    rail; the 10-step technical line lives in Evidence; replay sits behind “How we got here”;
+    Present mode, human status labels, Needs you/In progress/Queued/Done groups, `Ctrl+K` palette
+    and deep links. Demo uses Firefox, LibreOffice, GIMP, Blender and Joplin, including a task in
+    the middle of the check. The full React/Vite window, SSE and Playwright are later.
 - [ ] **T1.25** Verification cost split: builder, challenger and verifier tokens/USD in `run.json`
   and the proof; verification share is reported next to the total. **S**
 
@@ -1043,9 +1044,11 @@ All decided; revisit only with an ADR.
   Evidence is one click away for an engineer. Both are computed from the same proof, and the human
   answer (changed, checked, not checked, who decides) lives in the Story hero and receipt strip;
   technical states and reason codes stay in Evidence.
-- [x] **D21** The task is a line. Story is the default view: five human milestones with Mira at the
-  current one only (never on future milestones), a ten-milestone technical line inside Evidence,
-  replay from real events, and no animation that is not backed by an event.
+- [x] **D21** The task is a line. Story is the default view: a gray Reported origin and five Mira
+  stops (Picked up, Confirmed, Fixed, Checked, Delivered) with four states — not started, in the
+  middle, done, stopped. Mira appears only at the current stop, never on future ones; the
+  ten-station technical line lives in Evidence; replay comes from real events, and no animation is
+  backed by anything but an event.
 
 ---
 
@@ -1074,6 +1077,11 @@ agents, a zoo of model providers before M3, and autonomous merge without the two
 
 ## 20. Changelog
 
+- **v4.19** — the route becomes a journey: a gray **Reported** origin (not part of Mira's path)
+  followed by five Mira stops, each with not-started / in-the-middle / done / stopped states and
+  state-aware labels (“Mira is fixing it”, “Fixed”, “Mira stopped while fixing”). Adds a
+  mid-check **Blender** demo task with the fix done and Mira checking; the demo now covers five
+  open-source products. Pending stops lose empty timestamps and the route gets a state legend.
 - **v4.18** — Story becomes the only human reading: five plain-language milestones (Reported →
   Confirmed → Fixed → Checked → Released), Mira at the current milestone only with sentence labels
   (“Mira confirmed it”, “Mira is ready to release”), full-body Mira never clipped or overlapping,

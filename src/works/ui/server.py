@@ -221,7 +221,9 @@ def _pipeline(task: Task, events: list[Event], evidence: dict[str, Any] | None) 
         _first_at(events, "plan.drafted"),
         gate_plan.ts.isoformat() if gate_plan is not None else None,
         _first_at(events, "attempt.started"),
-        _first_at(events, "step.finished", step="test"),
+        _first_at(events, "step.finished", step="test")
+        or _first_at(events, "step.started", step="test")
+        or _first_at(events, "step.started", step="check"),
         next((event.ts.isoformat() for event in reversed(events) if event.type == "note"), None),
         gate_release.ts.isoformat() if gate_release is not None else None,
         next(
@@ -247,11 +249,12 @@ def _pipeline(task: Task, events: list[Event], evidence: dict[str, Any] | None) 
     ]
 
     story_specs = [
-        ("reported", "Reported", [0], "You reported the problem."),
+        ("reported", "Reported", [], "A person reported the problem."),
+        ("picked_up", "Picked up", [0], "Mira picked it up."),
         ("confirmed", "Confirmed", [1], "We saw it happen."),
         ("fixed", "Fixed", [2, 3, 4], "We built a fix."),
         ("checked", "Checked", [5, 6], "We checked it."),
-        ("delivered", "Deliver", [7, 8, 9], "The fix is on its way back."),
+        ("delivered", "Delivered", [7, 8, 9], "The fix is on its way back."),
     ]
     blocked_why = {
         "not_reproducible": "The problem could not be reproduced, so no fix can be proven.",
@@ -269,10 +272,26 @@ def _pipeline(task: Task, events: list[Event], evidence: dict[str, Any] | None) 
     blocked_key = None
     if state == "blocked":
         blocked_key = next((key for key, _, indexes, _ in story_specs if current in indexes), None)
+    pickup_at = (
+        next(
+            (
+                event.ts.isoformat()
+                for event in events
+                if event.type == "state.changed" and event.data.get("to") == "reproducing"
+            ),
+            None,
+        )
+        or at[1]
+    )
+
     story: list[dict[str, Any]] = []
     for key, label, indexes, caption in story_specs:
         states = [technical[index]["state"] for index in indexes]
-        if "blocked" in states:
+        if key == "reported":
+            stage = "done"
+        elif key == "picked_up":
+            stage = "done" if current > 0 else "pending"
+        elif "blocked" in states:
             stage = "blocked"
         elif all(item == "done" for item in states):
             stage = "done"
@@ -295,8 +314,12 @@ def _pipeline(task: Task, events: list[Event], evidence: dict[str, Any] | None) 
                 if state == "released"
                 else f"The fix is on its way back to {task.product}."
             )
-        story_at = next(
-            (technical[index]["at"] for index in indexes if technical[index]["at"]), None
+        story_at = (
+            at[0]
+            if key == "reported"
+            else pickup_at
+            if key == "picked_up"
+            else next((technical[index]["at"] for index in indexes if technical[index]["at"]), None)
         )
         if key == blocked_key:
             stage = "blocked"
@@ -308,6 +331,8 @@ def _pipeline(task: Task, events: list[Event], evidence: dict[str, Any] | None) 
                 f"Reported through {source.get(task.source.kind.value, 'the source')}",
                 task.source.title,
             ]
+        elif key == "picked_up":
+            story_artifacts = ["Mira took the report", f"Work started on {task.product}"]
         elif key == "confirmed":
             story_artifacts = [
                 "The problem was reproduced",
@@ -347,8 +372,10 @@ def _pipeline(task: Task, events: list[Event], evidence: dict[str, Any] | None) 
             {
                 "id": key,
                 "label": label,
-                "kind": "gate"
-                if any(technical[index]["kind"] == "gate" for index in indexes)
+                "kind": "source"
+                if key == "reported"
+                else "gate"
+                if key == "delivered"
                 else "stage",
                 "state": stage,
                 "at": story_at,

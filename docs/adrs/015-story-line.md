@@ -15,8 +15,11 @@ static empty-state image wastes the metaphor.
 ## Decision
 
 - Add a **Story** view as the default for a selected task.
-- The Story line has five human stations: **Reported → Confirmed → Fixed → Checked → Released**
-  (the last one reads “Release to {product}” at the release gate and “Back in {product}” after it).
+- The Story line starts with a gray **Reported** origin — the signal, not part of Mira's journey —
+  then five Mira stops: **Picked up → Confirmed → Fixed → Checked → Delivered**.
+- Every stop has four states: **not started** (dimmed), **Mira is here** (violet, work in the
+  middle), **done** (green) and **stopped** (red). The release gate adds **waits for you** (amber).
+  The label follows the state: “Mira is fixing it”, “Fixed”, “Mira stopped while fixing”.
 - A **Technical line** lives inside **Evidence**: ten stations with gates, retries, artifacts and
   exact event times.
 - Mira is the **current-milestone marker**, not a chat avatar and not a decoration. She appears in

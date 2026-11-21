@@ -114,7 +114,7 @@ in v0 — no silent retry, no "trust the builder".
 | Readiness | `works readiness` (lint, types, fast tests, architecture, suppressions, verify, feature map) lands with T2.18; a red gate will refuse automation |
 | Feature map | User-facing feature map and runtime artifacts in the proof land with T2.19 |
 | Verification cost | Builder/challenger/verifier split in the proof lands with T1.25 |
-| GUI | `works ui` opens **Story** (default) for people — the Reported → Confirmed → Fixed → Checked → Released route, full-body Mira at the current milestone, Present mode, replay behind “How we got here”, and a specific blocked rail — with **Evidence** for engineers one click away. Write actions, the full React/Vite window, SSE and Playwright are later |
+| GUI | `works ui` opens **Story** (default) for people — a gray **Reported** origin, then five Mira stops: **Picked up → Confirmed → Fixed → Checked → Delivered**, each not started / Mira is here / done / stopped; full-body Mira at the current stop, Present mode, replay behind “How we got here”, and a specific blocked rail — with **Evidence** for engineers one click away. Write actions, the full React/Vite window, SSE and Playwright are later |
 
 The fixture bug is deliberate: `add` subtracts. The good trace fixes it, the sneaky trace passes
 the visible test but fails a P0 holdout, and the test-edit trace is refused by policy.

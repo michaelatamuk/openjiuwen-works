@@ -1,11 +1,12 @@
 """Build a small, realistic read-only preview for `works ui`.
 
 The demo uses open-source products that people actually use, with human issue titles and spread-out
-event times. The blocked task uses a tablet-zoom scenario so the Story view can explain a failure in
-plain language.
+event times. One task is stopped by a tablet-zoom check; another is in the middle of the check, with
+the fix already done, so the Story view shows Mira checking. The runs are local fixtures, not
+upstream fixes.
 
     python scripts/demo-ui.py
-    works --home %TEMP%\\opencode\\works-ui-demo-v4 ui
+    works --home %TEMP%\\opencode\\works-ui-demo-v6 ui
 """
 
 from __future__ import annotations
@@ -24,7 +25,7 @@ from works.gitops import init_repo
 from works.harness.fake import FakeHarness
 from works.ledger import Ledger
 from works.queue import Queue
-from works.records import Source, SourceKind, Task
+from works.records import Source, SourceKind, Task, TaskState
 from works.runner import SubprocessRunner
 from works.supervisor import Supervisor
 
@@ -63,7 +64,9 @@ def _tablet_scenarios(root: Path) -> Path:
     return path
 
 
-def _submit(queue: Queue, repo_path: Path, *, ref: str, title: str, product: str, detector: bool) -> Task:
+def _submit(
+    queue: Queue, repo_path: Path, *, ref: str, title: str, product: str, detector: bool
+) -> Task:
     task, _ = queue.submit(
         source=Source(
             kind=SourceKind.DETECTOR if detector else SourceKind.MANUAL,
@@ -88,9 +91,58 @@ def _run(workspace: WorksPaths, queue: Queue, task: Task, trace: str, scenarios:
     asyncio.run(supervisor.run(task.id, approve_plan=True, scenario_set=scenarios))
 
 
-def _backdate(workspace: WorksPaths, queue: Queue, task_id: str, base: datetime, span: timedelta) -> None:
+def _in_check(queue: Queue, task: Task) -> None:
+    """Record a run with the fix built and the checks still running."""
+
+    def move(target: TaskState) -> None:
+        current = queue.load(task.id)
+        queue.append(
+            task.id,
+            "state.changed",
+            {"from": current.state.value, "to": target.value},
+        )
+
+    move(TaskState.REPRODUCING)
+    queue.append(
+        task.id,
+        "step.started",
+        {"step": "reproduce", "command": "python -m pytest -q"},
+    )
+    queue.append(task.id, "step.finished", {"step": "reproduce", "exit_code": 1})
+    move(TaskState.REPRODUCED)
+    move(TaskState.PLANNING)
+    queue.append(
+        task.id,
+        "plan.drafted",
+        {
+            "scenario_ids": ["render-preview-material"],
+            "files": ["app/render/preview.c"],
+            "summary": "Refresh the material preview when the surface changes.",
+        },
+    )
+    move(TaskState.PLAN_APPROVED)
+    queue.append(
+        task.id,
+        "gate.decided",
+        {"gate": "plan", "by": "cli", "commit": "7c41b2e"},
+    )
+    move(TaskState.BUILDING)
+    queue.append(task.id, "attempt.started", {"attempt": 1, "model": "demo"})
+    move(TaskState.CHECKING)
+    queue.append(
+        task.id,
+        "step.started",
+        {"step": "test", "command": "python -m pytest -q"},
+    )
+
+
+def _backdate(
+    workspace: WorksPaths, queue: Queue, task_id: str, base: datetime, span: timedelta
+) -> None:
     events_path = workspace.task_dir(task_id) / "events.jsonl"
-    events = [json.loads(line) for line in events_path.read_text(encoding="utf-8").splitlines() if line]
+    events = [
+        json.loads(line) for line in events_path.read_text(encoding="utf-8").splitlines() if line
+    ]
     step = span / max(1, len(events) - 1)
     moments = [base + step * index for index in range(len(events))]
     for event, moment in zip(events, moments, strict=True):
@@ -140,7 +192,7 @@ def main() -> None:
     parser.add_argument(
         "--root",
         type=Path,
-        default=Path(tempfile.gettempdir()) / "opencode" / "works-ui-demo-v4",
+        default=Path(tempfile.gettempdir()) / "opencode" / "works-ui-demo-v6",
     )
     args = parser.parse_args()
     root: Path = args.root.expanduser().resolve()
@@ -186,6 +238,23 @@ def main() -> None:
     )
     _run(workspace, queue, gimp, "fix-add-sneaky.json", tablet)
     _backdate(workspace, queue, gimp.id, now - timedelta(hours=2), timedelta(minutes=45))
+
+    blender = _submit(
+        queue,
+        repo.path,
+        ref="BLENDER-7291",
+        title="The render preview flickers when I switch to material preview",
+        product="Blender",
+        detector=False,
+    )
+    _in_check(queue, blender)
+    _backdate(
+        workspace,
+        queue,
+        blender.id,
+        now - timedelta(hours=1, minutes=10),
+        timedelta(minutes=55),
+    )
 
     joplin = _submit(
         queue,

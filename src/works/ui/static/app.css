@@ -324,14 +324,25 @@ h1 { margin: 0; font-size: 25px; line-height: 1.2; letter-spacing: -0.03em; }
 .story-meta strong { color: var(--text); font-weight: 650; }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
 .story-mira { width: 140px; height: 140px; flex: none; filter: drop-shadow(0 12px 18px rgb(0 0 0 / 0.16)); }
-.route-scroll { overflow-x: auto; padding: 4px 0 0; }
-.route-wrap { position: relative; height: 380px; min-width: 780px; }
+.route-block { padding: 0; }
+.route-head { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; padding: 0 2px 4px; }
+.route-title { color: var(--muted); font-size: 12.5px; font-weight: 650; }
+.route-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; color: var(--faint); font-size: 10.5px; }
+.route-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--line-strong); display: inline-block; }
+.legend-dot.active { border-color: var(--violet); background: var(--violet); }
+.legend-dot.waiting { border-color: var(--amber); background: var(--amber); }
+.legend-dot.done { border-color: var(--green); background: var(--green); }
+.legend-dot.blocked { border-color: var(--red); background: var(--red); }
+.legend-dot.pending { border-style: dashed; background: transparent; }
+.route-scroll { overflow-x: auto; padding: 0; }
+.route-wrap { position: relative; height: 290px; min-width: 640px; }
 .route-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .route-base { fill: none; stroke: var(--line-strong); stroke-width: 2; stroke-dasharray: 4 9; }
 .route-progress { fill: none; stroke: var(--violet); stroke-width: 3; stroke-linecap: round; transition: stroke-dashoffset 420ms ease; }
 .route-progress.blocked { stroke: var(--red); }
 .route-points { position: absolute; inset: 0; }
-.milestone { position: absolute; width: 180px; height: 0; transform: translate(-50%, 0); color: var(--muted); }
+.milestone { position: absolute; width: 150px; height: 0; transform: translate(-50%, 0); color: var(--muted); }
 .m-node {
   position: absolute;
   left: 50%;
@@ -349,23 +360,27 @@ h1 { margin: 0; font-size: 25px; line-height: 1.2; letter-spacing: -0.03em; }
   font-weight: 800;
   z-index: 2;
 }
-.m-copy { position: absolute; left: 50%; transform: translateX(-50%); width: 180px; text-align: center; }
+.m-copy { position: absolute; left: 50%; transform: translateX(-50%); width: 150px; text-align: center; }
 .milestone.above .m-copy { bottom: 24px; }
 .milestone.below .m-copy { top: 24px; }
 .m-copy strong { display: block; color: var(--muted); font-size: 12.5px; line-height: 1.25; }
 .m-copy em { display: block; margin-top: 3px; color: var(--faint); font-size: 10.5px; font-style: normal; font-variant-numeric: tabular-nums; }
+.milestone.source .m-node { width: 20px; height: 20px; border-color: var(--line-strong); background: var(--panel-3); color: transparent; }
+.milestone.source .m-copy strong { color: var(--faint); font-weight: 600; }
+.milestone.source .m-copy em { color: var(--faint); }
 .milestone.done .m-node { border-color: var(--green); color: var(--green); background: var(--green-soft); }
 .milestone.done .m-copy strong { color: var(--text); }
 .milestone.active .m-node { border-color: var(--violet); color: var(--violet-text); background: var(--violet-soft); box-shadow: 0 0 0 5px color-mix(in srgb, var(--violet) 16%, transparent); transform: translate(-50%, -50%) scale(1.08); }
 .milestone.active .m-copy strong { color: var(--text); }
 .milestone.blocked .m-node { border-color: var(--red); color: var(--red); background: var(--red-soft); }
 .milestone.blocked .m-copy strong { color: var(--red); }
-.milestone.pending .m-node { border-style: dashed; color: var(--muted); background: var(--panel); }
+.milestone.pending .m-node { width: 18px; height: 18px; border-style: dashed; color: transparent; background: var(--panel); }
 .milestone.pending .m-copy strong { color: var(--faint); }
 .milestone.gate .m-node { border-radius: 7px; border-color: var(--amber); color: var(--amber); background: var(--amber-soft); }
 .milestone.gate.done .m-node { border-color: var(--green); color: var(--green); background: var(--green-soft); }
 .milestone.gate.pending .m-node { border-color: var(--line-strong); color: var(--faint); background: var(--panel-2); }
 .route-mira { position: absolute; transform: translate(-50%, calc(-100% - 68px)); display: flex; flex-direction: column; align-items: center; gap: 0; pointer-events: none; z-index: 3; }
+.route-mira.above-node { transform: translate(-50%, calc(-100% - 12px)); }
 .route-mira[hidden] { display: none; }
 .route-mira img { filter: drop-shadow(0 5px 8px rgb(0 0 0 / 0.18)); }
 .receipt { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 16px; background: var(--panel); overflow: hidden; box-shadow: var(--shadow); }

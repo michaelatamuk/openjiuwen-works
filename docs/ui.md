@@ -14,12 +14,14 @@ Global `--home` comes before the subcommand. Use `--no-open` to avoid launching 
 
 The same evidence page serves two audiences without a second data source:
 
-- **Story** (default): the line of one fix — Reported → Confirmed → Fixed → Checked → Released.
-  Full-body Mira stands at the current milestone only, and the label reads as a sentence:
-  “Mira confirmed it”, “Mira fixed it”, “Mira checked it”, “Mira is ready to release”. Future
-  milestones stay dimmed but legible; they never get a Mira. The receipt strip answers what
-  changed, what was checked, what was not, and who decides. “How we got here” keeps the replay out
-  of the headline.
+- **Story** (default): the road of one fix. A gray **Reported** origin (the signal, not part of
+  Mira's journey) is followed by five Mira stops: **Picked up → Confirmed → Fixed → Checked →
+  Delivered**. Each stop has four states: not started (dimmed), Mira is here (violet, in the middle
+  of the work), done (green), or stopped (red); the release gate adds an amber **waits for you**
+  state. The active stop reads as a sentence (“Mira is fixing it”, “Mira is checking it”, “Mira is
+  ready to release”); future stops never get a Mira. The receipt
+  strip answers what changed, what was checked, what was not, and who decides. “How we got here”
+  keeps the replay out of the headline.
 - **Evidence**: the answer for an engineer — the ten-step technical line, run metadata, verdict and
   scenarios, risk, decision, commands, diff, policy, residual risk and timeline.
 
@@ -39,20 +41,23 @@ returns to the queue.
 
 ```powershell
 python scripts/demo-ui.py
-works --home "$env:TEMP\opencode\works-ui-demo-v4" ui
+works --home "$env:TEMP\opencode\works-ui-demo-v6" ui
 ```
 
-The demo has four tasks on open-source products people actually use — **Firefox, LibreOffice, GIMP
-and Joplin** — with human issue titles and event times spread over hours. One GIMP task is blocked
-by a tablet-zoom check, so the Story shows a plain-language stop instead of a verdict table. The
-runs are local fixtures, not upstream fixes.
+The demo has five tasks on open-source products people actually use — **Firefox, LibreOffice, GIMP,
+Blender and Joplin** — with human issue titles and event times spread over hours. The GIMP task is
+blocked by a tablet-zoom check, so the Story shows a plain-language stop. The Blender task is in the
+middle of the check: the fix is done, Mira is checking it, Checked is the active stop and Delivered
+is still dimmed. That makes it the task to screenshot when the story needs to show work in progress
+without a failure or a finished run. The runs are local fixtures, not upstream fixes.
 
 ## What it shows
 
 - **Queue** — grouped into **Needs you**, **In progress**, **Queued** and **Done**; filter, search
   and `j`/`k` navigation.
-- **Story** — one sentence per task, the outcome route, Mira at the current milestone, the receipt
-  strip, a specific blocked rail when stopped, and replay behind “How we got here”.
+- **Story** — one sentence per task, the reported origin with five Mira stops, the four stop states,
+  Mira at the current stop, the receipt strip, a specific blocked rail when stopped, and replay
+  behind “How we got here”.
 - **Evidence** — the ten-step technical line, run metadata (task/run id, base commit, rules version,
   evidence fingerprint, model, provider), verdict, findings, challenge, commands, change/diff,
   policy, risk, decision, readiness, feature map, residual risk, cost and timeline.
