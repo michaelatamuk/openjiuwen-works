@@ -1,6 +1,6 @@
 # Development plan — openJiuwen Works
 
-**Status:** v4 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
+**Status:** v4.1 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
 
 Every task is a checkbox, checked when its criteria are met and the change is merged. `S/M/L`:
 S ≤ half a day, M ≤ two days, L ≤ a week. Nothing is checked because it was started.
@@ -38,6 +38,8 @@ Detail: `docs/deck/`, `docs/video/`.
 - No web UI before the loop works, no multi-tenant, no SSO, no billing.
 - No arbitrary repositories: one fork, one flow, one product.
 - No automatic merge to a protected branch.
+- No PRs to the upstream project in v0. The factory works and publishes inside our fork; anything
+  sent upstream is a manual, explicitly approved act.
 
 ---
 
@@ -79,6 +81,10 @@ Cheap checks that can cancel the project.
 - [ ] **R8** Isolation decision (was D6): the verifier runs in a **container** (WSL2/Docker), the
   builder stays on the host with a pinned cwd. Limitations written down. **M**
 - [ ] **R9** Write the first three scenarios for the R3 issue, before any code. **M**
+- [ ] **R10** Target remote: a public fork of the product under `michaelatamuk`, cloned with an
+  `upstream` remote; a sync step (`fetch upstream`, hard reset on a clean tree) and the divergence
+  recorded in evidence. **S**
+  - Policy: v0 opens PRs **inside the fork**. Nothing is sent to upstream without explicit approval.
 
 **Gate to proceed:** R1–R9 green, or the plan is revised.
 
@@ -510,7 +516,8 @@ Stop if any holds after M1:
 
 All decided; revisit only with an ADR.
 
-- [x] **D1** Target: a fork of `open-webui` under `michaelatamuk`, flow `fix-issue`.
+- [x] **D1** Target: a public fork of `open-webui` under `michaelatamuk`, flow `fix-issue`; PRs stay
+  inside the fork in v0.
 - [x] **D2** Engine location: developer machine; the verifier runs in a container on the same host.
 - [x] **D3** Models: builder on one frontier coding model, verifier on a different provider; ids pinned
   in config and recorded per run.
@@ -538,6 +545,8 @@ Each has a sentence in §3 and no task.
 
 ## 20. Changelog
 
+- **v4.1** — target remote decided: a public fork with an `upstream` remote, a sync step before runs,
+  divergence recorded; v0 publishes PRs inside the fork only (R10, non-goal updated).
 - **v4** — added the engineering standard (§6.4) with reliability, reproducibility, supply chain,
   AI-specific quality, observability and process rules; the GUI standard (§6.5); scheduled
   refactoring gates RG0–RG4 with continuous triggers (§6.6); toolchain, schema and CLI-contract
