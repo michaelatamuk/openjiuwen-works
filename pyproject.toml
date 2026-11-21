@@ -90,6 +90,8 @@ source_paths = [
   "src/works/queue.py",
 ]
 pytest_add_cli_args_test_selection = ["tests"]
+debug = true
+
 
 [tool.bandit]
 exclude_dirs = ["tests", ".venv"]
