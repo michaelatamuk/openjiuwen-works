@@ -36,3 +36,11 @@ gates:
     action: ask
   - "on": release
     action: ask
+risk:
+  owners:
+    auth: [michael]
+    billing: [michael]
+    migrations: [michael]
+    secrets: [michael]
+    .github: [michael]
+    flows: [michael]

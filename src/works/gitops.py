@@ -50,6 +50,13 @@ class GitRepo:
     def head(self) -> str:
         return self._git("rev-parse", "HEAD").stdout.strip()
 
+    def show(self, rev: str, path: str) -> str | None:
+        """Read a file at a commit without touching the worktree; None when absent."""
+        try:
+            return self._git("show", f"{rev}:{path}", timeout_s=30).stdout
+        except GitError:
+            return None
+
     def is_dirty(self) -> bool:
         return bool(self._git("status", "--porcelain").stdout.strip())
 

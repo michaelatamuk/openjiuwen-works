@@ -7,6 +7,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
+from .decision import GateVerdict
 from .gitops import DiffStat
 from .policy import PolicyReport, Violation
 from .records import (
@@ -18,6 +19,7 @@ from .records import (
     TaskState,
     Verdict,
 )
+from .risk import RiskRating
 
 MAX_DIFF_CHARS = 60_000
 
@@ -40,6 +42,7 @@ class Evidence(BaseModel):
     product: str
     source: str
     base_commit: str | None = None
+    checks_sha: str | None = None
     state: TaskState
     stop_reason: StopReason
     model: str | None = None
@@ -52,11 +55,15 @@ class Evidence(BaseModel):
     files_changed: list[str] = Field(default_factory=list)
     diff_stat: list[DiffStatRow] = Field(default_factory=list)
     policy: PolicyReport = Field(default_factory=lambda: PolicyReport(ok=True))
+    risk: RiskRating | None = None
+    decision: GateVerdict | None = None
     reproduce: CommandRecord | None = None
     test: CommandRecord | None = None
+    preview: CommandRecord | None = None
     verdict: Verdict | None = None
     challenge: Challenge | None = None
     findings: list[Finding] = Field(default_factory=list)
+    would_block: list[str] = Field(default_factory=list)
     not_tested: list[str] = Field(default_factory=list)
     diff: str = ""
     diff_sha256: str = ""
@@ -89,6 +96,8 @@ def render_markdown(evidence: Evidence) -> str:
         "",
         f"**Source** `{evidence.source}` · **Base commit** `{evidence.base_commit or '—'}`",
         "",
+        f"**Checks SHA-256** `{evidence.checks_sha or '—'}`",
+        "",
         f"**State** `{evidence.state.value}` · **Stop reason** `{evidence.stop_reason.value}`",
         "",
         f"**Proof SHA-256** `{evidence.proof_sha256 or 'unbound'}`",
@@ -111,6 +120,34 @@ def render_markdown(evidence: Evidence) -> str:
                 f"| `{_cell(outcome.id)}` | {outcome.priority.value} | "
                 f"{_result(outcome.passed)} | {outcome.exit_code} | {outcome.duration_ms} |"
             )
+        lines.append("")
+    if evidence.decision is not None:
+        gate_decision = evidence.decision
+        approval = "required" if gate_decision.requires_approval else "not required"
+        lines += [
+            "## Decision",
+            "",
+            f"**{gate_decision.verb.upper()}** — `{_cell(gate_decision.reason_code)}` · "
+            f"confidence `{gate_decision.confidence:.2f}` · approval {approval}",
+            "",
+            f"Source `{gate_decision.source}` · id `{gate_decision.decision_id or '—'}` · "
+            f"trace `{gate_decision.trace_id or '—'}`",
+            "",
+        ]
+        if gate_decision.alternatives:
+            lines += [f"- Alternative: `{_cell(item)}`" for item in gate_decision.alternatives]
+            lines.append("")
+    if evidence.risk is not None:
+        risk = evidence.risk
+        lines += [
+            "## Risk",
+            "",
+            f"**{risk.level.value.upper()}** — {risk.files} file(s), {risk.lines} line(s).",
+            "",
+        ]
+        lines += [f"- {_cell(reason)}" for reason in risk.reasons]
+        if risk.owners:
+            lines.append(f"- Owners: {', '.join(f'`{_cell(owner)}`' for owner in risk.owners)}")
         lines.append("")
     lines += ["## Findings", ""]
     if evidence.findings:
@@ -147,13 +184,19 @@ def render_markdown(evidence: Evidence) -> str:
         lines += [f"- Not tested: `{_cell(item)}`" for item in evidence.not_tested]
     else:
         lines.append("- Not tested: none recorded.")
+    if evidence.would_block:
+        lines += [f"- Observe mode would block: `{_cell(item)}`" for item in evidence.would_block]
     if not evidence.policy.ok:
         lines.append("- Policy violations block this change.")
     if evidence.verdict is None:
         lines.append("- No verdict: the change was not judged.")
     lines.append("")
     lines += ["## Commands", ""]
-    commands = [command for command in (evidence.reproduce, evidence.test) if command is not None]
+    commands = [
+        command
+        for command in (evidence.reproduce, evidence.test, evidence.preview)
+        if command is not None
+    ]
     if not commands:
         lines += ["Not attempted.", ""]
     else:

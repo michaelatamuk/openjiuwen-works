@@ -13,9 +13,10 @@ from typing import Any
 from pydantic import ValidationError
 
 from .config import WorksPaths
-from .errors import ConfigError, HarnessError, StateError, WorksError
+from .decision import DecisionPort, GateContext, GateVerdict, ShadowGate, build_decision_port
+from .errors import ConfigError, ConflictError, HarnessError, StateError, WorksError
 from .evidence import DiffStatRow, Evidence, write_evidence
-from .flow import FlowSpec, Node, PathsSpec, find_flow, load_flow
+from .flow import FlowSpec, GateMode, Node, PathsSpec
 from .gitops import GitRepo
 from .harness.base import Harness, Proposal, ProposalRequest
 from .ledger import Ledger
@@ -37,9 +38,11 @@ from .records import (
     TaskState,
     Verdict,
 )
+from .risk import RiskLevel, RiskRating, rate_risk
 from .runner import CommandResult, CommandRunner
 from .scenarios import Scenario, ScenarioSet, judge, load_scenario_set
 from .state import TERMINAL
+from .trusted import load_trusted_flow
 
 LOG = get_logger("supervisor")
 
@@ -63,14 +66,20 @@ class RunContext:
     run_dir: Path
     worktree: Path | None
     base_commit: str | None = None
+    checks_sha: str | None = None
+    checks_source: str | None = None
     started_at: datetime = field(default_factory=lambda: datetime.now(tz=UTC))
     commands: list[CommandRecord] = field(default_factory=list)
     reproduce: CommandRecord | None = None
     test: CommandRecord | None = None
+    preview: CommandRecord | None = None
     proposal: Proposal | None = None
     verdict: Verdict | None = None
     challenge: Challenge | None = None
     policy: PolicyReport = field(default_factory=lambda: PolicyReport(ok=True))
+    risk: RiskRating | None = None
+    decisions: list[GateVerdict] = field(default_factory=list)
+    would_block: list[str] = field(default_factory=list)
     plan: dict[str, Any] = field(default_factory=dict)
     scenario_set: ScenarioSet | None = None
     scenario_dir: Path | None = None
@@ -92,6 +101,8 @@ class Supervisor:
         flows_dir: Path | None = None,
         python: str | None = None,
         clock: Callable[[], datetime] | None = None,
+        decision_mode: str | None = None,
+        decision_port: DecisionPort | None = None,
     ) -> None:
         self._paths = paths
         self._queue = queue
@@ -102,6 +113,8 @@ class Supervisor:
         self._flows_dir = flows_dir or paths.flows
         self._python = python
         self._clock = clock or (lambda: datetime.now(tz=UTC))
+        self._decision_mode = decision_mode
+        self._decision: DecisionPort = decision_port or build_decision_port(decision_mode)
 
     @property
     def python(self) -> str:
@@ -113,8 +126,10 @@ class Supervisor:
 
     def plan_run(self, task_id: str, *, scenario_set: Path | None = None) -> dict[str, Any]:
         task = self._queue.load(task_id)
-        flow = self._load_flow(task)
         repo = self._repo(task)
+        base = repo.head()
+        trusted = load_trusted_flow(repo, base, task.flow, self._flows_dir)
+        flow = trusted.flow
         payload: dict[str, Any] = {
             "task_id": task.id,
             "flow": flow.flow,
@@ -122,10 +137,18 @@ class Supervisor:
             "repo": str(repo),
             "state": task.state.value,
             "nodes": [
-                {"id": node.id, "kind": node.kind.value, "required": node.required}
+                {
+                    "id": node.id,
+                    "kind": node.kind.value,
+                    "required": node.required,
+                    "mode": node.mode.value,
+                }
                 for node in flow.nodes
             ],
-            "base_commit": repo.head() if repo.is_repo() else None,
+            "base_commit": base,
+            "checks_sha": trusted.checks_sha,
+            "checks_source": trusted.source,
+            "mode": flow.mode.value,
         }
         if scenario_set is not None:
             resolved = scenario_set.expanduser().resolve()
@@ -151,8 +174,19 @@ class Supervisor:
             raise StateError(
                 f"task {task_id} is {task.state.value}; resume from this state lands in M1"
             )
-        flow = self._load_flow(task)
         repo = self._repo(task)
+        plan = self._latest_plan(task.id) if task.state is not TaskState.QUEUED else None
+        if task.state is not TaskState.QUEUED and plan is None:
+            raise StateError(f"cannot resume {task.state.value} without a plan")
+        base = str(plan["base_commit"]) if plan is not None else repo.head()
+        trusted = load_trusted_flow(repo, base, task.flow, self._flows_dir)
+        flow = trusted.flow
+        if plan is not None:
+            planned_sha = plan.get("checks_sha")
+            if planned_sha and planned_sha != trusted.checks_sha:
+                raise ConflictError(
+                    "the checks changed since the plan was drafted; re-plan before building"
+                )
         if quarantine is not None:
             flow = self._apply_quarantine(flow, quarantine, repo)
         run_id = new_run_id()
@@ -165,8 +199,12 @@ class Supervisor:
             run_id=run_id,
             run_dir=run_dir,
             worktree=None,
+            base_commit=base,
+            checks_sha=trusted.checks_sha,
+            checks_source=trusted.source,
             state=task.state,
             started_at=self._clock(),
+            plan=plan or {},
         )
         try:
             await self._execute(ctx, repo, approve_plan, scenario_set)
@@ -194,7 +232,7 @@ class Supervisor:
         task = ctx.task
         if task.state is TaskState.QUEUED:
             self._move(ctx, TaskState.REPRODUCING)
-            ctx.base_commit = repo.head()
+            ctx.base_commit = ctx.base_commit or repo.head()
             ctx.worktree = self._prepare_worktree(ctx, repo, ctx.base_commit)
             reproduce = await self._run_node(ctx, "reproduce", flow.node("reproduce"))
             ctx.reproduce = reproduce.record("reproduce")
@@ -207,18 +245,27 @@ class Supervisor:
             self._move(ctx, TaskState.PLANNING)
             self._queue.append(task.id, "plan.drafted", ctx.plan)
         else:
-            plan = self._latest_plan(ctx)
-            if plan is None:
+            if not ctx.plan:
                 raise StateError(f"cannot resume {task.state.value} without a plan")
-            ctx.plan = plan
-            ctx.base_commit = plan["base_commit"]
-            stored = Path(plan["scenario_set"])
+            stored = Path(ctx.plan["scenario_set"])
             scenario_set = scenario_set or stored
-            ctx.worktree = self._prepare_worktree(ctx, repo, ctx.base_commit)
+            ctx.worktree = self._prepare_worktree(
+                ctx, repo, _required(ctx.base_commit, "base commit")
+            )
 
         gate = flow.gate("plan")
         current = self._current_state(ctx)
         already_approved = current is TaskState.PLAN_APPROVED
+        if already_approved:
+            self._require_approval(ctx, "plan")
+        decision = self._decide(ctx, "plan", already_approved=already_approved)
+        if (
+            decision.source == "laix"
+            and decision.action == "allow"
+            and not approve_plan
+            and not already_approved
+        ):
+            approve_plan = True
         if not approve_plan and not already_approved and gate.action != "allow":
             self._stop(ctx, StopReason.NEEDS_PLAN_APPROVAL)
             return
@@ -231,6 +278,8 @@ class Supervisor:
                     "gate": "plan",
                     "decision": "approved",
                     "by": "cli" if approve_plan else "flow",
+                    "commit": ctx.base_commit,
+                    "checks_sha": ctx.checks_sha,
                 },
             )
 
@@ -251,41 +300,75 @@ class Supervisor:
             self._stop(ctx, StopReason.BUDGET_EXCEEDED, detail="wall-clock budget")
             return
 
+        worktree = _required(ctx.worktree, "worktree")
+        touched = proposal.touched_paths or (
+            repo.all_changed_files(worktree)
+            if proposal.applied
+            else paths_from_patch(proposal.patch)
+        )
+        stats = repo.diff_stat(worktree) if proposal.applied else []
+        ctx.risk = rate_risk(paths=touched, diff_stat=stats, flow=flow)
+        self._queue.append(
+            ctx.task.id,
+            "risk.rated",
+            ctx.risk.model_dump(mode="json"),
+        )
+
         violations = (
-            check_paths(proposal.touched_paths, flow.paths)
+            check_paths(touched, flow.paths)
             if proposal.applied
             else check_patch(proposal.patch, flow.paths)
         )
-        if proposal.applied:
-            worktree = _required(ctx.worktree, "worktree")
-            touched = proposal.touched_paths or repo.all_changed_files(worktree)
-            violations = check_paths(touched, flow.paths)
         ctx.policy = PolicyReport(ok=not violations, violations=violations)
         if violations:
-            self._stop(ctx, StopReason.POLICY_VIOLATION)
-            return
+            if flow.mode is GateMode.OBSERVE:
+                self._observe(ctx, "policy", [v.reason for v in violations])
+            else:
+                self._stop(ctx, StopReason.POLICY_VIOLATION)
+                return
 
         if not proposal.applied:
-            worktree = _required(ctx.worktree, "worktree")
             repo.apply_patch(worktree, proposal.patch, ctx.run_dir / "proposal.diff")
         self._move(ctx, TaskState.CHECKING)
 
+        if any(node.id == "preview" for node in flow.nodes):
+            preview_node = flow.node("preview")
+            if preview_node.mode is not GateMode.OFF:
+                preview = await self._run_node(ctx, "preview", preview_node)
+                ctx.preview = preview.record("preview")
+                if not preview.ok:
+                    if preview_node.mode is GateMode.OBSERVE:
+                        self._observe(ctx, "preview", [f"exit {preview.exit_code}"])
+                    else:
+                        self._stop(ctx, StopReason.TESTS_FAILED, detail="preview failed")
+                        return
+
         if any(node.id == "test" for node in flow.nodes):
-            test = await self._run_node(ctx, "test", flow.node("test"))
-            ctx.test = test.record("test")
-            if not test.ok:
-                self._stop(ctx, StopReason.TESTS_FAILED)
-                return
-            if self._over_wall(ctx):
-                self._stop(ctx, StopReason.BUDGET_EXCEEDED, detail="wall-clock budget")
-                return
+            test_node = flow.node("test")
+            if test_node.mode is not GateMode.OFF:
+                test = await self._run_node(ctx, "test", test_node)
+                ctx.test = test.record("test")
+                if not test.ok:
+                    if test_node.mode is GateMode.OBSERVE:
+                        self._observe(ctx, "test", [f"exit {test.exit_code}"])
+                    else:
+                        self._stop(ctx, StopReason.TESTS_FAILED)
+                        return
+                if self._over_wall(ctx):
+                    self._stop(ctx, StopReason.BUDGET_EXCEEDED, detail="wall-clock budget")
+                    return
 
         if any(node.id == "challenge" for node in flow.nodes):
-            challenge = await self._challenge(ctx, proposal)
-            ctx.challenge = challenge
-            if not challenge.allow:
-                self._stop(ctx, StopReason.CHALLENGE_FAILED, detail=challenge.reason)
-                return
+            challenge_node = flow.node("challenge")
+            if challenge_node.mode is not GateMode.OFF:
+                challenge = await self._challenge(ctx, proposal)
+                ctx.challenge = challenge
+                if not challenge.allow:
+                    if challenge_node.mode is GateMode.OBSERVE:
+                        self._observe(ctx, "challenge", [challenge.reason])
+                    else:
+                        self._stop(ctx, StopReason.CHALLENGE_FAILED, detail=challenge.reason)
+                        return
 
         verdict = await self._judge(ctx)
         ctx.verdict = verdict
@@ -296,15 +379,13 @@ class Supervisor:
             self._stop(ctx, StopReason.VERDICT_FAILED)
             return
         self._move(ctx, TaskState.PROVED)
+        self._decide(ctx, "release")
         self._queue.append(
             ctx.task.id,
             "note",
             {"message": "release gate not crossed in v0; proof is ready"},
         )
         ctx.stop_reason = StopReason.COMPLETED
-
-    def _load_flow(self, task: Task) -> FlowSpec:
-        return load_flow(find_flow(self._flows_dir, task.flow))
 
     def _repo(self, task: Task) -> GitRepo:
         repo = GitRepo(Path(task.repo).expanduser().resolve(), self._runner)
@@ -340,6 +421,8 @@ class Supervisor:
         ctx.scenario_dir = directory
         ctx.plan = {
             "base_commit": repo.head(),
+            "checks_sha": ctx.checks_sha,
+            "checks_source": ctx.checks_source,
             "scenario_set": str(resolved),
             "scenario_ids": [s.id for s in scenarios.scenarios],
             "p0": scenarios.p0_ids,
@@ -358,9 +441,9 @@ class Supervisor:
         ctx.scenario_set = scenarios
         ctx.scenario_dir = directory
 
-    def _latest_plan(self, ctx: RunContext) -> dict[str, Any] | None:
+    def _latest_plan(self, task_id: str) -> dict[str, Any] | None:
         plan: dict[str, Any] | None = None
-        for event in self._queue.events(ctx.task.id):
+        for event in self._queue.events(task_id):
             if event.type == "plan.drafted":
                 plan = dict(event.data)
         return plan
@@ -481,6 +564,82 @@ class Supervisor:
     def _current_state(self, ctx: RunContext) -> TaskState:
         return self._queue.load(ctx.task.id).state
 
+    def _observe(self, ctx: RunContext, gate: str, reasons: list[str]) -> None:
+        detail = "; ".join(reasons) or "blocked"
+        ctx.would_block.append(f"{gate}: {detail}")
+        self._queue.append(
+            ctx.task.id,
+            "would_block",
+            {"gate": gate, "reason": detail, "mode": GateMode.OBSERVE.value},
+        )
+
+    def _decide(
+        self, ctx: RunContext, gate: str, *, already_approved: bool = False
+    ) -> GateVerdict:
+        evidence: list[str] = []
+        if ctx.reproduce is not None:
+            evidence.append("the reproduction failed on the base commit")
+        if ctx.verdict is not None:
+            evidence.append(f"the verifier verdict is {'allow' if ctx.verdict.allow else 'block'}")
+        if ctx.challenge is not None:
+            evidence.append(
+                f"the challenger verdict is {'allow' if ctx.challenge.allow else 'block'}"
+            )
+        if ctx.risk is not None:
+            evidence.append(f"the risk rating is {ctx.risk.level.value}")
+        if ctx.plan:
+            evidence.append(f"the plan names {len(ctx.plan.get('scenario_ids', []))} scenarios")
+        context = GateContext(
+            task_id=ctx.task.id,
+            gate=gate,
+            base_commit=ctx.base_commit,
+            risk=ctx.risk.level if ctx.risk is not None else RiskLevel.MEDIUM,
+            policy_ok=ctx.policy.ok,
+            verdict_allow=None if ctx.verdict is None else ctx.verdict.allow,
+            challenge_allow=None if ctx.challenge is None else ctx.challenge.allow,
+            already_approved=already_approved,
+            touched_paths=[],
+            diff_lines=ctx.risk.lines if ctx.risk is not None else 0,
+            budget_usd_left=ctx.task.budget.usd,
+            evidence=evidence,
+        )
+        verdict = self._decision.decide(context)
+        ctx.decisions.append(verdict)
+        payload = {"gate": gate, "mode": self._decision.mode, **verdict.model_dump(mode="json")}
+        self._queue.append(ctx.task.id, "decision.made", payload)
+        if isinstance(self._decision, ShadowGate):
+            shadow = self._decision.last_shadow
+            self._queue.append(
+                ctx.task.id,
+                "decision.shadow",
+                {
+                    "gate": gate,
+                    "agree": None
+                    if shadow is None
+                    else verdict.action == shadow.action,
+                    "shadow": None if shadow is None else shadow.model_dump(mode="json"),
+                    "error": self._decision.last_error,
+                },
+            )
+        return verdict
+
+    def _require_approval(self, ctx: RunContext, gate: str) -> None:
+        decisions = [
+            event
+            for event in self._queue.events(ctx.task.id)
+            if event.type == "gate.decided" and event.data.get("gate") == gate
+        ]
+        if not decisions:
+            raise StateError(f"task is {ctx.state.value} but has no {gate} approval")
+        last = decisions[-1].data
+        if last.get("commit") != ctx.base_commit:
+            raise ConflictError(
+                f"the {gate} approval is bound to {last.get('commit')}, "
+                f"not {ctx.base_commit}; approve the current commit"
+            )
+        if last.get("checks_sha") not in (None, ctx.checks_sha):
+            raise ConflictError(f"the checks changed since the {gate} approval; approve again")
+
     def _over_wall(self, ctx: RunContext) -> bool:
         elapsed_minutes = (self._clock() - ctx.started_at).total_seconds() / 60
         return elapsed_minutes > ctx.task.budget.wall_minutes
@@ -561,6 +720,7 @@ class Supervisor:
             product=ctx.flow.product,
             source=f"{ctx.task.source.kind.value}:{ctx.task.source.ref}",
             base_commit=ctx.base_commit,
+            checks_sha=ctx.checks_sha,
             state=state,
             stop_reason=ctx.stop_reason,
             model=proposal.model if proposal else None,
@@ -573,14 +733,19 @@ class Supervisor:
             files_changed=files_changed,
             diff_stat=stats,
             policy=ctx.policy,
+            risk=ctx.risk,
+            decision=ctx.decisions[-1] if ctx.decisions else None,
             reproduce=ctx.reproduce,
             test=ctx.test,
+            preview=ctx.preview,
             verdict=ctx.verdict,
             challenge=ctx.challenge,
             findings=findings,
+            would_block=ctx.would_block,
             diff=diff,
         ).bind()
         _, md_path = write_evidence(ctx.run_dir, evidence)
+        last_decision = ctx.decisions[-1] if ctx.decisions else None
         record = RunRecord(
             run_id=ctx.run_id,
             task_id=ctx.task.id,
@@ -588,6 +753,11 @@ class Supervisor:
             state=state,
             stop_reason=ctx.stop_reason,
             base_commit=ctx.base_commit,
+            checks_sha=ctx.checks_sha,
+            risk_level=ctx.risk.level.value if ctx.risk is not None else None,
+            risk_reasons=ctx.risk.reasons if ctx.risk is not None else [],
+            decision_verb=last_decision.verb if last_decision is not None else None,
+            decision_id=last_decision.decision_id if last_decision is not None else None,
             model=proposal.model if proposal else None,
             provider=proposal.provider if proposal else None,
             attempts=self._queue.load(ctx.task.id).attempts,

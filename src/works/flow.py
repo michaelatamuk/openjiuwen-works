@@ -22,12 +22,21 @@ class NodeKind(StrEnum):
     AGENTIC = "agentic"
 
 
+class GateMode(StrEnum):
+    """A new gate earns enforcement; it does not start there."""
+
+    OFF = "off"
+    OBSERVE = "observe"
+    ENFORCE = "enforce"
+
+
 class Node(BaseModel):
     id: str = Field(min_length=1)
     kind: NodeKind
     cmd: str | None = None
     required: bool = True
     timeout_s: int = Field(default=600, gt=0)
+    mode: GateMode = GateMode.ENFORCE
 
     @model_validator(mode="after")
     def _check(self) -> Node:
@@ -65,6 +74,25 @@ class PathsSpec(BaseModel):
     deny: list[str] = Field(default_factory=list)
 
 
+class RiskSpec(BaseModel):
+    """Which paths always need an owner, and who owns them."""
+
+    high_paths: list[str] = Field(
+        default_factory=lambda: [
+            "auth/",
+            "billing/",
+            "migrations/",
+            "secrets/",
+            ".github/",
+            "flows/",
+            "src/works/policy.py",
+            "src/works/state.py",
+            "src/works/scenarios.py",
+        ]
+    )
+    owners: dict[str, list[str]] = Field(default_factory=dict)
+
+
 class FlowSpec(BaseModel):
     schema_version: int = 1
     flow: str
@@ -75,6 +103,8 @@ class FlowSpec(BaseModel):
     paths: PathsSpec = Field(default_factory=PathsSpec)
     budget: Budget = Field(default_factory=Budget)
     gates: list[Gate] = Field(default_factory=list)
+    mode: GateMode = GateMode.ENFORCE
+    risk: RiskSpec = Field(default_factory=RiskSpec)
 
     @model_validator(mode="after")
     def _check_graph(self) -> FlowSpec:
@@ -124,16 +154,20 @@ class FlowSpec(BaseModel):
 def load_flow(path: Path) -> FlowSpec:
     if not path.exists():
         raise ConfigError(f"flow not found: {path}")
+    return load_flow_text(path.read_text(encoding="utf-8"), source=str(path))
+
+
+def load_flow_text(text: str, *, source: str = "<memory>") -> FlowSpec:
     try:
-        raw: Any = yaml.safe_load(path.read_text(encoding="utf-8"))
+        raw: Any = yaml.safe_load(text)
     except yaml.YAMLError as exc:
-        raise ConfigError(f"{path} is not valid YAML: {exc}") from exc
+        raise ConfigError(f"{source} is not valid YAML: {exc}") from exc
     if not isinstance(raw, dict):
-        raise ConfigError(f"{path} must contain a mapping")
+        raise ConfigError(f"{source} must contain a mapping")
     try:
         return FlowSpec.model_validate(raw)
     except ValidationError as exc:
-        raise ConfigError(f"{path} is not a valid flow:\n{exc}") from exc
+        raise ConfigError(f"{source} is not a valid flow:\n{exc}") from exc
 
 
 def find_flow(flows_dir: Path, name: str) -> Path:

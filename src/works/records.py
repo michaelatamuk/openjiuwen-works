@@ -178,6 +178,11 @@ class RunRecord(BaseModel):
     state: TaskState
     stop_reason: StopReason
     base_commit: str | None = None
+    checks_sha: str | None = None
+    risk_level: str | None = None
+    risk_reasons: list[str] = Field(default_factory=list)
+    decision_verb: str | None = None
+    decision_id: str | None = None
     model: str | None = None
     provider: str | None = None
     attempts: int = 0

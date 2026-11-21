@@ -152,6 +152,12 @@ def _apply(task: Task | None, event: Event) -> Task:
         "step.finished",
         "finding",
         "challenge.decided",
+        "risk.rated",
+        "decision.made",
+        "decision.shadow",
+        "would_block",
+        "flake",
+        "preview.finished",
     ):
         return task.model_copy(update={"updated_at": event.ts})
 

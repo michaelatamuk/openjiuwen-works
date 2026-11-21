@@ -89,7 +89,17 @@ def test_a_preapproved_plan_runs_without_the_flag(
     assert first.stop_reason is StopReason.NEEDS_PLAN_APPROVAL
     queue = Queue(paths)
     queue.transition(task.id, TaskState.PLAN_APPROVED)
-    queue.append(task.id, "gate.decided", {"gate": "plan", "decision": "approved"})
+    plan = [event for event in queue.events(task.id) if event.type == "plan.drafted"][-1].data
+    queue.append(
+        task.id,
+        "gate.decided",
+        {
+            "gate": "plan",
+            "decision": "approved",
+            "commit": plan["base_commit"],
+            "checks_sha": plan["checks_sha"],
+        },
+    )
     second = run(make_supervisor("fix-add"), task.id, scenario_set, approve_plan=False)
     assert second.state is TaskState.PROVED
     assert second.stop_reason is StopReason.COMPLETED

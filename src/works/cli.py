@@ -200,11 +200,21 @@ def cmd_approve(args: argparse.Namespace) -> int:
         raise ConfigError(
             f"task {args.task_id} is {task.state.value}; the plan gate needs planning"
         )
+    plans = [event for event in queue.events(args.task_id) if event.type == "plan.drafted"]
+    if not plans:
+        raise ConfigError(f"task {args.task_id} has no drafted plan to approve")
+    plan = plans[-1].data
     queue.transition(args.task_id, TaskState.PLAN_APPROVED)
     queue.append(
         args.task_id,
         "gate.decided",
-        {"gate": "plan", "decision": "approved", "by": "cli"},
+        {
+            "gate": "plan",
+            "decision": "approved",
+            "by": "cli",
+            "commit": plan.get("base_commit"),
+            "checks_sha": plan.get("checks_sha"),
+        },
     )
     updated = queue.load(args.task_id)
     if args.json:
@@ -258,6 +268,7 @@ def _supervisor(args: argparse.Namespace) -> Supervisor:
         harness=harness,
         runner=SubprocessRunner(),
         memory=memory,
+        decision_mode=getattr(args, "decision", None),
     )
 
 
@@ -593,6 +604,91 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     return 1 if failed(results) else 0
 
 
+def cmd_risk(args: argparse.Namespace) -> int:
+    from .risk import RiskRating
+
+    events = _queue(args).events(args.task_id)
+    ratings = [
+        RiskRating.model_validate(event.data) for event in events if event.type == "risk.rated"
+    ]
+    if not ratings:
+        raise ConfigError(f"task {args.task_id} has no risk rating yet")
+    latest = ratings[-1]
+    if args.json:
+        _emit({"risk": latest.model_dump(mode="json")})
+        return 0
+    print(f"{latest.level.value}: {latest.files} file(s), {latest.lines} line(s)")
+    for reason in latest.reasons:
+        print(f"- {reason}")
+    if latest.owners:
+        print(f"owners: {', '.join(latest.owners)}")
+    return 0
+
+
+def cmd_gate_list(args: argparse.Namespace) -> int:
+    events = _queue(args).events(args.task_id)
+    decisions = [
+        {"seq": event.seq, "type": event.type, **event.data}
+        for event in events
+        if event.type in ("decision.made", "decision.shadow", "would_block")
+    ]
+    if args.json:
+        _emit({"task_id": args.task_id, "events": decisions})
+        return 0
+    print(table(("seq", "type", "gate", "detail"), [
+        (
+            item["seq"],
+            item["type"],
+            item.get("gate", "-"),
+            item.get("action") or item.get("reason") or item.get("agree") or "-",
+        )
+        for item in decisions
+    ]))
+    return 0
+
+
+def cmd_flake_add(args: argparse.Namespace) -> int:
+    from .flakes import add_flake
+
+    flake = add_flake(
+        _paths(args),
+        task_id=args.task_id,
+        scenario_id=args.scenario,
+        owner=args.owner,
+        reason=args.reason,
+        days=args.days,
+    )
+    if args.json:
+        _emit({"flake": flake.model_dump(mode="json")})
+    else:
+        print(f"flake recorded: {flake.id} ({flake.scenario_id}, owner {flake.owner})")
+    return 0
+
+
+def cmd_flake_list(args: argparse.Namespace) -> int:
+    from .flakes import active_flakes, load_flakes
+
+    flakes = active_flakes(_paths(args)) if args.active else load_flakes(_paths(args))
+    if args.json:
+        _emit({"flakes": [flake.model_dump(mode="json") for flake in flakes]})
+        return 0
+    print(table(
+        ("id", "task", "scenario", "owner", "expires", "status"),
+        [
+            (
+                flake.id,
+                flake.task_id,
+                flake.scenario_id,
+                flake.owner,
+                flake.expires_at.isoformat(timespec="seconds") if flake.expires_at else "-",
+                flake.status.value,
+            )
+            for flake in flakes
+        ],
+    ))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="works", description=DESCRIPTION)
     parser.add_argument("--home", type=Path, default=None, help="Workspace root")
@@ -646,6 +742,7 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--prompt", type=Path, default=None)
     run.add_argument("--ppma", default=None)
     run.add_argument("--ppma-space", default="me")
+    run.add_argument("--decision", choices=("off", "shadow", "laix"), default=None)
     run.add_argument("--json", action="store_true")
     run.set_defaults(func=cmd_run)
 
@@ -679,6 +776,7 @@ def build_parser() -> argparse.ArgumentParser:
     dispatch.add_argument("--prompt", type=Path, default=None)
     dispatch.add_argument("--ppma", default=None)
     dispatch.add_argument("--ppma-space", default="me")
+    dispatch.add_argument("--decision", choices=("off", "shadow", "laix"), default=None)
     dispatch.add_argument("--json", action="store_true")
     dispatch.set_defaults(func=cmd_dispatch)
 
@@ -713,6 +811,33 @@ def build_parser() -> argparse.ArgumentParser:
     metrics = sub.add_parser("metrics", help="Attention and cost metrics")
     metrics.add_argument("--json", action="store_true")
     metrics.set_defaults(func=cmd_metrics)
+
+    risk = sub.add_parser("risk", help="Show the latest risk rating")
+    risk.add_argument("task_id")
+    risk.add_argument("--json", action="store_true")
+    risk.set_defaults(func=cmd_risk)
+
+    gate = sub.add_parser("gate", help="Inspect gate decisions and observe-mode blocks")
+    gate_sub = gate.add_subparsers(dest="gate_command", required=True)
+    gate_list = gate_sub.add_parser("list", help="List decisions for a task")
+    gate_list.add_argument("task_id")
+    gate_list.add_argument("--json", action="store_true")
+    gate_list.set_defaults(func=cmd_gate_list)
+
+    flake = sub.add_parser("flake", help="Flaky tests are defects with an owner and an expiry")
+    flake_sub = flake.add_subparsers(dest="flake_command", required=True)
+    flake_add = flake_sub.add_parser("add", help="Record a flake")
+    flake_add.add_argument("task_id")
+    flake_add.add_argument("--scenario", required=True)
+    flake_add.add_argument("--owner", required=True)
+    flake_add.add_argument("--reason", required=True)
+    flake_add.add_argument("--days", type=int, default=14)
+    flake_add.add_argument("--json", action="store_true")
+    flake_add.set_defaults(func=cmd_flake_add)
+    flake_list = flake_sub.add_parser("list", help="List flakes")
+    flake_list.add_argument("--active", action="store_true")
+    flake_list.add_argument("--json", action="store_true")
+    flake_list.set_defaults(func=cmd_flake_list)
 
     schema = sub.add_parser("schema", help="Print every persisted schema")
     schema.add_argument("--json", action="store_true")

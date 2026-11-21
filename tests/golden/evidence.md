@@ -4,9 +4,11 @@
 
 **Source** `manual:GH-1` · **Base commit** `abc1234`
 
+**Checks SHA-256** `—`
+
 **State** `proved` · **Stop reason** `completed`
 
-**Proof SHA-256** `afd3423d2ce558d7ae5fe08a45bc3098e57dd69d817ba022e24d25a733345d41`
+**Proof SHA-256** `9565745e62a2a94687dfa403d5d90785482086fbcdb9c84275102650964a9323`
 
 ## Verdict
 

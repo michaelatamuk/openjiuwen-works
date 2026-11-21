@@ -6,7 +6,9 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from .decision import GateContext, GateVerdict
 from .evidence import Evidence
+from .flakes import Flake
 from .harness.base import Proposal
 from .records import (
     SCHEMA_VERSION,
@@ -19,6 +21,7 @@ from .records import (
     Task,
     Verdict,
 )
+from .risk import RiskRating
 
 
 def all_schemas() -> dict[str, Any]:
@@ -33,6 +36,10 @@ def all_schemas() -> dict[str, Any]:
         "proposal": Proposal,
         "finding": Finding,
         "challenge": Challenge,
+        "risk": RiskRating,
+        "decision": GateVerdict,
+        "gate_context": GateContext,
+        "flake": Flake,
     }
     return {
         "schema_version": SCHEMA_VERSION,
