@@ -45,10 +45,6 @@
     <text x="1060" y="274" fill="#34D399" font-size="13" font-weight="800" text-anchor="middle">✓</text>
     <text x="1060" y="312" fill="#98A2B3" font-size="14" font-weight="700" letter-spacing="0.5" text-anchor="middle">CONFIRMED</text>
 
-    <rect x="1117" y="240" width="16" height="16" rx="4" transform="rotate(45 1125 248)" fill="#0F2A22" stroke="#34D399" stroke-width="2.5"/>
-    <text x="1125" y="252" fill="#34D399" font-size="9" font-weight="800" text-anchor="middle">✓</text>
-    <text x="1125" y="342" fill="#34D399" font-size="11" font-weight="800" letter-spacing="0.5" text-anchor="middle">PLAN GATE · approved</text>
-
     <circle cx="1190" cy="228" r="15" fill="#0F2A22" stroke="#34D399" stroke-width="3"/>
     <text x="1190" y="234" fill="#34D399" font-size="13" font-weight="800" text-anchor="middle">✓</text>
     <text x="1190" y="197" fill="#98A2B3" font-size="14" font-weight="700" letter-spacing="0.5" text-anchor="middle">FIXED</text>
@@ -56,10 +52,6 @@
     <circle cx="1320" cy="268" r="15" fill="#0F2A22" stroke="#34D399" stroke-width="3"/>
     <text x="1320" y="274" fill="#34D399" font-size="13" font-weight="800" text-anchor="middle">✓</text>
     <text x="1320" y="312" fill="#98A2B3" font-size="14" font-weight="700" letter-spacing="0.5" text-anchor="middle">CHECKED</text>
-
-    <rect x="1382" y="240" width="16" height="16" rx="4" transform="rotate(45 1390 248)" fill="#0F2A22" stroke="#34D399" stroke-width="2.5"/>
-    <text x="1390" y="252" fill="#34D399" font-size="9" font-weight="800" text-anchor="middle">✓</text>
-    <text x="1390" y="342" fill="#34D399" font-size="11" font-weight="800" letter-spacing="0.5" text-anchor="middle">RELEASE GATE · approved</text>
 
     <circle cx="1460" cy="228" r="20" fill="#0F2A22" stroke="#34D399" stroke-width="4"/>
     <text x="1460" y="235" fill="#34D399" font-size="15" font-weight="800" text-anchor="middle">✓</text>
