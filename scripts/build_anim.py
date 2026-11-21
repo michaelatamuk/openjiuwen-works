@@ -1,9 +1,10 @@
-import os, subprocess
+import os, subprocess, shutil
 
-OUT = r"C:\Workspace\openjiuwenothers\factory"
-FR = os.path.join(OUT, "anim", "frames")
-AN = os.path.join(OUT, "anim")
-FF = r"C:\Users\m00645993\AppData\Local\Temp\opencode\vidvenv\Lib\site-packages\imageio_ffmpeg\binaries\ffmpeg-win-x86_64-v9.0.2.exe"
+OUT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+FR = os.path.join(OUT, "docs", "frames")
+AN = FR
+FF = (os.environ.get("FFMPEG") or shutil.which("ffmpeg")
+      or r"C:\Users\m00645993\AppData\Local\Temp\opencode\vidvenv\Lib\site-packages\imageio_ffmpeg\binaries\ffmpeg-win-x86_64-v9.0.2.exe")
 
 scenes = [("b1", 7), ("b2", 7), ("b3", 7), ("b4", 7), ("b5", 8), ("punch", 6), ("end", 5)]
 total = sum(d for _, d in scenes)
@@ -11,8 +12,8 @@ total = sum(d for _, d in scenes)
 concat = os.path.join(AN, "scenes.txt")
 with open(concat, "w", encoding="utf-8") as f:
     for name, dur in scenes:
-        f.write(f"file 'frames/{name}.png'\nduration {dur}\n")
-    f.write(f"file 'frames/{scenes[-1][0]}.png'\n")
+        f.write(f"file '{name}.png'\nduration {dur}\n")
+    f.write(f"file '{scenes[-1][0]}.png'\n")
 
 inputs = ["-f", "concat", "-safe", "0", "-i", concat,
           "-i", os.path.join(AN, "ambience.wav"),
@@ -24,7 +25,8 @@ filter_complex = ("[1:a]volume=0.55[amb];"
                   "[2:a]adelay=35200|35200[a1];[3:a]adelay=41200|41200[a2];"
                   "[amb][a1][a2]amix=inputs=3:normalize=0[aout]")
 
-out = os.path.join(OUT, "openjiuwen-works-two-mondays.mp4")
+out = os.path.join(OUT, "docs", "video", "openjiuwen-works-two-mondays.mp4")
+os.makedirs(os.path.dirname(out), exist_ok=True)
 cmd = [FF, "-y"] + inputs + [
     "-filter_complex", filter_complex,
     "-map", "0:v", "-map", "[aout]",

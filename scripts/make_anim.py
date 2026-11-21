@@ -1,8 +1,8 @@
 import os, subprocess
 
-OUT = r"C:\Workspace\openjiuwenothers\factory"
-AN = os.path.join(OUT, "anim")
-SC = os.path.join(AN, "frames")
+OUT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+AN = os.path.join(OUT, "docs", "frames")
+SC = AN
 os.makedirs(SC, exist_ok=True)
 CHROME = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
 
