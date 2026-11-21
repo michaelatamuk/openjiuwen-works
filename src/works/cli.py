@@ -82,7 +82,7 @@ def cmd_version(args: argparse.Namespace) -> int:
 
 
 def cmd_submit(args: argparse.Namespace) -> int:
-    from .records import Source, SourceKind
+    from .records import Source, SourceKind, TaskKind
 
     try:
         kind = SourceKind(args.kind)
@@ -90,12 +90,19 @@ def cmd_submit(args: argparse.Namespace) -> int:
         raise ConfigError(
             f"unknown source kind {args.kind!r}; expected manual, tracker, detector"
         ) from exc
+    try:
+        task_kind = TaskKind(args.task_kind)
+    except ValueError as exc:
+        raise ConfigError(
+            f"unknown task kind {args.task_kind!r}; expected fix or check-change"
+        ) from exc
     target = (args.repo or Path.cwd()).expanduser().resolve()
     task, created = _queue(args).submit(
         source=Source(kind=kind, ref=args.ref, title=args.title),
         flow=args.flow,
         product=args.product,
         repo=str(target),
+        task_kind=task_kind,
     )
     body = {"task": task.model_dump(mode="json"), "created": created}
     if args.json:
@@ -622,6 +629,10 @@ def cmd_risk(args: argparse.Namespace) -> int:
         print(f"- {reason}")
     if latest.owners:
         print(f"owners: {', '.join(latest.owners)}")
+    print(
+        f"reviewers: {latest.required_reviewers}"
+        + (" (deeper verification)" if latest.deeper_verification else "")
+    )
     return 0
 
 
@@ -649,6 +660,45 @@ def cmd_gate_list(args: argparse.Namespace) -> int:
             ],
         )
     )
+    return 0
+
+
+def cmd_gate_report(args: argparse.Namespace) -> int:
+    queue = _queue(args)
+    task_ids = [args.task_id] if args.task_id else [task.id for task in queue.list_tasks()]
+    report: list[dict[str, Any]] = []
+    for task_id in task_ids:
+        decisions = [
+            event
+            for event in queue.events(task_id)
+            if event.type in ("decision.made", "decision.shadow", "would_block")
+        ]
+        by_gate: dict[str, dict[str, int]] = {}
+        for event in decisions:
+            gate = str(event.data.get("gate", "unknown"))
+            bucket = by_gate.setdefault(gate, {"decisions": 0, "would_block": 0, "disagree": 0})
+            if event.type == "decision.made":
+                bucket["decisions"] += 1
+            elif event.type == "would_block":
+                bucket["would_block"] += 1
+            elif event.data.get("agree") is False:
+                bucket["disagree"] += 1
+        report.append({"task_id": task_id, "gates": by_gate})
+    if args.json:
+        _emit({"report": report})
+        return 0
+    rows = [
+        (
+            item["task_id"],
+            gate,
+            counts["decisions"],
+            counts["would_block"],
+            counts["disagree"],
+        )
+        for item in report
+        for gate, counts in sorted(item["gates"].items())
+    ]
+    print(table(("task", "gate", "decisions", "would_block", "disagree"), rows))
     return 0
 
 
@@ -696,6 +746,39 @@ def cmd_flake_list(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_decision_replay(args: argparse.Namespace) -> int:
+    from .decision import build_decision_port
+    from .decision_eval import load_cases, replay, summary
+
+    cases = load_cases(Path(args.cases))
+    candidate = build_decision_port(args.provider)
+    outcomes = replay(cases, candidate)
+    payload = summary(outcomes)
+    if args.json:
+        _emit(payload)
+    else:
+        print(
+            table(
+                ("case", "deterministic", "candidate", "agree", "unsafe"),
+                [
+                    (
+                        item.case_id,
+                        item.deterministic.action,
+                        item.candidate.action,
+                        "yes" if item.agree else "no",
+                        "YES" if item.unsafe_allow else "no",
+                    )
+                    for item in outcomes
+                ],
+            )
+        )
+        print(
+            f"{payload['cases']} cases · {payload['agree']} agree · "
+            f"{payload['disagree']} differ · {payload['unsafe_allow']} unsafe allow"
+        )
+    return EXIT_POLICY if payload["unsafe_allow"] else 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="works", description=DESCRIPTION)
     parser.add_argument("--home", type=Path, default=None, help="Workspace root")
@@ -712,6 +795,12 @@ def build_parser() -> argparse.ArgumentParser:
     submit.add_argument("--product", default="openjiuwen")
     submit.add_argument("--repo", type=Path, default=None)
     submit.add_argument("--kind", default="manual", help="manual, tracker or detector")
+    submit.add_argument(
+        "--task-kind",
+        default="fix",
+        choices=("fix", "check-change"),
+        help="fix or check-change",
+    )
     submit.add_argument("--json", action="store_true")
     submit.set_defaults(func=cmd_submit)
 
@@ -830,6 +919,10 @@ def build_parser() -> argparse.ArgumentParser:
     gate_list.add_argument("task_id")
     gate_list.add_argument("--json", action="store_true")
     gate_list.set_defaults(func=cmd_gate_list)
+    gate_report = gate_sub.add_parser("report", help="Summarize decisions and observe blocks")
+    gate_report.add_argument("task_id", nargs="?", default=None)
+    gate_report.add_argument("--json", action="store_true")
+    gate_report.set_defaults(func=cmd_gate_report)
 
     flake = sub.add_parser("flake", help="Flaky tests are defects with an owner and an expiry")
     flake_sub = flake.add_subparsers(dest="flake_command", required=True)
@@ -845,6 +938,16 @@ def build_parser() -> argparse.ArgumentParser:
     flake_list.add_argument("--active", action="store_true")
     flake_list.add_argument("--json", action="store_true")
     flake_list.set_defaults(func=cmd_flake_list)
+
+    decision = sub.add_parser("decision", help="Replay historical gate cases")
+    decision_sub = decision.add_subparsers(dest="decision_command", required=True)
+    decision_replay = decision_sub.add_parser(
+        "replay", help="Compare a candidate policy with the rule"
+    )
+    decision_replay.add_argument("--cases", required=True)
+    decision_replay.add_argument("--provider", choices=("off", "shadow", "laix"), default="laix")
+    decision_replay.add_argument("--json", action="store_true")
+    decision_replay.set_defaults(func=cmd_decision_replay)
 
     schema = sub.add_parser("schema", help="Print every persisted schema")
     schema.add_argument("--json", action="store_true")

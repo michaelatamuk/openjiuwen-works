@@ -77,11 +77,14 @@ def load_flakes(paths: WorksPaths) -> list[Flake]:
     return flakes
 
 
-def active_flakes(paths: WorksPaths, *, now: datetime | None = None) -> list[Flake]:
+def active_flakes(
+    paths: WorksPaths, *, task_id: str | None = None, now: datetime | None = None
+) -> list[Flake]:
     moment = now or datetime.now(tz=UTC)
     return [
         flake
         for flake in load_flakes(paths)
         if flake.status is FlakeStatus.OPEN
+        and (task_id is None or flake.task_id == task_id)
         and (flake.expires_at is None or flake.expires_at > moment)
     ]

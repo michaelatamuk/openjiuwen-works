@@ -9,12 +9,18 @@ from pathlib import Path
 from .errors import ConfigError
 from .flow import FlowSpec, find_flow, load_flow_text
 from .gitops import GitRepo
+from .policy import matches
 
 CHECK_FILES = (
     "src/works/policy.py",
     "src/works/state.py",
     "src/works/scenarios.py",
 )
+CHECK_PATHS = ("flows/", *CHECK_FILES)
+
+
+def is_check_path(path: str) -> bool:
+    return matches(path, CHECK_PATHS)
 
 
 @dataclass(frozen=True)

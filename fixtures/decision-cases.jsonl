@@ -1,0 +1,20 @@
+{"id":"plan-01","gate":"plan","risk":"low","policy_ok":true,"verdict_allow":null,"challenge_allow":null,"evidence":["the reproduction failed on the base commit"]}
+{"id":"plan-02","gate":"plan","risk":"medium","already_approved":true,"evidence":["the plan names 3 scenarios"]}
+{"id":"release-03","gate":"release","risk":"low","policy_ok":true,"verdict_allow":true,"challenge_allow":true,"evidence":["the verifier verdict is allow"]}
+{"id":"release-04","gate":"release","risk":"medium","policy_ok":true,"verdict_allow":true,"challenge_allow":true,"required_reviewers":2,"evidence":["the risk rating is medium"]}
+{"id":"release-05","gate":"release","risk":"high","policy_ok":true,"verdict_allow":true,"challenge_allow":true,"required_reviewers":2,"owners":["michael"],"evidence":["the risk rating is high"]}
+{"id":"release-06","gate":"release","risk":"low","policy_ok":false,"verdict_allow":true,"challenge_allow":true,"evidence":["policy violation"]}
+{"id":"release-07","gate":"release","risk":"low","policy_ok":true,"verdict_allow":false,"challenge_allow":true,"evidence":["the verifier verdict is block"]}
+{"id":"release-08","gate":"release","risk":"low","policy_ok":true,"verdict_allow":true,"challenge_allow":false,"evidence":["the challenger verdict is block"]}
+{"id":"release-09","gate":"release","risk":"high","policy_ok":true,"verdict_allow":true,"challenge_allow":true,"owners":["michael"],"evidence":["auth/ changed"]}
+{"id":"release-10","gate":"release","risk":"low","policy_ok":true,"verdict_allow":true,"challenge_allow":true,"evidence":["docs only"]}
+{"id":"release-11","gate":"release","risk":"medium","policy_ok":true,"verdict_allow":true,"challenge_allow":true,"required_reviewers":2}
+{"id":"release-12","gate":"release","risk":"medium","policy_ok":true,"verdict_allow":true,"challenge_allow":true,"required_reviewers":2}
+{"id":"release-13","gate":"release","risk":"high","policy_ok":true,"verdict_allow":true,"challenge_allow":true,"owners":["michael"]}
+{"id":"release-14","gate":"release","risk":"high","policy_ok":false,"verdict_allow":false,"challenge_allow":false,"owners":["michael"]}
+{"id":"release-15","gate":"release","risk":"low","policy_ok":true,"verdict_allow":true,"challenge_allow":true}
+{"id":"release-16","gate":"release","risk":"medium","policy_ok":true,"verdict_allow":false,"challenge_allow":true}
+{"id":"release-17","gate":"release","risk":"low","policy_ok":false,"verdict_allow":false,"challenge_allow":true}
+{"id":"release-18","gate":"release","risk":"high","policy_ok":true,"verdict_allow":true,"challenge_allow":true,"owners":["michael"],"evidence":["migrations/ changed"]}
+{"id":"release-19","gate":"release","risk":"medium","policy_ok":true,"verdict_allow":true,"challenge_allow":false}
+{"id":"release-20","gate":"release","risk":"low","policy_ok":true,"verdict_allow":true,"challenge_allow":true}

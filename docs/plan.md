@@ -1,6 +1,6 @@
 # Development plan — openJiuwen Works
 
-**Status:** v4.11 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
+**Status:** v4.12 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
 
 Every task is a checkbox, checked when its criteria are met and the change is merged. `S/M/L`:
 S ≤ half a day, M ≤ two days, L ≤ a week. Nothing is checked because it was started.
@@ -587,26 +587,40 @@ Internal only: nothing is published to the upstream fork until M2 is green.
   and the proof. Deterministic gate remains the fallback. **M**
   - Criteria: path deny wins before LAIX; a missing/invalid decision falls back, never opens a gate;
     shadow differences are recorded for 20 cases.
+  - 2026-11-21: `DecisionPort`, `DeterministicGate`, `LaixGate`, `ShadowGate` and
+    `works decision replay --cases fixtures/decision-cases.jsonl`; the fixture has 20 cases.
+    Actual LAIX historical replay and opt-in remain T2.14.
 - [ ] **T1.20** Risk rating and code owners: a separate risk step rates each change
   `low | medium | high` from diff, paths, blast radius, reversibility, coverage and recent
   incidents, rounding up when unsure. Code owners always approve `auth/`, `billing/`, migrations,
   secrets, CI/deploy and public API. LAIX consumes the rating as `risk`. **M**
   - Criteria: the rating is recorded in `run.json` and the proof; it changes the evidence and the
     reviewers, never the existence of the two gates.
+  - 2026-11-21: rating, owners, `required_reviewers` and `deeper_verification` are recorded and
+    shown by `works risk`; release-gate enforcement is still open.
 - [ ] **T1.21** Trusted-base checks and exact-commit binding: policy, flows, scenarios, review rules
   and risk rules load from the base commit or a trusted checkout, never the worktree. A new commit
   invalidates the verifier result, challenger verdict and approval; the merge re-checks the exact
   SHA. **M**
   - Criteria: a worktree edit to a check is refused; a commit after approval cannot merge on the old
     verdict; `checks_sha` is recorded in the run and proof.
+  - 2026-11-21: base flow/check loading, `checks_sha`, approval commit binding and a separate
+    `check-change` task kind; the trusted verifier image remains M2.
 - [ ] **T1.22** Observe mode for every gate: `off | observe | enforce` for policy rules, flow nodes,
   risk rules and review checks; observe records `would_block` with a reason. Promotion happens only
   after false positives are reviewed. **S**
   - Criteria: a new rule can run for 20 changes without changing a transition; its false positives
     are listed from events.
+  - 2026-11-21: policy, node and risk modes plus `works gate report`; review checks arrive with
+    T2.17.
 - [ ] **T1.23** Flaky-test policy: a test that passes only on retry is a defect, never a green
   result. No skip, sleep or retry-to-green; a `flake` event carries an owner and expiry, and the test
   is fixed or deleted with a written reason. **S**
+  - 2026-11-21: `works flake add/list`, active flakes block the verdict with `flaky_test`, and the
+    engine never retries a scenario to green.
+- [ ] **T1.24** Read-only GUI preview: queue, task detail, proof, risk, decision and `would_block`
+  in one window; `works ui --read-only`; no write actions. **M**
+  - Next deliverable after the T1.19–T1.23 batch, before the rest of M1.
 
 **Demo M1:** two real issues go from ticket to proof, twice in a row, with scenarios written first.
 
@@ -966,6 +980,9 @@ agents, a zoo of model providers before M3, and autonomous merge without the two
 
 ## 20. Changelog
 
+- **v4.12** — group 1 of the gate hardening: `check-change` task kind and check-path refusal,
+  flake enforcement (`flaky_test`), risk routing requirements, risk observe mode, `works gate
+  report`, 20-case `works decision replay`, and a read-only GUI preview queued as T1.24.
 - **v4.11** — gate integrity from the software-factory study: trusted-base checks, exact-commit
   binding, risk-rated approval with code owners, observe-before-enforce, run-the-change preview,
   property/differential tests, bounded repair, flaky tests as defects, review-the-reviewers,

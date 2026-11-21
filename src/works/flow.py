@@ -77,6 +77,7 @@ class PathsSpec(BaseModel):
 class RiskSpec(BaseModel):
     """Which paths always need an owner, and who owns them."""
 
+    mode: GateMode = GateMode.ENFORCE
     high_paths: list[str] = Field(
         default_factory=lambda: [
             "auth/",

@@ -4,11 +4,13 @@
 
 **Source** `manual:GH-1` · **Base commit** `abc1234`
 
+**Task kind** `fix`
+
 **Checks SHA-256** `—`
 
 **State** `proved` · **Stop reason** `completed`
 
-**Proof SHA-256** `9565745e62a2a94687dfa403d5d90785482086fbcdb9c84275102650964a9323`
+**Proof SHA-256** `de79451852989516ee489ef4968a05d19fa46efeedc8845507deca59710bf04a`
 
 ## Verdict
 

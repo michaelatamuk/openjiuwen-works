@@ -7,10 +7,11 @@ from pathlib import Path
 import pytest
 
 from works.errors import StateError
+from works.flakes import add_flake
 from works.ledger import Ledger
 from works.quarantine import QuarantineError
 from works.queue import Queue
-from works.records import Budget, LedgerRow, StopReason, TaskState
+from works.records import Budget, LedgerRow, StopReason, TaskKind, TaskState
 from works.scenarios import judge
 from works.supervisor import Supervisor
 
@@ -136,6 +137,42 @@ def test_a_test_edit_is_refused_before_any_command(
     assert any("tests/test_core.py" in item["path"] for item in proof["policy"]["violations"])
     assert proof["test"] is None
     assert proof["diff"] == ""
+
+
+def test_a_check_edit_is_refused_for_a_normal_fix(
+    paths, submit, scenario_set, make_supervisor
+) -> None:
+    task = submit()
+    record = run(make_supervisor("fix-check-edit"), task.id, scenario_set, approve_plan=True)
+    assert record.state is TaskState.BLOCKED
+    assert record.stop_reason is StopReason.POLICY_VIOLATION
+    proof = evidence(paths, record)
+    assert proof["policy"]["ok"] is False
+    assert any("check-change" in item["reason"] for item in proof["policy"]["violations"])
+
+
+def test_a_check_change_task_may_edit_checks(paths, submit, scenario_set, make_supervisor) -> None:
+    task = submit(task_kind=TaskKind.CHECK_CHANGE)
+    record = run(make_supervisor("fix-check-edit"), task.id, scenario_set, approve_plan=True)
+    assert record.stop_reason is StopReason.COMPLETED
+    proof = evidence(paths, record)
+    assert proof["task_kind"] == "check-change"
+    assert proof["policy"]["ok"] is True
+
+
+def test_an_active_flake_blocks_the_verdict(paths, submit, scenario_set, make_supervisor) -> None:
+    task = submit()
+    add_flake(
+        paths,
+        task_id=task.id,
+        scenario_id="add-negative",
+        owner="michael",
+        reason="times out on Windows",
+    )
+    record = run(make_supervisor("fix-add"), task.id, scenario_set, approve_plan=True)
+    assert record.state is TaskState.BLOCKED
+    assert record.stop_reason is StopReason.FLAKY_TEST
+    assert any(event.type == "flake" for event in Queue(paths).events(task.id))
 
 
 def test_a_blocking_challenge_stops_the_change(

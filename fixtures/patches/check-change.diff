@@ -1,0 +1,19 @@
+diff --git a/flows/check.txt b/flows/check.txt
+new file mode 100644
+index 0000000..b2f7c3d
+--- /dev/null
++++ b/flows/check.txt
+@@ -0,0 +1 @@
++checked policy definition
+diff --git a/calc/core.py b/calc/core.py
+--- a/calc/core.py
++++ b/calc/core.py
+@@ -2,7 +2,7 @@
+ 
+ 
+ def add(a: int, b: int) -> int:
+-    return a - b
++    return a + b
+ 
+ 
+ def mul(a: int, b: int) -> int:

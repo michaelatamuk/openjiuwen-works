@@ -16,13 +16,14 @@ from .config import WorksPaths
 from .decision import DecisionPort, GateContext, GateVerdict, ShadowGate, build_decision_port
 from .errors import ConfigError, ConflictError, HarnessError, StateError, WorksError
 from .evidence import DiffStatRow, Evidence, write_evidence
+from .flakes import active_flakes
 from .flow import FlowSpec, GateMode, Node, PathsSpec
 from .gitops import GitRepo
 from .harness.base import Harness, Proposal, ProposalRequest
 from .ledger import Ledger
 from .logs import get_logger
 from .memory import Memory, NullMemory
-from .policy import PolicyReport, check_patch, check_paths, paths_from_patch
+from .policy import PolicyReport, Violation, check_patch, check_paths, paths_from_patch
 from .quarantine import ensure_outside
 from .quarantine import load as load_quarantine
 from .queue import Queue
@@ -35,6 +36,7 @@ from .records import (
     ScenarioOutcome,
     StopReason,
     Task,
+    TaskKind,
     TaskState,
     Verdict,
 )
@@ -42,7 +44,7 @@ from .risk import RiskLevel, RiskRating, rate_risk
 from .runner import CommandResult, CommandRunner
 from .scenarios import Scenario, ScenarioSet, judge, load_scenario_set
 from .state import TERMINAL
-from .trusted import load_trusted_flow
+from .trusted import is_check_path, load_trusted_flow
 
 LOG = get_logger("supervisor")
 
@@ -280,6 +282,11 @@ class Supervisor:
                     "by": "cli" if approve_plan else "flow",
                     "commit": ctx.base_commit,
                     "checks_sha": ctx.checks_sha,
+                    "risk": ctx.risk.level.value if ctx.risk is not None else None,
+                    "owners": ctx.risk.owners if ctx.risk is not None else [],
+                    "required_reviewers": (
+                        ctx.risk.required_reviewers if ctx.risk is not None else 1
+                    ),
                 },
             )
 
@@ -313,6 +320,30 @@ class Supervisor:
             "risk.rated",
             ctx.risk.model_dump(mode="json"),
         )
+        if flow.risk.mode is GateMode.OBSERVE and ctx.risk.required_reviewers > 1:
+            self._observe(
+                ctx,
+                "risk",
+                [
+                    f"{ctx.risk.level.value} risk would require "
+                    f"{ctx.risk.required_reviewers} reviewers"
+                ],
+            )
+
+        check_touched = [path for path in touched if is_check_path(path)]
+        if check_touched and ctx.task.kind is not TaskKind.CHECK_CHANGE:
+            ctx.policy = PolicyReport(
+                ok=False,
+                violations=[
+                    Violation(
+                        path=path,
+                        reason="check change requires a check-change task",
+                    )
+                    for path in check_touched
+                ],
+            )
+            self._stop(ctx, StopReason.POLICY_VIOLATION)
+            return
 
         violations = (
             check_paths(touched, flow.paths)
@@ -370,6 +401,8 @@ class Supervisor:
                         self._stop(ctx, StopReason.CHALLENGE_FAILED, detail=challenge.reason)
                         return
 
+        if not self._check_flakes(ctx):
+            return
         verdict = await self._judge(ctx)
         ctx.verdict = verdict
         (ctx.run_dir / "verdict.json").write_text(
@@ -540,6 +573,22 @@ class Supervisor:
         outcomes = [task.result() for _, task in tasks]
         return judge(outcomes, run_id=ctx.run_id)
 
+    def _check_flakes(self, ctx: RunContext) -> bool:
+        scenario_set = _required(ctx.scenario_set, "scenario set")
+        ids = {scenario.id for scenario in scenario_set.scenarios}
+        hits = [
+            flake
+            for flake in active_flakes(self._paths, task_id=ctx.task.id)
+            if flake.scenario_id in ids
+        ]
+        if not hits:
+            return True
+        for flake in hits:
+            self._queue.append(ctx.task.id, "flake", flake.model_dump(mode="json"))
+        detail = ", ".join(f"{flake.scenario_id} ({flake.owner})" for flake in hits)
+        self._stop(ctx, StopReason.FLAKY_TEST, detail=f"active flake: {detail}")
+        return False
+
     async def _run_scenario(self, ctx: RunContext, scenario: Scenario) -> ScenarioOutcome:
         worktree = _required(ctx.worktree, "worktree")
         scenario_dir = _required(ctx.scenario_dir, "scenario directory")
@@ -592,6 +641,8 @@ class Supervisor:
             gate=gate,
             base_commit=ctx.base_commit,
             risk=ctx.risk.level if ctx.risk is not None else RiskLevel.MEDIUM,
+            required_reviewers=ctx.risk.required_reviewers if ctx.risk is not None else 1,
+            owners=ctx.risk.owners if ctx.risk is not None else [],
             policy_ok=ctx.policy.ok,
             verdict_allow=None if ctx.verdict is None else ctx.verdict.allow,
             challenge_allow=None if ctx.challenge is None else ctx.challenge.allow,
@@ -715,6 +766,7 @@ class Supervisor:
             flow=ctx.flow.flow,
             product=ctx.flow.product,
             source=f"{ctx.task.source.kind.value}:{ctx.task.source.ref}",
+            task_kind=ctx.task.kind.value,
             base_commit=ctx.base_commit,
             checks_sha=ctx.checks_sha,
             state=state,
@@ -750,6 +802,7 @@ class Supervisor:
             stop_reason=ctx.stop_reason,
             base_commit=ctx.base_commit,
             checks_sha=ctx.checks_sha,
+            task_kind=ctx.task.kind.value,
             risk_level=ctx.risk.level.value if ctx.risk is not None else None,
             risk_reasons=ctx.risk.reasons if ctx.risk is not None else [],
             decision_verb=last_decision.verb if last_decision is not None else None,

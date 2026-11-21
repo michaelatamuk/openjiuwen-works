@@ -12,7 +12,7 @@ from works.harness.base import Harness
 from works.harness.fake import FakeHarness
 from works.ledger import Ledger
 from works.queue import Queue
-from works.records import Budget, Source, SourceKind, Task
+from works.records import Budget, Source, SourceKind, Task, TaskKind
 from works.runner import SubprocessRunner
 from works.supervisor import Supervisor
 
@@ -69,7 +69,11 @@ def trace(factory_root: Path) -> Callable[[str], Path]:
 @pytest.fixture
 def submit(paths: WorksPaths, repo: GitRepo) -> Callable[..., Task]:
     def create(
-        *, ref: str = "GH-1", budget: Budget | None = None, repo_path: Path | None = None
+        *,
+        ref: str = "GH-1",
+        budget: Budget | None = None,
+        repo_path: Path | None = None,
+        task_kind: TaskKind = TaskKind.FIX,
     ) -> Task:
         queue = Queue(paths)
         task, _ = queue.submit(
@@ -78,6 +82,7 @@ def submit(paths: WorksPaths, repo: GitRepo) -> Callable[..., Task]:
             product="openjiuwen",
             repo=str(repo_path or repo.path),
             budget=budget,
+            task_kind=task_kind,
         )
         return task
 

@@ -41,6 +41,7 @@ class Evidence(BaseModel):
     flow: str
     product: str
     source: str
+    task_kind: str = "fix"
     base_commit: str | None = None
     checks_sha: str | None = None
     state: TaskState
@@ -95,6 +96,8 @@ def render_markdown(evidence: Evidence) -> str:
         f"**Product** `{evidence.product}`",
         "",
         f"**Source** `{evidence.source}` · **Base commit** `{evidence.base_commit or '—'}`",
+        "",
+        f"**Task kind** `{evidence.task_kind}`",
         "",
         f"**Checks SHA-256** `{evidence.checks_sha or '—'}`",
         "",

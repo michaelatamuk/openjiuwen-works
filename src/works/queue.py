@@ -25,6 +25,7 @@ from .records import (
     Scope,
     Source,
     Task,
+    TaskKind,
     TaskState,
     utcnow,
 )
@@ -206,6 +207,7 @@ class Queue:
         repo: str,
         budget: Budget | None = None,
         scope: Scope | None = None,
+        task_kind: TaskKind = TaskKind.FIX,
     ) -> tuple[Task, bool]:
         """Return (task, created). A duplicate source returns the existing task."""
         task_id = make_task_id(source.kind.value, source.ref)
@@ -221,6 +223,7 @@ class Queue:
                 product=product,
                 repo=repo,
                 source=source,
+                kind=task_kind,
                 budget=budget or Budget(),
                 scope=scope or Scope(),
                 created_at=now,

@@ -20,6 +20,8 @@ class GateContext(BaseModel):
     gate: str
     base_commit: str | None = None
     risk: RiskLevel = RiskLevel.MEDIUM
+    required_reviewers: int = 1
+    owners: list[str] = Field(default_factory=list)
     policy_ok: bool = True
     verdict_allow: bool | None = None
     challenge_allow: bool | None = None

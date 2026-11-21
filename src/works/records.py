@@ -21,6 +21,11 @@ class SourceKind(StrEnum):
     DETECTOR = "detector"
 
 
+class TaskKind(StrEnum):
+    FIX = "fix"
+    CHECK_CHANGE = "check-change"
+
+
 class TaskState(StrEnum):
     QUEUED = "queued"
     REPRODUCING = "reproducing"
@@ -49,6 +54,7 @@ class StopReason(StrEnum):
     CHALLENGE_FAILED = "challenge_failed"
     VERDICT_FAILED = "verdict_failed"
     BUDGET_EXCEEDED = "budget_exceeded"
+    FLAKY_TEST = "flaky_test"
     CONFLICT = "conflict"
     CONFIG_ERROR = "config_error"
     INTERNAL_ERROR = "internal_error"
@@ -89,6 +95,7 @@ class Task(BaseModel):
     product: str
     repo: str
     source: Source
+    kind: TaskKind = TaskKind.FIX
     state: TaskState = TaskState.QUEUED
     budget: Budget = Field(default_factory=Budget)
     scope: Scope = Field(default_factory=Scope)
@@ -179,6 +186,7 @@ class RunRecord(BaseModel):
     stop_reason: StopReason
     base_commit: str | None = None
     checks_sha: str | None = None
+    task_kind: str = "fix"
     risk_level: str | None = None
     risk_reasons: list[str] = Field(default_factory=list)
     decision_verb: str | None = None

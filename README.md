@@ -6,9 +6,10 @@ where the bug was seen.
 **Status: M0.5 + live builder path.** The queue, policy, supervisor, evidence, ledger and CLI work
 end to end. The builder can be the real `openjiuwen` Claude Code harness on the DeepSeek
 Anthropic-compatible endpoint, and finished runs are reported to PPMA memory. The verifier is
-still the local scenario runner (M2); nothing is published yet (M3). Gates are deterministic today;
-LAIX is the optional decision layer being added behind `DecisionPort` in shadow mode. The next code
-changes harden the gate itself: trusted-base checks, exact-commit binding and a computed risk rating.
+still the local scenario runner (M2); nothing is published yet (M3). Gate hardening is in:
+trusted-base flows and checks, exact-commit approval, `check-change` tasks, risk rating, flake
+enforcement and the LAIX `DecisionPort` in shadow mode. Next deliverable: the read-only GUI preview
+(T1.24).
 
 <img src="brand/mascot/mira-primary.png" width="120" align="right" alt="Mira, a magpie courier, carrying a proof page">
 
@@ -103,11 +104,11 @@ in v0 — no silent retry, no "trust the builder".
 | Verifier | The local scenario runner stands in; the container and provider split land in M2 |
 | Release | The loop stops at `proved`; branch, PR and the issue comment land in M3 |
 | Memory | Finished runs are posted to PPMA (`works.run_finished`); recall and lessons are M4 |
-| Decision layer | Gates are deterministic. LAIX is the optional decision layer: pinned `0.18.0`, boundary in §6.7 and ADR-011, shadow mode next (T1.19); it never overrides path deny or the verifier |
-| Gate integrity | Checks, flows, scenarios and review rules must load from the trusted base, and a verdict is bound to the exact commit. Land next (T1.21) |
-| Risk rating | Risk classes and code owners are policy today; a separate `low/medium/high` rating and its evidence land next (T1.20) |
-| Observe mode | LAIX has shadow; every new gate gets `off/observe/enforce` with `would_block` events next (T1.22) |
-| GUI | CLI only. The 2026 window standard is in the plan, §6.5, for after M2 |
+| Decision layer | `DecisionPort` + `LaixGate` in shadow mode; `works decision replay` runs 20 fixture cases. Release-gate opt-in waits for the real historical replay (T2.14) |
+| Gate integrity | Trusted-base flows/checks, `checks_sha`, exact-commit approval and a separate `check-change` task kind are in; the trusted verifier image lands with M2 |
+| Risk rating | `low/medium/high`, owners, required reviewers and deeper verification are computed and shown by `works risk`; release-gate routing still open |
+| Observe mode | `off/observe/enforce` for policy, nodes and risk; `works gate report` lists decisions and `would_block`; review checks land with T2.17 |
+| GUI | CLI only. The read-only preview (queue, task, proof, risk/decision) is the next deliverable (T1.24); the full window follows M1/M2 |
 
 The fixture bug is deliberate: `add` subtracts. The good trace fixes it, the sneaky trace passes
 the visible test but fails a P0 holdout, and the test-edit trace is refused by policy.
