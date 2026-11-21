@@ -232,3 +232,25 @@ def test_readiness_runs_only_in_write_mode(paths, repo) -> None:
     with running(paths) as base:
         status, _ = post(base, "/api/readiness", {"repo": str(repo.path)})
         assert status == 405
+
+
+def test_a_run_artifact_is_served_and_traversal_is_refused(paths, submit) -> None:
+    task = submit()
+    run_dir = paths.runs / "r-artifact"
+    (run_dir / "artifacts").mkdir(parents=True)
+    (run_dir / "artifacts" / "story.png").write_bytes(b"\x89PNG\r\n")
+    (run_dir / "run.json").write_text(
+        json.dumps({"task_id": task.id, "finished_at": "2026-11-21T22:00:00Z"}),
+        encoding="utf-8",
+    )
+    with running(paths) as base:
+        with urlopen(f"{base}/api/tasks/{task.id}/artifacts/story.png", timeout=10) as response:
+            assert response.status == 200
+            assert response.read() == b"\x89PNG\r\n"
+            assert response.headers["Content-Type"] == "image/png"
+        try:
+            urlopen(f"{base}/api/tasks/{task.id}/artifacts/%2e%2e%2fsecret", timeout=10)
+        except HTTPError as exc:
+            assert exc.code == 404
+        else:
+            raise AssertionError("path traversal must be refused")

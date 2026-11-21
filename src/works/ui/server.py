@@ -663,6 +663,9 @@ class Handler(BaseHTTPRequestHandler):
                     limit = 200
                 self._json(HTTPStatus.OK, {"tasks": _tasks(queue, limit)})
                 return
+            if path.startswith("/api/tasks/") and "/artifacts/" in path:
+                self._artifact(path)
+                return
             if path.startswith("/api/tasks/"):
                 task_id = unquote(path.removeprefix("/api/tasks/"))
                 self._json(HTTPStatus.OK, _task_detail(queue, self.paths, task_id))
@@ -682,6 +685,30 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as exc:
             LOG.debug("api error", exc_info=True)
             self._json(HTTPStatus.NOT_FOUND, {"ok": False, "error": str(exc)})
+
+    def _artifact(self, path: str) -> None:
+        rest = unquote(path.removeprefix("/api/tasks/"))
+        task_id, separator, name = rest.partition("/artifacts/")
+        if not separator or not task_id or not name:
+            self._json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "artifact not found"})
+            return
+        run_info = _run_index(self.paths).get(task_id)
+        if run_info is None:
+            self._json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "run not found"})
+            return
+        root = (run_info[1] / "artifacts").resolve()
+        target = (root / name).resolve()
+        if root not in target.parents or not target.is_file():
+            self._json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "artifact not found"})
+            return
+        body = target.read_bytes()
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", _content_type(target))
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Disposition", f'inline; filename="{target.name}"')
+        self.end_headers()
+        self.wfile.write(body)
 
     def _static(self, *, head: bool = False) -> None:
         name = urlparse(self.path).path.lstrip("/")
@@ -720,6 +747,16 @@ def _content_type(path: Path) -> str:
         ".css": "text/css; charset=utf-8",
         ".js": "text/javascript; charset=utf-8",
         ".svg": "image/svg+xml",
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".webp": "image/webp",
+        ".mp4": "video/mp4",
+        ".webm": "video/webm",
+        ".json": "application/json",
+        ".txt": "text/plain; charset=utf-8",
+        ".log": "text/plain; charset=utf-8",
+        ".trace": "application/json",
     }.get(path.suffix, "application/octet-stream")
 
 

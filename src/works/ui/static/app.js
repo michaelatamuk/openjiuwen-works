@@ -414,19 +414,24 @@ function renderFeatures(detail) {
   );
 }
 
-function renderArtifacts(evidence) {
+function renderArtifacts(evidence, taskId) {
   const artifacts = evidence?.artifacts || [];
   if (!artifacts.length) {
     return card("Runtime artifacts", `<p class="muted small">No screenshot, log, video or trace was attached to this proof.</p>`);
   }
   const rows = artifacts
-    .map(
-      (item) => `<div class="check pass">
+    .map((item) => {
+      const relative = String(item.path || "").replace(/^artifacts\//, "");
+      const href = `/api/tasks/${encodeURIComponent(taskId)}/artifacts/${relative
+        .split("/")
+        .map(encodeURIComponent)
+        .join("/")}`;
+      return `<div class="check pass">
         <span class="box" aria-hidden="true">✓</span>
         <span class="feature-copy"><strong>${esc(item.kind)}</strong><em>${esc(item.path)}</em></span>
-        <span class="check-detail">${esc(item.sha256.slice(0, 12))}</span>
-      </div>`,
-    )
+        <span class="check-detail"><a href="${esc(href)}" target="_blank" rel="noopener">open</a> · ${esc(item.sha256.slice(0, 12))}</span>
+      </div>`;
+    })
     .join("");
   return card("Runtime artifacts", rows, { actions: `${artifacts.length}` });
 }
@@ -736,14 +741,14 @@ function renderEvidence(detail) {
           ${renderDecision(evidence)}
           ${renderReadiness(detail)}
           ${renderFeatures(detail)}
-          ${renderArtifacts(evidence)}
+          ${renderArtifacts(evidence, detail.task.id)}
           ${renderMemoryRecall(evidence)}
           ${renderResidual(evidence)}
           ${renderCost(evidence)}
           ${renderTimeline(detail.timeline)}
         </div>
       </div>`
-    : `<div class="grid"><div class="stack">${renderEmptyProof()}</div><div class="stack">${renderReadiness(detail)}${renderFeatures(detail)}${renderArtifacts(evidence)}${renderMemoryRecall(evidence)}${renderTimeline(detail.timeline)}</div></div>`;
+    : `<div class="grid"><div class="stack">${renderEmptyProof()}</div><div class="stack">${renderReadiness(detail)}${renderFeatures(detail)}${renderArtifacts(evidence, detail.task.id)}${renderMemoryRecall(evidence)}${renderTimeline(detail.timeline)}</div></div>`;
 }
 
 function stopStory() {
