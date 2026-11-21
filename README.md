@@ -15,7 +15,7 @@
 
 **Local-first preview** · proof before release · the plan gate is live, release is next
 
-> Most coding agents stop at a diff. Works stops at proof: what changed, what was checked, what was **not** checked, and who decided.
+> Most coding agents stop at a diff. Works carries the fix to release — and brings the proof with it.
 
 <div align="center">
   <img src="docs/ui/story.png" alt="openJiuwen Works Story view: Reported → Picked up → Confirmed → Fixed → Checked, with Mira at the ready-to-release gate and Evidence one click away" width="100%" />
@@ -25,15 +25,15 @@
 
 A bug report waits: for triage, for an agent's answer, for a reviewer, for someone to prove the change works. Writing the fix is the short part.
 
-## Built for proof.
+## Built to ship.
 
-**A factory that turns a report into a proof, then lets a person decide.**
+**A factory that turns a report into a fix a person can release — with proof they can inspect.**
 
 Works moves the waiting into an engine and keeps the judgement with people:
 
 - **Reproduce before fixing.** A deterministic command must fail on the base commit. No failing reproduction, no fix.
 - **Two human gates in the design.** The plan gate is live; the release gate is the next milestone. The engine never approves itself.
-- **The proof is the product.** One page bound to the exact diff by SHA-256: verdict, commands, policy, cost, risk and residual gaps.
+- **Every release carries its proof.** One page bound to the exact diff by SHA-256: verdict, commands, policy, cost, risk and residual gaps.
 - **No silent retry.** A blocked task stays blocked until a person changes the plan or the evidence.
 
 Mira, the magpie courier, appears in the empty state and at the current milestone — never as a chat avatar and never instead of status text. Brand notes: [`docs/brand/mascot.md`](docs/brand/mascot.md).
