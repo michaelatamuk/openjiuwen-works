@@ -27,6 +27,10 @@ closes.
 
 | Path | What it is |
 |---|---|
+| `docs/plan.md` | The development plan: preconditions, 5 milestones, ~70 checkbox tasks |
+| `docs/review-1-self.md` | Self-critique of plan v1 |
+| `docs/review-2-industry.md` | What Stripe, Ramp, Warp and StrongDM do that the plan first missed |
+| `docs/review-3-external.md` | Independent review of plan v2 |
 | `docs/deck/` | Five slides: problem, how it works, why now, flow file, flow boxes (SVG + PNG) |
 | `docs/video/` | Concept film, 47 s: one clock, one timeline, two people |
 | `docs/video-proposal.md` | The 1:55 storyboard and craft rules for a live-action cut |
