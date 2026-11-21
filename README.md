@@ -1,218 +1,164 @@
+<div align="center">
+  <img src="docs/ui/banner.svg" alt="openJiuwen Works — one signal in, a reproduced, checked and proven fix out" width="100%" />
+</div>
+
 # openJiuwen Works
 
-A software factory: one signal goes in, a released fix comes out — and the fix goes back to
-where the bug was seen.
+**A local-first software factory.** A bug report goes in. A reproduced, tested and proven fix comes out — with a person approving the plan; the release gate is the next milestone.
 
-**Status: M0.5 + live builder path.** The queue, policy, supervisor, evidence, ledger and CLI work
-end to end. The builder can be the real `openjiuwen` Claude Code harness on the DeepSeek
-Anthropic-compatible endpoint, and finished runs are reported to PPMA memory. The verifier is
-still the local scenario runner (M2); nothing is published yet (M3). Gate hardening is in:
-trusted-base flows and checks, exact-commit approval, `check-change` tasks, risk rating, flake
-enforcement and the LAIX `DecisionPort` in shadow mode. The read-only preview is in: `works ui`
-opens Story — the line of one fix with Mira — and keeps Evidence for engineers one click away. The
-human Summary is folded into the Story receipt block. Next: preview artifacts and real-mode
-acceptance (T2.20). The trust pyramid and the slop lesson are in `docs/review-5-slop.md`.
+[![ci](https://github.com/michaelatamuk/openjiuwen-works/actions/workflows/ci.yml/badge.svg)](https://github.com/michaelatamuk/openjiuwen-works/actions/workflows/ci.yml)
+[![license](https://img.shields.io/badge/license-Apache--2.0-6D28D9.svg)](LICENSE)
+[![python](https://img.shields.io/badge/python-3.12-3776AB.svg)](pyproject.toml)
 
-<img src="brand/mascot/mira-primary.png" width="120" align="right" alt="Mira, a magpie courier, carrying a proof page">
+**Local preview** · read-only by default · no hosted service · plan gate live, release gate M3
 
-Mira is the product's mascot: a magpie courier who carries the signal in and the proof back. Brand
-notes and poses are in [`docs/brand/mascot.md`](docs/brand/mascot.md).
+> Most coding agents stop at a diff. Works stops at proof: what changed, what was checked, what was **not** checked, and who decided.
 
----
+<div align="center">
+  <img src="docs/ui/story.png" alt="openJiuwen Works Story view: Reported → Picked up → Confirmed → Fixed → Checked → Delivered, with Mira at the current milestone and Evidence one click away" width="100%" />
+</div>
 
-## The idea
+## Why this exists
 
-Today a bug spends days in queues: for triage, for an agent's answers, for a reviewer's time,
-for someone to prove the change works. Writing the code is the short part.
+A bug spends more time waiting than being fixed: waiting for triage, for an agent's answer, for a reviewer, for someone to prove the change works. Writing the code is the short part.
 
-openJiuwen Works moves the waiting into an engine. It takes a signal from three places — a
-failure caught by DigitalMate, a bug already filed in a tracker, a person reporting it — and
-carries it through ten steps. People appear at exactly two gates: the plan and the release.
+Works moves the waiting into an engine and keeps the judgement with people:
 
-What comes back is not a diff to read. It is one page: what changed, what was tested, what it
-cost. Then the fix ships to the app, the tracker or the person who reported it, and the report
-closes.
+- **Reproduce before fixing.** A deterministic command must fail on the base commit. No failing reproduction, no fix.
+- **Two human gates in the design.** The plan gate is live; the release gate lands with M3. The engine never approves itself.
+- **The proof is the product.** One page bound to the exact diff by SHA-256: verdict, commands, policy, cost, risk and residual gaps.
+- **No silent retry.** A blocked task stays blocked until a person changes the plan or the evidence.
 
----
+Mira, the magpie courier, appears in the empty state and at the current milestone — never as a chat avatar and never instead of status text. Brand notes: [`docs/brand/mascot.md`](docs/brand/mascot.md).
 
-## Try it
+## How it works
+
+```text
+signal → reproduce → plan gate → build → check · challenge · prove → release gate → return
+```
+
+| Step | What happens |
+|---|---|
+| **Signal** | A person, a tracker or a detector reports the problem. |
+| **Reproduce** | A failing test or scenario runs against the base commit. |
+| **Plan gate** | A person approves the scenarios that will judge the change. |
+| **Build** | `openjiuwen` edits a disposable git worktree; policy checks every touched path. |
+| **Check** | Repository tests, an independent challenger, then P0/P1 scenarios. |
+| **Prove** | The evidence page is computed from the run and bound to the diff. |
+| **Release gate (M3)** | A person approves the exact commit. Publishing is not wired yet. |
+| **Return (M3)** | The proof is shaped to go back to the app, tracker or person that reported it. |
+
+Verdict rule: **all P0 pass and P1 pass rate ≥ 80%**. Anything else blocks. A blocked task is terminal until a person acts.
+
+## See it in 60 seconds
 
 ```bash
 uv sync --extra dev
-uv run works --help
+python scripts/demo-ui.py
+# use the path printed by the script
+uv run works --home /path/printed/by/demo ui
 ```
 
-The live builder is opt-in: `uv sync --extra live` and an installed (or `PYTHONPATH`-visible)
-`openjiuwen`; see `docs/live-harness.md`.
+The demo is local, deterministic and free: no model, no network, no external services. It creates five tasks on products people know — Firefox, LibreOffice, GIMP, Blender and Joplin — including a blocked tablet-zoom check and a task in the middle of **Checked**.
 
-The full M0 demo, with a planted bug and a recorded proposal:
+Report from the GUI (opt-in writes, queued only):
+
+```bash
+uv run works --home /path/printed/by/demo ui --write
+```
+
+The `+ Report a bug` button creates a queued task. It never starts a run and never approves a gate.
+
+The original recorded M0 demo:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/demo-m0.ps1
 ```
 
-It submits a task, shows a dry run, refuses a test edit, runs the loop, and prints the proof and
-the ledger row. No model and no network are used.
+## Use it on a real repository
 
----
+Readiness is a gate, not a warning. Add `.works/readiness.yaml` and a feature map first; a live run refuses to start while the gate is red.
 
-## What works today
+```bash
+uv sync --extra live
+# openjiuwen must be installed or on PYTHONPATH; see docs/live-harness.md
+uv run works readiness --repo /path/to/repo
+uv run works submit --repo /path/to/repo --product MyProduct --ref GH-42 --title "The export drops the last column"
+uv run works run <task-id> --live --approve-plan --scenarios scenarios.yaml
+```
 
-| Command | What it does |
-|---|---|
-| `works submit --ref GH-42 --repo .` | Creates a task; the same `(kind, ref)` returns the same task |
-| `works status [task]` | Lists the queue from a derived index; one task with owner and event count |
-| `works task <task>` | Prints the projection and verifies it against a full replay |
-| `works trace <task>` | Renders the timeline from the event store |
-| `works approve <task>` | Closes the plan gate |
-| `works run <task> --dry-run` | Shows nodes and scenarios; changes nothing |
-| `works run <task> --scenarios … --trace …` | Reproduce → plan → build → test → scenarios → proof (recorded) |
-| `works run <task> --live …` | The same loop with the real `openjiuwen` Claude Code harness |
-| `works run <task> --ppma URL` | Report the finished run to PPMA memory over its north contract |
-| `works memory backfill --ppma URL` | Send already-finished local runs to PPMA; `--dry-run`, idempotent |
-| `works memory recall --ppma URL` | Read PPMA memory statements for an operator |
-| `works wait <task> --on review` | Wait for a review/CI/deploy event instead of blocking |
-| `works wake <task> --event …` | Wake a waiting task and advance to its next state |
-| `works dispatch` | Claim and run ready tasks; `--watch` keeps the loop alive |
-| `works policy check <paths>` | Refuses test paths and escapes before any command runs |
-| `works finding add/list <task>` | Structured findings with confidence and uncertainty |
-| `works metrics` | Attention, waiting time and cost derived from events and the ledger |
-| `works ui` | Opens the read-only preview: queue, proof, risk, decision, readiness |
-| `works ui --write` | Adds report intake (`+ Report a bug`, queued only) and readiness execution |
-| `works ledger` | Reads the append-only ledger |
-| `works schema --json` | Prints every persisted JSON Schema and its version |
-| `works doctor` | Checks Python, git, workspace, flow, harness, container, credentials, isolation |
-| `works readiness --repo …` | Runs the repository's lint/format/types/tests/verify/architecture gate; red exits 8 |
+The live builder needs `ANTHROPIC_API_KEY` (or `WORKS_MODEL_KEY`). PPMA memory is optional:
 
-Every command takes `--json` and returns a stable exit code: `0` ok, `2` usage, `3` policy,
-`4` state, `5` not found, `6` config, `7` conflict, `8` blocked, `1` internal.
+```bash
+uv run works run <task-id> --live --ppma http://127.0.0.1:8766
+uv run works memory backfill --ppma http://127.0.0.1:8766
+uv run works memory recall --ppma http://127.0.0.1:8766
+```
 
-### The loop
-
-1. **Reproduce** — a deterministic command must fail on the base commit.
-2. **Plan** — the scenario ids that will judge the change; gate 1 is a person.
-3. **Build** — a bounded harness port returns a unified diff. Policy checks every touched path
-   *before* the patch is applied.
-4. **Check** — the repository's own tests, then an independent challenger session that tries to
-   disprove the change, then the P0/P1 scenarios in a separate directory.
-5. **Prove** — a computed page bound to the diff by SHA-256: verdict, commands, policy, cost, diff.
-6. **Ledger** — one append-only row per finished run.
-
-Verdict rule: all P0 pass and P1 pass rate ≥ 80%; anything else blocks. A blocked task is terminal
-in v0 — no silent retry, no "trust the builder".
-
----
-
-## What is not real yet
+## What is real today
 
 | Area | State |
 |---|---|
-| Live harness | Works: `openjiuwen` + bundled `claude.exe` + DeepSeek Anthropic endpoint; builder+challenger measured 88.6 s / 180 604 tokens / $0.193 for the fixture fix |
-| Verifier | The local scenario runner stands in; the container and provider split land in M2 |
-| Release | The loop stops at `proved`; branch, PR and the issue comment land in M3 |
-| Memory | Finished runs are posted to PPMA (`works.run_finished`), `works memory backfill` sends older local runs, and Story/Evidence show the recorded sync status; recall and lessons are T2.21 |
-| Decision layer | `DecisionPort` + `LaixGate` are off by default, shadow opt-in; `works decision replay` runs 20 fixture cases. Real LAIX must come from the local checkout because the PyPI `laix` name is an unrelated placeholder; T2.14 |
-| Gate integrity | Trusted-base flows/checks, `checks_sha`, exact-commit approval and a separate `check-change` task kind are in; the trusted verifier image lands with M2 |
-| Risk rating | `low/medium/high`, owners, required reviewers and deeper verification are computed and shown by `works risk`; release-gate routing still open |
-| Observe mode | `off/observe/enforce` for policy, nodes and risk; `works gate report` lists decisions and `would_block`; review checks land with T2.17 |
-| Readiness | `works readiness` runs lint, format, types, fast tests, product verify and architecture from `.works/readiness.yaml`, audits suppressions and requires a feature map; a red gate exits 8 and refuses autonomous runs. Import-graph checks in the verifier remain M2 |
-| Feature map | `features/<product>.yaml` declares user paths and expected observations; Evidence shows covered/failed/not-covered from the proof's scenarios. Preview artifacts and selector checks remain T2.19 |
-| Verification cost | Builder/challenger/verifier split in the proof lands with T1.25 |
-| GUI | `works ui` opens **Story** (default) for people — a gray **Reported** origin, then five Mira stops: **Picked up → Confirmed → Fixed → Checked → Delivered**, each not started / Mira is here / done / stopped; full-body Mira at the current stop, Present mode, replay behind “How we got here”, and a specific blocked rail — with **Evidence** for engineers one click away. `--write` adds `+ Report a bug` (queued only) and a readiness runner. The full React/Vite window, SSE and Playwright are later |
+| **Loop** | Queue, policy, disposable worktree, reproduce, build, check, proof and ledger work end to end. |
+| **Live builder** | Real `openjiuwen` Claude Code harness on an Anthropic-compatible endpoint; model, tokens, USD and prompt hash are recorded. |
+| **Proof** | Computed evidence page and immutable ledger row; P0/P1 verdict, policy, risk, cost, diff and residual gaps. |
+| **GUI** | Story is the default human reading; Evidence is one click away; mobile route, replay, Present mode and a specific blocked rail. |
+| **Readiness** | `works readiness` runs lint, format, types, fast tests, product verify, architecture and import boundaries; a red gate blocks live runs. |
+| **Feature map** | `features/<product>.yaml`; Evidence shows covered, failed and not-covered features. |
+| **Memory** | When configured, finished runs are reported to PPMA; older runs can be backfilled; `works memory recall` reads statements. |
+| **Decision layer** | `DecisionPort` and `LaixGate` exist behind a deterministic fallback; off by default, shadow opt-in. |
 
-The fixture bug is deliberate: `add` subtracts. The good trace fixes it, the sneaky trace passes
-the visible test but fails a P0 holdout, and the test-edit trace is refused by policy.
+## Current boundaries
 
----
+This is a local preview, not a hosted product.
+
+- The verifier is still the local scenario runner; the independent container lands in **M2**.
+- The loop stops at `proved`. Branch, PR and issue comment land in **M3**. Nothing is auto-merged.
+- PPMA recall before interrupting a person is **T2.21**; automatic recall is not wired into the planner yet.
+- Preview video/trace/selector execution is **T2.19**. Feature coverage is in; screenshot/log/video/trace artifacts and selector execution remain.
+- LAIX must come from a local checkout: the PyPI `laix` name is an unrelated placeholder.
+- React, SSE and Playwright are later; the current preview is vanilla HTML/CSS/JS and polling.
+- Orbit is a future publish adapter; it is not wired.
 
 ## Engineering standard
 
-The plan carries a 2026 engineering standard (§6.4): Python 3.12, mypy strict, ruff, uv, pydantic,
-hypothesis, mutation testing ≥ 70% on `state/`, `policy/` and `queue/`, structured JSON logs,
-schema versions and migrations, pinned models and prompts, supply-chain checks (bandit, pip-audit,
-gitleaks), and scheduled refactoring gates RG0–RG4 (§6.6).
-
-Measured budgets (`python scripts/bench.py`):
-
-| Budget | Measured | Target |
-|---|---|---|
-| CLI start | 206 ms | < 300 ms |
-| `status` logic, 10 000 tasks | 59 ms | < 100 ms |
-| Evidence render | 0.02 ms | < 1 s |
-
-Checks:
+Python 3.12, strict `mypy`, `ruff`, `pydantic`, `hypothesis`, mutation testing on state/policy/queue, versioned prompts, schema migrations, structured JSON logs and supply-chain checks.
 
 ```bash
-make check          # ruff, ruff format --check, mypy, pytest with coverage
+make check          # ruff, format, mypy, pytest with coverage
 make integration    # the whole loop, no model
-make bench          # re-measure the budgets
+make bench          # CLI, status and evidence budgets
 ```
 
-CI adds bandit and gitleaks on every PR, a weekly mutation gate (71.8% on state, policy and queue),
-and a weekly `pip-audit`. Decisions are recorded as ADRs in `docs/adrs/`; known failures and first
-responses are in `docs/runbook.md`. The live builder is in `docs/live-harness.md`; the PPMA memory
-integration is in `docs/ppma.md`; the LAIX decision layer and its boundary are in `docs/laix.md`;
-verification and approval boundaries are in `docs/verification.md`; readiness is in
-`docs/readiness.md`; feature maps are in `docs/features.md`; the read-only preview is in
-`docs/ui.md`; the factory comparison that shaped v4.5 is in `docs/review-4-factories.md`; the
-slop/readiness talk is in `docs/review-5-slop.md`; waits and the dispatcher are in
-`docs/waiting-and-dispatch.md`.
+CI runs lint, tests, bandit and gitleaks; mutation and `pip-audit` run weekly. Decisions are recorded as ADRs in [`docs/adrs/`](docs/adrs/), and known failures are in [`docs/runbook.md`](docs/runbook.md).
 
----
+## Documentation
 
-## Layout
-
-| Path | What it is |
+| Document | What it answers |
 |---|---|
-| `src/works/` | The engine: state, queue, index, policy, flow, supervisor, evidence, harness port |
-| `src/works/ui/` | The read-only preview server, HTML, CSS and JS |
-| `tests/` | Unit, property-based, CLI and integration tests; golden evidence page |
-| `fixtures/` | A planted-bug repository, three scenarios, six recorded traces and 20 decision cases |
-| `flows/fix-issue.yaml` | The first flow as a node graph with gates and policy |
-| `docs/plan.md` | The plan: preconditions, milestones, checkboxes, standards, refactoring gates |
-| `docs/deck/` | Five slides (SVG + PNG) |
-| `docs/video/` | The 47 s concept film |
-| `docs/adrs/` | Fifteen architecture decisions |
-| `scripts/` | Demo, benchmark, check, mutation gate, film generators |
+| [`docs/plan.md`](docs/plan.md) | Milestones, checkboxes, standards and refactoring gates |
+| [`docs/ui.md`](docs/ui.md) | Story, Evidence, report intake and the read-only/write boundary |
+| [`docs/readiness.md`](docs/readiness.md) | `.works/readiness.yaml` and the autonomy gate |
+| [`docs/features.md`](docs/features.md) | Feature map format and proof coverage |
+| [`docs/live-harness.md`](docs/live-harness.md) | Real `openjiuwen` builder setup |
+| [`docs/ppma.md`](docs/ppma.md) | PPMA north contract, backfill and recall |
+| [`docs/laix.md`](docs/laix.md) | Decision-layer boundary and rollout |
+| [`docs/verification.md`](docs/verification.md) | Verification and approval boundaries |
+| [`docs/waiting-and-dispatch.md`](docs/waiting-and-dispatch.md) | Waits, wake events and dispatch |
+| [`docs/adrs/`](docs/adrs/) | Fifteen architecture decisions |
 
----
+## Repository map
 
-## Deck order
-
-1. **The problem** — a customer in Berlin, the wrong VAT, four days of waiting.
-2. **How it works** — ten steps, two gates, the products it uses.
-3. **Why now** — the bottleneck moved; what a factory needs; flows and success metrics.
-4. **Appendices** — the flow as a file, and as ten boxes.
-
-## Design in one paragraph
-
-A **window** and an **engine**. The window is where a person reports, watches and approves. The
-engine owns the queue, the check and the proof. The gate reads its checks from the trusted base and
-binds every verdict to the exact commit, so the change cannot edit its judge. Everything else is a
-tool it calls: `jiuwenswarm` builds in a worktree and runs CI, `agent-core` runs the checking agent
-in a clean context, `PPMA` keeps the project state, `Orbit` optionally shares the proof with a team
-room. Nothing is forked; every link is a published contract.
-
----
-
-## Building the deck and the film
-
-Requires Chrome, Python 3.11+ and ffmpeg.
-
-```bash
-python scripts/make_anim.py     # frames -> docs/frames
-python scripts/make_audio.py    # ticks, dings and the pad
-python scripts/build_anim.py    # docs/video/openjiuwen-works-two-mondays.mp4
+```text
+src/works/          engine: queue, state, policy, flow, supervisor, evidence
+src/works/ui/       local Story/Evidence preview
+flows/              the fix-issue flow as a node graph
+fixtures/           planted-bug repo, scenarios, traces and decision cases
+tests/              unit, property, CLI, integration and golden proof tests
+docs/               plan, ADRs, UI, readiness, memory and brand
+scripts/            demo, benchmark, checks, deck and film
 ```
-
-Narration is generated with Windows SAPI (`scripts/anim_tts.ps1`). Swap in a real voice-over and
-the edit stays the same.
-
-## Numbers
-
-Two only: **4 days** the usual way, **1 h 45 min** with Works. Both are illustrative and labelled
-as such on the slides.
 
 ## License
 
-Apache-2.0. See LICENSE.
+Apache-2.0. See [`LICENSE`](LICENSE).
