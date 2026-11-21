@@ -26,6 +26,7 @@ from .quarantine import ensure_outside
 from .quarantine import load as load_quarantine
 from .queue import Queue
 from .records import (
+    Challenge,
     CommandRecord,
     Finding,
     LedgerRow,
@@ -68,6 +69,7 @@ class RunContext:
     test: CommandRecord | None = None
     proposal: Proposal | None = None
     verdict: Verdict | None = None
+    challenge: Challenge | None = None
     policy: PolicyReport = field(default_factory=lambda: PolicyReport(ok=True))
     plan: dict[str, Any] = field(default_factory=dict)
     scenario_set: ScenarioSet | None = None
@@ -278,6 +280,13 @@ class Supervisor:
                 self._stop(ctx, StopReason.BUDGET_EXCEEDED, detail="wall-clock budget")
                 return
 
+        if any(node.id == "challenge" for node in flow.nodes):
+            challenge = await self._challenge(ctx, proposal)
+            ctx.challenge = challenge
+            if not challenge.allow:
+                self._stop(ctx, StopReason.CHALLENGE_FAILED, detail=challenge.reason)
+                return
+
         verdict = await self._judge(ctx)
         ctx.verdict = verdict
         (ctx.run_dir / "verdict.json").write_text(
@@ -414,6 +423,29 @@ class Supervisor:
         )
         return proposal
 
+    async def _challenge(self, ctx: RunContext, proposal: Proposal) -> Challenge:
+        if self._harness is None:
+            raise ConfigError("the flow asks for a challenge but no harness is configured")
+        worktree = _required(ctx.worktree, "worktree")
+        base_commit = _required(ctx.base_commit, "base commit")
+        request = ProposalRequest(
+            task_id=ctx.task.id,
+            source_ref=ctx.task.source.ref,
+            title=ctx.task.source.title,
+            worktree=worktree,
+            base_commit=base_commit,
+        )
+        challenge = await self._harness.challenge(request, proposal)
+        (ctx.run_dir / "challenge.json").write_text(
+            challenge.model_dump_json(indent=2) + "\n", encoding="utf-8", newline="\n"
+        )
+        self._queue.append(
+            ctx.task.id,
+            "challenge.decided",
+            challenge.model_dump(mode="json"),
+        )
+        return challenge
+
     async def _judge(self, ctx: RunContext) -> Verdict:
         scenario_set = _required(ctx.scenario_set, "scenario set")
         _required(ctx.scenario_dir, "scenario directory")
@@ -510,7 +542,10 @@ class Supervisor:
             except WorksError as exc:
                 LOG.warning("could not collect the diff: %s", exc)
         proposal = ctx.proposal
-        tokens = proposal.tokens if proposal else 0
+        tokens = (proposal.tokens if proposal else 0) + (
+            ctx.challenge.tokens if ctx.challenge else 0
+        )
+        usd = (proposal.usd if proposal else 0.0) + (ctx.challenge.usd if ctx.challenge else 0.0)
         findings: list[Finding] = []
         for event in self._queue.events(ctx.task.id):
             if event.type != "finding":
@@ -533,7 +568,7 @@ class Supervisor:
             prompt_name=proposal.prompt_name if proposal else None,
             prompt_sha256=proposal.prompt_sha256 if proposal else None,
             tokens=tokens,
-            usd=proposal.usd if proposal else 0.0,
+            usd=usd,
             duration_ms=duration_ms,
             files_changed=files_changed,
             diff_stat=stats,
@@ -541,6 +576,7 @@ class Supervisor:
             reproduce=ctx.reproduce,
             test=ctx.test,
             verdict=ctx.verdict,
+            challenge=ctx.challenge,
             findings=findings,
             diff=diff,
         ).bind()
@@ -556,7 +592,7 @@ class Supervisor:
             provider=proposal.provider if proposal else None,
             attempts=self._queue.load(ctx.task.id).attempts,
             tokens=tokens,
-            usd=proposal.usd if proposal else 0.0,
+            usd=usd,
             started_at=ctx.started_at,
             finished_at=finished,
             duration_ms=duration_ms,
@@ -581,7 +617,7 @@ class Supervisor:
                 state=state,
                 verdict=verdict_label,
                 tokens=tokens,
-                usd=proposal.usd if proposal else 0.0,
+                usd=usd,
             )
         )
         try:

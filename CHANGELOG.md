@@ -38,5 +38,7 @@ Semantic Versioning.
   findings and residual risk; Mira, the magpie courier, as the product mascot.
 - Waiting states and wake events; `works wait/wake`; `works dispatch` with claims, `--limit`,
   `--watch` and per-task reporting.
+- Adversarial challenge: separate challenger session, versioned prompt, JSON verdict, fail-closed
+  parsing and a blocking fixture trace; proof includes Challenge and Residual risk.
 - ADRs 008–010, the runbook entries for live harness and PPMA failures, and
   `docs/review-4-factories.md`; waits and dispatch in `docs/waiting-and-dispatch.md`.

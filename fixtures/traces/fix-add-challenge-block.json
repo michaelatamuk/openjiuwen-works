@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "name": "fix-add-challenge-block",
+  "model": "fake-builder-1",
+  "provider": "fixture",
+  "tokens": 1200,
+  "usd": 0.012,
+  "patch_file": "../patches/fix-add.diff",
+  "notes": ["correct literal fix, challenged for adjacent behavior"],
+  "challenge_allow": false,
+  "challenge_reason": "the change does not explain behavior outside the visible test",
+  "challenge_concerns": ["no scenario evidence for negative inputs"]
+}

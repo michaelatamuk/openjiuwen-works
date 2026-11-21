@@ -7,6 +7,7 @@ from pathlib import Path
 from works.evidence import DiffStatRow, Evidence, render_markdown
 from works.policy import PolicyReport, Violation
 from works.records import (
+    Challenge,
     CommandRecord,
     Finding,
     Priority,
@@ -95,6 +96,14 @@ def fixed_evidence() -> Evidence:
                 created_at=datetime(2026, 1, 1, tzinfo=UTC),
             )
         ],
+        challenge=Challenge(
+            allow=True,
+            reason="the change is the smallest one that explains the defect",
+            concerns=["no stress test for integer overflow"],
+            model="fake-challenger-1",
+            provider="fixture",
+            prompt_sha256="e" * 64,
+        ),
         not_tested=["Windows-specific path handling"],
         diff=(
             "diff --git a/calc/core.py b/calc/core.py\n"

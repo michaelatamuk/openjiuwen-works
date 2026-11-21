@@ -83,7 +83,8 @@ Every command takes `--json` and returns a stable exit code: `0` ok, `2` usage, 
 2. **Plan** — the scenario ids that will judge the change; gate 1 is a person.
 3. **Build** — a bounded harness port returns a unified diff. Policy checks every touched path
    *before* the patch is applied.
-4. **Check** — the repository's own tests, then the P0/P1 scenarios in a separate directory.
+4. **Check** — the repository's own tests, then an independent challenger session that tries to
+   disprove the change, then the P0/P1 scenarios in a separate directory.
 5. **Prove** — a computed page bound to the diff by SHA-256: verdict, commands, policy, cost, diff.
 6. **Ledger** — one append-only row per finished run.
 

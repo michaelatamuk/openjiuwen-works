@@ -13,9 +13,13 @@ nodes:
     kind: deterministic
     cmd: "{python} -m pytest -q"
     timeout_s: 300
+  - id: challenge
+    kind: agentic
+    required: false
 edges:
   - [reproduce, build]
   - [build, test]
+  - [test, challenge]
 repair:
   attempts: 1
   then: needs_person

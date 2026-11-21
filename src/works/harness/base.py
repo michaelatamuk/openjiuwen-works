@@ -7,6 +7,8 @@ from typing import Protocol, runtime_checkable
 
 from pydantic import BaseModel, Field
 
+from ..records import Challenge
+
 
 class ProposalRequest(BaseModel):
     task_id: str
@@ -36,3 +38,5 @@ class Harness(Protocol):
     name: str
 
     async def propose(self, request: ProposalRequest) -> Proposal: ...
+
+    async def challenge(self, request: ProposalRequest, proposal: Proposal) -> Challenge: ...

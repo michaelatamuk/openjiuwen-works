@@ -128,6 +128,21 @@ def test_a_test_edit_is_refused_before_any_command(
     assert proof["diff"] == ""
 
 
+def test_a_blocking_challenge_stops_the_change(
+    paths, submit, scenario_set, make_supervisor
+) -> None:
+    task = submit()
+    record = run(
+        make_supervisor("fix-add-challenge-block"), task.id, scenario_set, approve_plan=True
+    )
+    assert record.state is TaskState.BLOCKED
+    assert record.stop_reason is StopReason.CHALLENGE_FAILED
+    proof = evidence(paths, record)
+    assert proof["challenge"]["allow"] is False
+    assert "negative inputs" in " ".join(proof["challenge"]["concerns"])
+    assert proof["verdict"] is None
+
+
 def test_a_sneaky_patch_fails_the_holdout(paths, submit, scenario_set, make_supervisor) -> None:
     task = submit()
     record = run(make_supervisor("fix-add-sneaky"), task.id, scenario_set, approve_plan=True)

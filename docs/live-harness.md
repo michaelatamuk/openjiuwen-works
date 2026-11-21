@@ -42,6 +42,11 @@ safe substitution for `$worktree`, `$ref` and `$title`; the defect title is fenc
 SHA-256 of the prompt is written to `harness.json` and the proof, so a prompt change is visible in
 review and cannot hide behind a model change.
 
+The challenger prompt is `flows/fix-issue/prompts/challenge.md`. It runs in a separate session with
+`permission_mode="plan"`: the challenger may read and run `git diff`, but may not edit. It must reply
+with one JSON object (`allow`, `reason`, `concerns`); anything else fails closed and blocks the task.
+The proof records the challenge, its concerns and the prompt hash.
+
 ## Measured on the development host
 
 | Run | Time | Tokens | USD | Result |

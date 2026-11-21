@@ -46,6 +46,7 @@ class StopReason(StrEnum):
     HARNESS_FAILED = "harness_failed"
     POLICY_VIOLATION = "policy_violation"
     TESTS_FAILED = "tests_failed"
+    CHALLENGE_FAILED = "challenge_failed"
     VERDICT_FAILED = "verdict_failed"
     BUDGET_EXCEEDED = "budget_exceeded"
     CONFLICT = "conflict"
@@ -119,6 +120,20 @@ class Finding(BaseModel):
     uncertainty: str = ""
     evidence: list[str] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=utcnow)
+
+
+class Challenge(BaseModel):
+    """A separate reviewer's verdict on the builder's work."""
+
+    schema_version: int = SCHEMA_VERSION
+    allow: bool
+    reason: str = ""
+    concerns: list[str] = Field(default_factory=list)
+    model: str = "unknown"
+    provider: str = "unknown"
+    tokens: int = 0
+    usd: float = 0.0
+    prompt_sha256: str | None = None
 
 
 class CommandRecord(BaseModel):

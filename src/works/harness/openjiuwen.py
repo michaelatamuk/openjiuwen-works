@@ -8,14 +8,18 @@ This is deliberately not a patch-producing adapter: Claude Code works by editing
 from __future__ import annotations
 
 import asyncio
+import json
 import os
+import re
 from collections.abc import Callable
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
 from ..errors import ConfigError, HarnessError
 from ..gitops import GitRepo
 from ..prompts import DEFAULT_PROMPT, Prompt, load_prompt
+from ..records import Challenge
 from .base import Proposal, ProposalRequest
 
 DEFAULT_MODEL = "deepseek-chat"
@@ -84,6 +88,7 @@ class LiveHarness:
         max_turns: int = 16,
         timeout_s: int = 600,
         prompt_path: Path | None = None,
+        challenge_prompt_path: Path | None = None,
         harness_factory: Callable[[Path], Any] | None = None,
     ) -> None:
         self._model = model or default_model()
@@ -93,13 +98,18 @@ class LiveHarness:
         self._max_turns = max_turns
         self._timeout_s = timeout_s
         self._prompt = load_prompt(prompt_path or DEFAULT_PROMPT)
+        self._challenge_prompt = (
+            load_prompt(challenge_prompt_path, name="challenge")
+            if challenge_prompt_path is not None and challenge_prompt_path.exists()
+            else None
+        )
         self._factory = harness_factory
 
     @property
     def provider(self) -> str:
         return "deepseek" if "deepseek" in self._base else "anthropic"
 
-    def _make_harness(self, worktree: Path) -> Any:
+    def _make_harness(self, worktree: Path, *, permission_mode: str = "bypassPermissions") -> Any:
         try:
             from openjiuwen.harness_providers.claudecode import (
                 ClaudeCodeHarness,
@@ -115,7 +125,7 @@ class LiveHarness:
             add_dirs=(str(worktree),),
             cli_path=self._cli,
             model=ClaudeModelConfig(model=self._model, api_base=self._base, api_key=self._key),
-            permission_mode="bypassPermissions",
+            permission_mode=permission_mode,
             max_turns=self._max_turns,
         )
         return ClaudeCodeHarness(config)
@@ -189,6 +199,98 @@ class LiveHarness:
             usd=usd,
             notes=[answer] if answer else [],
         )
+
+    async def challenge(self, request: ProposalRequest, proposal: Proposal) -> Challenge:
+        if self._challenge_prompt is None:
+            raise ConfigError("the flow asks for a challenge but no challenge prompt is configured")
+        if self._factory is not None:
+            harness = self._factory(request.worktree)
+        else:
+            harness = self._make_harness(request.worktree, permission_mode="plan")
+        context, input_type, kind_type, lifecycle_type = self._protocol_types(request)
+        context = replace(
+            context,
+            system_prompt=(
+                "You are an independent reviewer. Never edit files. "
+                "Return only the JSON object the user asks for."
+            ),
+        )
+        terminal: Any = None
+        await harness.start(context)
+        try:
+            prompt = self._challenge_prompt.render(
+                worktree=str(request.worktree),
+                ref=request.source_ref,
+                title=request.title.strip() or request.source_ref,
+            )
+            receipt = await harness.send(input_type(content=prompt))
+            async with asyncio.timeout(self._timeout_s):
+                async for event in harness.turn_events(receipt.turn_id):
+                    payload = event.event
+                    if (
+                        isinstance(payload, lifecycle_type)
+                        and payload.kind is not kind_type.STARTED
+                    ):
+                        terminal = payload
+        except TimeoutError as exc:
+            raise HarnessError(f"the challenger did not finish within {self._timeout_s}s") from exc
+        finally:
+            await harness.stop()
+
+        tokens = 0
+        usd = 0.0
+        text = ""
+        if terminal is not None and terminal.result is not None:
+            result = terminal.result
+            if result.usage is not None:
+                usage = result.usage
+                tokens = usage.total_tokens or (
+                    (usage.input_tokens or 0) + (usage.output_tokens or 0)
+                )
+            if result.cost is not None:
+                usd = result.cost.micros / 1_000_000
+            if isinstance(result.final_output, str):
+                text = result.final_output
+        if terminal is None or terminal.kind is not kind_type.FINISHED:
+            return Challenge(
+                allow=False,
+                reason="challenger did not finish",
+                model=self._model,
+                provider=self.provider,
+                tokens=tokens,
+                usd=usd,
+                prompt_sha256=self._challenge_prompt.sha256,
+            )
+        match = re.search(r"\{.*\}", text, re.S)
+        try:
+            payload = json.loads(match.group(0)) if match else {}
+            allow = payload.get("allow")
+            if not isinstance(allow, bool):
+                raise ValueError("allow is not a boolean")
+            concerns = payload.get("concerns", [])
+            if not isinstance(concerns, list):
+                concerns = []
+            return Challenge(
+                allow=allow,
+                reason=str(payload.get("reason") or ""),
+                concerns=[str(item) for item in concerns],
+                model=self._model,
+                provider=self.provider,
+                tokens=tokens,
+                usd=usd,
+                prompt_sha256=self._challenge_prompt.sha256,
+            )
+        except (ValueError, json.JSONDecodeError):
+            return Challenge(
+                allow=False,
+                reason="challenger did not return a valid JSON verdict",
+                concerns=[text[:300]] if text else [],
+                model=self._model,
+                provider=self.provider,
+                tokens=tokens,
+                usd=usd,
+                prompt_sha256=self._challenge_prompt.sha256,
+            )
 
     @staticmethod
     def _protocol_types(request: ProposalRequest) -> tuple[Any, Any, Any, Any]:

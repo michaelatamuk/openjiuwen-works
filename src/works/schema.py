@@ -10,6 +10,7 @@ from .evidence import Evidence
 from .harness.base import Proposal
 from .records import (
     SCHEMA_VERSION,
+    Challenge,
     CommandRecord,
     Event,
     Finding,
@@ -31,6 +32,7 @@ def all_schemas() -> dict[str, Any]:
         "evidence": Evidence,
         "proposal": Proposal,
         "finding": Finding,
+        "challenge": Challenge,
     }
     return {
         "schema_version": SCHEMA_VERSION,

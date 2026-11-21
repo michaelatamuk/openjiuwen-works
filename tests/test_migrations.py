@@ -57,6 +57,7 @@ def test_every_persisted_schema_is_printed() -> None:
         "evidence",
         "proposal",
         "finding",
+        "challenge",
     ):
         assert name in payload["schemas"]
         assert payload["schemas"][name]["type"] == "object"

@@ -1,6 +1,6 @@
 # Development plan — openJiuwen Works
 
-**Status:** v4.8 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
+**Status:** v4.9 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
 
 Every task is a checkbox, checked when its criteria are met and the change is merged. `S/M/L`:
 S ≤ half a day, M ≤ two days, L ≤ a week. Nothing is checked because it was started.
@@ -435,10 +435,13 @@ Internal only: nothing is published to the upstream fork until M2 is green.
 - [ ] **T2.7** Judge calibration: 10 scenarios scored by a human and by the judge; delta recorded;
   block if disagreement > 2. **M**
 - [ ] **T2.8** Verdict rule: all P0 pass, P1 ≥ 80%, else block. **S**
-- [ ] **T2.9** Evidence v2: verdict, failures, cost, **what was not tested**. **M**
-- [ ] **T2.10** Adversarial challenge: a separate session, on a different provider where possible,
+- [x] **T2.9** Evidence v2: verdict, failures, cost, **what was not tested**. **M**
+  - Done 2026-11-21: proof has Findings, Challenge, Residual risk and an explicit not-tested list.
+- [x] **T2.10** Adversarial challenge: a separate session, on a different provider where possible,
   tries to disprove the diagnosis and then the fix; the verdict is recorded and a send-back blocks.
   **M**
+  - Done 2026-11-21: separate challenger prompt/session, plan mode, JSON verdict, fail-closed;
+    `challenge.json`, proof section and a blocking fake trace. Provider split still T2.3.
 - [ ] **T2.11** Agent eval suite: backtest past runs with the answer stripped; score investigation
   and handoff separately; refuse cases whose metrics/traces would leak the cause; scan transcripts
   for spoilers. **L**
@@ -671,6 +674,9 @@ agents, a zoo of model providers before M3, and autonomous merge without the two
 
 ## 20. Changelog
 
+- **v4.9** — adversarial challenge: separate challenger session in plan mode, versioned
+  `challenge.md`, JSON verdict (`allow/reason/concerns`), fail-closed parsing, `challenge.json`,
+  proof Challenge section and a blocking fixture trace; T2.9/T2.10 closed.
 - **v4.8** — waiting states and wake events (`waiting_review/ci/deploy`, deadline + default,
   replayable), `works wait/wake`, and `works dispatch` with claims, `--limit`, `--watch` and
   per-task reporting; T3.9/T3.10 closed.

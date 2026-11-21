@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from .gitops import DiffStat
 from .policy import PolicyReport, Violation
 from .records import (
+    Challenge,
     CommandRecord,
     Finding,
     Priority,
@@ -54,6 +55,7 @@ class Evidence(BaseModel):
     reproduce: CommandRecord | None = None
     test: CommandRecord | None = None
     verdict: Verdict | None = None
+    challenge: Challenge | None = None
     findings: list[Finding] = Field(default_factory=list)
     not_tested: list[str] = Field(default_factory=list)
     diff: str = ""
@@ -125,6 +127,21 @@ def render_markdown(evidence: Evidence) -> str:
         lines.append("")
     else:
         lines += ["No structured findings were recorded.", ""]
+    lines += ["## Challenge", ""]
+    if evidence.challenge is None:
+        lines += ["No independent challenge was run.", ""]
+    else:
+        decision = "ALLOW" if evidence.challenge.allow else "BLOCK"
+        lines += [f"**{decision}** — {_cell(evidence.challenge.reason or 'no reason')}.", ""]
+        if evidence.challenge.concerns:
+            lines += ["| Concern |", "|---|"]
+            lines += [f"| {_cell(item)} |" for item in evidence.challenge.concerns]
+            lines.append("")
+        lines += [
+            f"Model `{evidence.challenge.model}` · provider `{evidence.challenge.provider}` · "
+            f"prompt `{evidence.challenge.prompt_sha256 or '—'}`.",
+            "",
+        ]
     lines += ["## Residual risk", ""]
     if evidence.not_tested:
         lines += [f"- Not tested: `{_cell(item)}`" for item in evidence.not_tested]

@@ -6,7 +6,7 @@
 
 **State** `proved` · **Stop reason** `completed`
 
-**Proof SHA-256** `1fa09412de1798ef710cff822a32f4c37956f3edcf6a867e927f918f80b55121`
+**Proof SHA-256** `afd3423d2ce558d7ae5fe08a45bc3098e57dd69d817ba022e24d25a733345d41`
 
 ## Verdict
 
@@ -23,6 +23,16 @@
 | Step | Finding | Confidence | Remaining uncertainty |
 |---|---|---|---|
 | build | add subtracted instead of adding | 0.95 | none observed |
+
+## Challenge
+
+**ALLOW** — the change is the smallest one that explains the defect.
+
+| Concern |
+|---|
+| no stress test for integer overflow |
+
+Model `fake-challenger-1` · provider `fixture` · prompt `eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee`.
 
 ## Residual risk
 

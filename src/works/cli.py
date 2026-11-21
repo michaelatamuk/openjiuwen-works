@@ -238,10 +238,12 @@ def _supervisor(args: argparse.Namespace) -> Supervisor:
         if prompt_path is None:
             candidate = paths.flows / flow / "prompts" / "build.md"
             prompt_path = candidate if candidate.exists() else None
+        challenge_path = paths.flows / flow / "prompts" / "challenge.md"
         harness = LiveHarness(
             model=args.model,
             base_url=args.model_base,
             prompt_path=prompt_path,
+            challenge_prompt_path=challenge_path if challenge_path.exists() else None,
         )
     memory = None
     ppma_url = args.ppma or os.environ.get("WORKS_PPMA_URL")

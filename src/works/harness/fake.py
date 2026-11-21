@@ -10,6 +10,7 @@ from typing import Any
 from pydantic import BaseModel, Field, ValidationError
 
 from ..errors import HarnessError
+from ..records import Challenge
 from .base import Proposal, ProposalRequest
 
 
@@ -25,6 +26,9 @@ class Trace(BaseModel):
     patch: str | None = None
     notes: list[str] = Field(default_factory=list)
     delay_s: float = 0.0
+    challenge_allow: bool = True
+    challenge_reason: str = "fixture challenge passed"
+    challenge_concerns: list[str] = Field(default_factory=list)
 
 
 class FakeHarness:
@@ -80,3 +84,15 @@ class FakeHarness:
         if not proposal.patch.strip():
             raise HarnessError(f"trace {self._trace.name!r} carries no patch and no stop reason")
         return proposal
+
+    async def challenge(self, request: ProposalRequest, proposal: Proposal) -> Challenge:
+        await asyncio.sleep(0)
+        return Challenge(
+            allow=self._trace.challenge_allow,
+            reason=self._trace.challenge_reason,
+            concerns=list(self._trace.challenge_concerns),
+            model=self._trace.model,
+            provider=self._trace.provider,
+            tokens=0,
+            usd=0.0,
+        )

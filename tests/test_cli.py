@@ -109,7 +109,12 @@ def test_dry_run_shows_nodes_and_changes_nothing(paths, repo, scenario_set: Path
     result = invoke(paths, "run", task_id, "--dry-run", "--scenarios", str(scenario_set), "--json")
     assert result.exit_code == 0, result.stdout + result.stderr
     body = payload(result)
-    assert [node["id"] for node in body["nodes"]] == ["reproduce", "build", "test"]
+    assert [node["id"] for node in body["nodes"]] == [
+        "reproduce",
+        "build",
+        "test",
+        "challenge",
+    ]
     assert body["scenario_ids"] == ["add-positive", "add-negative", "mul-positive"]
     assert Queue(paths).load(task_id).state is TaskState.QUEUED
 
