@@ -1,6 +1,6 @@
 # Development plan — openJiuwen Works
 
-**Status:** v4.1 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
+**Status:** v4.2 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
 
 Every task is a checkbox, checked when its criteria are met and the change is merged. `S/M/L`:
 S ≤ half a day, M ≤ two days, L ≤ a week. Nothing is checked because it was started.
@@ -38,8 +38,8 @@ Detail: `docs/deck/`, `docs/video/`.
 - No web UI before the loop works, no multi-tenant, no SSO, no billing.
 - No arbitrary repositories: one fork, one flow, one product.
 - No automatic merge to a protected branch.
-- No PRs to the upstream project in v0. The factory works and publishes inside our fork; anything
-  sent upstream is a manual, explicitly approved act.
+- No external repositories in v0. The first product is this repository: bugs are filed and fixed here.
+  External products, including a real OSS target, are v1.
 
 ---
 
@@ -68,23 +68,26 @@ Cheap checks that can cancel the project.
   required services. **S**
 - [ ] **R2** Find a fast path: the subset that catches this class of bug in ≤ 3 minutes. **S**
   - Threshold: fast path ≤ 3 min, full suite ≤ 10 min. Above 5 / 15 min, the plan is revised.
-- [ ] **R3** Pick the v0 issue: user-filed, reproducible, ≤ 3 files, no migrations, provable by a
-  test. **S**
-- [ ] **R3b** Label the last 40 issues in the fork as in-scope / out-of-scope and record the rate. **M**
-  - Gate: below 15% in-scope, the product thesis is wrong for this repo.
+- [ ] **R3** Define the first defect class and write down three candidate defects in our own code:
+  the one we will fix first and two fallbacks. **S**
+  - Criteria: each is reproducible, touches ≤ 3 files, and a test can prove it.
+- [ ] **R3b** Record a proxy for the in-scope rate: of the last 10 defects in this repository (or, while
+  there are none, 10 realistic defect descriptions), how many fit the class. **M**
+  - The external in-scope rate is measured in v1 on a real product; v0 records the local proxy.
 - [ ] **R4** Baseline: how long the same issue class takes a person today, with evidence. **S**
 - [ ] **R5** Forge and CI: which API, which token scopes, which commands. **S**
 - [ ] **R6** Harness smoke test: one turn, events, cost. **M**
-- [ ] **R7** **Manual spike** (the experiment that can cancel everything): run the harness by hand on
-  the R3 issue. Record attempts, cost, wall time, and whether the result was mergeable. **L**
+- [ ] **R7** **Manual spike** (the experiment that can cancel everything): run the harness by hand on a
+  representative issue in a read-only clone of an unfamiliar codebase — not our repository, because
+  the question is capability on code the model has not seen. Record attempts, cost, wall time, and
+  whether the result was mergeable. **L**
   - Gate: if it cannot produce a plausible fix in two attempts, stop and re-scope.
 - [ ] **R8** Isolation decision (was D6): the verifier runs in a **container** (WSL2/Docker), the
   builder stays on the host with a pinned cwd. Limitations written down. **M**
 - [ ] **R9** Write the first three scenarios for the R3 issue, before any code. **M**
-- [ ] **R10** Target remote: a public fork of the product under `michaelatamuk`, cloned with an
-  `upstream` remote; a sync step (`fetch upstream`, hard reset on a clean tree) and the divergence
-  recorded in evidence. **S**
-  - Policy: v0 opens PRs **inside the fork**. Nothing is sent to upstream without explicit approval.
+- [ ] **R10** Branch policy: short-lived branches from `main`, one PR per task, protected `main`,
+  required checks, and no fork. The spike in R7 uses a read-only clone of an external product and
+  publishes nothing. **S**
 
 **Gate to proceed:** R1–R9 green, or the plan is revised.
 
@@ -495,7 +498,8 @@ and a mechanical suspicious-change list (deleted tests, new skips, broad except,
 | Verifier too strict | Weights and P0/P1; calibration |
 | Token blow-up | Hard abort at 80%, per-attempt cost, output compaction |
 | Harness API move | Pinned commit, adapter |
-| Fork drift | Rebase job and upstream divergence in evidence |
+| Target repo drift (v1) | Sync before run; divergence in evidence |
+| Dogfooding hides real-world mess | R7 runs on an unfamiliar codebase, not ours |
 | Solo bottleneck | R7 spike first; S/M/L sizing |
 
 ---
@@ -516,8 +520,8 @@ Stop if any holds after M1:
 
 All decided; revisit only with an ADR.
 
-- [x] **D1** Target: a public fork of `open-webui` under `michaelatamuk`, flow `fix-issue`; PRs stay
-  inside the fork in v0.
+- [x] **D1** Target: **this repository**. The factory fixes defects in its own code (dogfooding);
+  branches in place, no fork. An external OSS product is v1.
 - [x] **D2** Engine location: developer machine; the verifier runs in a container on the same host.
 - [x] **D3** Models: builder on one frontier coding model, verifier on a different provider; ids pinned
   in config and recorded per run.
@@ -545,6 +549,9 @@ Each has a sentence in §3 and no task.
 
 ## 20. Changelog
 
+- **v4.2** — target changed to this repository (dogfooding, branches in place, no fork); `open-webui`
+  is used only as a read-only clone for the R7 capability spike; in-scope rate recorded as a local
+  proxy in v0 and measured externally in v1.
 - **v4.1** — target remote decided: a public fork with an `upstream` remote, a sync step before runs,
   divergence recorded; v0 publishes PRs inside the fork only (R10, non-goal updated).
 - **v4** — added the engineering standard (§6.4) with reliability, reproducibility, supply chain,
