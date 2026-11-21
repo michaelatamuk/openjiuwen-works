@@ -21,7 +21,8 @@ The same evidence page serves two audiences without a second data source:
   state. The active stop reads as a sentence (“Mira is fixing it”, “Mira is checking it”, “Mira is
   ready to release”); future stops never get a Mira. The receipt
   strip answers what changed, what was checked, what was not, and who decides. “How we got here”
-  keeps the replay out of the headline.
+  keeps the replay out of the headline. The hero also states the recorded memory status —
+  “PPMA synced”, “PPMA failed” or “Not recorded” — so the preview never fakes a green memory badge.
 - **Evidence**: the answer for an engineer — the ten-step technical line, run metadata, verdict and
   scenarios, risk, decision, commands, diff, policy, residual risk and timeline.
 
@@ -56,8 +57,8 @@ without a failure or a finished run. The runs are local fixtures, not upstream f
 - **Queue** — grouped into **Needs you**, **In progress**, **Queued** and **Done**; filter, search
   and `j`/`k` navigation.
 - **Story** — one sentence per task, the reported origin with five Mira stops, the four stop states,
-  Mira at the current stop, the receipt strip, a specific blocked rail when stopped, and replay
-  behind “How we got here”.
+  Mira at the current stop, the receipt strip, the recorded memory status, a specific blocked rail
+  when stopped, and replay behind “How we got here”.
 - **Evidence** — the ten-step technical line, run metadata (task/run id, base commit, rules version,
   evidence fingerprint, model, provider), verdict, findings, challenge, commands, change/diff,
   policy, risk, decision, readiness, feature map, residual risk, cost and timeline.
@@ -69,8 +70,10 @@ without a failure or a finished run. The runs are local fixtures, not upstream f
 
 Dark and light themes, comfortable and compact density, one violet accent, borders instead of
 decorative gradients, visible focus, text labels for every status, `prefers-reduced-motion`, and
-Mira in the empty state. `Ctrl+K` opens a command palette; `/` focuses search; `t` toggles the theme;
-`c` toggles Present mode; `?` shows the keyboard help.
+Mira in the empty state. Below 720 px the route becomes a vertical list with the same states and
+per-milestone screen-reader names; the queue moves below the Story so the task is visible first.
+Replay updates the route and receipt in place. `Ctrl+K` opens a command palette; `/` focuses search;
+`t` toggles the theme; `c` toggles Present mode; `?` shows the keyboard help.
 
 Times have one source: the hero, the header and the route all read the reported time from the same
 `task.created` event, so the page cannot show two different “Reported” moments.

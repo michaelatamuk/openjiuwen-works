@@ -107,7 +107,7 @@ in v0 — no silent retry, no "trust the builder".
 | Live harness | Works: `openjiuwen` + bundled `claude.exe` + DeepSeek Anthropic endpoint; builder+challenger measured 88.6 s / 180 604 tokens / $0.193 for the fixture fix |
 | Verifier | The local scenario runner stands in; the container and provider split land in M2 |
 | Release | The loop stops at `proved`; branch, PR and the issue comment land in M3 |
-| Memory | Finished runs are posted to PPMA (`works.run_finished`) and `works memory backfill` sends older local runs; recall and lessons are T2.21 |
+| Memory | Finished runs are posted to PPMA (`works.run_finished`), `works memory backfill` sends older local runs, and Story/Evidence show the recorded sync status; recall and lessons are T2.21 |
 | Decision layer | `DecisionPort` + `LaixGate` off by default, shadow opt-in; `works decision replay` runs 20 fixture cases with a fake adapter. Real pinned LAIX replay is T2.14 |
 | Gate integrity | Trusted-base flows/checks, `checks_sha`, exact-commit approval and a separate `check-change` task kind are in; the trusted verifier image lands with M2 |
 | Risk rating | `low/medium/high`, owners, required reviewers and deeper verification are computed and shown by `works risk`; release-gate routing still open |

@@ -64,6 +64,15 @@ def test_backfill_reports_every_finished_run_without_a_rerun(paths) -> None:
     assert first["type"] == "works.run_finished"
     assert first["payload"]["task_id"] == task.id
     assert first["payload"]["run_id"] == "r-backfill-1"
+    memory_events = [
+        event for event in Queue(paths).events(task.id) if event.type == "memory.reported"
+    ]
+    assert len(memory_events) == 1
+    assert memory_events[0].data["via"] == "backfill"
+
+    backfill_runs(paths, memory)
+    again = [event for event in Queue(paths).events(task.id) if event.type == "memory.reported"]
+    assert len(again) == 1
 
 
 def test_a_run_without_evidence_is_skipped_not_failed(paths) -> None:

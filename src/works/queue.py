@@ -159,6 +159,8 @@ def _apply(task: Task | None, event: Event) -> Task:
         "would_block",
         "flake",
         "preview.finished",
+        "memory.reported",
+        "memory.failed",
     ):
         return task.model_copy(update={"updated_at": event.ts})
 

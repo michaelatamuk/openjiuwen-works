@@ -50,6 +50,21 @@ def _read_run(paths: WorksPaths, run_file: Path) -> tuple[RunRecord, Evidence, T
     return record, evidence, task
 
 
+def _append_memory_event(
+    paths: WorksPaths,
+    task_id: str,
+    kind: str,
+    run_id: str,
+    **data: str,
+) -> None:
+    queue = Queue(paths)
+    if any(
+        event.type == kind and event.data.get("run_id") == run_id for event in queue.events(task_id)
+    ):
+        return
+    queue.append(task_id, kind, {"run_id": run_id, **data})
+
+
 def backfill_runs(
     paths: WorksPaths,
     memory: Memory,
@@ -71,7 +86,27 @@ def backfill_runs(
             if dry_run:
                 entries.append(BackfillEntry(run_id, task_id, "dry-run"))
                 continue
-            memory.record(task=task, record=record, evidence=evidence)
+            try:
+                memory.record(task=task, record=record, evidence=evidence)
+            except Exception as exc:
+                _append_memory_event(
+                    paths,
+                    task_id,
+                    "memory.failed",
+                    record.run_id,
+                    error=str(exc)[:500],
+                    via="backfill",
+                )
+                entries.append(BackfillEntry(run_id, task_id, "failed", str(exc)))
+                continue
+            _append_memory_event(
+                paths,
+                task_id,
+                "memory.reported",
+                record.run_id,
+                app="ppma",
+                via="backfill",
+            )
             entries.append(BackfillEntry(run_id, task_id, "reported"))
         except FileNotFoundError:
             entries.append(BackfillEntry(run_id, task_id, "skipped", "no evidence.json"))

@@ -847,6 +847,18 @@ class Supervisor:
             )
         except Exception as exc:
             LOG.warning("memory was not updated: %s", exc, extra={"run_id": ctx.run_id})
+            self._queue.append(
+                ctx.task.id,
+                "memory.failed",
+                {"run_id": ctx.run_id, "error": str(exc)[:500]},
+            )
+        else:
+            if not isinstance(self._memory, NullMemory):
+                self._queue.append(
+                    ctx.task.id,
+                    "memory.reported",
+                    {"run_id": ctx.run_id, "app": "ppma", "via": "run"},
+                )
         LOG.info(
             "run finished",
             extra={"run_id": ctx.run_id, "task_id": ctx.task.id, "duration_ms": duration_ms},

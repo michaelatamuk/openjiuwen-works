@@ -1,6 +1,6 @@
 # Development plan — openJiuwen Works
 
-**Status:** v4.20 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
+**Status:** v4.21 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
 
 Every task is a checkbox, checked when its criteria are met and the change is merged. `S/M/L`:
 S ≤ half a day, M ≤ two days, L ≤ a week. Nothing is checked because it was started.
@@ -678,7 +678,9 @@ Internal only: nothing is published to the upstream fork until M2 is green.
   per-run failures, idempotent ULIDs. **S**
   - Done 2026-11-21: verified against `ppma serve --profile fake --auth dev`: three demo runs
     accepted on `POST /v0/spaces/me/messages`; a run without evidence is skipped, not failed.
-  - Still open: automatic E2E in CI, a memory badge in Story, and recall (T2.21).
+    Each send records `memory.reported` (or `memory.failed`), and Story/Evidence show the honest
+    memory status; a second backfill does not duplicate the local event.
+  - Still open: automatic PPMA E2E in CI and recall (T2.21).
 
 **Demo M1:** two real issues go from ticket to proof, twice in a row, with scenarios written first.
 
@@ -1095,6 +1097,11 @@ agents, a zoo of model providers before M3, and autonomous merge without the two
 
 ## 20. Changelog
 
+- **v4.21** — memory becomes visible and the preview becomes mobile-honest: runs record
+  `memory.reported`/`memory.failed`, and Story/Evidence show “PPMA synced”, “PPMA failed” or “Not
+  recorded” instead of a config badge. The route turns into a vertical list under 720 px with real
+  per-milestone ARIA names; replay updates the route and receipt in place instead of rebuilding the
+  page. Dead `lineMode`/`renderStoryStage` code is gone.
 - **v4.20** — PPMA becomes a usable integration, not only a side effect: `works memory backfill`
   reports already-finished runs from `run.json` + `evidence.json` with a dry run and per-run
   failures, and was verified against a local PPMA fake profile (three demo runs accepted). Plan
