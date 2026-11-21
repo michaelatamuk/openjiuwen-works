@@ -11,7 +11,7 @@ import sys
 from collections import Counter
 
 THRESHOLD = 0.70
-LINE = re.compile(r"^\s+\S+: (\w[\w ]*)$", re.MULTILINE)
+LINE = re.compile(r"^\s+(.+): ([a-z][a-z ]*)$", re.MULTILINE)
 EXCLUDED = {"skipped", "not checked", "check was interrupted by user"}
 
 

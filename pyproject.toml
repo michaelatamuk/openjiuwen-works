@@ -92,7 +92,6 @@ only_mutate = [
 ]
 pytest_add_cli_args_test_selection = ["tests", "--ignore=tests/integration"]
 also_copy = ["flows", "fixtures"]
-debug = true
 
 
 [tool.bandit]
