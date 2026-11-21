@@ -1,6 +1,6 @@
 # Development plan — openJiuwen Works
 
-**Status:** v3 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
+**Status:** v4 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
 
 Every task is a checkbox, checked when its criteria are met and the change is merged. `S/M/L`:
 S ≤ half a day, M ≤ two days, L ≤ a week. Nothing is checked because it was started.
@@ -137,6 +137,148 @@ Deterministic nodes never call a model and cannot be skipped by the agent.
 - **Ledger** — `ledger.jsonl`; plus `ledger/escapes.jsonl` for post-release attribution.
 - **Idempotency** — `(source.kind, source.ref)`; a duplicate webhook returns the existing task.
 
+### 6.4 Engineering standard — 2026, not optional
+
+Every commit satisfies this. It is checked in CI, not in review comments.
+
+**Language and shape**
+
+- Python **3.12**, `from __future__ import annotations`, type hints on every public function.
+- `mypy --strict` on `src/`; no `Any` without a one-line reason; no `# type: ignore` without a code.
+- `ruff` for lint and format; no warnings, no unused imports, no dead code.
+- Async for I/O; `asyncio.TaskGroup` for structured concurrency; no bare threads.
+- Pure functions where possible; side effects at the edges; dependencies injected, not imported globally.
+- One module, one reason to change. Domain types never import infrastructure.
+- Errors: a typed exception hierarchy per component; `except Exception` only to log, add context and
+  re-raise or convert into a stop reason.
+- Structured JSON logs with `run_id`, `task_id`, `step`; no `print`.
+- Config via pydantic settings; secret names documented; secrets never in files or prompts.
+- Every persisted record carries `schema_version`; a migration function per bump.
+
+**Tooling**
+
+`uv` (env, lock) · `ruff` · `mypy` · `pytest` · `hypothesis` · `mutmut` · `bandit` · `pip-audit` ·
+`gitleaks` · `pre-commit` · `cyclonedx` SBOM on release.
+
+**Testing**
+
+- Property-based tests for the state machine and path policy (adversarial paths, `..`, unicode).
+- Contract tests for the harness adapter against recorded traces.
+- Golden-file tests for evidence rendering; a change to the page is a reviewed diff.
+- Mutation score ≥ 70% on `queue/`, `policy/`, `verify/`.
+- Load test: 10 000 tasks in the queue, `status` still under 100 ms.
+
+**Budgets**
+
+- CLI cold start < 300 ms; `status` < 100 ms; evidence render < 1 s.
+- No dependency without a reason; a new dependency requires an ADR line.
+
+**Every PR**
+
+`make check` green (ruff, mypy, pytest), no new TODOs, docs updated, and if the change touches a
+decision, an ADR is added or amended.
+
+**Reliability**
+
+- Every external call has a timeout, a bounded retry with jitter, and a typed failure.
+- Circuit breaker around the model provider: after N consecutive failures, stop and say so; never
+  loop on a dead provider.
+- Idempotent everywhere it matters: submit, publish, comment, revert.
+- Graceful degradation: if the verifier cannot run, the task blocks — it never "passes by default".
+
+**Reproducibility**
+
+- `uv.lock` committed; exact versions pinned; model id and version recorded per run.
+- Fixed seeds in tests; recorded traces replayed in CI, not live model calls.
+- `works schema` prints every persisted schema; a migration is tested with old fixtures.
+
+**Supply chain**
+
+- Pinned dependency hashes; `pip-audit` and Dependabot/Renovate weekly; `cyclonedx` SBOM per release.
+- `gitleaks` on every push; signed commits from v0.2 onward.
+- No dependency added without a reason in the PR and a line in the ADR.
+
+**AI-specific quality**
+
+- Prompts are versioned files with a hash; a prompt change requires a benchmark run before adoption.
+- Every agent output that drives a decision is JSON validated by a schema — never parsed free text.
+- The verifier runs at temperature 0 where the provider allows it, and the setting is recorded.
+- Cost per step is captured from harness events and attributed to the run budget.
+- Injection guard: issue text is fenced as data; the policy engine, not the model, enforces paths.
+- A prompt change and a model change are never shipped in the same commit.
+
+**Observability**
+
+- Structured events carry `run_id`, `task_id`, `step`, `duration_ms`, `tokens`, `usd`.
+- `works trace <run>` renders the timeline from events; nothing is reconstructed from logs.
+- OpenTelemetry spans are optional in v0 but the event schema is ready for them.
+
+**Process**
+
+- Trunk-based, small PRs (< 400 changed lines), conventional commits, PR template asks for evidence.
+- `CHANGELOG.md` per release; `docs/runbook.md` for known failures and their first response.
+- Renovate weekly; a dependency update that breaks a test is fixed or reverted the same day.
+
+### 6.5 GUI standard — if a GUI is built
+
+v0 is CLI-first. If and when a window is built, it is a separate `web/` app and it meets this bar.
+
+**Stack**
+
+React 19 + TypeScript strict + Vite + Tailwind CSS v4 + shadcn/ui (Radix primitives) +
+TanStack Query; SSE for live runs; Playwright + axe for tests; visual snapshots for regressions.
+
+**Design**
+
+- Design tokens for colour, space, radius and type; light and dark from one source.
+- Inter or Geist; 4/8 pt spacing scale; one accent colour (purple); no decorative gradients.
+- Depth from a single shadow scale; borders over shadows for structure.
+- Density toggle: comfortable and compact, same information, no reflow surprises.
+
+**Interaction**
+
+- Keyboard-first: `⌘K` command palette, `g` sequences, visible focus, escape everywhere.
+- Streaming run progress over SSE; skeletons instead of spinners; optimistic updates with rollback.
+- Inline diff with syntax highlighting; every run, step and artifact has a deep link.
+- Empty, loading, error and blocked states designed, not defaulted.
+
+**Accessibility and performance**
+
+- WCAG 2.2 AA: contrast ≥ 4.5:1, focus visible, `prefers-reduced-motion` respected, labels on every
+  control, status never conveyed by colour alone.
+- LCP < 1.5 s locally, INP < 200 ms, no layout shift, initial bundle < 250 kB gzip.
+- Tables virtualised beyond 100 rows; no modal for a primary flow.
+
+**Testing**
+
+Playwright end-to-end on the three primary flows, axe checks in CI, screenshot diffs on every PR
+that touches `web/`.
+
+### 6.6 Refactoring gates
+
+Refactoring is scheduled, not improvised. Each gate is a task with a definition of done; no new
+feature work starts until it closes.
+
+- [ ] **RG0** after M0.5 — remove fake-harness seams that leaked into real code; align interfaces
+  with the real protocol; delete scaffolding. **S**
+- [ ] **RG1** after M1 — extract the supervisor from CLI commands; unify command execution; strict
+  typing everywhere; remove dead paths. **M**
+- [ ] **RG2** after M2 — split `verify` and `evidence`; introduce ports for forge, CI and scenarios;
+  no concept leaks between them. **M**
+- [ ] **RG3** after M3 — consolidate adapters; audit idempotency; finalise the error taxonomy; remove
+  duplicated retry logic. **M**
+- [ ] **RG4** after M4 — cost and performance pass; consolidate prompts and flows; documentation
+  sweep; benchmark before and after. **M**
+
+Definition of done for a gate: tests green, mutation ≥ 70% on core, no new TODOs, complexity within
+limits, benchmark not regressed, ADR if the structure changed.
+
+**Continuous triggers** — act at the next gate, or immediately if a test breaks:
+
+file > 400 lines · function > 50 lines · cyclomatic complexity > 10 · a duplicated block in three
+places · module fan-in > 7 · an unexplained `# type: ignore` · a TODO older than 14 days · an unused
+dependency · a test slower than 2 s.
+
 ---
 
 ## 7. One run
@@ -169,7 +311,13 @@ Deterministic nodes never call a model and cannot be skipped by the agent.
   - Criteria: an adversarial path table passes; a test edit is refused before any command runs.
 - [ ] **T0.6** Ledger writer with schema version. **S**
 - [ ] **T0.7** `works status`, `works run --dry-run`. **S**
-- [ ] **T0.8** CI: pytest, ruff, mypy. **S**
+- [ ] **T0.8** Toolchain in CI and pre-commit: ruff, mypy strict, pytest, hypothesis, mutmut baseline,
+  bandit, pip-audit, gitleaks, coverage gates. **M**
+  - Criteria: a PR with a type error, a leaked secret, untested code or a low mutation score fails.
+- [ ] **T0.8b** `works schema` prints JSON Schemas for task, run, verdict, event; a fixture from the
+  previous schema version loads through a migration. **S**
+- [ ] **T0.8c** `--json` output and stable exit codes for every command; no interactive prompt when
+  `CI=1`. **S**
 - [ ] **T0.9** `works doctor`: config, git, harness, container, scenario dir, credentials. **M**
 - [ ] **T0.10** Quarantine list lives outside the repo; the runner refuses to read one inside. **S**
 
@@ -319,9 +467,14 @@ and a mechanical suspicious-change list (deleted tests, new skips, broad except,
 ## 14. Testing
 
 - Unit: state machine, policy table (adversarial paths), scenario loader, evidence computation.
-- Integration: fixture repo + fake harness in CI.
-- Mutation and sneaky-patch suites in CI.
+- Property-based: state machine and path policy with hypothesis (unicode paths, `..`, symlinks).
+- Contract: harness adapter against recorded traces; no live model in CI.
+- Golden files: evidence rendering, so a page change is a reviewed diff.
+- Integration: fixture repo + fake harness, the whole loop in CI.
+- Mutation and sneaky-patch suites in CI; mutation ≥ 70% on core.
 - Leak test: grep every builder-readable artifact for scenario strings.
+- Load: 10 000 tasks in the queue; `status` under 100 ms.
+- Performance: CLI start, evidence render and report timed in CI; fail on > 20% regression.
 - One manual end-to-end per milestone, recorded.
 
 ---
@@ -355,20 +508,24 @@ Stop if any holds after M1:
 
 ## 17. Open decisions
 
-- [ ] **D1** Target: `open-webui` fork (default).
-- [ ] **D2** Engine location: developer machine first.
-- [ ] **D3** Model routing: builder and verifier on different providers (required), specific models TBD.
-- [ ] **D4** License.
-- [ ] **D5** Release gate owner.
+All decided; revisit only with an ADR.
+
+- [x] **D1** Target: a fork of `open-webui` under `michaelatamuk`, flow `fix-issue`.
+- [x] **D2** Engine location: developer machine; the verifier runs in a container on the same host.
+- [x] **D3** Models: builder on one frontier coding model, verifier on a different provider; ids pinned
+  in config and recorded per run.
+- [x] **D4** License: Apache-2.0.
+- [x] **D5** Release gate: Michael owns it; from M3 a second reviewer is required for `auth/`.
 - [x] **D6** Isolation: verifier in a container; builder on host with pinned cwd (v0).
-- [ ] **D7** Forge adapter: GitHub first.
+- [x] **D7** Forge: GitHub first; a GitCode adapter interface exists but is unimplemented in v0.
 
 ---
 
 ## 18. Definition of done
 
 A milestone is done when the demo runs twice, the ledger has rows, the proof is readable without
-narration, and the limitations are written down.
+narration, the limitations are written down, **the engineering standard in §6.4 holds for every
+touched file**, and **the refactoring gate that follows it (§6.6) is closed**.
 
 ---
 
@@ -381,6 +538,10 @@ Each has a sentence in §3 and no task.
 
 ## 20. Changelog
 
+- **v4** — added the engineering standard (§6.4) with reliability, reproducibility, supply chain,
+  AI-specific quality, observability and process rules; the GUI standard (§6.5); scheduled
+  refactoring gates RG0–RG4 with continuous triggers (§6.6); toolchain, schema and CLI-contract
+  tasks; expanded testing and definition of done; all open decisions taken (D1–D7).
 - **v3** — from external review and industry practice: scenarios moved before the build; test paths
   denied and quarantine moved outside the repo; verifier isolation decided (container) and leak tests
   added; provider split; sneaky-patch and abstain suites; judge calibration; computed evidence; commit

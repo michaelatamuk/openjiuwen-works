@@ -41,6 +41,18 @@ closes.
 
 ---
 
+## Engineering standard
+
+The plan carries a 2026 engineering standard (§6.4): Python 3.12, mypy strict, ruff, uv, pydantic,
+hypothesis, mutation testing ≥ 70% on core, structured events, pinned models and prompts, supply-chain
+checks (bandit, pip-audit, gitleaks, SBOM), and explicit refactoring gates after every milestone.
+The GUI standard (§6.5) — React 19, Tailwind v4, shadcn/ui, SSE, WCAG 2.2 AA — applies if and when a
+window is built.
+
+Decisions are recorded as ADRs in `docs/adrs/`.
+
+---
+
 ## Deck order
 
 1. **The problem** — a customer in Berlin, the wrong VAT, four days of waiting.
@@ -79,3 +91,10 @@ and the edit stays the same.
 
 Two only: **4 days** the usual way, **1 h 45 min** with Works. Both are illustrative and labelled
 as such on the slides.
+
+---
+
+## License
+
+Apache-2.0. See LICENSE.
+
