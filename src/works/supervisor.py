@@ -46,6 +46,7 @@ from .runner import CommandResult, CommandRunner
 from .scenarios import Scenario, ScenarioSet, judge, load_scenario_set
 from .state import TERMINAL
 from .trusted import is_check_path, load_trusted_flow
+from .verifier import LocalVerifier, Verifier
 
 LOG = get_logger("supervisor")
 
@@ -108,6 +109,7 @@ class Supervisor:
         clock: Callable[[], datetime] | None = None,
         decision_mode: str | None = None,
         decision_port: DecisionPort | None = None,
+        verifier: Verifier | None = None,
     ) -> None:
         self._paths = paths
         self._queue = queue
@@ -120,6 +122,7 @@ class Supervisor:
         self._clock = clock or (lambda: datetime.now(tz=UTC))
         self._decision_mode = decision_mode
         self._decision: DecisionPort = decision_port or build_decision_port(decision_mode)
+        self._verifier: Verifier = verifier or LocalVerifier(runner)
 
     @property
     def python(self) -> str:
@@ -517,7 +520,7 @@ class Supervisor:
         worktree = _required(ctx.worktree, "worktree")
         self._queue.append(ctx.task.id, "step.started", {"step": step})
         result = await asyncio.to_thread(
-            self._runner.run,
+            self._verifier.run,
             node.argv(self.python),
             worktree,
             env={"PYTHONPATH": str(worktree)},
@@ -626,7 +629,7 @@ class Supervisor:
         scenario_dir = _required(ctx.scenario_dir, "scenario directory")
         argv = scenario.argv(self.python, scenario_dir)
         result = await asyncio.to_thread(
-            self._runner.run,
+            self._verifier.run,
             argv,
             worktree,
             env={"PYTHONPATH": str(worktree)},

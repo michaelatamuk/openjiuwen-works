@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib.util
 import os
 import shutil
+import subprocess  # nosec B404
 import sys
 import urllib.request
 from pathlib import Path
@@ -127,10 +128,31 @@ def _ppma_check(environ: dict[str, str]) -> CheckResult:
 
 def _container_check() -> CheckResult:
     found = _which("docker") or _which("podman")
+    if not found:
+        return CheckResult(
+            name="container",
+            status="warn",
+            detail="docker/podman not found; --verifier docker is unavailable",
+        )
+    if _which("podman") and not _which("docker"):
+        return CheckResult(name="container", status="ok", detail=found)
+    probe = subprocess.run(  # noqa: S603  # nosec B603
+        [found, "info", "--format", "{{.ServerVersion}}"],
+        capture_output=True,
+        text=True,
+        timeout=15,
+        check=False,
+    )
+    if probe.returncode == 0:
+        return CheckResult(
+            name="container",
+            status="ok",
+            detail=f"{found} (daemon {probe.stdout.strip() or 'reachable'})",
+        )
     return CheckResult(
         name="container",
-        status="ok" if found else "warn",
-        detail=found or "docker/podman not found; the verifier container lands in M2",
+        status="warn",
+        detail=f"{found} is installed but the daemon is not reachable; start Docker Desktop",
     )
 
 

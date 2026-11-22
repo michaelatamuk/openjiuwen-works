@@ -3,9 +3,9 @@
 The gate is the product. This note is the implementation reference for plan §6.8–§6.9 and
 ADR-012/013.
 
-**Status: v4.13.** Trusted-base checks, risk rating, observe mode, flake enforcement and the
-decision port are in. Agent readiness, feature map, architecture guardrails and the verification
-cost split are next (T2.18–T2.19, T1.25).
+**Status: v4.14.** Trusted-base checks, risk rating, observe mode, flake enforcement, the decision
+port and an opt-in Docker verifier are in. Agent readiness, feature map, architecture guardrails and
+the verification cost split are next (T2.18–T2.19, T1.25).
 
 ## Principles
 
@@ -62,6 +62,22 @@ input: a repeated correction becomes a check, and old occurrences are cleaned up
 - `high`: named code owner, second reviewer, deeper verification, rollback plan.
 - Code owners always approve `auth/`, `billing/`, migrations, secrets, CI/deploy and public API.
 - LAIX receives it as `risk`; `requires_approval` follows, but LAIX cannot open the gate.
+
+## Verifier isolation
+
+`--verifier local` is the default: the command runs on the host. `--verifier docker` runs the same
+command inside a container with:
+
+- `--network=none`, `--cap-drop=ALL`, `--security-opt=no-new-privileges`, memory, CPU and PID caps;
+- only the worktree (read-write) and the scenario directory (read-only) mounted;
+- the host environment replaced by the explicit scenario environment, so builder credentials never
+  enter the verifier;
+- absolute host paths rewritten to their container location.
+
+The adapter fails closed: if Docker is installed but its daemon is unreachable, the run stops with a
+configuration error instead of quietly using the host. `works doctor` reports the same status.
+Tests drive the Docker argument builder through a recorded runner; a live container run needs a
+running daemon.
 
 ## Trusted base
 

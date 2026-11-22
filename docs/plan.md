@@ -762,8 +762,29 @@ Internal only: nothing is published to the upstream fork until M2 is green.
 - [ ] **T2.22** agent-core verification team: inspector, challenger and reporter on `BaseTeam` +
   `TeamRuntime`, model-free, reading recorded evidence only; the team cannot open a gate. **M**
   - 2026-11-22: `works team verify` runs the three roles in agent-core's own Python via subprocess,
-    records `team.verified`, and returns `allow` or `block`. The isolated verifier runtime is still
-    M2.
+    records `team.verified`, and returns `allow` or `block`. The container adapter is T2.25; the
+    provider split and a live daemon in CI are still open.
+- [ ] **T2.23** Tracker intake: GitHub Issues and Jira become ordinary queued tasks with the same
+  `(kind, ref)` deduplication; HTTP is behind an injectable transport so tests never touch the
+  network. Live private-repo runs need credentials. **S**
+  - 2026-11-22: `works source github` and `works source jira` wire `sources.py` into the parser;
+    parsing, auth headers, refusals and idempotency are covered by fake-transport tests. A live run
+    against a private Jira or GitHub repo remains open.
+- [ ] **T2.24** Product-to-repository map: `.works/products.yaml` resolves `--product` without a
+  repeated `--repo`, keeps `--repo` as the override, and fails with the known product names instead
+  of guessing. **S**
+  - 2026-11-22: `products.py`, the submit wiring and edge-case tests are in.
+- [ ] **T2.25** Verifier container: `--verifier docker` runs scenarios and checks with no network,
+  dropped capabilities, read-only scenarios and only the worktree mounted; a missing daemon is a
+  configuration error. **M**
+  - 2026-11-22: Docker argument builder, path/env rewriting and `works doctor` daemon status are in,
+    tested through a recorded runner. A live container run is blocked until the Docker daemon is
+    running.
+- [ ] **T2.26** JiuwenSwarm boundary: `works.swarm.v1` request/result contract, an isolated
+  `SwarmHarness`, `works swarm doctor` and `works run --swarm`; no fake fallback. **M**
+  - 2026-11-22: adapter and preflight are in and tested. The local checkout still fails with
+    `ModuleNotFoundError: agent_gateway`, so `--swarm` refuses to start until an isolated venv or
+    image provides an entrypoint.
 
 ### M3 — Release, return, escape (weeks 7–8)
 

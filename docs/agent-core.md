@@ -41,4 +41,5 @@ Environment:
 - It cannot open a gate; a person still approves release.
 - If agent-core is unavailable, the command fails with a configuration error instead of falling
   back silently.
-- The next step is to run this team inside the isolated verifier runtime, not the host environment.
+- The next step is to run this team inside the isolated verifier runtime (`--verifier docker`), not
+  the host environment.

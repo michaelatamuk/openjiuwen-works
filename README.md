@@ -90,11 +90,17 @@ Readiness is a gate, not a warning. Add `.works/readiness.yaml` and a feature ma
 uv sync --extra live
 # openjiuwen must be installed or on PYTHONPATH; see docs/live-harness.md
 uv run works readiness --repo /path/to/repo
+uv run works source github owner/name --product MyProduct --label bug
 uv run works submit --repo /path/to/repo --product MyProduct --ref GH-42 --title "The export drops the last column"
 uv run works run <task-id> --live --approve-plan --scenarios scenarios.yaml
+uv run works run <task-id> --live --verifier docker --scenarios scenarios.yaml
 uv run works release <task-id>
 uv run works team verify <task-id>
+uv run works swarm doctor
 ```
+
+A product can point at its checkout once in `.works/products.yaml`, so `--product MyProduct` is
+enough; see [`docs/intake.md`](docs/intake.md).
 
 The live builder needs `ANTHROPIC_API_KEY` (or `WORKS_MODEL_KEY`). PPMA memory is optional:
 
@@ -117,12 +123,15 @@ uv run works memory recall --ppma http://127.0.0.1:8766
 | **Memory** | When configured, finished runs are reported to PPMA; older runs can be backfilled; `works memory recall` reads statements. |
 | **Decision layer** | `DecisionPort` and `LaixGate` exist behind a deterministic fallback; off by default, shadow opt-in. |
 | **Agent-core team** | `works team verify` runs inspector + challenger + reporter on `BaseTeam`/`TeamRuntime`; model-free, no API key. |
+| **Intake** | GitHub Issues and Jira become queued tasks with `(kind, ref)` deduplication; `.works/products.yaml` maps a product to its checkout. |
+| **Verifier container** | `--verifier docker` runs checks with no network, dropped capabilities and only the worktree mounted; a missing daemon is an error, never a silent host fallback. |
+| **JiuwenSwarm boundary** | `works run --swarm` speaks `works.swarm.v1` to an isolated entrypoint; `works swarm doctor` reports why the local checkout cannot start yet. |
 
 ## Roadmap
 
 Three things turn the preview into the full factory:
 
-- **Independent verifier.** Move tests, scenarios and structural checks into an isolated runtime with the provider split.
+- **Independent verifier.** The container boundary exists; the remaining work is the provider split and a live daemon in CI.
 - **Release and return.** Bind approval to the commit, then publish the change and the proof back to the source.
 - **Depth in memory and evidence.** Feed PPMA recall into the planner, attach runtime artifacts, and execute feature selectors in the preview.
 
@@ -151,6 +160,8 @@ CI runs lint, tests, bandit and gitleaks; mutation and `pip-audit` run weekly. D
 | [`docs/features.md`](docs/features.md) | Feature map format and proof coverage |
 | [`docs/live-harness.md`](docs/live-harness.md) | Real `openjiuwen` builder setup |
 | [`docs/agent-core.md`](docs/agent-core.md) | agent-core harness and verification team |
+| [`docs/intake.md`](docs/intake.md) | GitHub/Jira intake and product-to-repository map |
+| [`docs/swarm.md`](docs/swarm.md) | Isolated JiuwenSwarm builder contract |
 | [`docs/ppma.md`](docs/ppma.md) | PPMA north contract, backfill and recall |
 | [`docs/laix.md`](docs/laix.md) | Decision-layer boundary and rollout |
 | [`docs/verification.md`](docs/verification.md) | Verification and approval boundaries |

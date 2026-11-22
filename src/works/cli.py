@@ -84,6 +84,7 @@ def cmd_version(args: argparse.Namespace) -> int:
 
 
 def cmd_submit(args: argparse.Namespace) -> int:
+    from .products import resolve_repo
     from .records import Source, SourceKind, TaskKind
 
     try:
@@ -98,7 +99,7 @@ def cmd_submit(args: argparse.Namespace) -> int:
         raise ConfigError(
             f"unknown task kind {args.task_kind!r}; expected fix or check-change"
         ) from exc
-    target = (args.repo or Path.cwd()).expanduser().resolve()
+    target = resolve_repo(_paths(args), args.product, args.repo)
     task, created = _queue(args).submit(
         source=Source(kind=kind, ref=args.ref, title=args.title),
         flow=args.flow,
@@ -316,6 +317,75 @@ def cmd_team_verify(args: argparse.Namespace) -> int:
     return 0 if result.get("verdict") == "allow" else EXIT_BLOCKED
 
 
+def cmd_source_github(args: argparse.Namespace) -> int:
+    from .products import resolve_repo
+    from .sources import github_issues, ingest_issues
+
+    issues = github_issues(args.repository, label=args.label, limit=args.limit)
+    repo = resolve_repo(_paths(args), args.product, args.repo)
+    created = ingest_issues(_queue(args), product=args.product, repo=str(repo), issues=issues)
+    fresh = sum(1 for _, was_created in created if was_created)
+    if args.json:
+        _emit(
+            {
+                "source": "github",
+                "found": len(issues),
+                "created": fresh,
+                "tasks": [task.id for task, _ in created],
+            }
+        )
+    else:
+        print(f"github: {len(issues)} issue(s), {fresh} new")
+    return 0
+
+
+def cmd_source_jira(args: argparse.Namespace) -> int:
+    from .products import resolve_repo
+    from .sources import ingest_issues, jira_issues
+
+    issues = jira_issues(args.url, args.jql, limit=args.limit)
+    repo = resolve_repo(_paths(args), args.product, args.repo)
+    created = ingest_issues(_queue(args), product=args.product, repo=str(repo), issues=issues)
+    fresh = sum(1 for _, was_created in created if was_created)
+    if args.json:
+        _emit(
+            {
+                "source": "jira",
+                "found": len(issues),
+                "created": fresh,
+                "tasks": [task.id for task, _ in created],
+            }
+        )
+    else:
+        print(f"jira: {len(issues)} issue(s), {fresh} new")
+    return 0
+
+
+def cmd_swarm_doctor(args: argparse.Namespace) -> int:
+    from .harness.swarm import preflight
+
+    diagnostic = preflight(
+        Path(args.python) if args.python else None,
+        home=Path(args.home) if args.home else None,
+    )
+    body = {
+        "ok": diagnostic.ok,
+        "detail": diagnostic.detail,
+        "argv": list(diagnostic.argv),
+        "exit_code": diagnostic.exit_code,
+        "output_tail": diagnostic.output_tail,
+        "contract": "works.swarm.v1",
+    }
+    if args.json:
+        _emit(body)
+    else:
+        print(f"jiuwenswarm: {'ready' if diagnostic.ok else 'not ready'}")
+        print(f"  {diagnostic.detail}")
+        if diagnostic.output_tail:
+            print(f"  last output: {diagnostic.output_tail}")
+    return 0 if diagnostic.ok else EXIT_BLOCKED
+
+
 def cmd_release(args: argparse.Namespace) -> int:
     from .release import release_packet
 
@@ -343,10 +413,26 @@ def _supervisor(args: argparse.Namespace) -> Supervisor:
 
     if args.trace is not None and args.live:
         raise ConfigError("use either --trace (recorded) or --live (real model), not both")
+    swarm = getattr(args, "swarm", False)
+    if swarm and (args.trace is not None or args.live):
+        raise ConfigError("use either --swarm, --trace or --live; one builder per run")
     paths = _paths(args)
     harness: Harness | None = None
     if args.trace is not None:
         harness = FakeHarness(args.trace)
+    elif swarm:
+        from .harness.swarm import SwarmHarness
+
+        swarm_kwargs: dict[str, Any] = {}
+        if args.swarm_python:
+            swarm_kwargs["python"] = Path(args.swarm_python)
+        if args.swarm_home:
+            swarm_kwargs["home"] = Path(args.swarm_home)
+        swarm_harness = SwarmHarness(**swarm_kwargs)
+        diagnostic = swarm_harness.diagnostic()
+        if not diagnostic.ok:
+            raise ConfigError(f"JiuwenSwarm is not ready: {diagnostic.detail}")
+        harness = swarm_harness
     elif args.live:
         from .harness.openjiuwen import LiveHarness
 
@@ -371,14 +457,34 @@ def _supervisor(args: argparse.Namespace) -> Supervisor:
         from .memory import PpmaMemory
 
         memory = PpmaMemory(ppma_url, space=args.ppma_space)
+    from .verifier import DockerVerifier, Mount, verifier_from_name
+
+    runner = SubprocessRunner()
+    verifier_name = getattr(args, "verifier", "local") or "local"
+    mounts = (
+        Mount(paths.worktrees, "/works/worktrees", read_only=False),
+        Mount(paths.scenarios, "/works/scenarios"),
+    )
+    verifier = verifier_from_name(
+        verifier_name,
+        runner,
+        image=getattr(args, "verifier_image", None),
+        mounts=mounts,
+    )
+    if isinstance(verifier, DockerVerifier) and not verifier.available():
+        raise ConfigError(
+            "Docker is installed but its daemon is not reachable; "
+            "start Docker Desktop or use --verifier local"
+        )
     return Supervisor(
         paths=paths,
         queue=_queue(args),
         ledger=Ledger(paths.ledger),
         harness=harness,
-        runner=SubprocessRunner(),
+        runner=runner,
         memory=memory,
         decision_mode=getattr(args, "decision", None),
+        verifier=verifier,
     )
 
 
@@ -1063,6 +1169,25 @@ def build_parser() -> argparse.ArgumentParser:
     submit.add_argument("--json", action="store_true")
     submit.set_defaults(func=cmd_submit)
 
+    source = sub.add_parser("source", help="Read a tracker and queue its open issues")
+    source_sub = source.add_subparsers(dest="source_command", required=True)
+    source_github = source_sub.add_parser("github", help="GitHub Issues intake")
+    source_github.add_argument("repository", help="owner/name")
+    source_github.add_argument("--product", required=True)
+    source_github.add_argument("--repo", type=Path, default=None)
+    source_github.add_argument("--label", default=None)
+    source_github.add_argument("--limit", type=int, default=20)
+    source_github.add_argument("--json", action="store_true")
+    source_github.set_defaults(func=cmd_source_github)
+    source_jira = source_sub.add_parser("jira", help="Jira JQL intake")
+    source_jira.add_argument("--url", required=True, help="Jira base URL")
+    source_jira.add_argument("--jql", required=True)
+    source_jira.add_argument("--product", required=True)
+    source_jira.add_argument("--repo", type=Path, default=None)
+    source_jira.add_argument("--limit", type=int, default=20)
+    source_jira.add_argument("--json", action="store_true")
+    source_jira.set_defaults(func=cmd_source_jira)
+
     status = sub.add_parser("status", help="Show one task or the queue")
     status.add_argument("task_id", nargs="?", default=None)
     status.add_argument("--json", action="store_true")
@@ -1096,6 +1221,14 @@ def build_parser() -> argparse.ArgumentParser:
     team_verify.add_argument("--json", action="store_true")
     team_verify.set_defaults(func=cmd_team_verify)
 
+    swarm = sub.add_parser("swarm", help="Check the JiuwenSwarm builder boundary")
+    swarm_sub = swarm.add_subparsers(dest="swarm_command", required=True)
+    swarm_doctor = swarm_sub.add_parser("doctor", help="Preflight the isolated builder")
+    swarm_doctor.add_argument("--python", default=None)
+    swarm_doctor.add_argument("--home", default=None)
+    swarm_doctor.add_argument("--json", action="store_true")
+    swarm_doctor.set_defaults(func=cmd_swarm_doctor)
+
     run = sub.add_parser("run", help="Reproduce, plan, build, check, prove")
     run.add_argument("task_id")
     run.add_argument("--dry-run", action="store_true")
@@ -1104,12 +1237,17 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--quarantine", default=None)
     run.add_argument("--trace", type=Path, default=None)
     run.add_argument("--live", action="store_true")
+    run.add_argument("--swarm", action="store_true")
+    run.add_argument("--swarm-python", default=None)
+    run.add_argument("--swarm-home", default=None)
     run.add_argument("--model", default=None)
     run.add_argument("--model-base", default=None)
     run.add_argument("--prompt", type=Path, default=None)
     run.add_argument("--ppma", default=None)
     run.add_argument("--ppma-space", default="me")
     run.add_argument("--decision", choices=("off", "shadow", "laix"), default=None)
+    run.add_argument("--verifier", choices=("local", "docker"), default="local")
+    run.add_argument("--verifier-image", default=None)
     run.add_argument("--json", action="store_true")
     run.set_defaults(func=cmd_run)
 
@@ -1138,12 +1276,17 @@ def build_parser() -> argparse.ArgumentParser:
     dispatch.add_argument("--quarantine", default=None)
     dispatch.add_argument("--trace", type=Path, default=None)
     dispatch.add_argument("--live", action="store_true")
+    dispatch.add_argument("--swarm", action="store_true")
+    dispatch.add_argument("--swarm-python", default=None)
+    dispatch.add_argument("--swarm-home", default=None)
     dispatch.add_argument("--model", default=None)
     dispatch.add_argument("--model-base", default=None)
     dispatch.add_argument("--prompt", type=Path, default=None)
     dispatch.add_argument("--ppma", default=None)
     dispatch.add_argument("--ppma-space", default="me")
     dispatch.add_argument("--decision", choices=("off", "shadow", "laix"), default=None)
+    dispatch.add_argument("--verifier", choices=("local", "docker"), default="local")
+    dispatch.add_argument("--verifier-image", default=None)
     dispatch.add_argument("--json", action="store_true")
     dispatch.set_defaults(func=cmd_dispatch)
 
