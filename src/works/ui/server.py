@@ -537,20 +537,32 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self._static()
 
+    def _drain_body(self) -> None:
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            length = 0
+        if 0 < length <= 65_536:
+            self.rfile.read(length)
+
     def do_POST(self) -> None:
         if not self.writable:
+            self._drain_body()
             self._json(
                 HTTPStatus.METHOD_NOT_ALLOWED,
                 {"ok": False, "error": "read-only preview; start `works ui --write` to report"},
             )
             return
         if urlparse(self.path).path not in ("/api/tasks", "/api/readiness"):
+            self._drain_body()
             self._json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "unknown endpoint"})
             return
         if self.client_address[0] not in ("127.0.0.1", "::1"):
+            self._drain_body()
             self._json(HTTPStatus.FORBIDDEN, {"ok": False, "error": "local requests only"})
             return
         if self.headers.get("X-Works-Write") != "1":
+            self._drain_body()
             self._json(
                 HTTPStatus.FORBIDDEN,
                 {"ok": False, "error": "missing X-Works-Write header"},

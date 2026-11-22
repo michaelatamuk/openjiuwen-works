@@ -5,11 +5,12 @@ gate: given the recorded evidence, the budget and what needs approval, should th
 `observe`, `guide`, `ask`, `act`, `verify` or `escalate`? Works keeps the queue, state machine,
 policy, verifier, ledger and proof.
 
-**Status: adapter implemented, runtime not active.** `DecisionPort`, `DeterministicGate`,
-`ShadowGate`, `LaixGate` and `works decision replay` exist and are tested with a fake LAIX module;
-`WORKS_DECISION` defaults to `off`. The deterministic gate is what runs today. The pinned
-`laix==0.18.0` cannot be a normal extra yet: the `laix` name on PyPI is an unrelated `0.0.0`
-placeholder, so T2.14 must install the local LAIX checkout or publish the real package first.
+**Status: adapter implemented; real LAIX replay run; opt-in stays off.** `DecisionPort`,
+`DeterministicGate`, `ShadowGate`, `LaixGate` and `works decision replay` exist. The pinned local
+LAIX `0.18.0` checkout was installed and the 20-case replay ran: **1/20 agreement, 0 unsafe
+allows**. That is a valid shadow result, not a failure of the safety boundary: LAIX is much more
+conservative than the deterministic rule and is not ready to change a gate. `WORKS_DECISION` stays
+`off`; opt-in remains T2.14 work.
 
 ## Boundary
 

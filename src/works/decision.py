@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 from datetime import UTC, datetime
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 from pydantic import BaseModel, Field
 
@@ -115,7 +115,7 @@ class LaixGate:
 
     def __init__(self) -> None:
         try:
-            from laix import (  # type: ignore[import-not-found]
+            from laix import (
                 ActionOption,
                 Belief,
                 DecisionRequest,
@@ -204,6 +204,14 @@ class LaixGate:
             "verify": "verify",
             "escalate": "escalate",
         }.get(verb, "ask")
+        alternatives: list[str] = []
+        for item in cast(list[object], decision.alternatives):
+            if isinstance(item, dict):
+                value = item.get("action_id") or item.get("id") or item.get("verb")
+            else:
+                value = getattr(item, "action_id", None) or getattr(item, "verb", None)
+            if value:
+                alternatives.append(str(value))
         return GateVerdict(
             verb=verb,
             action=action,
@@ -212,7 +220,7 @@ class LaixGate:
             requires_approval=bool(decision.requires_approval),
             decision_id=str(decision.decision_id),
             trace_id=str(decision.trace_id),
-            alternatives=[str(item.action_id) for item in decision.alternatives],
+            alternatives=alternatives,
             source="laix",
             raw=dict(decision.to_dict()),
         )

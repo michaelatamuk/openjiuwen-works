@@ -723,6 +723,9 @@ Internal only: nothing is published to the upstream fork until M2 is green.
   allows what the policy or verifier refuses is a defect in the adapter, not a policy change.
   Adapter tests with a fake `LaixGate` are necessary but not enough; CI and docs must show the real
   package. **M**
+  - 2026-11-22: installed the local `laix==0.18.0` checkout and ran the 20-case replay:
+    **1/20 agreement, 0 unsafe allows**. LAIX is conservative and not safe to opt in; the adapter
+    alternatives handling was fixed for the current API. Opt-in remains open.
 - [ ] **T2.15** Run the change: a `preview` node boots the product, drives one user path and attaches
   screen, log and trace to the proof; a per-product `verify` command is versioned, fast and
   stress-tested. Cheap checks run before expensive ones. **M**
