@@ -875,3 +875,20 @@ dialog dd { margin: 0; }
 .thread-ask { border-color: #ddd6fe; background: linear-gradient(180deg, var(--panel), var(--violet-soft)); }
 .thread-ask textarea { min-height: 58px; }
 .ask-live-text:empty::after { content: "…"; color: var(--faint); }
+
+/* Thread header, inline questions, composer modes, run dialog */
+.thread-head-main { min-width: 0; }
+.thread-done-row { display: flex; gap: 9px; align-items: center; flex-wrap: wrap; }
+.thread-done { display: inline-flex; align-items: center; border-radius: 999px; padding: 3px 9px; font: 700 9px/1.3 var(--mono); letter-spacing: .08em; text-transform: uppercase; background: var(--panel-3); color: var(--muted); }
+.thread-done.green { background: var(--green-soft); color: var(--green); }
+.thread-done.red { background: var(--red-soft); color: var(--red); }
+.thread-intent { margin: 5px 0 0; color: var(--muted); font-size: 11.5px; }
+.thread-question { margin: 6px 0 8px; font-size: 12px; font-weight: 600; color: var(--text); }
+.thread-options { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 9px; }
+.thread-options .btn { font-size: 11px; padding: 6px 10px; }
+.composer-modes { display: inline-flex; gap: 2px; padding: 3px; border-radius: 9px; background: var(--panel-3); margin-bottom: 7px; }
+.composer-modes button { border: 0; background: transparent; color: var(--muted); border-radius: 7px; padding: 5px 10px; font: 700 9px/1.2 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+.composer-modes button.active { background: var(--panel); color: var(--violet-text); box-shadow: 0 1px 3px rgb(17 24 39 / .08); }
+.thread-msg.generated .thread-body { border-style: dashed; border-color: #c4b5fd; background: linear-gradient(180deg, var(--panel), var(--violet-soft)); }
+.ai-badge { display: inline-block; border-radius: 5px; padding: 2px 5px; background: var(--violet-soft); color: var(--violet-text); font: 700 8px/1.2 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+.run-dialog-body { max-height: 55vh; overflow: auto; background: var(--panel-3); border-radius: 10px; padding: 12px; font: 11px/1.6 var(--mono); white-space: pre-wrap; }

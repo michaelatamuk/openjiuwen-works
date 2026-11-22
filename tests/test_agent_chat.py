@@ -10,6 +10,7 @@ from works.agent_chat import (
     ask_mira_stream,
     availability,
     build_context,
+    generate_commentary,
 )
 from works.queue import Queue
 
@@ -137,3 +138,37 @@ def test_ask_refuses_an_empty_question(paths, monkeypatch) -> None:
 
     with pytest.raises(Exception, match="question"):
         ask_mira(paths, task.id, "   ")
+
+
+def test_generate_commentary_records_generated_messages(paths, monkeypatch) -> None:
+    task = _proved(paths)
+    _run(paths, task)
+    monkeypatch.setattr("works.agent_chat._command", lambda: ["python", "worker.py"])
+    monkeypatch.setattr("works.agent_chat._environment", lambda: {})
+    monkeypatch.setattr(
+        "works.agent_chat.subprocess.run",
+        lambda *a, **k: FakeRun(
+            json.dumps(
+                {
+                    "type": "done",
+                    "messages": [
+                        {"role": "builder", "text": "I changed one file."},
+                        {"role": "inspector", "text": "The tests passed."},
+                        {"role": "reporter", "text": "It is not released."},
+                    ],
+                    "model": "m",
+                    "tokens": 12,
+                    "usd": 0.0,
+                }
+            )
+        ),
+    )
+
+    result = generate_commentary(paths, task.id)
+
+    assert [item["role"] for item in result] == ["builder", "inspector", "reporter"]
+    events = [event for event in Queue(paths).events(task.id) if event.type == "thread.commentary"]
+    assert len(events) == 3
+    assert events[0].data["generated"] is True
+    assert events[0].data["tokens"] == 12
+    assert events[1].data["tokens"] == 0

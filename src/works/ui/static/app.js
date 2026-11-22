@@ -15,6 +15,7 @@ const state = {
   storyTimer: null,
   writable: false,
   ai: null,
+  composeMode: "ask",
   timelineFilter: "all",
   products: null,
   detectors: null,
@@ -70,6 +71,7 @@ const timelineHuman = {
   "confirmation.finished": "Confirmed",
   "thread.note": "Context added",
   "thread.agent": "Mira answered",
+  "thread.commentary": "AI commentary",
 };
 
 const groupDefs = [
@@ -246,6 +248,30 @@ async function performAction(button, action, body, message) {
   } finally {
     button.disabled = false;
   }
+}
+
+function openRunDialog() {
+  const detail = state.detail;
+  if (!detail) return;
+  const run = detail.run || {};
+  const evidence = detail.evidence || {};
+  const verdict = evidence.verdict || {};
+  const risk = evidence.risk || {};
+  const lines = [
+    `Run:          ${run.run_id || "—"}`,
+    `Flow:         ${run.flow || "—"}`,
+    `Base commit:  ${run.base_commit || "—"}`,
+    `Checks SHA:   ${run.checks_sha || "—"}`,
+    `Proof SHA:    ${evidence.proof_sha256 || "—"}`,
+    `Verdict:      ${verdict.allow ? "allow" : evidence.verdict ? "block" : "—"}`,
+    `Risk:         ${risk.level || "—"}`,
+    `Files:        ${(evidence.files_changed || []).join(", ") || "—"}`,
+    `Not tested:   ${(evidence.not_tested || []).join(", ") || "none recorded"}`,
+    `Tokens:       ${evidence.tokens ?? 0}`,
+    `USD:          ${fmtUsd(evidence.usd ?? 0)}`,
+  ];
+  $("#run-dialog-body").textContent = lines.join("\n");
+  $("#run-dialog").showModal();
 }
 
 async function refreshDetectors() {
@@ -981,6 +1007,7 @@ function eventSummary(event) {
   if (event.type === "confirmation.finished") return `${data.ok ? "passed" : "failed"} · ${data.target || "check"}`;
   if (event.type === "thread.note") return data.message || "context added";
   if (event.type === "thread.agent") return `Mira · ${data.model || "model"} · ${data.tokens || 0} token(s)`;
+  if (event.type === "thread.commentary") return `${data.role || "role"} · AI commentary · ${data.model || "model"}`;
   if (event.type === "step.finished") return `${data.step}: exit ${data.exit_code}`;
   if (event.type === "challenge.decided") return data.allow ? "Independent check passed" : "Independent check blocked";
   if (event.type === "note") return "The proof is ready.";
@@ -1177,6 +1204,8 @@ const threadRoleLabel = {
   tracker: "Tracker",
   monitor: "Monitor",
   mira: "Mira",
+  inspector: "Inspector",
+  reporter: "Reporter",
 };
 
 const threadRoleLetter = {
@@ -1191,6 +1220,8 @@ const threadRoleLetter = {
   tracker: "T",
   monitor: "M",
   mira: "M",
+  inspector: "I",
+  reporter: "R",
 };
 
 function renderThreadCard(card) {
@@ -1204,7 +1235,25 @@ function renderThreadCard(card) {
       return `<div class="thread-row"><span>${esc(label)}</span>${cell}</div>`;
     })
     .join("");
-  return `<div class="thread-card">${rows}</div>`;
+  const options = (card.options || [])
+    .map(
+      (option) =>
+        `<button type="button" class="btn ${option.tone === "primary" ? "" : "ghost"}" data-thread-action="${esc(option.action)}">${esc(option.label)}${option.recommended ? " · recommended" : ""}</button>`,
+    )
+    .join(" ");
+  return `<div class="thread-card">
+    ${card.prompt ? `<p class="thread-question">${esc(card.prompt)}</p>` : ""}
+    ${rows}
+    ${options ? `<div class="thread-options">${options}</div>` : ""}
+  </div>`;
+}
+
+function sourceUrl(task) {
+  const ref = String(task?.source?.ref || "");
+  if (/^https?:\/\//.test(ref)) return ref;
+  const match = ref.match(/^([^/]+)\/([^#]+)#(\d+)$/);
+  if (match) return `https://github.com/${match[1]}/${match[2]}/issues/${match[3]}`;
+  return "";
 }
 
 function renderThreadMessage(message) {
@@ -1212,11 +1261,13 @@ function renderThreadMessage(message) {
   const facts = (message.facts || [])
     .map((fact) => `<span class="chip">${esc(fact)}</span>`)
     .join(" ");
-  return `<div class="thread-msg ${esc(role)} ${esc(message.tone || "")}">
+  const badge = message.generated ? `<span class="ai-badge">AI commentary</span>` : "";
+  return `<div class="thread-msg ${esc(role)} ${esc(message.tone || "")}${message.generated ? " generated" : ""}">
     <div class="thread-avatar" aria-hidden="true">${esc(threadRoleLetter[role] || "·")}</div>
     <div class="thread-body">
       <div class="thread-meta">
         <b>${esc(threadRoleLabel[role] || role)}</b>
+        ${badge}
         <time>${esc(new Date(message.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))}</time>
       </div>
       <h3>${esc(message.title)}</h3>
@@ -1306,40 +1357,50 @@ function renderThreadRail(rail, detail) {
 function renderThread(detail) {
   const messages = detail.thread || [];
   const ai = state.ai || {};
-  const ask = state.writable
-    ? ai.available
-      ? `<form class="thread-composer thread-ask" id="ask-form">
-          <textarea id="ask-input" rows="2" placeholder="Ask Mira about this run…"></textarea>
-          <div class="thread-composer-actions">
-            <span class="muted small">Advisory only. Mira reads the recorded proof; she cannot open a gate or change anything.</span>
-            <button type="submit" class="btn">Ask Mira</button>
-          </div>
-        </form>`
-      : `<p class="thread-readonly">Ask Mira is unavailable: ${esc(ai.reason || "no model configured")}</p>`
-    : `<p class="thread-readonly">Start <span class="mono">works ui --write</span> to ask Mira or add context.</p>`;
+  const mode = ai.available ? state.composeMode || "ask" : "note";
+  const modes = ai.available
+    ? `<div class="composer-modes" role="group" aria-label="Message mode">
+        <button type="button" data-compose-mode="ask" class="${mode === "ask" ? "active" : ""}">Ask Mira</button>
+        <button type="button" data-compose-mode="note" class="${mode === "note" ? "active" : ""}">Add context</button>
+      </div>`
+    : "";
   const composer = state.writable
     ? `<form class="thread-composer" id="thread-form">
-        <textarea id="thread-input" rows="2" placeholder="Add context to this run…"></textarea>
+        ${modes}
+        <textarea id="thread-input" rows="2" placeholder="${mode === "ask" ? "Tell Mira more…" : "Add context to this run…"}"></textarea>
         <div class="thread-composer-actions">
-          <span class="muted small">A note, not a command. It never opens a gate or starts a run.</span>
-          <button type="submit" class="btn ghost">Add context</button>
+          <span class="muted small">${mode === "ask" ? "Advisory only. Mira reads the recorded proof and cannot open a gate." : "A note, not a command. It never opens a gate or starts a run."}</span>
+          <button type="submit" class="btn">${mode === "ask" ? "Ask Mira" : "Add context"}</button>
         </div>
       </form>`
-    : "";
+    : `<p class="thread-readonly">Start <span class="mono">works ui --write</span> to ask Mira or add context.</p>`;
+  const url = sourceUrl(detail.task);
+  const source = url
+    ? `<a href="${esc(url)}" target="_blank" rel="noopener" class="mono">${esc(detail.task.source.ref)}</a>`
+    : `<span class="mono">${esc(detail.task.source.ref)}</span>`;
+  const commentary =
+    state.writable && ai.available
+      ? `<button type="button" class="btn ghost" data-action="commentary">Generate commentary</button>`
+      : "";
   return `<div class="thread-layout">
     <div class="thread-main">
       <header class="thread-head">
-        <div>
-          <div class="eyebrow">Worklog</div>
+        <div class="thread-head-main">
+          <div class="thread-done-row">
+            <span class="thread-done ${esc(stateTone(detail.task.state))}">${esc(stateLabel(detail.task.state))}</span>
+            ${source}
+            <span class="muted small">${esc(detail.task.product)}</span>
+          </div>
           <h2>${esc(detail.task.source.title || detail.task.id)}</h2>
+          <p class="thread-intent">Build this from ${esc(sourceLabel(detail.task.source.kind))}: ${esc(detail.task.source.ref)}</p>
         </div>
         <div class="thread-head-side">
-          ${pill(stateLabel(detail.task.state), stateTone(detail.task.state))}
           <span class="muted small">${messages.length} event(s)</span>
+          ${commentary}
         </div>
       </header>
       <div class="thread-line">${messages.map(renderThreadMessage).join("") || `<p class="muted small">No events yet.</p>`}</div>
-      ${ask}${composer}
+      ${composer}
     </div>
     <aside class="thread-rail" aria-label="Task context">${renderThreadRail(detail.rail || {}, detail)}</aside>
   </div>`;
@@ -2079,6 +2140,11 @@ function bindView() {
       const message = input.value.trim();
       if (!message) return;
       const button = threadForm.querySelector("button[type='submit']");
+      if ((state.composeMode || "ask") === "ask" && state.ai?.available) {
+        input.value = "";
+        await streamAsk(message, button);
+        return;
+      }
       button.disabled = true;
       try {
         await api("/api/actions", {
@@ -2096,18 +2162,40 @@ function bindView() {
       }
     });
   }
-  const askForm = $("#ask-form");
-  if (askForm) {
-    askForm.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const input = $("#ask-input");
-      const question = input.value.trim();
-      if (!question) return;
-      const button = askForm.querySelector("button[type='submit']");
-      input.value = "";
-      await streamAsk(question, button);
+  $$("#detail [data-compose-mode]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.composeMode = button.dataset.composeMode;
+      renderDetail();
     });
-  }
+  });
+  $$("#detail [data-action='commentary']").forEach((button) => {
+    button.addEventListener("click", () =>
+      performAction(
+        button,
+        "commentary",
+        {},
+        (result) => `${(result.messages || []).length} commentary message(s) added.`,
+      ),
+    );
+  });
+  $$("#detail [data-thread-action]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const action = button.dataset.threadAction;
+      if (action === "open-run") {
+        openRunDialog();
+        return;
+      }
+      if (action === "open-release") {
+        setView("release");
+        return;
+      }
+      if (action === "open-evidence") {
+        setView("evidence");
+        return;
+      }
+      return performAction(button, action, {}, () => `${action} recorded.`);
+    });
+  });
 }
 
 function setView(view) {
@@ -2472,6 +2560,7 @@ function bind() {
   $("#report-form").addEventListener("submit", submitReport);
   $("#intake-form").addEventListener("submit", submitIntake);
   $("#intake-form").elements.source.addEventListener("change", toggleIntakeSource);
+  $("#run-close").addEventListener("click", () => $("#run-dialog").close());
   $("#palette-input").addEventListener("input", (event) => renderPalette(event.target.value));
   $("#palette-input").addEventListener("keydown", (event) => {
     if (event.key === "Enter") {

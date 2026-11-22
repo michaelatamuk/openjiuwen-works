@@ -210,3 +210,19 @@ def test_add_context_event_is_projectable(paths) -> None:
     queue = Queue(paths)
     queue.append(task.id, "thread.note", {"message": "hello", "by": "person"})
     assert queue.load(task.id).updated_at >= task.updated_at
+
+
+def test_commentary_is_marked_as_generated(paths) -> None:
+    task = _proved(paths)
+    message = _thread_message(
+        event(
+            "thread.commentary",
+            {"role": "builder", "text": "One file changed.", "model": "m", "generated": True},
+        ),
+        task,
+    )
+    assert message is not None
+    assert message["role"] == "builder"
+    assert message["title"] == "Builder commentary"
+    assert message["generated"] is True
+    assert "AI commentary" in message["facts"]

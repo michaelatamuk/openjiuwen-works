@@ -197,8 +197,6 @@ def cmd_trace(args: argparse.Namespace) -> int:
 
 
 def cmd_approve(args: argparse.Namespace) -> int:
-    from .records import TaskState
-
     if args.gate == "release":
         from .release import approve_release, release_packet
 
@@ -237,29 +235,9 @@ def cmd_approve(args: argparse.Namespace) -> int:
         return 0
     if args.gate != "plan":
         raise ConfigError(f"unknown gate {args.gate!r}; expected plan or release")
-    queue = _queue(args)
-    task = queue.load(args.task_id)
-    if task.state is not TaskState.PLANNING:
-        raise ConfigError(
-            f"task {args.task_id} is {task.state.value}; the plan gate needs planning"
-        )
-    plans = [event for event in queue.events(args.task_id) if event.type == "plan.drafted"]
-    if not plans:
-        raise ConfigError(f"task {args.task_id} has no drafted plan to approve")
-    plan = plans[-1].data
-    queue.transition(args.task_id, TaskState.PLAN_APPROVED)
-    queue.append(
-        args.task_id,
-        "gate.decided",
-        {
-            "gate": "plan",
-            "decision": "approved",
-            "by": "cli",
-            "commit": plan.get("base_commit"),
-            "checks_sha": plan.get("checks_sha"),
-        },
-    )
-    updated = queue.load(args.task_id)
+    from .approvals import approve_plan
+
+    updated, _ = approve_plan(_paths(args), args.task_id, by="cli")
     if args.json:
         _emit({"task": updated.model_dump(mode="json")})
     else:

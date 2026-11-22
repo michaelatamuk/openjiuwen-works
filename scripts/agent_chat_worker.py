@@ -25,6 +25,18 @@ You are advisory: you cannot approve, release, retry or change anything. Be conc
 When useful, name the evidence you used (for example "verdict", "release blockers", "confirmation").
 """
 
+COMMENTARY_SYSTEM = """You are Mira's advisory commentary layer inside openJiuwen Works.
+Write exactly three short messages about the recorded run: builder, inspector, reporter.
+Use only the run context. Never invent a commit, test, gate, release or delivery. Each message is
+1-2 sentences, plain text, no markdown. Commentary is not evidence and cannot change a verdict.
+Return JSON only in this shape:
+{"messages": [
+  {"role": "builder", "text": "..."},
+  {"role": "inspector", "text": "..."},
+  {"role": "reporter", "text": "..."}
+]}
+"""
+
 # openjiuwen logs to stdout; keep stdout as protocol and send library output to stderr.
 PROTOCOL = sys.stdout
 sys.stdout = sys.stderr
@@ -46,6 +58,16 @@ def _config() -> tuple[str, str, str]:
 
 def _messages(payload: dict[str, Any]) -> list[dict[str, str]]:
     context = str(payload.get("context") or "")
+    kind = str(payload.get("kind") or "ask")
+    if kind == "commentary":
+        messages = [{"role": "system", "content": COMMENTARY_SYSTEM}]
+        messages.append(
+            {
+                "role": "user",
+                "content": "RUN CONTEXT\n\n" + context[:12000] + "\n\nWrite the three messages.",
+            }
+        )
+        return messages
     question = str(payload.get("question") or "").strip()
     history = payload.get("history") or []
     messages: list[dict[str, str]] = [{"role": "system", "content": SYSTEM}]
@@ -65,6 +87,22 @@ def _messages(payload: dict[str, Any]) -> list[dict[str, str]]:
             messages.append({"role": role, "content": content[:4000]})
     messages.append({"role": "user", "content": question})
     return messages
+
+
+def _json_object(text: str) -> dict[str, Any]:
+    clean = text.strip()
+    if clean.startswith("```"):
+        clean = clean.strip("`")
+        if clean.startswith("json"):
+            clean = clean[4:]
+    start = clean.find("{")
+    end = clean.rfind("}")
+    if start < 0 or end <= start:
+        raise RuntimeError("model returned no JSON object")
+    parsed = json.loads(clean[start : end + 1])
+    if not isinstance(parsed, dict):
+        raise RuntimeError("model returned a non-object")
+    return parsed
 
 
 async def _run(payload: dict[str, Any]) -> None:
@@ -87,8 +125,24 @@ async def _run(payload: dict[str, Any]) -> None:
         ModelRequestConfig(model=model_name, temperature=0.2, max_tokens=700),
     )
     messages = _messages(payload)
+    kind = str(payload.get("kind") or "ask")
     stream = bool(payload.get("stream"))
     _emit({"type": "start", "model": model_name})
+    if kind == "commentary":
+        result = await model.invoke(messages, max_tokens=900)
+        text = str(getattr(result, "content", result) or "")
+        usage = getattr(result, "usage_metadata", None)
+        parsed = _json_object(text)
+        _emit(
+            {
+                "type": "done",
+                "messages": parsed.get("messages") or [],
+                "model": model_name,
+                "tokens": int(getattr(usage, "total_tokens", 0) or 0),
+                "usd": float(getattr(usage, "total_cost", 0.0) or 0.0),
+            }
+        )
+        return
     if not stream:
         result = await model.invoke(messages, max_tokens=700)
         text = str(getattr(result, "content", result) or "")

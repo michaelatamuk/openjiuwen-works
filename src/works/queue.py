@@ -169,6 +169,7 @@ def _apply(task: Task | None, event: Event) -> Task:
         "confirmation.finished",
         "thread.note",
         "thread.agent",
+        "thread.commentary",
     ):
         return task.model_copy(update={"updated_at": event.ts})
 

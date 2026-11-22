@@ -601,3 +601,19 @@ def test_detail_exposes_a_mira_answer(paths, submit) -> None:
             and message["body"] == "Not released."
             for message in messages
         )
+
+
+def test_approve_plan_action_opens_gate_one(paths, submit) -> None:
+    from works.queue import Queue
+    from works.records import TaskState
+
+    task = submit()
+    queue = Queue(paths)
+    for state in (TaskState.REPRODUCING, TaskState.REPRODUCED, TaskState.PLANNING):
+        queue.transition(task.id, state)
+    queue.append(task.id, "plan.drafted", {"base_commit": "abc1234", "checks_sha": "x"})
+    with running(paths, write=True) as base:
+        status, body = post(base, "/api/actions", {"action": "approve-plan", "task_id": task.id})
+        assert status == 200, body
+        assert json.loads(body)["event"]["data"]["gate"] == "plan"
+    assert queue.load(task.id).state is TaskState.PLAN_APPROVED

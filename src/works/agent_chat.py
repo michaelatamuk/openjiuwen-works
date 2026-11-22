@@ -222,6 +222,72 @@ def ask_mira(paths: WorksPaths, task_id: str, question: str) -> dict[str, Any]:
     return answer
 
 
+def generate_commentary(paths: WorksPaths, task_id: str) -> list[dict[str, Any]]:
+    """Generate three short advisory messages from the recorded run.
+
+    The model writes commentary, never evidence. Each message is stored as `thread.commentary`
+    with `generated: true`, so the UI can mark it as model output.
+    """
+    payload = {
+        "kind": "commentary",
+        "context": build_context(paths, task_id),
+        "stream": False,
+    }
+    completed = subprocess.run(  # noqa: S603  # nosec B603
+        _command(),
+        input=json.dumps(payload),
+        text=True,
+        capture_output=True,
+        env=_environment(),
+        timeout=180,
+        check=False,
+    )
+    answer: dict[str, Any] | None = None
+    for line in completed.stdout.splitlines():
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(event, dict):
+            continue
+        if event.get("type") == "error":
+            raise ConfigError(f"Mira failed: {event.get('error')}")
+        if event.get("type") == "done":
+            answer = event
+    if answer is None:
+        detail = (completed.stderr or completed.stdout or "").strip().splitlines()
+        raise ConfigError(
+            f"Mira returned no commentary: {detail[-1] if detail else completed.returncode}"
+        )
+    raw_messages = answer.get("messages")
+    if not isinstance(raw_messages, list) or not raw_messages:
+        raise ConfigError("Mira returned no commentary messages")
+    allowed = {"builder", "inspector", "reporter"}
+    queue = Queue(paths)
+    recorded: list[dict[str, Any]] = []
+    for index, item in enumerate(raw_messages[:3]):
+        if not isinstance(item, dict):
+            continue
+        role = str(item.get("role") or "").strip().lower()
+        text = str(item.get("text") or "").strip()
+        if role not in allowed or not text:
+            continue
+        data = {
+            "role": role,
+            "text": text[:1200],
+            "model": answer.get("model") or "",
+            "tokens": int(answer.get("tokens") or 0) if index == 0 else 0,
+            "usd": float(answer.get("usd") or 0.0) if index == 0 else 0.0,
+            "by": "mira",
+            "generated": True,
+        }
+        queue.append(task_id, "thread.commentary", data)
+        recorded.append(data)
+    if not recorded:
+        raise ConfigError("Mira returned no usable commentary")
+    return recorded
+
+
 def ask_mira_stream(paths: WorksPaths, task_id: str, question: str) -> Iterator[dict[str, Any]]:
     payload = _payload(paths, task_id, question, stream=True)
     process = subprocess.Popen(  # noqa: S603  # nosec B603

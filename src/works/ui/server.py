@@ -663,8 +663,22 @@ def _thread_message(event: Event, task: Task) -> dict[str, Any] | None:
         p1 = data.get("p1") or []
         facts = [f"{len(ids)} scenario(s)", f"{len(p0)} P0", f"{len(p1)} P1"]
         card = {
-            "kind": "plan",
+            "kind": "question",
+            "prompt": "Are these the right must-pass scenarios?",
             "rows": [["Scenarios", str(len(ids))], ["P0", str(len(p0))], ["P1", str(len(p1))]],
+            "options": (
+                [
+                    {
+                        "label": "Approve plan",
+                        "action": "approve-plan",
+                        "tone": "primary",
+                        "recommended": True,
+                    },
+                    {"label": "Open run", "action": "open-run"},
+                ]
+                if task.state.value == "planning"
+                else [{"label": "Open run", "action": "open-run"}]
+            ),
         }
     elif kind == "gate.decided":
         role = "person"
@@ -828,6 +842,16 @@ def _thread_message(event: Event, task: Task) -> dict[str, Any] | None:
             "kind": "question",
             "rows": [["Question", str(data.get("question") or "")]],
         }
+    elif kind == "thread.commentary":
+        role = str(data.get("role") or "mira")
+        title = {
+            "builder": "Builder commentary",
+            "inspector": "Inspector commentary",
+            "reporter": "Reporter commentary",
+        }.get(role, "Mira commentary")
+        body = str(data.get("text") or "")
+        facts = ["AI commentary", f"model {data.get('model') or '—'}"]
+        card = None
     elif kind == "thread.note":
         role = "person"
         title = "Context added"
@@ -845,6 +869,23 @@ def _thread_message(event: Event, task: Task) -> dict[str, Any] | None:
             role = "system"
             title = "Proof ready"
             body = "proof is ready; gate 2 is the next step"
+            options: list[dict[str, Any]] = [{"label": "Open run", "action": "open-run"}]
+            if task.state.value == "proved":
+                options.insert(
+                    0,
+                    {
+                        "label": "Release this commit",
+                        "action": "release",
+                        "tone": "primary",
+                        "recommended": True,
+                    },
+                )
+            options.insert(1, {"label": "Open release", "action": "open-release"})
+            card = {
+                "kind": "question",
+                "prompt": "Release this commit?",
+                "options": options,
+            }
         else:
             role = "system"
             title = "Note"
@@ -898,6 +939,7 @@ def _thread_message(event: Event, task: Task) -> dict[str, Any] | None:
         "body": body,
         "facts": [item for item in facts if item],
         "tone": tone,
+        "generated": bool(data.get("generated")),
         "card": card,
     }
 
@@ -1341,6 +1383,29 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(
                     HTTPStatus.OK,
                     {"ok": True, "action": action, "answer": answer},
+                )
+                return
+            if action == "commentary":
+                from ..agent_chat import generate_commentary
+
+                messages = generate_commentary(self.paths, task_id)
+                self._json(
+                    HTTPStatus.OK,
+                    {"ok": True, "action": action, "messages": messages},
+                )
+                return
+            if action == "approve-plan":
+                from ..approvals import approve_plan
+
+                task, event = approve_plan(self.paths, task_id, by="ui")
+                self._json(
+                    HTTPStatus.OK,
+                    {
+                        "ok": True,
+                        "action": action,
+                        "task": task.model_dump(mode="json"),
+                        "event": event.model_dump(mode="json"),
+                    },
                 )
                 return
             if action == "release":
