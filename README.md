@@ -7,7 +7,7 @@
 
 # openJiuwen Works
 
-**A local-first software factory.** A bug report goes in. A reproduced, tested and proven fix comes out — with a person approving the plan; the release gate is the next milestone.
+**A local-first software factory.** A bug report goes in. A reproduced, tested and proven fix comes out - with a person approving the plan and a person releasing the proven commit.
 
 [![ci](https://github.com/michaelatamuk/openjiuwen-works/actions/workflows/ci.yml/badge.svg)](https://github.com/michaelatamuk/openjiuwen-works/actions/workflows/ci.yml)
 [![license](https://img.shields.io/badge/license-Apache--2.0-6D28D9.svg)](LICENSE)
@@ -32,7 +32,8 @@ A bug report waits: for triage, for an agent's answer, for a reviewer, for someo
 Works moves the waiting into an engine and keeps the judgement with people:
 
 - **Reproduce before fixing.** A deterministic command must fail on the base commit. No failing reproduction, no fix.
-- **Two human gates in the design.** The plan gate is live; the release gate is the next milestone. The engine never approves itself.
+- **Two human gates in the design.** The plan gate and the release gate are live; the engine never
+  approves itself, and delivery waits for the release gate.
 - **Every release carries its proof.** One page bound to the exact diff by SHA-256: verdict, commands, policy, cost, risk and residual gaps.
 - **No silent retry.** A blocked task stays blocked until a person changes the plan or the evidence.
 
@@ -95,6 +96,9 @@ uv run works submit --repo /path/to/repo --product MyProduct --ref GH-42 --title
 uv run works run <task-id> --live --approve-plan --scenarios scenarios.yaml
 uv run works run <task-id> --live --verifier docker --scenarios scenarios.yaml
 uv run works release <task-id>
+uv run works approve <task-id> --gate release
+uv run works deliver <task-id> --provider github
+uv run works confirm <task-id> --url https://app.example/health --provider github --close
 uv run works team verify <task-id>
 uv run works swarm doctor
 ```
@@ -126,13 +130,17 @@ uv run works memory recall --ppma http://127.0.0.1:8766
 | **Intake** | GitHub Issues and Jira become queued tasks with `(kind, ref)` deduplication; `.works/products.yaml` maps a product to its checkout. |
 | **Verifier container** | `--verifier docker` runs checks with no network, dropped capabilities and only the worktree mounted; a missing daemon is an error, never a silent host fallback. |
 | **JiuwenSwarm boundary** | `works run --swarm` speaks `works.swarm.v1` to an isolated entrypoint; `works swarm doctor` reports why the local checkout cannot start yet. |
+| **Release gate** | `works approve --gate release` binds gate 2 to the base commit and proof, moves the task to `released`, and records `release.json`; a repeat is idempotent. |
+| **Delivery** | `works deliver` commits the approved diff with `Works-Run:` trailers, pushes `works/<task-id>`, opens one GitHub PR or GitLab MR, and returns one comment to GitHub, GitLab or Jira. |
+| **Confirmation** | `works confirm` re-checks the delivered commit (HTTP, command or the plan's scenarios) and returns to the tracker, optionally closing a GitHub/GitLab issue or moving a Jira issue to Done. |
 
 ## Roadmap
 
 Three things turn the preview into the full factory:
 
 - **Independent verifier.** The container boundary exists; the remaining work is the provider split and a live daemon in CI.
-- **Release and return.** Bind approval to the commit, then publish the change and the proof back to the source.
+- **Release and return.** Gate 2, delivery and confirmation exist; a live pull request, comment and
+  issue close need a real remote and `GITHUB_TOKEN`.
 - **Depth in memory and evidence.** Feed PPMA recall into the planner, attach runtime artifacts, and execute feature selectors in the preview.
 
 LAIX is optional and keeps the deterministic gate as the fallback. Merging stays human.
@@ -155,7 +163,7 @@ CI runs lint, tests, bandit and gitleaks; mutation and `pip-audit` run weekly. D
 |---|---|
 | [`docs/plan.md`](docs/plan.md) | Milestones, checkboxes, standards and refactoring gates |
 | [`docs/ui.md`](docs/ui.md) | Story, Evidence, report intake and the read-only/write boundary |
-| [`docs/release.md`](docs/release.md) | Commit-bound release packet and publisher boundary |
+| [`docs/release.md`](docs/release.md) | Release packet, gate 2, delivery and confirmation |
 | [`docs/readiness.md`](docs/readiness.md) | `.works/readiness.yaml` and the autonomy gate |
 | [`docs/features.md`](docs/features.md) | Feature map format and proof coverage |
 | [`docs/live-harness.md`](docs/live-harness.md) | Real `openjiuwen` builder setup |

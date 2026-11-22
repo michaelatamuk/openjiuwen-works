@@ -60,6 +60,8 @@ const timelineHuman = {
   "memory.recall_failed": "Memory recall failed",
   "readiness.checked": "Readiness checked",
   "team.verified": "Verification team",
+  "delivery.finished": "Delivered",
+  "confirmation.finished": "Confirmed",
 };
 
 const groupDefs = [
@@ -548,6 +550,8 @@ function eventSummary(event) {
   if (event.type === "memory.recall_failed") return `recall failed · ${data.error || "unknown error"}`;
   if (event.type === "readiness.checked") return `readiness ${data.status} · ${data.passed}/${data.total}`;
   if (event.type === "team.verified") return `team ${data.verdict} · ${data.team || "inspector+challenger+reporter"}`;
+  if (event.type === "delivery.finished") return `${data.branch || "branch"} · ${data.commit || ""}${data.pr_url ? " · pull request" : ""}`;
+  if (event.type === "confirmation.finished") return `${data.ok ? "passed" : "failed"} · ${data.target || "check"}`;
   if (event.type === "step.finished") return `${data.step}: exit ${data.exit_code}`;
   if (event.type === "challenge.decided") return data.allow ? "Independent check passed" : "Independent check blocked";
   if (event.type === "note") return "The proof is ready.";

@@ -141,10 +141,12 @@ def test_approve_refuses_a_task_that_is_not_planning(paths, repo) -> None:
     assert result.exit_code == 6
 
 
-def test_release_approval_is_not_wired_in_v0(paths, repo) -> None:
+def test_release_approval_is_blocked_until_the_task_is_proved(paths, repo) -> None:
     submitted = submit_cli(paths, repo)
     result = invoke(paths, "approve", submitted["task"]["id"], "--gate", "release", "--json")
-    assert result.exit_code == 2
+    assert result.exit_code == 8
+    assert payload(result)["ok"] is False
+    assert any("not proved" in blocker for blocker in payload(result)["blockers"])
 
 
 def test_version_speaks_json(paths) -> None:

@@ -25,7 +25,6 @@ from .errors import (
     EXIT_POLICY,
     EXIT_STATE,
     ConfigError,
-    NotImplementedYet,
     PolicyError,
     WorksError,
     exit_code_for,
@@ -201,7 +200,41 @@ def cmd_approve(args: argparse.Namespace) -> int:
     from .records import TaskState
 
     if args.gate == "release":
-        raise NotImplementedYet("the release gate lands in M3; nothing is published in v0")
+        from .release import approve_release, release_packet
+
+        packet = release_packet(_paths(args), args.task_id, require_release_gate=False)
+        if not packet.ready:
+            if args.json:
+                _emit(
+                    {
+                        "ok": False,
+                        "task_id": args.task_id,
+                        "ready": False,
+                        "blockers": packet.blockers,
+                    }
+                )
+            else:
+                print(f"release blocked: {args.task_id}")
+                for blocker in packet.blockers:
+                    print(f"  blocker: {blocker}")
+            return EXIT_BLOCKED
+        task, packet, created = approve_release(_paths(args), args.task_id)
+        body = {
+            "ok": True,
+            "created": created,
+            "task": task.model_dump(mode="json"),
+            "release": packet.as_dict(),
+        }
+        if args.json:
+            _emit(body)
+        elif created:
+            print(
+                f"release approved: {args.task_id} is now {task.state.value} "
+                f"at {packet.commit} (gate 2; nothing is published)"
+            )
+        else:
+            print(f"already released: {args.task_id} at {packet.commit}")
+        return 0
     if args.gate != "plan":
         raise ConfigError(f"unknown gate {args.gate!r}; expected plan or release")
     queue = _queue(args)
@@ -361,6 +394,66 @@ def cmd_source_jira(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_deliver(args: argparse.Namespace) -> int:
+    from .deliver import deliver
+
+    delivery = deliver(
+        _paths(args),
+        args.task_id,
+        remote=args.remote,
+        provider=args.provider,
+        tracker=args.tracker,
+        dry_run=args.dry_run,
+        base_branch=args.base,
+    )
+    if args.json:
+        _emit(delivery.as_dict())
+    else:
+        state = "dry run" if delivery.dry_run else "delivered"
+        print(f"{state}: {delivery.task_id} -> {delivery.branch} ({delivery.commit})")
+        if delivery.pr_url:
+            print(f"  pull request: {delivery.pr_url}")
+        if delivery.comment_url:
+            print(f"  source comment: {delivery.comment_url}")
+        for note in delivery.notes:
+            print(f"  {note}")
+    return 0
+
+
+def cmd_confirm(args: argparse.Namespace) -> int:
+    from .confirm import confirm
+
+    command: str | list[str] | None = args.command
+    if isinstance(command, str) and command.lstrip().startswith("["):
+        try:
+            parsed = json.loads(command)
+        except json.JSONDecodeError as exc:
+            raise ConfigError(f"--command is not a JSON array: {exc}") from exc
+        if not isinstance(parsed, list) or not all(isinstance(item, str) for item in parsed):
+            raise ConfigError("--command must be a JSON array of strings")
+        command = parsed
+    result = confirm(
+        _paths(args),
+        args.task_id,
+        url=args.url,
+        command=command,
+        provider=args.provider,
+        tracker=args.tracker,
+        close_issue=args.close,
+        force=args.force,
+    )
+    if args.json:
+        _emit(result.as_dict())
+    else:
+        verdict = "confirmed" if result.ok else "failed"
+        print(f"{verdict}: {result.task_id} at {result.commit} ({result.target})")
+        for note in result.notes:
+            print(f"  {note}")
+        if result.comment_url:
+            print(f"  source comment: {result.comment_url}")
+    return 0 if result.ok else EXIT_BLOCKED
+
+
 def cmd_swarm_doctor(args: argparse.Namespace) -> int:
     from .harness.swarm import preflight
 
@@ -400,7 +493,10 @@ def cmd_release(args: argparse.Namespace) -> int:
         print(f"  ready:  {'yes' if packet.ready else 'no'}")
         for blocker in packet.blockers:
             print(f"  blocker: {blocker}")
-        print("  publisher: not configured (dry run only)")
+        if packet.released:
+            print("  released: yes; delivery is the next step (`works deliver`)")
+        else:
+            print("  released: no; a person opens gate 2 (`works approve --gate release`)")
     return EXIT_OK if packet.ready else EXIT_BLOCKED
 
 
@@ -1213,6 +1309,28 @@ def build_parser() -> argparse.ArgumentParser:
     release.add_argument("task_id")
     release.add_argument("--json", action="store_true")
     release.set_defaults(func=cmd_release)
+
+    deliver = sub.add_parser("deliver", help="Push the released change and open a pull request")
+    deliver.add_argument("task_id")
+    deliver.add_argument("--remote", default="origin")
+    deliver.add_argument("--base", default="main", help="Pull-request base branch")
+    deliver.add_argument("--provider", choices=("none", "github", "gitlab"), default="none")
+    deliver.add_argument("--tracker", choices=("none", "github", "gitlab", "jira"), default=None)
+    deliver.add_argument("--dry-run", action="store_true")
+    deliver.add_argument("--json", action="store_true")
+    deliver.set_defaults(func=cmd_deliver)
+
+    confirm = sub.add_parser("confirm", help="Re-check the released commit and close the loop")
+    confirm.add_argument("task_id")
+    target = confirm.add_mutually_exclusive_group()
+    target.add_argument("--url", default=None, help="HTTP endpoint to check")
+    target.add_argument("--command", default=None, help="Command to run in a fresh worktree")
+    confirm.add_argument("--provider", choices=("none", "github", "gitlab", "jira"), default="none")
+    confirm.add_argument("--tracker", choices=("none", "github", "gitlab", "jira"), default=None)
+    confirm.add_argument("--close", action="store_true", help="Close the source issue on success")
+    confirm.add_argument("--force", action="store_true")
+    confirm.add_argument("--json", action="store_true")
+    confirm.set_defaults(func=cmd_confirm)
 
     team = sub.add_parser("team", help="Run the agent-core verification team")
     team_sub = team.add_subparsers(dest="team_command", required=True)

@@ -788,14 +788,27 @@ Internal only: nothing is published to the upstream fork until M2 is green.
 
 ### M3 — Release, return, escape (weeks 7–8)
 
-- [ ] **T3.1** Release gate: normalized path matching, deny-wins, approval bound to commit hash. **M**
-  - 2026-11-22: `works release` builds a read-only packet bound to run, base commit, proof, plan
-    approval and release approval; blockers are explicit and exit `8`. Publishing and the actual
-    gate transition remain open with T3.2–T3.4.
-- [ ] **T3.2** Publish asserts `HEAD == approved_commit`; otherwise re-gate. **S**
+- [x] **T3.1** Release gate: normalized path matching, deny-wins, approval bound to commit hash. **M**
+  - 2026-11-22: `works release` builds a read-only packet bound to run, base commit and proof;
+    `works approve --gate release` opens gate 2, moves `proved → releasing → released`, records the
+    gate event and `release.json`, and is idempotent per commit. Nothing is published by the gate.
+- [ ] **T3.2** Publish asserts that the delivered commit matches the approved proof; otherwise
+  re-gate. **S**
+  - 2026-11-22: delivery verifies the worktree diff hash and staged file list against the proof
+    before committing. A real remote push is covered by a local bare-repo test; a live GitHub run
+    still needs a token.
 - [ ] **T3.3** Branch + PR with proof, `Works-Run:` trailer, bot identity. **M**
+  - 2026-11-22: `works deliver` creates `works/<task-id>`, commits with the trailers, pushes to
+    `origin`, and with `--provider github|gitlab` opens one pull or merge request. Idempotent by
+    branch, commit and run marker. Live creation needs the matching token.
 - [ ] **T3.4** Return: one comment per run on the source issue, idempotent. **M**
+  - 2026-11-22: delivery and confirmation both write one marker comment per run to GitHub, GitLab
+    or Jira. `--close` closes a GitHub/GitLab issue or transitions Jira to Done. Live calls need
+    the matching token.
 - [ ] **T3.5** Confirm: re-run the reproduction; result recorded. **M**
+  - 2026-11-22: `works confirm` runs an HTTP check, an explicit command, or the plan's scenario set
+    against the delivered commit in a fresh worktree; the result is `confirmation.json` plus a
+    `confirmation.finished` event. A GUI product still needs a real driver.
 - [ ] **T3.6** **Escape detection**: arm a 14-day window per release; a revert, hotfix or red main
   touching the same paths attributes a row to the release. **L**
 - [ ] **T3.7** Revert path: revert PR, note, post-mortem, ledger row. **M**

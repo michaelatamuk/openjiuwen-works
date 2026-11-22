@@ -47,8 +47,8 @@ class GitRepo:
         except (GitError, ConfigError):
             return False
 
-    def head(self) -> str:
-        return self._git("rev-parse", "HEAD").stdout.strip()
+    def head(self, cwd: Path | None = None) -> str:
+        return self._git("rev-parse", "HEAD", cwd=cwd).stdout.strip()
 
     def show(self, rev: str, path: str) -> str | None:
         """Read a file at a commit without touching the worktree; None when absent."""
@@ -115,6 +115,82 @@ class GitRepo:
                 )
             )
         return stats
+
+    def stage_all(self, *, cwd: Path | None = None) -> None:
+        """Stage tracked changes and new files, but never runtime artifacts."""
+        self._git("add", "-A", "--", ".", ":(exclude).works", cwd=cwd)
+
+    def staged_files(self, *, cwd: Path | None = None) -> list[str]:
+        output = self._git("diff", "--cached", "--name-only", cwd=cwd).stdout
+        return [line.strip() for line in output.splitlines() if line.strip()]
+
+    def commit_staged(
+        self,
+        message: str,
+        *,
+        cwd: Path | None = None,
+        author: str = "openjiuwen-works",
+        email: str = "works@local",
+    ) -> str:
+        self._git(
+            "-c",
+            f"user.name={author}",
+            "-c",
+            f"user.email={email}",
+            "commit",
+            "-q",
+            "-m",
+            message,
+            cwd=cwd,
+        )
+        return self.head(cwd=cwd)
+
+    def commit_all(
+        self,
+        message: str,
+        *,
+        cwd: Path | None = None,
+        author: str = "openjiuwen-works",
+        email: str = "works@local",
+    ) -> str:
+        """Stage the change and commit it, leaving runtime artifacts out of the tree."""
+        self.stage_all(cwd=cwd)
+        if not self.staged_files(cwd=cwd):
+            return self.head(cwd=cwd)
+        return self.commit_staged(message, cwd=cwd, author=author, email=email)
+
+    def remote_url(self, remote: str = "origin") -> str:
+        return self._git("remote", "get-url", remote).stdout.strip()
+
+    def has_remote(self, remote: str = "origin") -> bool:
+        try:
+            self._git("remote", "get-url", remote, timeout_s=30)
+        except GitError:
+            return False
+        return True
+
+    def set_branch(self, name: str, commit: str) -> None:
+        self._git("branch", "-f", name, commit)
+
+    def branch_commit(self, name: str) -> str | None:
+        try:
+            return self._git("rev-parse", "--verify", f"refs/heads/{name}").stdout.strip() or None
+        except GitError:
+            return None
+
+    def remote_commit(self, remote: str, branch: str) -> str | None:
+        output = self._git("ls-remote", remote, f"refs/heads/{branch}", timeout_s=60).stdout.strip()
+        return output.split()[0] if output else None
+
+    def push(self, remote: str, branch: str, *, cwd: Path | None = None) -> CommandResult:
+        return self._git(
+            "push",
+            "--porcelain",
+            remote,
+            f"refs/heads/{branch}:refs/heads/{branch}",
+            cwd=cwd,
+            timeout_s=300,
+        )
 
 
 def init_repo(path: Path, *, message: str = "initial commit") -> GitRepo:

@@ -136,13 +136,20 @@ def _container_check() -> CheckResult:
         )
     if _which("podman") and not _which("docker"):
         return CheckResult(name="container", status="ok", detail=found)
-    probe = subprocess.run(  # noqa: S603  # nosec B603
-        [found, "info", "--format", "{{.ServerVersion}}"],
-        capture_output=True,
-        text=True,
-        timeout=15,
-        check=False,
-    )
+    try:
+        probe = subprocess.run(  # noqa: S603  # nosec B603
+            [found, "info", "--format", "{{.ServerVersion}}"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return CheckResult(
+            name="container",
+            status="warn",
+            detail=f"{found} did not answer in time: {exc}",
+        )
     if probe.returncode == 0:
         return CheckResult(
             name="container",
