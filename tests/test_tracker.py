@@ -28,10 +28,25 @@ class Router:
 def test_the_tracker_accepts_the_right_reference_shapes() -> None:
     assert tracker_accepts("github", "o/r#3") is True
     assert tracker_accepts("gitlab", "o/r#3") is True
+    assert tracker_accepts("gitlab", "group/sub/project#3") is True
     assert tracker_accepts("jira", "FIRE-3") is True
     assert tracker_accepts("jira", "o/r#3") is False
     assert tracker_accepts("github", "FIRE-3") is False
     assert tracker_accepts("none", "FIRE-3") is False
+
+
+def test_gitlab_keeps_a_nested_group_in_the_project_path() -> None:
+    transport = Router(
+        [
+            ("GET", "/notes", (200, [])),
+            ("POST", "/notes", (201, {"web_url": "https://gitlab/x#note"})),
+        ]
+    )
+    tracker = GitLabTracker(token="secret", transport=transport)  # noqa: S106
+
+    tracker.ensure_comment(ref="group/sub/project#3", body="new", marker="m")
+
+    assert "group%2Fsub%2Fproject" in transport.calls[0][0]
 
 
 def test_github_reuses_a_marker_comment() -> None:

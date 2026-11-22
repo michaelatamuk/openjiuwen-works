@@ -19,7 +19,7 @@ from .errors import ConfigError
 
 Transport = Callable[[str, str, dict[str, str] | None, dict[str, Any] | None], tuple[int, Any]]
 
-SOURCE_ISSUE = re.compile(r"^(?P<owner>[^/]+)/(?P<repo>[^#]+)#(?P<number>\d+)$")
+SOURCE_ISSUE = re.compile(r"^(?P<owner>.+)/(?P<repo>[^/#]+)#(?P<number>\d+)$")
 GITHUB_REMOTE = re.compile(r"github\.com[:/](?P<owner>[^/]+)/(?P<repo>[^/.]+)")
 GITLAB_REMOTE = re.compile(r"(?P<host>gitlab[^/:]*)[:/](?P<owner>[^/]+)/(?P<repo>[^/.]+)")
 
