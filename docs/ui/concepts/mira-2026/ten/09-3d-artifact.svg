@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Mira 3D artifact</title>
+  <defs>
+    <radialGradient id="clay" cx="38%" cy="28%" r="78%">
+      <stop offset="0" stop-color="#FBF7EE"/>
+      <stop offset=".55" stop-color="#E4DAC8"/>
+      <stop offset="1" stop-color="#B9AC96"/>
+    </radialGradient>
+    <radialGradient id="glaze" cx="35%" cy="25%" r="80%">
+      <stop offset="0" stop-color="#A78BFA"/>
+      <stop offset="1" stop-color="#5B21B6"/>
+    </radialGradient>
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="12"/>
+    </filter>
+  </defs>
+  <ellipse cx="256" cy="452" rx="150" ry="24" fill="#16141B" opacity=".18" filter="url(#soft)"/>
+  <path d="M 216 372 C 176 396 140 420 112 446 C 134 456 162 450 190 430 C 212 414 230 392 242 374 Z" fill="#B9AC96"/>
+  <path d="M 242 230 C 310 222 360 264 366 326 C 372 388 334 424 278 428 C 224 432 188 396 188 344 C 188 296 206 246 242 230 Z" fill="url(#clay)"/>
+  <circle cx="334" cy="214" r="56" fill="url(#clay)"/>
+  <path d="M 382 204 L 438 220 L 382 236 Z" fill="#B9AC96"/>
+  <path d="M 234 294 C 270 280 314 292 330 326 C 314 356 274 368 242 350 C 226 330 224 310 234 294 Z" fill="url(#glaze)" opacity=".92"/>
+  <path d="M 262 412 L 258 442 M 258 442 L 240 450 M 258 442 L 274 450" stroke="#8E816C" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <path d="M 300 408 L 296 438 M 296 438 L 278 446 M 296 438 L 312 446" stroke="#8E816C" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <circle cx="248" cy="326" r="9" fill="#E2452F"/>
+</svg>

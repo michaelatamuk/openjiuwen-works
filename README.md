@@ -122,12 +122,13 @@ uv run works memory recall --ppma http://127.0.0.1:8766
 | **Loop** | Queue, policy, disposable worktree, reproduce, build, check, proof and ledger work end to end. |
 | **Live builder** | Real `openjiuwen` Claude Code harness on an Anthropic-compatible endpoint; model, tokens, USD and prompt hash are recorded. |
 | **Proof** | Computed evidence page and immutable ledger row; P0/P1 verdict, policy, risk, cost, diff and residual gaps. |
-| **GUI** | Story is the default human reading; Evidence is one click away; a Release view carries the packet, delivery, confirmation and team verdict; inline artifacts, product map, detectors, intake and a new-task form. |
+| **GUI** | Story is the default human reading; Evidence is one click away; a Release view carries the packet, delivery, confirmation and team verdict; a Thread worklog adds a model-backed, streamed `Ask Mira` that is advisory only. Inline artifacts, product map, detectors, intake and a new-task form. |
 | **Readiness** | `works readiness` runs lint, format, types, fast tests, product verify, architecture and import boundaries; the report carries the internal import graph and fails on cycles, and a red gate blocks live runs. |
 | **Feature map** | `features/<product>.yaml`; Evidence shows covered, failed and not-covered features. |
 | **Memory** | When configured, finished runs are reported to PPMA; older runs can be backfilled; `works memory recall` reads statements. |
 | **Decision layer** | `DecisionPort` and `LaixGate` exist behind a deterministic fallback; off by default, shadow opt-in. |
 | **Agent-core team** | `works team verify` runs inspector + challenger + reporter on `BaseTeam`/`TeamRuntime`; model-free, no API key. |
+| **Ask Mira** | The Thread view can ask a real `openjiuwen` model about the recorded run; answers stream into the worklog and are advisory, never a gate. |
 | **Intake** | GitHub Issues, Jira and firing detector alerts become queued tasks with `(kind, ref)` deduplication; `.works/products.yaml` maps a product to its checkout. |
 | **Verifier container** | `--verifier docker` runs checks with no network, dropped capabilities and only the worktree mounted; a missing daemon is an error, never a silent host fallback. |
 | **Provider split** | The verifier environment drops builder credentials, `works doctor` warns when both roles share one key, and the proof records the verifier and its isolation. |
@@ -169,7 +170,7 @@ CI runs lint, tests, bandit and gitleaks; mutation and `pip-audit` run weekly. D
 | [`docs/readiness.md`](docs/readiness.md) | `.works/readiness.yaml` and the autonomy gate |
 | [`docs/features.md`](docs/features.md) | Feature map format and proof coverage |
 | [`docs/live-harness.md`](docs/live-harness.md) | Real `openjiuwen` builder setup |
-| [`docs/agent-core.md`](docs/agent-core.md) | agent-core harness and verification team |
+| [`docs/agent-core.md`](docs/agent-core.md) | agent-core harness, verification team and Ask Mira |
 | [`docs/intake.md`](docs/intake.md) | GitHub/Jira/detector intake and product-to-repository map |
 | [`docs/swarm.md`](docs/swarm.md) | Isolated JiuwenSwarm builder contract |
 | [`docs/ppma.md`](docs/ppma.md) | PPMA north contract, backfill and recall |

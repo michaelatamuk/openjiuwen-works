@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Mira silhouette only</title>
+  <path d="M 238 368 C 190 404 130 446 54 486 C 84 498 128 490 170 462 C 208 438 240 404 260 374 Z" fill="#16141B"/>
+  <path d="M 270 206 C 326 200 366 238 372 294 C 378 350 346 392 298 402 C 250 412 212 382 204 340 C 196 296 222 242 270 206 Z" fill="#16141B"/>
+  <circle cx="352" cy="170" r="54" fill="#16141B"/>
+  <path d="M 402 160 L 470 178 L 402 196 Z" fill="#16141B"/>
+  <path d="M 300 400 L 296 434 M 296 434 L 280 442 M 296 434 L 310 442" stroke="#16141B" stroke-width="7" stroke-linecap="round" fill="none"/>
+  <path d="M 342 394 L 338 428 M 338 428 L 322 436 M 338 428 L 352 436" stroke="#16141B" stroke-width="7" stroke-linecap="round" fill="none"/>
+</svg>

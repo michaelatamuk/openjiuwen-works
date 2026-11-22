@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Mira 2026 — concept board</title>
+<style>
+  :root {
+    --ink: #16141b;
+    --ink-2: #2b2832;
+    --paper: #efe9dc;
+    --paper-2: #f7f3e9;
+    --paper-3: #e4dccb;
+    --violet: #6d28d9;
+    --violet-2: #8b5cf6;
+    --vermilion: #e2452f;
+    --muted: #6f675c;
+    --line: rgba(22,20,27,.16);
+    --serif: Georgia, "Times New Roman", serif;
+    --mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+    --sans: "Segoe UI", Inter, system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    width: 1800px; min-height: 1500px;
+    background:
+      radial-gradient(circle at 18% 10%, rgba(255,255,255,.55), transparent 34%),
+      radial-gradient(circle at 82% 78%, rgba(109,40,217,.055), transparent 30%),
+      var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    padding: 58px 64px 48px;
+  }
+  .top { display: flex; justify-content: space-between; gap: 40px; align-items: flex-start; }
+  .kicker { font: 700 11px/1 var(--mono); letter-spacing: .22em; text-transform: uppercase; color: var(--violet); }
+  h1 { font: 400 84px/.93 var(--serif); margin: 14px 0 0; letter-spacing: -.035em; max-width: 950px; }
+  h1 em { font-style: italic; color: var(--violet); }
+  .lede { max-width: 420px; font-size: 16px; line-height: 1.6; color: var(--muted); padding-top: 10px; }
+  .lede strong { color: var(--ink); font-weight: 600; }
+  .meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; margin-top: 34px; padding-top: 18px; border-top: 1px solid var(--line); }
+  .meta div { font: 11px/1.6 var(--mono); letter-spacing: .06em; color: var(--muted); text-transform: uppercase; }
+  .meta b { display: block; color: var(--ink); font-weight: 700; letter-spacing: .08em; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 42px; }
+  .card { background: var(--paper-2); border: 1px solid var(--line); border-radius: 18px; padding: 22px 22px 18px; box-shadow: 0 1px 0 rgba(255,255,255,.7) inset; }
+  .card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .num { font: 700 11px/1 var(--mono); letter-spacing: .18em; color: var(--violet); }
+  .name { font: 400 30px/1.1 var(--serif); margin: 8px 0 4px; letter-spacing: -.02em; }
+  .desc { font-size: 12.5px; line-height: 1.55; color: var(--muted); min-height: 58px; }
+  .tile { border-radius: 12px; display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; margin-top: 12px; overflow: hidden; }
+  .tile.light { background: var(--paper-3); border: 1px solid rgba(22,20,27,.08); }
+  .tile.dark { background: #11141b; color: var(--paper); }
+  .tile img { display: block; }
+  .large { width: 184px; height: 184px; }
+  .medium { width: 78px; height: 78px; }
+  .small { width: 42px; height: 42px; }
+  .tiny { width: 24px; height: 24px; }
+  .sizes { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
+  .sizes span { font: 10px/1 var(--mono); letter-spacing: .08em; color: var(--muted); }
+  .glyph-row { display: flex; align-items: center; gap: 14px; margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: rgba(22,20,27,.045); }
+  .glyph-row span { font: 10px/1.4 var(--mono); letter-spacing: .08em; color: var(--muted); text-transform: uppercase; }
+  .context { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 32px; }
+  .panel { border-radius: 18px; padding: 22px; min-height: 230px; position: relative; overflow: hidden; }
+  .panel.light { background: var(--paper-2); border: 1px solid var(--line); }
+  .panel.dark { background: #11141b; color: var(--paper); border: 1px solid rgba(255,255,255,.08); }
+  .panel h3 { font: 400 22px/1.15 var(--serif); margin: 0 0 6px; letter-spacing: -.015em; }
+  .panel p { font-size: 12.5px; line-height: 1.55; color: var(--muted); max-width: 300px; margin: 0; }
+  .panel.dark p { color: #9ca4b3; }
+  .empty-row { display: flex; gap: 18px; align-items: center; }
+  .empty-row img { width: 132px; height: 132px; flex: none; }
+  .story-row { display: flex; gap: 12px; align-items: center; margin-top: 20px; padding: 13px; border-radius: 12px; background: #171b24; border: 1px solid rgba(255,255,255,.07); }
+  .story-row img { width: 44px; height: 44px; }
+  .story-row b { display: block; font-size: 13px; }
+  .story-row span { font: 10px/1.5 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: #8b95a7; }
+  .gate-row { display: flex; gap: 16px; align-items: center; margin-top: 22px; padding: 16px; border-radius: 12px; background: #171b24; border: 1px solid rgba(255,255,255,.07); }
+  .gate-row img { width: 44px; height: 44px; }
+  .gate-row b { display: block; font-size: 13px; }
+  .gate-row span { font: 10px/1.5 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: #8b95a7; }
+  .motion { margin-top: 32px; background: var(--paper-2); border: 1px solid var(--line); border-radius: 18px; padding: 22px; }
+  .motion-head { display: flex; justify-content: space-between; align-items: baseline; gap: 20px; }
+  .motion h3 { font: 400 26px/1.1 var(--serif); margin: 0; letter-spacing: -.02em; }
+  .motion p { font-size: 12.5px; color: var(--muted); margin: 0; }
+  .frames { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-top: 18px; }
+  .frame { border-radius: 12px; border: 1px solid var(--line); background: #fbf8f0; padding: 14px; min-height: 152px; display: flex; flex-direction: column; justify-content: space-between; }
+  .frame .art { height: 88px; display: flex; align-items: center; justify-content: center; }
+  .frame img { width: 70px; height: 70px; }
+  .frame .step { font: 700 10px/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--violet); }
+  .frame .note { font: 11px/1.45 var(--sans); color: var(--muted); margin-top: 6px; }
+  .frame .t { font: 10px/1 var(--mono); color: var(--muted); letter-spacing: .06em; }
+  .score { display: grid; grid-template-columns: 1.15fr 1fr; gap: 24px; margin-top: 32px; }
+  .table { background: var(--paper-2); border: 1px solid var(--line); border-radius: 18px; padding: 22px; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font: 700 10px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); padding: 0 0 12px; border-bottom: 1px solid var(--line); }
+  td { padding: 11px 0; border-bottom: 1px solid rgba(22,20,27,.08); font-size: 13px; }
+  td:first-child { font-weight: 600; }
+  td.num { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  td.good { font-family: var(--mono); font-size: 11px; color: var(--violet); font-weight: 700; }
+  .rule { background: #11141b; color: var(--paper); border-radius: 18px; padding: 24px; }
+  .rule h3 { font: 400 26px/1.1 var(--serif); margin: 0 0 14px; color: var(--paper); }
+  .rule ul { margin: 0; padding-left: 18px; }
+  .rule li { font-size: 13px; line-height: 1.65; color: #b7becb; margin-bottom: 8px; }
+  .rule li b { color: var(--paper); }
+  .swatches { display: flex; gap: 8px; margin-top: 18px; }
+  .sw { flex: 1; height: 42px; border-radius: 8px; position: relative; }
+  .sw span { position: absolute; left: 8px; bottom: 6px; font: 9px/1 var(--mono); color: rgba(255,255,255,.8); letter-spacing: .06em; }
+  .sw.light span { color: rgba(22,20,27,.72); }
+  .footer { display: flex; justify-content: space-between; align-items: baseline; margin-top: 30px; padding-top: 16px; border-top: 1px solid var(--line); font: 10px/1.6 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .footer b { color: var(--ink); }
+</style>
+</head>
+<body>
+  <header class="top">
+    <div>
+      <div class="kicker">Mira · 2026 system · concept board</div>
+      <h1>Keeper of<br><em>the proof.</em></h1>
+      <div class="meta">
+        <div><b>Character</b>Magpie, ink / paper-cut</div>
+        <div><b>Motion</b>5 states, 120–240 ms</div>
+        <div><b>Status</b>Not applied · review draft</div>
+      </div>
+    </div>
+    <p class="lede">
+      The 2026 move is not a new animal. It is a <strong>system</strong>: an editorial character for
+      warmth, a route line for motion, and a seal for the two human gates. Mira stays the magpie —
+      <strong>喜鹊</strong>, the bird that brings good news — but she stops looking like a 2018 SaaS
+      mascot.
+    </p>
+  </header>
+
+  <section class="grid">
+    <article class="card">
+      <div class="card-head"><span class="num">01 / INK</span><span class="num">character</span></div>
+      <h2 class="name">Ink magpie</h2>
+      <p class="desc">Two inks, paper, one vermilion seal. No blush, no sparkle, no soft shadow. Built for empty states and the Story rail.</p>
+      <div class="tile light">
+        <img class="large" src="mira-ink-v2.svg" alt="Ink magpie on paper" />
+        <div class="sizes"><span>184</span><span>96</span><span>44</span><span>24</span></div>
+      </div>
+      <div class="tile dark">
+        <img class="medium" src="mira-ink-v2-dark.svg" alt="Ink magpie on dark" />
+        <img class="small" src="mira-ink-v2-dark.svg" alt="" />
+        <img class="tiny" src="mira-ink-v2-dark.svg" alt="" />
+      </div>
+      <div class="glyph-row">
+        <img class="tiny" src="mira-glyph.svg" alt="" />
+        <img width="42" height="42" src="mira-glyph.svg" alt="" />
+        <span>glyph 16 / 24 / 44</span>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="card-head"><span class="num">02 / ROUTE</span><span class="num">motion-first</span></div>
+      <h2 class="name">Route bird</h2>
+      <p class="desc">One violet route draws the body, head and tail. The proof node is a stop on the way. Designed for line-draw motion, not a static picture.</p>
+      <div class="tile light">
+        <img class="large" src="mira-route.svg" alt="Route bird on paper" />
+        <div class="sizes"><span>184</span><span>96</span><span>44</span><span>24</span></div>
+      </div>
+      <div class="tile dark">
+        <img class="medium" src="mira-route-dark.svg" alt="Route bird on dark" />
+        <img class="small" src="mira-route-dark.svg" alt="" />
+        <img class="tiny" src="mira-route-dark.svg" alt="" />
+      </div>
+      <div class="glyph-row">
+        <img class="tiny" src="mira-glyph.svg" alt="" />
+        <img width="42" height="42" src="mira-glyph.svg" alt="" />
+        <span>same glyph, 2 inks</span>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="card-head"><span class="num">03 / SEAL</span><span class="num">gate mark</span></div>
+      <h2 class="name">Proof seal</h2>
+      <p class="desc">The release mark, not a mascot. A magpie cut out of a violet seal, with one vermilion stamp dot. It reads at 24 px and stays serious next to a gate.</p>
+      <div class="tile light">
+        <img class="large" src="mira-seal.svg" alt="Proof seal on paper" />
+        <div class="sizes"><span>184</span><span>96</span><span>44</span><span>24</span></div>
+      </div>
+      <div class="tile dark">
+        <img class="medium" src="mira-seal-dark.svg" alt="Proof seal on dark" />
+        <img class="small" src="mira-seal-dark.svg" alt="" />
+        <img class="tiny" src="mira-seal-dark.svg" alt="" />
+      </div>
+      <div class="glyph-row">
+        <img class="tiny" src="mira-seal.svg" alt="" />
+        <img width="42" height="42" src="mira-seal.svg" alt="" />
+        <span>gate / release only</span>
+      </div>
+    </article>
+  </section>
+
+  <section class="context">
+    <div class="panel light">
+      <h3>Empty state</h3>
+      <div class="empty-row">
+        <img src="mira-ink-v2.svg" alt="" />
+        <div>
+          <p>Warmth belongs here. One character, one sentence, no decoration.</p>
+          <p style="margin-top:10px;color:var(--ink);font-weight:600">Start with a report.</p>
+        </div>
+      </div>
+    </div>
+    <div class="panel dark">
+      <h3>Story rail</h3>
+      <p>The character marks the current stop. It never overlaps a gate or covers the route.</p>
+      <div class="story-row">
+        <img src="mira-route-dark.svg" alt="" />
+        <div><b>Mira is checking it</b><span>checking · 1 of 3</span></div>
+      </div>
+    </div>
+    <div class="panel dark">
+      <h3>Release gate</h3>
+      <p>No cartoon at the decision. The seal carries the brand and the seriousness.</p>
+      <div class="gate-row">
+        <img src="mira-seal-dark.svg" alt="" />
+        <div><b>Release this commit</b><span>gate 2 · a person decides</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="motion">
+    <div class="motion-head">
+      <h3>Motion language · 5 states</h3>
+      <p>Short, purposeful, no bounce loops. Route draws once; seal stamps once; the character blinks at rest.</p>
+    </div>
+    <div class="frames">
+      <div class="frame"><div class="art"><img src="mira-ink-v2.svg" alt="" /></div><div><div class="step">01 · idle</div><div class="note">Tail settles. One blink every 6–8 s.</div><div class="t">0–240 ms · ease-out</div></div></div>
+      <div class="frame"><div class="art"><img src="mira-ink-v2.svg" alt="" style="transform:translateX(5px) rotate(-2deg)" /></div><div><div class="step">02 · carry</div><div class="note">The seal becomes the carried object.</div><div class="t">180 ms · standard</div></div></div>
+      <div class="frame"><div class="art"><img src="mira-ink-v2.svg" alt="" style="transform:translateY(-4px)" /></div><div><div class="step">03 · wait</div><div class="note">Head tilt 4°. No loop, no bob.</div><div class="t">160 ms · ease-in-out</div></div></div>
+      <div class="frame"><div class="art"><img src="mira-route.svg" alt="" /></div><div><div class="step">04 · alert</div><div class="note">Route redraws toward the failed check.</div><div class="t">320 ms · linear</div></div></div>
+      <div class="frame"><div class="art"><img src="mira-seal.svg" alt="" style="transform:scale(1.08)" /></div><div><div class="step">05 · approve</div><div class="note">Seal stamps down. Check draws. One dot.</div><div class="t">220 ms · snap</div></div></div>
+    </div>
+  </section>
+
+  <section class="score">
+    <div class="table">
+      <table>
+        <thead><tr><th>Criterion</th><th>Now</th><th>Target</th></tr></thead>
+        <tbody>
+          <tr><td>2026 relevance</td><td class="num">3 / 10</td><td class="good">10 / 10 · editorial + route</td></tr>
+          <tr><td>Drawing quality</td><td class="num">7 / 10</td><td class="good">10 / 10 · two inks, no noise</td></tr>
+          <tr><td>Brand fit</td><td class="num">7 / 10</td><td class="good">10 / 10 · violet route + seal</td></tr>
+          <tr><td>16–44 px</td><td class="num">5 / 10</td><td class="good">10 / 10 · dedicated glyph</td></tr>
+          <tr><td>Motion</td><td class="num">0 / 10</td><td class="good">10 / 10 · 5 states</td></tr>
+          <tr><td>Seriousness at gates</td><td class="num">5 / 10</td><td class="good">10 / 10 · seal, no mascot</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="rule">
+      <h3>Rules of the system</h3>
+      <ul>
+        <li><b>One character, one job.</b> Mira carries the proof; she does not decorate gates.</li>
+        <li><b>Ink for warmth, route for motion, seal for decisions.</b> Never all three at once.</li>
+        <li><b>Small sizes use the glyph.</b> No face, no scarf, no page below 44 px.</li>
+        <li><b>Red is a stamp, not a brand.</b> One vermilion dot per surface.</li>
+        <li><b>No panda, dragon, lantern or red envelope.</b> The story is the magpie, not a theme.</li>
+      </ul>
+      <div class="swatches">
+        <div class="sw" style="background:#16141b"><span>INK</span></div>
+        <div class="sw light" style="background:#f4f0e6;border:1px solid rgba(22,20,27,.18)"><span>PAPER</span></div>
+        <div class="sw" style="background:#6d28d9"><span>VIOLET</span></div>
+        <div class="sw" style="background:#8b5cf6"><span>VIOLET 2</span></div>
+        <div class="sw" style="background:#e2452f"><span>STAMP</span></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <span><b>Recommendation</b> keep the magpie · adopt ink + route + seal</span>
+    <span>concept draft · not applied to the app</span>
+  </footer>
+</body>
+</html>

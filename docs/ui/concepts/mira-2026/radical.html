@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Mira — five non-bird identities</title>
+<style>
+  :root{
+    --bg:#f4f5f9;--panel:#fff;--panel-2:#f8f9fc;--panel-3:#eef1f7;
+    --text:#111827;--muted:#4b5563;--faint:#9ca3af;--line:#e3e7ef;
+    --violet:#6d28d9;--violet-soft:#f1edff;--violet-text:#5b21b6;--red:#be123c;--green:#047857;
+    --mono:"Cascadia Code",Consolas,monospace;--sans:"Segoe UI",Inter,system-ui,sans-serif;
+    --shadow:0 1px 0 rgba(17,24,39,.02),0 8px 22px rgba(17,24,39,.05);
+  }
+  *{box-sizing:border-box}html,body{margin:0}
+  body{width:1600px;min-height:1040px;background:var(--bg);color:var(--text);font-family:var(--sans);padding:44px 52px}
+  .kicker{font:700 10px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--violet)}
+  h1{font:650 48px/1.05 var(--sans);letter-spacing:-.035em;margin:10px 0 8px}
+  .lede{max-width:1000px;color:var(--muted);font-size:13.5px;line-height:1.6;margin:0}
+  .warn{display:inline-block;margin-top:10px;padding:6px 10px;border-radius:8px;background:#fff1f2;color:var(--red);font:700 9px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase}
+  .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:24px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:15px;box-shadow:var(--shadow);display:flex;flex-direction:column;min-height:360px}
+  .num{font:700 10px/1 var(--mono);letter-spacing:.16em;color:var(--violet)}
+  .kind{font:8px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--faint);text-align:right}
+  h2{font:650 17px/1.15 var(--sans);letter-spacing:-.02em;margin:7px 0 3px}
+  .what{font-size:10.5px;line-height:1.5;color:var(--muted);min-height:52px}
+  .stage{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0;min-height:190px;display:flex;align-items:flex-end;justify-content:space-between}
+  .stage img{display:block}
+  .small{display:flex;flex-direction:column;align-items:center;gap:5px}
+  .small span{font:8px var(--mono);color:var(--faint)}
+  .note{margin-top:auto;font:9px/1.5 var(--mono);color:var(--faint);border-top:1px solid var(--line);padding-top:7px}
+  .note b{color:var(--text)}
+  .footer{display:flex;justify-content:space-between;margin-top:22px;padding-top:12px;border-top:1px solid var(--line);font:9px/1.6 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+  .footer b{color:var(--text)}
+</style>
+</head>
+<body>
+  <div class="kicker">Mira · five non-bird identities · light UI</div>
+  <h1>No bird. Five identities.</h1>
+  <p class="lede">You asked for totally different. This is the honest version: no magpie, no eyes, no scarf, no proof page. Five different categories of identity. If none of these is right, then “Mira the bird” is the constraint — not the year.</p>
+  <div class="warn">not bird variants · not final art</div>
+
+  <section class="grid">
+    <article class="card">
+      <div class="num">01 · PROOF MARK</div><div class="kind">seal</div>
+      <h2>The check</h2>
+      <p class="what">A violet seal with one check and one vermilion dot. No character, no face. A decision mark.</p>
+      <div class="stage"><img src="radical/proof-mark.svg" width="150" height="150" alt="" /><div class="small"><img src="radical/proof-mark.svg" width="44" height="44" alt="" /><span>44</span></div><div class="small"><img src="radical/proof-mark.svg" width="24" height="24" alt="" /><span>24</span></div></div>
+      <div class="note"><b>Best for:</b> gate 2, favicon, proof. <b>Risk:</b> no warmth.</div>
+    </article>
+
+    <article class="card">
+      <div class="num">02 · MONOGRAM</div><div class="kind">brand</div>
+      <h2>The M</h2>
+      <p class="what">The letter M ends in a check. A brand mark, not a mascot. One shape, no story character.</p>
+      <div class="stage"><img src="radical/monogram.svg" width="150" height="150" alt="" /><div class="small"><img src="radical/monogram.svg" width="44" height="44" alt="" /><span>44</span></div><div class="small"><img src="radical/monogram.svg" width="24" height="24" alt="" /><span>24</span></div></div>
+      <div class="note"><b>Best for:</b> brand system. <b>Risk:</b> reads as a logo only.</div>
+    </article>
+
+    <article class="card">
+      <div class="num">03 · CURSOR</div><div class="kind">dev-native</div>
+      <h2>The cursor</h2>
+      <p class="what">A terminal block cursor and a check. The factory as a prompt, not a character.</p>
+      <div class="stage"><img src="radical/cursor.svg" width="150" height="150" alt="" /><div class="small"><img src="radical/cursor.svg" width="44" height="44" alt="" /><span>44</span></div><div class="small"><img src="radical/cursor.svg" width="24" height="24" alt="" /><span>24</span></div></div>
+      <div class="note"><b>Best for:</b> developer audience. <b>Risk:</b> too cold.</div>
+    </article>
+
+    <article class="card">
+      <div class="num">04 · OBJECT</div><div class="kind">object</div>
+      <h2>The clip</h2>
+      <p class="what">A violet paper clip holding the proof card. A physical object with no face.</p>
+      <div class="stage"><img src="radical/paperclip.svg" width="150" height="150" alt="" /><div class="small"><img src="radical/paperclip.svg" width="44" height="44" alt="" /><span>44</span></div><div class="small"><img src="radical/paperclip.svg" width="24" height="24" alt="" /><span>24</span></div></div>
+      <div class="note"><b>Best for:</b> warmth without a creature. <b>Risk:</b> office-object cliché.</div>
+    </article>
+
+    <article class="card">
+      <div class="num">05 · SYSTEM</div><div class="kind">generative</div>
+      <h2>The constellation</h2>
+      <p class="what">Nodes and edges form a check. The identity is a system that changes with state.</p>
+      <div class="stage"><img src="radical/constellation.svg" width="150" height="150" alt="" /><div class="small"><img src="radical/constellation.svg" width="44" height="44" alt="" /><span>44</span></div><div class="small"><img src="radical/constellation.svg" width="24" height="24" alt="" /><span>24</span></div></div>
+      <div class="note"><b>Best for:</b> adaptive product. <b>Risk:</b> abstract.</div>
+    </article>
+  </section>
+
+  <footer class="footer"><span><b>Pick one</b> or say “none” · no app changes</span><span>concept draft</span></footer>
+</body>
+</html>

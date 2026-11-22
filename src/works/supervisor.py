@@ -429,7 +429,7 @@ class Supervisor:
         self._queue.append(
             ctx.task.id,
             "note",
-            {"message": "release gate not crossed in v0; proof is ready"},
+            {"message": "proof is ready; gate 2 is the next step"},
         )
         ctx.stop_reason = StopReason.COMPLETED
 

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Mira — bird readability test</title>
+<style>
+  :root {
+    --ink:#16141b; --paper:#f4efe3; --paper-2:#fbf8f0; --line:rgba(22,20,27,.15);
+    --violet:#6d28d9; --violet-2:#8b5cf6; --red:#be123c; --green:#047857; --muted:#6f675c;
+    --serif:Georgia,"Times New Roman",serif; --mono:"Cascadia Code",Consolas,monospace; --sans:"Segoe UI",Inter,system-ui,sans-serif;
+  }
+  *{box-sizing:border-box} html,body{margin:0}
+  body{width:1400px;min-height:1020px;background:radial-gradient(circle at 20% 0%,#fff9ee,transparent 34%),var(--paper);color:var(--ink);font-family:var(--sans);padding:48px 56px}
+  .kicker{font:700 10px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--violet)}
+  h1{font:400 52px/1 var(--serif);letter-spacing:-.03em;margin:12px 0 8px}
+  .lede{max-width:880px;color:var(--muted);font-size:13.5px;line-height:1.6;margin:0}
+  .columns{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:30px}
+  .col{background:var(--paper-2);border:1px solid var(--line);border-radius:18px;padding:22px}
+  .col h2{font:400 26px/1.1 var(--serif);margin:0 0 4px}
+  .col .tag{font:700 9px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase}
+  .col.now .tag{color:var(--red)} .col.next .tag{color:var(--green)}
+  .sizes{display:flex;align-items:flex-end;gap:22px;margin:18px 0 20px;min-height:250px}
+  .size{display:flex;flex-direction:column;align-items:center;gap:6px}
+  .size span{font:9px var(--mono);color:var(--muted)}
+  .size img{display:block}
+  .note{font-size:12px;line-height:1.6;color:var(--muted);margin:0}
+  .note b{color:var(--ink)}
+  ul{margin:10px 0 0;padding-left:18px}
+  li{font-size:12px;line-height:1.6;color:var(--muted);margin-bottom:4px}
+  li b{color:var(--ink)}
+  .callout{margin-top:22px;background:#11141b;color:var(--paper);border-radius:16px;padding:20px 24px;display:grid;grid-template-columns:1.2fr 1fr;gap:24px}
+  .callout h3{font:400 22px/1.2 var(--serif);margin:0 0 8px;color:var(--paper)}
+  .callout p{margin:0;color:#b7becb;font-size:12px;line-height:1.6}
+  .callout b{color:var(--paper)}
+  .small{font:10px/1.7 var(--mono);letter-spacing:.05em;text-transform:uppercase;color:#8b95a7;margin-top:14px}
+  .owl{margin-top:18px;padding:12px 14px;border-left:2px solid var(--violet);background:rgba(109,40,217,.06);font-size:12px;color:var(--muted);line-height:1.55}
+</style>
+</head>
+<body>
+  <div class="kicker">Mira · bird readability test · not applied</div>
+  <h1>What does it read as?</h1>
+  <p class="lede">A mascot has one job at 24 px: the silhouette must name the animal. Mira is a <b>magpie</b> (喜鹊). The current drawing reads as a duck because the tail is lost, the body is round and the neck is hidden. This is a silhouette problem, not a color or detail problem.</p>
+
+  <section class="columns">
+    <article class="col now">
+      <div class="tag">current · v1</div>
+      <h2>Round, friendly, ambiguous</h2>
+      <div class="sizes">
+        <div class="size"><img src="mira-ink.svg" width="210" height="210" alt="" /><span>210</span></div>
+        <div class="size"><img src="mira-ink.svg" width="96" height="96" alt="" /><span>96</span></div>
+        <div class="size"><img src="mira-ink.svg" width="44" height="44" alt="" /><span>44</span></div>
+        <div class="size"><img src="mira-ink.svg" width="24" height="24" alt="" /><span>24</span></div>
+      </div>
+      <p class="note"><b>Why it reads as a duck:</b></p>
+      <ul>
+        <li>body is round and wide, like a duck</li>
+        <li>neck disappears into the body</li>
+        <li>tail is short at reading size; it merges with the body</li>
+        <li>white belly dominates; the white shoulder patch is a thin sliver</li>
+        <li>the beak is short and soft</li>
+      </ul>
+    </article>
+
+    <article class="col next">
+      <div class="tag">proposed · v2</div>
+      <h2>Long tail, visible neck, magpie</h2>
+      <div class="sizes">
+        <div class="size"><img src="mira-ink-v2.svg" width="210" height="210" alt="" /><span>210</span></div>
+        <div class="size"><img src="mira-ink-v2.svg" width="96" height="96" alt="" /><span>96</span></div>
+        <div class="size"><img src="mira-ink-v2.svg" width="44" height="44" alt="" /><span>44</span></div>
+        <div class="size"><img src="mira-ink-v2.svg" width="24" height="24" alt="" /><span>24</span></div>
+      </div>
+      <p class="note"><b>What changed:</b></p>
+      <ul>
+        <li>tail is longer than the body and splits into two feathers</li>
+        <li>slimmer, more upright body; the neck is visible</li>
+        <li>stronger, longer beak with a paper mouth line</li>
+        <li>clear white shoulder patch, not a sliver</li>
+        <li>crest at the nape; the head no longer floats</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="callout">
+    <div>
+      <h3>What I meant</h3>
+      <p>Mira is a <b>magpie</b> — 喜鹊, the bird that brings good news. She is the <b>keeper of the proof</b>, not a courier duck. The scarf is the brand; the seal is the proof; the long tail is the species.</p>
+      <p style="margin-top:10px">The seal and route marks use the same bird. If the character reads as a duck, the seal inherits the same problem.</p>
+      <div class="small">Owl was a rejected option — it is not in the design.</div>
+    </div>
+    <div class="owl">
+      <b>If the silhouette still fails after v2,</b> the honest fallback is not more detail. It is a different bird with an unmistakable outline: a <b>swallow</b> (returning to the source) or a <b>red-crowned crane</b> (longevity, trust). But a magpie with a real tail is the stronger story.
+    </div>
+  </section>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Mira — front woodcut</title>
+  <path d="M 84 456 H 438" stroke="#16141B" stroke-width="5" stroke-linecap="round" opacity=".25"/>
+  <!-- wings spread -->
+  <path d="M 220 270 L 52 168 L 72 248 L 38 258 L 112 306 L 86 332 L 200 336 Z" fill="#16141B"/>
+  <path d="M 292 270 L 460 168 L 440 248 L 474 258 L 400 306 L 426 332 L 312 336 Z" fill="#16141B"/>
+  <path d="M 96 212 L 200 290" stroke="#F4EFE3" stroke-width="4" stroke-dasharray="2 9" opacity=".55"/>
+  <path d="M 416 212 L 312 290" stroke="#F4EFE3" stroke-width="4" stroke-dasharray="2 9" opacity=".55"/>
+  <!-- tail -->
+  <path d="M 220 380 L 170 490 L 220 480 L 256 420 L 292 480 L 342 490 L 292 380 Z" fill="#16141B"/>
+  <path d="M 256 420 L 256 492" stroke="#F4EFE3" stroke-width="4" stroke-dasharray="2 8" opacity=".5"/>
+  <!-- body -->
+  <path d="M 256 250 C 316 250 344 300 340 356 C 336 412 302 430 256 430 C 210 430 176 412 172 356 C 168 300 196 250 256 250 Z" fill="#16141B"/>
+  <path d="M 256 310 C 294 310 312 344 310 382 C 306 414 286 424 256 424 C 226 424 206 414 202 382 C 200 344 218 310 256 310 Z" fill="#F4EFE3"/>
+  <path d="M 220 352 C 242 338 270 338 292 352" stroke="#16141B" stroke-width="4" stroke-dasharray="2 7" fill="none"/>
+  <!-- head -->
+  <circle cx="256" cy="196" r="58" fill="#16141B"/>
+  <path d="M 256 214 L 280 236 L 256 258 L 232 236 Z" fill="#16141B"/>
+  <circle cx="236" cy="188" r="9" fill="#F4EFE3"/><circle cx="276" cy="188" r="9" fill="#F4EFE3"/>
+  <circle cx="236" cy="188" r="3" fill="#16141B"/><circle cx="276" cy="188" r="3" fill="#16141B"/>
+  <!-- crest -->
+  <path d="M 232 142 L 208 108 L 228 104 L 246 136 Z" fill="#16141B"/>
+  <path d="M 280 142 L 304 108 L 284 104 L 266 136 Z" fill="#16141B"/>
+  <!-- legs -->
+  <path d="M 238 430 L 234 456 M 234 456 L 216 468 M 234 456 L 250 468" stroke="#16141B" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <path d="M 274 430 L 278 456 M 278 456 L 262 468 M 278 456 L 296 468" stroke="#16141B" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <!-- seal -->
+  <path d="M 256 330 L 282 330 L 282 356 L 256 356 Z" fill="#E2452F"/>
+  <path d="M 262 342 L 268 348 L 278 336" stroke="#F4EFE3" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

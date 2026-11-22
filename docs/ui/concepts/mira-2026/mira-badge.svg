@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Mira badge</title>
+  <desc id="desc">A circular proof badge with a magpie face, violet field and a cream check.</desc>
+  <circle cx="256" cy="256" r="204" fill="#F4EFE3" stroke="#16141B" stroke-width="12"/>
+  <circle cx="256" cy="256" r="174" fill="#6D28D9"/>
+  <circle cx="256" cy="222" r="104" fill="#16141B"/>
+  <circle cx="218" cy="210" r="30" fill="#F4EFE3"/>
+  <circle cx="294" cy="210" r="30" fill="#F4EFE3"/>
+  <circle cx="222" cy="214" r="13" fill="#16141B"/>
+  <circle cx="298" cy="214" r="13" fill="#16141B"/>
+  <path d="M 238 246 L 274 246 L 256 278 Z" fill="#D97706"/>
+  <path d="M 170 292 C 208 308 304 308 342 290 L 334 322 C 296 340 216 340 178 322 Z" fill="#F4EFE3"/>
+  <path d="M 190 320 C 174 344 178 372 200 384 C 212 368 206 346 216 328 Z" fill="#D9D2C4"/>
+  <path d="M 230 330 L 256 358 L 314 292" stroke="#F4EFE3" stroke-width="16" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="176" cy="356" r="8" fill="#E2452F"/>
+</svg>

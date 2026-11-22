@@ -1,10 +1,12 @@
 # agent-core verification team
 
-Works uses agent-core on two levels:
+Works uses agent-core on three levels:
 
 1. **Harness** — `--live` drives `openjiuwen.harness_protocol` from the agent-core checkout.
 2. **Verification team** — `works team verify` runs a deterministic three-role team on
    `BaseTeam` + `TeamRuntime`.
+3. **Ask Mira** — the Thread view asks a real `openjiuwen` model about one recorded run; the answer
+   streams into the worklog as an advisory message.
 
 The team is intentionally **model-free**. It reads recorded evidence, not agent prose:
 
@@ -34,6 +36,30 @@ Environment:
 |---|---|---|
 | `WORKS_AGENT_PYTHON` | `C:\Workspace\openjiuwen\agent-core\.venv\Scripts\python.exe` | agent-core interpreter |
 | `WORKS_AGENT_CORE` | `C:\Workspace\openjiuwen\agent-core` | agent-core checkout on `PYTHONPATH` |
+
+## Ask Mira
+
+`Ask Mira` is a real model call, not a template. The browser posts to `/api/ask/stream`; the server
+builds a context from the task, run, evidence, release packet, delivery and confirmation, then
+starts `scripts/agent_chat_worker.py` with agent-core's Python. The worker uses openjiuwen's
+`Model` (`Anthropic` client against an Anthropic-compatible endpoint) and streams text back as SSE.
+
+Every answer is stored as `thread.agent` with the question, answer, model, tokens and USD. The
+system prompt forbids inventing evidence: if the context does not contain an answer, Mira says
+"Not recorded in this run." The answer is advisory and cannot approve, release, retry or change a
+task.
+
+Environment:
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `WORKS_MODEL_KEY` / `ANTHROPIC_API_KEY` | — | model credential; required |
+| `WORKS_MODEL_BASE` | `https://api.deepseek.com/anthropic` | Anthropic-compatible endpoint |
+| `WORKS_AGENT_MODEL` | `deepseek-chat` | model name |
+| `WORKS_AGENT_PYTHON` | agent-core venv Python | isolated interpreter |
+| `WORKS_AGENT_CORE` | `C:\Workspace\openjiuwen\agent-core` | runtime on `PYTHONPATH` |
+
+Without a key or runtime the composer is disabled with the reason; there is no fake answer.
 
 ## Boundary
 

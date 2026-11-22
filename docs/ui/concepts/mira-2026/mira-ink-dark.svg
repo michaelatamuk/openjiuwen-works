@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Mira, keeper of the proof — ink on dark</title>
+  <desc id="desc">A paper-cut magpie in profile with a violet scarf and proof seal.</desc>
+  <path d="M 82 438 H 438" stroke="#F4F0E6" stroke-width="4" stroke-linecap="round" opacity="0.18"/>
+  <path d="M 238 346 C 196 382 150 420 92 462 C 120 476 160 468 194 444 C 222 424 246 396 262 368 Z" fill="#F4F0E6"/>
+  <path d="M 252 366 C 220 400 186 430 146 456 C 170 464 198 456 222 436 C 244 418 260 394 272 374 Z" fill="#BDB6A8"/>
+  <path d="M 246 214 C 304 206 354 240 366 294 C 378 350 346 394 296 406 C 246 418 206 390 196 348 C 186 304 206 250 246 214 Z" fill="#F4F0E6"/>
+  <path d="M 244 338 C 280 328 322 338 340 368 C 322 394 286 404 256 394 C 236 386 230 360 244 338 Z" fill="#16141B"/>
+  <path d="M 232 268 C 278 254 322 270 338 308 C 324 338 282 350 246 332 C 230 314 224 288 232 268 Z" fill="#16141B"/>
+  <path d="M 238 278 C 260 268 286 272 302 288 C 288 302 262 304 246 296 Z" fill="#F4F0E6"/>
+  <circle cx="356" cy="188" r="60" fill="#F4F0E6"/>
+  <path d="M 330 138 C 316 118 296 110 280 114 C 298 122 308 134 312 150 Z" fill="#F4F0E6"/>
+  <path d="M 358 132 C 350 110 332 98 314 100 C 330 110 338 122 340 138 Z" fill="#F4F0E6"/>
+  <path d="M 412 178 L 470 196 L 412 214 Z" fill="#F4F0E6"/>
+  <path d="M 414 196 H 454" stroke="#16141B" stroke-width="3" stroke-linecap="round" opacity="0.85"/>
+  <circle cx="378" cy="174" r="7.5" fill="#16141B"/>
+  <circle cx="380" cy="174" r="2.6" fill="#F4F0E6"/>
+  <path d="M 308 238 C 336 252 386 252 414 236 L 408 260 C 378 274 342 274 314 260 Z" fill="#8B5CF6"/>
+  <path d="M 318 262 C 304 284 306 312 326 324 C 338 310 332 288 342 272 Z" fill="#6D28D9"/>
+  <path d="M 294 404 L 290 432 M 290 432 L 274 440 M 290 432 L 304 440" stroke="#F4F0E6" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <path d="M 338 398 L 334 426 M 334 426 L 318 434 M 334 426 L 348 434" stroke="#F4F0E6" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <g transform="translate(244 292) rotate(-8)">
+    <rect width="50" height="50" rx="11" fill="#8B5CF6"/>
+    <path d="M12 26 L22 36 L39 16" stroke="#16141B" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </g>
+</svg>

@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Mira — 15 material directions</title>
+<style>
+  :root{
+    --bg:#f4f5f9;--panel:#fff;--panel-2:#f8f9fc;--panel-3:#eef1f7;
+    --text:#111827;--muted:#4b5563;--faint:#9ca3af;--line:#e3e7ef;
+    --violet:#6d28d9;--violet-soft:#f1edff;--violet-text:#5b21b6;--red:#be123c;--green:#047857;
+    --mono:"Cascadia Code",Consolas,monospace;--sans:"Segoe UI",Inter,system-ui,sans-serif;
+    --shadow:0 1px 0 rgba(17,24,39,.02),0 8px 22px rgba(17,24,39,.05);
+    --noise:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+  }
+  *{box-sizing:border-box}html,body{margin:0}
+  body{width:1800px;min-height:1320px;background:var(--bg);color:var(--text);font-family:var(--sans);padding:40px 48px}
+  .kicker{font:700 10px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--violet)}
+  h1{font:650 44px/1.05 var(--sans);letter-spacing:-.035em;margin:10px 0 8px}
+  .lede{max-width:1080px;color:var(--muted);font-size:13px;line-height:1.6;margin:0}
+  .warn{display:inline-block;margin-top:10px;padding:6px 10px;border-radius:8px;background:#fff1f2;color:var(--red);font:700 9px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase}
+  .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:22px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;box-shadow:var(--shadow);display:flex;flex-direction:column;min-height:310px}
+  .head{display:flex;justify-content:space-between;align-items:baseline}
+  .num{font:700 9px/1 var(--mono);letter-spacing:.14em;color:var(--violet)}
+  .kind{font:8px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+  h2{font:650 14px/1.2 var(--sans);letter-spacing:-.015em;margin:6px 0 2px}
+  .what{font-size:10px;line-height:1.45;color:var(--muted);min-height:42px}
+  .stage{position:relative;height:172px;border-radius:10px;margin:7px 0;overflow:hidden;background:var(--panel-2);border:1px solid var(--line);display:grid;place-items:center}
+  .art{position:relative;width:150px;height:150px;display:grid;place-items:center}
+  .art img{position:relative;z-index:2;width:100%;height:100%;object-fit:contain}
+  .art .ov{position:absolute;inset:0;z-index:3;border-radius:20%;}
+  .tag{font:8px/1.4 var(--mono);letter-spacing:.04em;color:var(--faint);border-top:1px solid var(--line);padding-top:6px;margin-top:auto}
+  /* 01 glass */
+  .glass img{filter:blur(.7px) saturate(.7) brightness(1.12);opacity:.82}
+  .glass .ov{background:
+    linear-gradient(125deg,rgba(255,255,255,.75) 0 8%,transparent 9% 32%,rgba(255,255,255,.45) 33% 36%,transparent 37%),
+    radial-gradient(circle at 28% 24%,rgba(255,255,255,.85),transparent 36%),
+    linear-gradient(160deg,rgba(139,92,246,.18),transparent 60%);
+    mix-blend-mode:screen;}
+  /* 02 chrome */
+  .chrome img{filter:grayscale(1) contrast(2.5) brightness(1.25)}
+  .chrome .ov{background:linear-gradient(115deg,transparent 0 18%,#fff 23%,#090b10 34%,#fff 46%,#4b5563 58%,#fff 68%,transparent 76%);mix-blend-mode:overlay;opacity:.9}
+  /* 03 porcelain */
+  .porcelain img{filter:saturate(.55) contrast(.92) brightness(1.08)}
+  .porcelain .ov{background:radial-gradient(circle at 30% 22%,rgba(255,255,255,.9),transparent 38%),linear-gradient(150deg,rgba(255,255,255,.25),rgba(109,40,217,.12));mix-blend-mode:soft-light}
+  /* 04 latex */
+  .latex img{filter:saturate(1.35) contrast(1.1) brightness(1.05)}
+  .latex .ov{background:radial-gradient(circle at 30% 20%,#fff 0 4%,transparent 14%),radial-gradient(circle at 70% 70%,rgba(255,255,255,.35),transparent 30%);mix-blend-mode:screen;opacity:.9}
+  /* 05 flocked */
+  .flocked img{filter:saturate(.55) contrast(.9) blur(.25px)}
+  .flocked .ov{background-image:var(--noise);background-size:90px;opacity:.28;mix-blend-mode:multiply}
+  /* 06 knit */
+  .knit img{filter:saturate(.8) contrast(1.05)}
+  .knit .ov{background:
+    repeating-linear-gradient(45deg,rgba(255,255,255,.25) 0 2px,transparent 2px 7px),
+    repeating-linear-gradient(-45deg,rgba(0,0,0,.16) 0 2px,transparent 2px 7px);
+    mix-blend-mode:overlay;opacity:.9}
+  /* 07 papier */
+  .papier img{filter:contrast(.88) saturate(.65) brightness(1.03)}
+  .papier .ov{background-image:var(--noise);background-size:120px;opacity:.35;mix-blend-mode:multiply}
+  .papier .ov::after{content:"";position:absolute;inset:8%;border:2px dashed rgba(22,20,27,.16);border-radius:18%}
+  /* 08 brutalist */
+  .brutal .stage{background:#f1e7d0}
+  .brutal img{filter:grayscale(1) contrast(2.8) brightness(.95);}
+  .brutal .ov{background:linear-gradient(90deg,rgba(0,0,0,.08),transparent 40%);mix-blend-mode:multiply}
+  .brutal .art{filter:drop-shadow(4px 4px 0 #111827)}
+  /* 09 collage */
+  .collage img{filter:grayscale(1) contrast(1.7) brightness(1.05)}
+  .collage .ov{background-image:radial-gradient(circle,#111827 1px,transparent 1.2px);background-size:5px 5px;opacity:.28;mix-blend-mode:multiply}
+  .collage .art{filter:drop-shadow(7px 7px 0 rgba(109,40,217,.22))}
+  /* 10 pixel */
+  .pixel img{image-rendering:pixelated;filter:none}
+  /* 11 wireframe */
+  .wire img{filter:saturate(1.1)}
+  /* 12 particle */
+  .particle{background:#11141b}
+  /* 13 enamel */
+  .enamel img{filter:saturate(1.25) contrast(1.15)}
+  .enamel .art{filter:drop-shadow(0 0 0 #c9a227) drop-shadow(0 0 0 #c9a227) drop-shadow(0 0 0 #c9a227)}
+  .enamel .ov{background:linear-gradient(135deg,rgba(255,255,255,.55),transparent 28%,transparent 72%,rgba(255,255,255,.35));mix-blend-mode:screen;opacity:.7}
+  /* 14 wood */
+  .wood .stage{background:#f2e6d2}
+  .wood img{filter:sepia(.35) saturate(.9) contrast(1.05)}
+  .wood .ov{background:repeating-linear-gradient(95deg,rgba(122,74,30,.22) 0 2px,transparent 2px 12px),repeating-linear-gradient(95deg,rgba(255,255,255,.18) 0 1px,transparent 1px 7px);mix-blend-mode:multiply;opacity:.8}
+  /* 15 concrete */
+  .concrete .stage{background:#e7e7e4}
+  .concrete img{filter:grayscale(1) contrast(1.1) brightness(.92)}
+  .concrete .ov{background-image:var(--noise);background-size:110px;opacity:.4;mix-blend-mode:multiply}
+  .concrete .ov::after{content:"";position:absolute;inset:0;background:linear-gradient(118deg,transparent 42%,rgba(17,24,39,.35) 43%,transparent 44%),linear-gradient(64deg,transparent 58%,rgba(17,24,39,.25) 59%,transparent 60%)}
+  .footer{display:flex;justify-content:space-between;margin-top:22px;padding-top:12px;border-top:1px solid var(--line);font:9px/1.6 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+</style>
+</head>
+<body>
+  <div class="kicker">Mira · 15 material directions · light UI</div>
+  <h1>Same bird. Fifteen materials.</h1>
+  <p class="lede">These are material and art-direction studies, not 15 final mascots. The silhouette stays close to Mira; the visual language changes completely. Pick a material, not a pose. Directions 1–7, 12–15 need a real 3D/render pass; vector directions are marked.</p>
+  <div class="warn">material studies · not final art</div>
+
+  <section class="grid">
+    <article class="card">
+      <div class="head"><span class="num">01 · GLASS</span><span class="kind">3D</span></div><h2>Frosted glass</h2>
+      <p class="what">Translucent body, refraction, violet core. Light-first, premium.</p>
+      <div class="stage"><div class="art glass"><img src="gaze/front.svg" alt="" /><div class="ov"></div></div></div>
+      <div class="tag">translucent · refraction · cool</div>
+    </article>
+
+    <article class="card">
+      <div class="head"><span class="num">02 · CHROME</span><span class="kind">3D</span></div><h2>Liquid chrome</h2>
+      <p class="what">Mirror metal, fluid reflections, hard highlights.</p>
+      <div class="stage"><div class="art chrome"><img src="gaze/three-quarter.svg" alt="" /><div class="ov"></div></div></div>
+      <div class="tag">metal · mirror · expensive</div>
+    </article>
+
+    <article class="card">
+      <div class="head"><span class="num">03 · PORCELAIN</span><span class="kind">3D</span></div><h2>Porcelain toy</h2>
+      <p class="what">Glazed ceramic, soft specular, hand-made imperfections.</p>
+      <div class="stage"><div class="art porcelain"><img src="gaze/front.svg" alt="" /><div class="ov"></div></div></div>
+      <div class="tag">glaze · clay · collectible</div>
+    </article>
+
+    <article class="card">
+      <div class="head"><span class="num">04 · LATEX</span><span class="kind">3D</span></div><h2>Inflatable</h2>
+      <p class="what">Glossy puffy form, seams, strong specular. Playful but controlled.</p>
+      <div class="stage"><div class="art latex"><img src="gaze/front.svg" alt="" /><div class="ov"></div></div></div>
+      <div class="tag">gloss · puffy · pop</div>
+    </article>
+
+    <article class="card">
+      <div class="head"><span class="num">05 · FLOCK</span><span class="kind">3D</span></div><h2>Flocked fiber</h2>
+      <p class="what">Matte fuzzy surface, tactile, warm. A collectible object.</p>
+      <div class="stage"><div class="art flocked"><img src="gaze/three-quarter.svg" alt="" /><div class="ov"></div></div></div>
+      <div class="tag">fiber · matte · warm</div>
+    </article>
+
+    <article class="card">
+      <div class="head"><span class="num">06 · KNIT</span><span class="kind">3D</span></div><h2>Knitted</h2>
+      <p class="what">Yarn, stitches, soft volume. Human and calm.</p>
+      <div class="stage"><div class="art knit"><img src="gaze/front.svg" alt="" /><div class="ov"></div></div></div>
+      <div class="tag">textile · craft · cozy</div>
+    </article>
+
+    <article class="card">
+      <div class="head"><span class="num">07 · PAPIER</span><span class="kind">3D</span></div><h2>Papier-mâché</h2>
+      <p class="what">Torn paper, glue, imperfect edges. Anti-perfect craft.</p>
+      <div class="stage"><div class="art papier"><img src="gaze/profile.svg" alt="" /><div class="ov"></div></div></div>
+      <div class="tag">paper · rough · honest</div>
+    </article>
+
+    <article class="card">
+      <div class="head"><span class="num">08 · BRUTAL</span><span class="kind">vector</span></div><h2>Neo-brutalist</h2>
+      <p class="what">Thick black stroke, flat fill, offset shadow. Poster energy.</p>
+      <div class="stage"><div class="art brutal"><img src="gaze/profile.svg" alt="" /><div class="ov"></div></div></div>
+      <div class="tag">flat · raw · loud</div>
+    </article>
+
+    <article class="card">
+      <div class="head"><span class="num">09 · COLLAGE</span><span class="kind">vector</span></div><h2>Editorial collage</h2>
+      <p class="what">Halftone, cut paper, print texture. Cultural, not corporate.</p>
+      <div class="stage"><div class="art collage"><img src="gaze/profile.svg" alt="" /><div class="ov"></div></div></div>
+      <div class="tag">halftone · cut-out · print</div>
+    </article>
+
+    <article class="card">
+      <div class="head"><span class="num">10 · PIXEL</span><span class="kind">vector</span></div><h2>Pixel sprite</h2>
+      <p class="what">16×16, two colors, sprite frames. Dev-native.</p>
+      <div class="stage"><div class="art pixel"><img src="ten/05-pixel.svg" alt="" /></div></div>
+      <div class="tag">retro · crisp · terminal</div>
+    </article>
+
+    <article class="card">
+      <div class="head"><span class="num">11 · WIRE</span><span class="kind">vector</span></div><h2>Wireframe</h2>
+      <p class="what">Technical lines, joints, dimensions. Factory/audit.</p>
+      <div class="stage"><div class="art wire"><img src="ten/06-wireframe.svg" alt="" /></div></div>
+      <div class="tag">blueprint · data · thin</div>
+    </article>
+
+    <article class="card">
+      <div class="head"><span class="num">12 · PARTICLE</span><span class="kind">generative</span></div><h2>Flow field</h2>
+      <p class="what">The bird is made of particles; state changes density and direction.</p>
+      <div class="stage particle"><svg viewBox="0 0 160 160" width="150" height="150" aria-label="Particle bird">
+        <g fill="#8B5CF6">
+          <circle cx="84" cy="30" r="4"/><circle cx="94" cy="34" r="3"/><circle cx="102" cy="40" r="4"/><circle cx="74" cy="36" r="3"/>
+          <circle cx="68" cy="50" r="4"/><circle cx="80" cy="48" r="3"/><circle cx="92" cy="50" r="3"/><circle cx="104" cy="54" r="3"/>
+          <circle cx="60" cy="64" r="3"/><circle cx="74" cy="64" r="4"/><circle cx="88" cy="66" r="3"/><circle cx="102" cy="70" r="4"/>
+          <circle cx="54" cy="82" r="3"/><circle cx="70" cy="80" r="3"/><circle cx="86" cy="82" r="4"/><circle cx="100" cy="86" r="3"/>
+          <circle cx="52" cy="100" r="4"/><circle cx="68" cy="98" r="3"/><circle cx="84" cy="100" r="3"/><circle cx="98" cy="104" r="3"/>
+          <circle cx="58" cy="118" r="3"/><circle cx="74" cy="116" r="4"/><circle cx="90" cy="118" r="3"/>
+          <circle cx="44" cy="130" r="3"/><circle cx="62" cy="136" r="3"/><circle cx="80" cy="132" r="3"/>
+        </g>
+        <g stroke="#8B5CF6" stroke-width="1" opacity=".35">
+          <path d="M84 30 L68 50 L60 64 L54 82 L52 100 L44 130"/>
+          <path d="M102 40 L104 54 L102 70 L100 86 L98 104"/>
+          <path d="M74 36 L74 64 L70 80 L68 98 L74 116"/>
+        </g>
+      </svg></div>
+      <div class="tag">particles · adaptive · abstract</div>
+    </article>
+
+    <article class="card">
+      <div class="head"><span class="num">13 · ENAMEL</span><span class="kind">vector</span></div><h2>Cloisonné pin</h2>
+      <p class="what">Metal outline, enamel fill, hard gloss. Collectible merch.</p>
+      <div class="stage"><div class="art enamel"><img src="gaze/front.svg" alt="" /><div class="ov"></div></div></div>
+      <div class="tag">metal · enamel · pin</div>
+    </article>
+
+    <article class="card">
+      <div class="head"><span class="num">14 · WOOD</span><span class="kind">3D</span></div><h2>Wooden toy</h2>
+      <p class="what">Painted wood, grain, joints. Warm object, not a cartoon.</p>
+      <div class="stage"><div class="art wood"><img src="gaze/three-quarter.svg" alt="" /><div class="ov"></div></div></div>
+      <div class="tag">grain · joinery · warm</div>
+    </article>
+
+    <article class="card">
+      <div class="head"><span class="num">15 · CONCRETE</span><span class="kind">3D</span></div><h2>Concrete</h2>
+      <p class="what">Cast stone, cracks, heavy light. Brutal and serious.</p>
+      <div class="stage"><div class="art concrete"><img src="gaze/profile.svg" alt="" /><div class="ov"></div></div></div>
+      <div class="tag">stone · cracks · heavy</div>
+    </article>
+  </section>
+
+  <footer class="footer"><span>pick 2–3 · material, not pose · concept draft</span><span>no app changes</span></footer>
+</body>
+</html>

@@ -14,6 +14,7 @@ const state = {
   storySelected: null,
   storyTimer: null,
   writable: false,
+  ai: null,
   timelineFilter: "all",
   products: null,
   detectors: null,
@@ -67,6 +68,8 @@ const timelineHuman = {
   "team.verified": "Verification team",
   "delivery.finished": "Delivered",
   "confirmation.finished": "Confirmed",
+  "thread.note": "Context added",
+  "thread.agent": "Mira answered",
 };
 
 const groupDefs = [
@@ -251,6 +254,63 @@ async function refreshDetectors() {
     if (state.detail) renderDetail();
   } catch (error) {
     toast(`Detectors unavailable: ${error.message}`);
+  }
+}
+
+async function streamAsk(question, button) {
+  const line = $(".thread-line");
+  if (!line) throw new Error("worklog is not open");
+  const id = `ask-live-${Date.now()}`;
+  line.insertAdjacentHTML(
+    "beforeend",
+    `<div class="thread-msg mira" id="${id}">
+      <div class="thread-avatar" aria-hidden="true">M</div>
+      <div class="thread-body">
+        <div class="thread-meta"><b>Mira</b><time>now</time></div>
+        <h3>Mira is answering…</h3>
+        <p class="ask-live-text"></p>
+      </div>
+    </div>`,
+  );
+  const textNode = line.querySelector(`#${id} .ask-live-text`);
+  button.disabled = true;
+  try {
+    const response = await fetch("/api/ask/stream", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Works-Write": "1" },
+      body: JSON.stringify({ task_id: state.selected, question }),
+    });
+    if (!response.ok || !response.body) {
+      throw new Error((await response.text()) || `${response.status} ${response.statusText}`);
+    }
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let finished = false;
+    while (!finished) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      let index;
+      while ((index = buffer.indexOf("\n\n")) >= 0) {
+        const block = buffer.slice(0, index);
+        buffer = buffer.slice(index + 2);
+        for (const raw of block.split("\n")) {
+          if (!raw.startsWith("data:")) continue;
+          const event = JSON.parse(raw.slice(5).trim());
+          if (event.type === "delta") textNode.textContent += event.text || "";
+          else if (event.type === "error") throw new Error(event.error || "Mira failed");
+          else if (event.type === "done") finished = true;
+        }
+      }
+    }
+    if (!finished) throw new Error("stream ended without an answer");
+    await loadDetail(state.selected);
+  } catch (error) {
+    document.getElementById(id)?.remove();
+    toast(`Mira: ${error.message}`);
+  } finally {
+    button.disabled = false;
   }
 }
 
@@ -919,6 +979,8 @@ function eventSummary(event) {
   if (event.type === "team.verified") return `team ${data.verdict} · ${data.team || "inspector+challenger+reporter"}`;
   if (event.type === "delivery.finished") return `${data.branch || "branch"} · ${data.commit || ""}${data.pr_url ? " · pull request" : ""}`;
   if (event.type === "confirmation.finished") return `${data.ok ? "passed" : "failed"} · ${data.target || "check"}`;
+  if (event.type === "thread.note") return data.message || "context added";
+  if (event.type === "thread.agent") return `Mira · ${data.model || "model"} · ${data.tokens || 0} token(s)`;
   if (event.type === "step.finished") return `${data.step}: exit ${data.exit_code}`;
   if (event.type === "challenge.decided") return data.allow ? "Independent check passed" : "Independent check blocked";
   if (event.type === "note") return "The proof is ready.";
@@ -1101,6 +1163,186 @@ function renderEvidenceMeta(detail) {
     "Run metadata",
     `<dl class="kv">${rows.map(([key, value]) => `<dt>${esc(key)}</dt><dd class="mono">${esc(value)}</dd>`).join("")}</dl>`,
   );
+}
+
+const threadRoleLabel = {
+  person: "Person",
+  builder: "Builder",
+  verifier: "Verifier",
+  challenger: "Challenger",
+  team: "Team",
+  delivery: "Delivery",
+  confirmation: "Confirmation",
+  system: "System",
+  tracker: "Tracker",
+  monitor: "Monitor",
+  mira: "Mira",
+};
+
+const threadRoleLetter = {
+  person: "P",
+  builder: "B",
+  verifier: "V",
+  challenger: "C",
+  team: "T",
+  delivery: "D",
+  confirmation: "✓",
+  system: "·",
+  tracker: "T",
+  monitor: "M",
+  mira: "M",
+};
+
+function renderThreadCard(card) {
+  if (!card) return "";
+  const rows = (card.rows || [])
+    .map(([label, value]) => {
+      const text = String(value ?? "");
+      const cell = /^https?:\/\//.test(text)
+        ? `<a href="${esc(text)}" target="_blank" rel="noopener">${esc(text)}</a>`
+        : `<span class="mono">${esc(text)}</span>`;
+      return `<div class="thread-row"><span>${esc(label)}</span>${cell}</div>`;
+    })
+    .join("");
+  return `<div class="thread-card">${rows}</div>`;
+}
+
+function renderThreadMessage(message) {
+  const role = message.role || "system";
+  const facts = (message.facts || [])
+    .map((fact) => `<span class="chip">${esc(fact)}</span>`)
+    .join(" ");
+  return `<div class="thread-msg ${esc(role)} ${esc(message.tone || "")}">
+    <div class="thread-avatar" aria-hidden="true">${esc(threadRoleLetter[role] || "·")}</div>
+    <div class="thread-body">
+      <div class="thread-meta">
+        <b>${esc(threadRoleLabel[role] || role)}</b>
+        <time>${esc(new Date(message.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))}</time>
+      </div>
+      <h3>${esc(message.title)}</h3>
+      ${message.body ? `<p>${esc(message.body)}</p>` : ""}
+      ${facts ? `<div class="thread-facts">${facts}</div>` : ""}
+      ${renderThreadCard(message.card)}
+    </div>
+  </div>`;
+}
+
+function railCard(title, body) {
+  return `<section class="rail-card"><h3>${esc(title)}</h3>${body}</section>`;
+}
+
+function railRows(rows) {
+  return rows
+    .map(([label, value, href]) => {
+      const cell = href
+        ? `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(value)}</a>`
+        : `<span>${esc(value)}</span>`;
+      return `<div class="rail-row"><span class="rail-label">${esc(label)}</span>${cell}</div>`;
+    })
+    .join("");
+}
+
+function renderThreadRail(rail, detail) {
+  const task = rail.task || {};
+  const factory = rail.factory || {};
+  const cost = rail.cost || {};
+  const agents = (rail.agents || [])
+    .map(
+      (agent) => `<div class="rail-agent">
+        <span class="rail-role">${esc(agent.role)}</span>
+        <b>${esc(agent.name)}</b>
+        <em>${esc(agent.detail)}</em>
+        ${agent.tone ? pill(agent.detail, agent.tone === "ok" ? "green" : "red") : ""}
+      </div>`,
+    )
+    .join("");
+  const deliverables = (rail.deliverables || [])
+    .map(
+      (item) => `<div class="rail-row">
+        <span class="rail-label">${esc(item.label)}</span>
+        ${item.href ? `<a href="${esc(item.href)}" target="_blank" rel="noopener">${esc(item.value)}</a>` : `<span class="mono">${esc(item.value)}</span>`}
+      </div>`,
+    )
+    .join("");
+  const checks = (rail.checks || [])
+    .map(
+      (item) =>
+        `<div class="rail-row"><span class="rail-label">${esc(item.label)}</span>${pill(
+          item.value,
+          item.value === "allow" || item.value === "pass" ? "green" : item.value === "block" || item.value === "fail" ? "red" : "",
+        )}</div>`,
+    )
+    .join("");
+  const artifacts = (detail.artifacts || [])
+    .slice(0, 6)
+    .map(
+      (item) => `<a class="rail-artifact" href="${esc(item.url)}" target="_blank" rel="noopener">${esc(item.kind)} · ${esc(item.name)}</a>`,
+    )
+    .join("");
+  return `${railCard("Task", railRows([
+    ["Id", task.id || "—"],
+    ["Product", task.product || "—"],
+    ["Source", task.source || "—"],
+    ["State", task.state || "—"],
+  ]))}
+  ${railCard("Factory", railRows([
+    ["Flow", factory.flow || "—"],
+    ["Run", factory.run || "—"],
+    ["Base commit", factory.base_commit || "—"],
+    ["Checks SHA", factory.checks_sha || "—"],
+  ]))}
+  ${railCard("People", `<div class="rail-people">${(rail.people || []).map((name) => pill(name)).join(" ")}${(rail.owners || []).map((name) => pill(`owner: ${name}`)).join(" ")}</div>`)}
+  ${railCard("Agents", agents || `<p class="muted small">No agent work recorded yet.</p>`)}
+  ${railCard("Deliverables", deliverables)}
+  ${railCard("Checks", checks)}
+  ${railCard("Cost", railRows([
+    ["Tokens", String(cost.tokens ?? 0)],
+    ["USD", fmtUsd(cost.usd ?? 0)],
+    ["Wall", fmtMs(cost.duration_ms ?? 0)],
+  ]))}
+  ${railCard("Artifacts", artifacts || `<p class="muted small">No artifacts.</p>`)}`;
+}
+
+function renderThread(detail) {
+  const messages = detail.thread || [];
+  const ai = state.ai || {};
+  const ask = state.writable
+    ? ai.available
+      ? `<form class="thread-composer thread-ask" id="ask-form">
+          <textarea id="ask-input" rows="2" placeholder="Ask Mira about this run…"></textarea>
+          <div class="thread-composer-actions">
+            <span class="muted small">Advisory only. Mira reads the recorded proof; she cannot open a gate or change anything.</span>
+            <button type="submit" class="btn">Ask Mira</button>
+          </div>
+        </form>`
+      : `<p class="thread-readonly">Ask Mira is unavailable: ${esc(ai.reason || "no model configured")}</p>`
+    : `<p class="thread-readonly">Start <span class="mono">works ui --write</span> to ask Mira or add context.</p>`;
+  const composer = state.writable
+    ? `<form class="thread-composer" id="thread-form">
+        <textarea id="thread-input" rows="2" placeholder="Add context to this run…"></textarea>
+        <div class="thread-composer-actions">
+          <span class="muted small">A note, not a command. It never opens a gate or starts a run.</span>
+          <button type="submit" class="btn ghost">Add context</button>
+        </div>
+      </form>`
+    : "";
+  return `<div class="thread-layout">
+    <div class="thread-main">
+      <header class="thread-head">
+        <div>
+          <div class="eyebrow">Worklog</div>
+          <h2>${esc(detail.task.source.title || detail.task.id)}</h2>
+        </div>
+        <div class="thread-head-side">
+          ${pill(stateLabel(detail.task.state), stateTone(detail.task.state))}
+          <span class="muted small">${messages.length} event(s)</span>
+        </div>
+      </header>
+      <div class="thread-line">${messages.map(renderThreadMessage).join("") || `<p class="muted small">No events yet.</p>`}</div>
+      ${ask}${composer}
+    </div>
+    <aside class="thread-rail" aria-label="Task context">${renderThreadRail(detail.rail || {}, detail)}</aside>
+  </div>`;
 }
 
 function renderTimeline(timeline) {
@@ -1693,6 +1935,7 @@ function renderTabs() {
     <button type="button" class="view-tab ${state.view === "story" ? "active" : ""}" data-view="story" role="tab" aria-selected="${state.view === "story"}">Story</button>
     <button type="button" class="view-tab ${state.view === "evidence" ? "active" : ""}" data-view="evidence" role="tab" aria-selected="${state.view === "evidence"}">Evidence <span class="faint">for engineers</span></button>
     <button type="button" class="view-tab ${state.view === "release" ? "active" : ""}" data-view="release" role="tab" aria-selected="${state.view === "release"}">Release <span class="faint">deliver & confirm</span></button>
+    <button type="button" class="view-tab ${state.view === "thread" ? "active" : ""}" data-view="thread" role="tab" aria-selected="${state.view === "thread"}">Thread <span class="faint">worklog</span></button>
   </div>`;
 }
 
@@ -1828,10 +2071,47 @@ function bindView() {
       }
     });
   });
+  const threadForm = $("#thread-form");
+  if (threadForm) {
+    threadForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const input = $("#thread-input");
+      const message = input.value.trim();
+      if (!message) return;
+      const button = threadForm.querySelector("button[type='submit']");
+      button.disabled = true;
+      try {
+        await api("/api/actions", {
+          method: "POST",
+          headers: { "X-Works-Write": "1" },
+          body: { action: "add-context", task_id: state.selected, message },
+        });
+        input.value = "";
+        toast("Context added to the worklog.");
+        await loadDetail(state.selected);
+      } catch (error) {
+        toast(`Could not add context: ${error.message}`);
+      } finally {
+        button.disabled = false;
+      }
+    });
+  }
+  const askForm = $("#ask-form");
+  if (askForm) {
+    askForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const input = $("#ask-input");
+      const question = input.value.trim();
+      if (!question) return;
+      const button = askForm.querySelector("button[type='submit']");
+      input.value = "";
+      await streamAsk(question, button);
+    });
+  }
 }
 
 function setView(view) {
-  state.view = ["story", "evidence", "release"].includes(view) ? view : "story";
+  state.view = ["story", "evidence", "release", "thread"].includes(view) ? view : "story";
   localStorage.setItem("works.view.v3", state.view);
   if (state.selected) {
     history.replaceState(null, "", taskHash(state.selected));
@@ -1841,7 +2121,7 @@ function setView(view) {
 }
 
 function taskHash(id) {
-  const suffix = state.view === "evidence" ? "/evidence" : state.view === "release" ? "/release" : "/story";
+  const suffix = state.view === "evidence" ? "/evidence" : state.view === "release" ? "/release" : state.view === "thread" ? "/thread" : "/story";
   const params = new URLSearchParams();
   if (state.view === "story" && state.storyAt != null) params.set("at", String(state.storyAt));
   const query = params.toString() ? `?${params.toString()}` : "";
@@ -1857,12 +2137,12 @@ function renderDetail() {
   }
   const task = detail.task;
   const title = task.source?.title || `Task ${task.id}`;
-  const label = state.view === "evidence" ? "Evidence" : state.view === "release" ? "Release" : "Story";
+  const label = state.view === "evidence" ? "Evidence" : state.view === "release" ? "Release" : state.view === "thread" ? "Thread" : "Story";
   $("#crumb").innerHTML = `<button type="button" class="crumb-link" id="crumb-home">Queue</button><span class="crumb-sep">/</span>${esc(label)}`;
   $("#crumb-home").addEventListener("click", () => clearSelection());
   $("#title").textContent = title;
   $("#subtitle").textContent = `${stateLabel(task.state)} · reported ${timeAgo(reportedAt(detail))}`;
-  const body = state.view === "evidence" ? renderEvidence(detail) : state.view === "release" ? renderReleaseView(detail) : renderStory(detail);
+  const body = state.view === "evidence" ? renderEvidence(detail) : state.view === "release" ? renderReleaseView(detail) : state.view === "thread" ? renderThread(detail) : renderStory(detail);
   $("#detail").innerHTML = `${renderTabs()}${body}`;
   $("#empty").hidden = true;
   $("#detail").hidden = false;
@@ -1890,6 +2170,7 @@ function clearSelection(updateHash = true) {
 async function loadHealth() {
   const health = await api("/api/health");
   state.writable = Boolean(health.write);
+  state.ai = health.ai || null;
   $("#report").hidden = !state.writable;
   $("#intake").hidden = !state.writable;
   await Promise.all([loadProducts(), loadDetectors()]);
@@ -2088,8 +2369,8 @@ function nextTask(step) {
 }
 
 function applyHash() {
-  const match = location.hash.match(/^#\/task\/([^/?]+)(?:\/(story|summary|evidence|release))?(?:\?(.*))?$/);
-  if (match && match[2]) state.view = match[2] === "evidence" ? "evidence" : match[2] === "release" ? "release" : "story";
+  const match = location.hash.match(/^#\/task\/([^/?]+)(?:\/(story|summary|evidence|release|thread))?(?:\?(.*))?$/);
+  if (match && match[2]) state.view = match[2] === "evidence" ? "evidence" : match[2] === "release" ? "release" : match[2] === "thread" ? "thread" : "story";
   const params = new URLSearchParams(match && match[3] ? match[3] : "");
   state.storyAt = params.has("at") ? Number(params.get("at")) : null;
   loadTasks().then(() => {
@@ -2116,6 +2397,7 @@ function paletteItems(query) {
     { label: "Story view", run: () => setView("story") },
     { label: "Evidence view", run: () => setView("evidence") },
     { label: "Release view", run: () => setView("release") },
+    { label: "Thread view", run: () => setView("thread") },
     { label: "New task", run: openReport },
     { label: "Import signals", run: openIntake },
     { label: "Refresh", run: () => $("#refresh").click() },

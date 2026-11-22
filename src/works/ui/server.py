@@ -635,6 +635,406 @@ def _artifact_list(
     return sorted(items.values(), key=lambda item: item["path"])
 
 
+def _thread_message(event: Event, task: Task) -> dict[str, Any] | None:
+    data = event.data
+    kind = event.type
+    role = "system"
+    title = kind
+    body = ""
+    facts: list[str] = []
+    tone = ""
+    card: dict[str, Any] | None = None
+
+    if kind == "task.created":
+        role = {
+            "manual": "person",
+            "tracker": "tracker",
+            "detector": "monitor",
+        }.get(task.source.kind.value, "person")
+        title = "Reported"
+        body = task.source.title
+        facts = [f"{task.source.kind.value}:{task.source.ref}", task.product]
+    elif kind == "plan.drafted":
+        role = "builder"
+        title = "Plan drafted"
+        body = "A plan with named must-pass scenarios."
+        ids = data.get("scenario_ids") or []
+        p0 = data.get("p0") or []
+        p1 = data.get("p1") or []
+        facts = [f"{len(ids)} scenario(s)", f"{len(p0)} P0", f"{len(p1)} P1"]
+        card = {
+            "kind": "plan",
+            "rows": [["Scenarios", str(len(ids))], ["P0", str(len(p0))], ["P1", str(len(p1))]],
+        }
+    elif kind == "gate.decided":
+        role = "person"
+        gate = str(data.get("gate") or "gate")
+        title = "Plan approved" if gate == "plan" else "Release approved"
+        body = f"{data.get('by', 'a person')} opened the {gate} gate."
+        facts = [f"commit {str(data.get('commit', '—'))[:12]}"]
+        if data.get("proof_sha256"):
+            facts.append(f"proof {str(data['proof_sha256'])[:12]}")
+        card = {
+            "kind": "gate",
+            "rows": [
+                ["Gate", gate],
+                ["Decision", str(data.get("decision", "approved"))],
+                ["By", str(data.get("by", "—"))],
+                ["Commit", str(data.get("commit", "—"))[:12]],
+            ],
+        }
+        tone = "ok"
+    elif kind == "attempt.started":
+        role = "builder"
+        title = f"Build attempt {data.get('attempt', '?')} started"
+        body = "The builder is editing the disposable worktree."
+    elif kind == "step.finished":
+        step = str(data.get("step") or "step")
+        code = data.get("exit_code", "?")
+        role = "verifier" if step in ("reproduce", "test", "preview", "check") else "builder"
+        if step == "reproduce":
+            title = "Reproduction confirmed" if code != 0 else "Reproduction did not fail"
+            body = (
+                "The failing check failed on the base commit, as expected."
+                if code != 0
+                else "The check passed on the base commit, so the bug was not reproduced."
+            )
+            tone = "ok" if code != 0 else "bad"
+        elif step == "test":
+            title = "Tests passed" if code == 0 else "Tests failed"
+            body = f"Exit code {code}."
+            tone = "ok" if code == 0 else "bad"
+        elif step == "preview":
+            title = "Preview passed" if code == 0 else "Preview failed"
+            body = f"Exit code {code}."
+            tone = "ok" if code == 0 else "bad"
+        else:
+            title = f"{step.capitalize()} finished"
+            body = f"Exit code {code}."
+            tone = "ok" if code == 0 else "bad"
+        facts = [step]
+    elif kind == "challenge.decided":
+        role = "challenger"
+        allow = bool(data.get("allow"))
+        title = "Independent check allowed" if allow else "Independent check blocked"
+        body = str(data.get("reason") or "No reason recorded.")
+        facts = [f"concerns {len(data.get('concerns') or [])}"]
+        card = {
+            "kind": "challenge",
+            "rows": [["Allow", "yes" if allow else "no"], ["Model", str(data.get("model", "—"))]],
+        }
+        tone = "ok" if allow else "bad"
+    elif kind == "risk.rated":
+        role = "verifier"
+        title = f"Risk: {data.get('level', 'unknown')}"
+        body = (
+            "; ".join(str(item) for item in (data.get("reasons") or [])) or "No reasons recorded."
+        )
+        facts = [f"owners {', '.join(data.get('owners') or []) or 'none'}"]
+    elif kind == "decision.made":
+        role = "verifier"
+        title = f"Decision: {data.get('verb', '—')}"
+        body = str(data.get("reason_code") or "")
+        facts = [f"gate {data.get('gate', '—')}"]
+    elif kind == "finding":
+        role = "verifier"
+        title = "Finding recorded"
+        body = str(data.get("summary") or "")
+        facts = [f"step {data.get('step', '—')}", f"confidence {data.get('confidence', '—')}"]
+        tone = "bad"
+    elif kind == "flake":
+        role = "verifier"
+        title = "Flaky test recorded"
+        body = f"{data.get('scenario_id', '?')} has an owner and an expiry."
+        facts = [f"owner {data.get('owner', '—')}"]
+        tone = "bad"
+    elif kind == "would_block":
+        role = "verifier"
+        title = "Observe mode would block"
+        body = f"{data.get('gate', '—')}: {data.get('reason', '')}"
+        tone = "bad"
+    elif kind == "readiness.checked":
+        role = "verifier"
+        title = f"Readiness: {data.get('status', '—')}"
+        body = f"{data.get('passed', '?')} of {data.get('total', '?')} checks passed."
+        facts = [str(data.get("note") or "")]
+        tone = "ok" if data.get("status") == "pass" else "bad"
+    elif kind == "team.verified":
+        role = "team"
+        verdict = str(data.get("verdict") or "?")
+        title = f"Team verdict: {verdict}"
+        blockers = data.get("blockers") or []
+        body = "; ".join(str(item) for item in blockers) or "No blockers."
+        inspector = data.get("inspector") or {}
+        challenger = data.get("challenger") or {}
+        inspector_text = (
+            ("allow" if inspector.get("allow") else "block") if inspector else "not recorded"
+        )
+        challenger_text = (
+            ("allow" if challenger.get("allow") else "block") if challenger else "not recorded"
+        )
+        facts = [f"inspector {inspector_text}", f"challenger {challenger_text}"]
+        card = {
+            "kind": "team",
+            "rows": [
+                ["Verdict", verdict],
+                ["Inspector", inspector_text],
+                ["Challenger", challenger_text],
+            ],
+        }
+        tone = "ok" if verdict == "allow" else "bad"
+    elif kind == "delivery.finished":
+        role = "delivery"
+        title = "Delivered"
+        body = f"{data.get('branch', '?')} · {str(data.get('commit', '?'))[:12]}"
+        facts = [str(data.get("provider") or "none"), str(data.get("tracker") or "none")]
+        card = {
+            "kind": "delivery",
+            "rows": [
+                ["Branch", str(data.get("branch", "—"))],
+                ["Commit", str(data.get("commit", "—"))[:12]],
+                ["Pull request", str(data.get("pr_url") or "—")],
+                ["Comment", str(data.get("comment_url") or "—")],
+            ],
+        }
+        tone = "ok" if data.get("pushed") else ""
+    elif kind == "confirmation.finished":
+        role = "confirmation"
+        ok = bool(data.get("ok"))
+        title = "Confirmation passed" if ok else "Confirmation failed"
+        body = str(data.get("target") or "—")
+        facts = [
+            f"exit {data.get('exit_code', '?')}",
+            f"proof {str(data.get('output_sha256') or '')[:10]}",
+        ]
+        card = {
+            "kind": "confirmation",
+            "rows": [
+                ["Result", "pass" if ok else "fail"],
+                ["Target", str(data.get("target", "—"))],
+                ["Output SHA", str(data.get("output_sha256", "—"))[:12]],
+            ],
+        }
+        tone = "ok" if ok else "bad"
+    elif kind == "thread.agent":
+        role = "mira"
+        title = "Mira answered"
+        body = str(data.get("answer") or "")
+        facts = [
+            f"model {data.get('model') or '—'}",
+            f"{data.get('tokens') or 0} token(s)",
+        ]
+        card = {
+            "kind": "question",
+            "rows": [["Question", str(data.get("question") or "")]],
+        }
+    elif kind == "thread.note":
+        role = "person"
+        title = "Context added"
+        body = str(data.get("message") or "")
+        facts = [f"by {data.get('by', 'a person')}"]
+    elif kind == "note":
+        raw_body = str(data.get("message") or "")
+        if data.get("model"):
+            role = "builder"
+            title = "Proposal received"
+            paths = data.get("paths") or []
+            body = f"{data.get('model')} proposed a change to {len(paths)} file(s)."
+            facts = [str(item) for item in paths]
+        elif "v0" in raw_body and "release gate" in raw_body:
+            role = "system"
+            title = "Proof ready"
+            body = "proof is ready; gate 2 is the next step"
+        else:
+            role = "system"
+            title = "Note"
+            body = raw_body
+    elif kind == "decision.shadow":
+        role = "system"
+        title = "LAIX shadow decision"
+        body = f"{data.get('gate', 'gate')}: {data.get('reason_code', '')}"
+        facts = [f"agree {data.get('agree', '—')}"]
+    elif kind in ("wait.started", "wait.woken", "wait.expired"):
+        role = "system"
+        title = {
+            "wait.started": "Waiting",
+            "wait.woken": "Woke up",
+            "wait.expired": "Wait expired",
+        }[kind]
+        body = str(data.get("wake_on") or data.get("on") or "")
+    elif kind.startswith("memory."):
+        role = "system"
+        title = {
+            "memory.reported": "PPMA synced",
+            "memory.failed": "PPMA failed",
+            "memory.recalled": "Memory recall",
+            "memory.recall_failed": "Memory recall failed",
+        }.get(kind, "Memory")
+        body = str(data.get("error") or data.get("via") or "")
+        facts = [f"{len(data.get('statements') or [])} statement(s)"]
+        tone = "bad" if kind.endswith("failed") else ""
+    elif kind == "state.changed":
+        target = str(data.get("to") or "")
+        if target not in ("blocked", "released", "reverted"):
+            return None
+        role = "system"
+        title = f"State: {target}"
+        body = str(data.get("reason") or "")
+        tone = "bad" if target in ("blocked", "reverted") else "ok"
+    elif kind == "preview.finished":
+        role = "verifier"
+        title = "Preview finished"
+        body = f"Exit code {data.get('exit_code', '?')}."
+        tone = "ok" if data.get("exit_code") == 0 else "bad"
+    else:
+        return None
+
+    return {
+        "seq": event.seq,
+        "at": event.ts.isoformat(),
+        "role": role,
+        "type": kind,
+        "title": title,
+        "body": body,
+        "facts": [item for item in facts if item],
+        "tone": tone,
+        "card": card,
+    }
+
+
+def _thread(task: Task, events: list[Event]) -> list[dict[str, Any]]:
+    messages: list[dict[str, Any]] = []
+    for event in events:
+        message = _thread_message(event, task)
+        if message is not None:
+            messages.append(message)
+    return messages
+
+
+def _thread_rail(
+    task: Task,
+    events: list[Event],
+    run: dict[str, Any] | None,
+    evidence: dict[str, Any] | None,
+    release: dict[str, Any],
+    delivery: dict[str, Any] | None,
+    confirmation: dict[str, Any] | None,
+    team: dict[str, Any],
+    verifier: dict[str, Any],
+) -> dict[str, Any]:
+    gates = [event.data for event in events if event.type == "gate.decided"]
+    people = sorted({str(item.get("by") or "cli") for item in gates})
+    owners = ((evidence or {}).get("risk") or {}).get("owners") or []
+    challenge = (evidence or {}).get("challenge") or {}
+    verdict = (evidence or {}).get("verdict") or {}
+    agents = [
+        {
+            "role": "builder",
+            "name": str((evidence or {}).get("model") or "—"),
+            "detail": str((evidence or {}).get("provider") or "—"),
+            "tone": "",
+        },
+        {
+            "role": "challenger",
+            "name": str(challenge.get("model") or "—"),
+            "detail": "allow" if challenge.get("allow") else "block" if challenge else "not run",
+            "tone": "ok" if challenge.get("allow") else "bad" if challenge else "",
+        },
+        {
+            "role": "verifier",
+            "name": str(verifier.get("name") or "local"),
+            "detail": str(verifier.get("isolation") or "process"),
+            "tone": "",
+        },
+        {
+            "role": "team",
+            "name": "inspector + challenger + reporter",
+            "detail": str((team.get("latest") or {}).get("verdict") or "not run"),
+            "tone": "ok"
+            if (team.get("latest") or {}).get("verdict") == "allow"
+            else "bad"
+            if team.get("latest")
+            else "",
+        },
+    ]
+    deliverables = [
+        {
+            "label": "Proof",
+            "value": str((evidence or {}).get("proof_sha256") or "—")[:12],
+            "href": "",
+        },
+        {"label": "Commit", "value": str((run or {}).get("base_commit") or "—")[:12], "href": ""},
+        {"label": "Branch", "value": str((delivery or {}).get("branch") or "—"), "href": ""},
+        {
+            "label": "Pull request",
+            "value": str((delivery or {}).get("pr_url") or "—"),
+            "href": str((delivery or {}).get("pr_url") or ""),
+        },
+        {
+            "label": "Release",
+            "value": "released" if release.get("released") else "not released",
+            "href": "",
+        },
+        {
+            "label": "Confirmation",
+            "value": "pass"
+            if (confirmation or {}).get("ok")
+            else "fail"
+            if confirmation
+            else "not run",
+            "href": "",
+        },
+    ]
+    checks = [
+        {
+            "label": "Policy",
+            "value": "pass" if ((evidence or {}).get("policy") or {}).get("ok") else "fail",
+        },
+        {
+            "label": "Verdict",
+            "value": "allow" if verdict.get("allow") else "block" if evidence else "—",
+        },
+        {
+            "label": "Challenge",
+            "value": "allow" if challenge.get("allow") else "block" if challenge else "not run",
+        },
+        {"label": "Team", "value": str((team.get("latest") or {}).get("verdict") or "not run")},
+        {
+            "label": "Confirmation",
+            "value": "pass"
+            if (confirmation or {}).get("ok")
+            else "fail"
+            if confirmation
+            else "not run",
+        },
+    ]
+    return {
+        "task": {
+            "id": task.id,
+            "state": task.state.value,
+            "product": task.product,
+            "source": f"{task.source.kind.value}:{task.source.ref}",
+            "title": task.source.title,
+        },
+        "factory": {
+            "flow": task.flow,
+            "run": str((run or {}).get("run_id") or "—"),
+            "base_commit": str((run or {}).get("base_commit") or "—")[:12],
+            "checks_sha": str((run or {}).get("checks_sha") or "—")[:12],
+        },
+        "people": people or ["—"],
+        "owners": owners,
+        "agents": agents,
+        "deliverables": deliverables,
+        "checks": checks,
+        "cost": {
+            "tokens": int((evidence or {}).get("tokens") or 0),
+            "usd": float((evidence or {}).get("usd") or 0),
+            "duration_ms": int((evidence or {}).get("duration_ms") or 0),
+        },
+    }
+
+
 def _task_detail(queue: Queue, paths: WorksPaths, task_id: str) -> dict[str, Any]:
     task = queue.load(task_id)
     events = queue.events(task_id)
@@ -678,6 +1078,10 @@ def _task_detail(queue: Queue, paths: WorksPaths, task_id: str) -> dict[str, Any
             or "process"
         ),
     }
+    team_payload = {
+        "latest": team_events[-1] if team_events else None,
+        "history": team_events[-10:],
+    }
     return {
         "task": task.model_dump(mode="json"),
         "summary": _task_summary(task, events),
@@ -691,13 +1095,14 @@ def _task_detail(queue: Queue, paths: WorksPaths, task_id: str) -> dict[str, Any
         "release": release,
         "delivery": delivery,
         "confirmation": confirmation,
-        "team": {
-            "latest": team_events[-1] if team_events else None,
-            "history": team_events[-10:],
-        },
+        "team": team_payload,
         "laix": laix,
         "verifier": verifier,
         "artifacts": _artifact_list(run_dir, task_id, evidence),
+        "thread": _thread(task, events),
+        "rail": _thread_rail(
+            task, events, run, evidence, release, delivery, confirmation, team_payload, verifier
+        ),
     }
 
 
@@ -757,6 +1162,7 @@ class Handler(BaseHTTPRequestHandler):
             "/api/readiness",
             "/api/actions",
             "/api/sources",
+            "/api/ask/stream",
         ):
             self._drain_body()
             self._json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "unknown endpoint"})
@@ -795,6 +1201,8 @@ class Handler(BaseHTTPRequestHandler):
                 self._run_action(payload)
             elif path == "/api/sources":
                 self._run_source(payload)
+            elif path == "/api/ask/stream":
+                self._ask_stream(payload)
             else:
                 self._create_task(payload)
         except (ConfigError, ValueError) as exc:
@@ -802,6 +1210,35 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as exc:  # a write failure must not leak a trace
             LOG.warning("report failed: %s", exc, exc_info=True)
             self._json(HTTPStatus.INTERNAL_SERVER_ERROR, {"ok": False, "error": str(exc)})
+
+    def _ask_stream(self, payload: dict[str, Any]) -> None:
+        from ..agent_chat import ask_mira_stream
+
+        task_id = str(payload.get("task_id") or "").strip()
+        question = str(payload.get("question") or "").strip()
+        if not task_id or not question:
+            raise ValueError("task_id and question are required")
+        Queue(self.paths).load(task_id)
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", "text/event-stream; charset=utf-8")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Connection", "close")
+        self.end_headers()
+        self.close_connection = True
+        try:
+            for event in ask_mira_stream(self.paths, task_id, question):
+                body = json.dumps(event, ensure_ascii=False, default=str)
+                self.wfile.write(f"data: {body}\n\n".encode())
+                self.wfile.flush()
+        except (BrokenPipeError, ConnectionResetError):
+            return
+        except Exception as exc:  # after headers, an error is an SSE event
+            try:
+                body = json.dumps({"type": "error", "error": str(exc)}, ensure_ascii=False)
+                self.wfile.write(f"data: {body}\n\n".encode())
+                self.wfile.flush()
+            except (BrokenPipeError, ConnectionResetError):
+                return
 
     def _run_readiness(self, payload: dict[str, Any]) -> None:
         from ..readiness import assess
@@ -876,6 +1313,36 @@ class Handler(BaseHTTPRequestHandler):
         queue = Queue(self.paths)
         queue.load(task_id)
         with cast(WorksHTTPServer, self.server).write_lock:
+            if action == "add-context":
+                message = str(payload.get("message") or "").strip()
+                if not message:
+                    raise ValueError("message is required")
+                if len(message) > 2000:
+                    raise ValueError("message is too long")
+                event = queue.append(
+                    task_id,
+                    "thread.note",
+                    {"message": message, "by": "person"},
+                )
+                self._json(
+                    HTTPStatus.OK,
+                    {
+                        "ok": True,
+                        "action": action,
+                        "event": event.model_dump(mode="json"),
+                    },
+                )
+                return
+            if action == "ask":
+                from ..agent_chat import ask_mira
+
+                question = str(payload.get("question") or "").strip()
+                answer = ask_mira(self.paths, task_id, question)
+                self._json(
+                    HTTPStatus.OK,
+                    {"ok": True, "action": action, "answer": answer},
+                )
+                return
             if action == "release":
                 from ..release import approve_release
 
@@ -1013,6 +1480,8 @@ class Handler(BaseHTTPRequestHandler):
         queue = Queue(self.paths)
         try:
             if path == "/api/health":
+                from ..agent_chat import availability
+
                 self._json(
                     HTTPStatus.OK,
                     {
@@ -1021,6 +1490,7 @@ class Handler(BaseHTTPRequestHandler):
                         "write": self.writable,
                         "root": str(self.paths.root),
                         "version": "0.0.1",
+                        "ai": availability(),
                     },
                 )
                 return
@@ -1099,7 +1569,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", _content_type(path))
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-cache")
+        self.send_header("Cache-Control", "no-store")
         self.end_headers()
         if not head:
             self.wfile.write(body)

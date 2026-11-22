@@ -32,6 +32,12 @@ The same evidence page serves two audiences without a second data source:
   tracker comment), confirmation (pass/fail, target, output SHA), team verdict, verifier isolation,
   LAIX shadow, product map and detector alerts. In `--write`, the same view can release, deliver,
   confirm and verify.
+- **Thread**: the worklog. Real events become role-labelled messages (Person, Builder, Verifier,
+  Challenger, Team, Delivery, Confirmation, Mira) with structured cards and a right rail for task,
+  factory, people, agents, deliverables, checks, cost and artifacts. In `--write` it has two inputs:
+  **Add context** appends a `thread.note`; **Ask Mira** asks a real `openjiuwen` model about the
+  recorded run. The answer streams token-by-token, is stored as `thread.agent`, and is advisory:
+  it cannot approve, release, retry or change anything.
 
 There is no separate Summary tab: the human answer lives in the Story hero and the receipt strip.
 Both views are computed from the same proof, so they cannot disagree. Deep links carry the view:

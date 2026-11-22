@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Mira — front stained glass</title>
+  <circle cx="256" cy="256" r="222" fill="#F4EFE3" stroke="#16141B" stroke-width="14"/>
+  <g stroke="#16141B" stroke-width="8" stroke-linejoin="round">
+    <!-- tail shards -->
+    <path d="M 220 360 L 150 470 L 200 476 L 250 400 Z" fill="#6D28D9"/>
+    <path d="M 250 400 L 220 480 L 256 486 L 256 410 Z" fill="#16141B"/>
+    <path d="M 256 410 L 256 486 L 292 480 L 262 400 Z" fill="#C9A227"/>
+    <path d="M 292 360 L 362 470 L 312 476 L 262 400 Z" fill="#6D28D9"/>
+    <!-- wings -->
+    <path d="M 190 280 L 90 330 L 110 390 L 196 350 Z" fill="#16141B"/>
+    <path d="M 322 280 L 422 330 L 402 390 L 316 350 Z" fill="#16141B"/>
+    <path d="M 198 302 L 130 336 L 142 364 L 202 336 Z" fill="#6D28D9"/>
+    <path d="M 314 302 L 382 336 L 370 364 L 310 336 Z" fill="#6D28D9"/>
+    <!-- body -->
+    <path d="M 256 230 L 330 280 L 318 380 L 256 420 L 194 380 L 182 280 Z" fill="#16141B"/>
+    <path d="M 256 280 L 300 306 L 292 370 L 256 396 L 220 370 L 212 306 Z" fill="#F4EFE3"/>
+    <path d="M 256 300 L 284 318 L 278 360 L 256 378 L 234 360 L 228 318 Z" fill="#6D28D9"/>
+    <!-- head -->
+    <path d="M 214 150 L 298 150 L 316 208 L 256 244 L 196 208 Z" fill="#16141B"/>
+    <path d="M 218 170 L 248 160 L 256 198 L 224 206 Z" fill="#F4EFE3"/>
+    <path d="M 294 170 L 264 160 L 256 198 L 288 206 Z" fill="#F4EFE3"/>
+    <circle cx="236" cy="186" r="7" fill="#16141B"/><circle cx="276" cy="186" r="7" fill="#16141B"/>
+    <path d="M 256 198 L 278 218 L 256 238 L 234 218 Z" fill="#C9A227"/>
+    <!-- proof dot -->
+    <circle cx="256" cy="356" r="9" fill="#E2452F"/>
+  </g>
+</svg>

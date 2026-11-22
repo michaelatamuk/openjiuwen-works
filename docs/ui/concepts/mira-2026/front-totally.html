@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Mira — five front-facing reinventions</title>
+<style>
+  :root{
+    --bg:#f4f5f9;--panel:#fff;--panel-2:#f8f9fc;--panel-3:#eef1f7;
+    --text:#111827;--muted:#4b5563;--faint:#9ca3af;--line:#e3e7ef;
+    --violet:#6d28d9;--violet-soft:#f1edff;--violet-text:#5b21b6;--red:#be123c;
+    --mono:"Cascadia Code",Consolas,monospace;--sans:"Segoe UI",Inter,system-ui,sans-serif;
+    --shadow:0 1px 0 rgba(17,24,39,.02),0 8px 22px rgba(17,24,39,.05);
+  }
+  *{box-sizing:border-box}html,body{margin:0}
+  body{width:1700px;min-height:1080px;background:var(--bg);color:var(--text);font-family:var(--sans);padding:44px 52px}
+  .kicker{font:700 10px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--violet)}
+  h1{font:650 46px/1.05 var(--sans);letter-spacing:-.035em;margin:10px 0 8px}
+  .lede{max-width:1080px;color:var(--muted);font-size:13.5px;line-height:1.6;margin:0}
+  .rule{display:inline-block;margin-top:10px;padding:6px 10px;border-radius:8px;background:var(--violet-soft);color:var(--violet-text);font:700 9px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase}
+  .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:22px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:15px;box-shadow:var(--shadow);display:flex;flex-direction:column;min-height:380px}
+  .num{font:700 10px/1 var(--mono);letter-spacing:.16em;color:var(--violet)}
+  .kind{font:8px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--faint);text-align:right}
+  h2{font:650 16px/1.15 var(--sans);letter-spacing:-.02em;margin:7px 0 3px}
+  .what{font-size:10.5px;line-height:1.5;color:var(--muted);min-height:54px}
+  .stage{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0;min-height:220px;display:flex;align-items:flex-end;justify-content:space-between}
+  .stage img{display:block}
+  .small{display:flex;flex-direction:column;align-items:center;gap:5px}
+  .small span{font:8px var(--mono);color:var(--faint)}
+  .note{margin-top:auto;font:9px/1.5 var(--mono);color:var(--faint);border-top:1px solid var(--line);padding-top:7px}
+  .note b{color:var(--text)}
+  .footer{display:flex;justify-content:space-between;margin-top:22px;padding-top:12px;border-top:1px solid var(--line);font:9px/1.6 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+  .footer b{color:var(--text)}
+</style>
+</head>
+<body>
+  <div class="kicker">Mira · five front-facing reinventions · light UI</div>
+  <h1>Front-facing. Totally different.</h1>
+  <p class="lede">No profiles. Every concept keeps eye contact with the viewer. What changes is the art movement: geometry, material, print, facets or wire. Same Mira, five different visual worlds.</p>
+  <div class="rule">front / 3-4 only · no profile · no app changes</div>
+
+  <section class="grid">
+    <article class="card">
+      <div class="num">01 · ART DECO</div><div class="kind">1920s / 2026</div>
+      <h2>Deco front</h2>
+      <p class="what">Symmetrical fan tail, gold linework, elongated body, direct gaze. A brand bird.</p>
+      <div class="stage"><img src="front/deco.svg" width="165" height="165" alt="" /><div class="small"><img src="front/deco.svg" width="44" height="44" alt="" /><span>44</span></div><div class="small"><img src="front/deco.svg" width="24" height="24" alt="" /><span>24</span></div></div>
+      <div class="note"><b>Reads as:</b> premium, editorial. <b>Risk:</b> decorative.</div>
+    </article>
+
+    <article class="card">
+      <div class="num">02 · STAINED GLASS</div><div class="kind">craft</div>
+      <h2>Glass front</h2>
+      <p class="what">A medallion: lead lines, glass shards, symmetrical wings, front gaze.</p>
+      <div class="stage"><img src="front/glass.svg" width="165" height="165" alt="" /><div class="small"><img src="front/glass.svg" width="44" height="44" alt="" /><span>44</span></div><div class="small"><img src="front/glass.svg" width="24" height="24" alt="" /><span>24</span></div></div>
+      <div class="note"><b>Reads as:</b> artifact, window. <b>Risk:</b> busy at 24.</div>
+    </article>
+
+    <article class="card">
+      <div class="num">03 · WOODCUT</div><div class="kind">print</div>
+      <h2>Carved front</h2>
+      <p class="what">Wings spread like a print, carved hatching, frontal head, vermilion seal.</p>
+      <div class="stage"><img src="front/woodcut.svg" width="165" height="165" alt="" /><div class="small"><img src="front/woodcut.svg" width="44" height="44" alt="" /><span>44</span></div><div class="small"><img src="front/woodcut.svg" width="24" height="24" alt="" /><span>24</span></div></div>
+      <div class="note"><b>Reads as:</b> strong, printed. <b>Risk:</b> rough.</div>
+    </article>
+
+    <article class="card">
+      <div class="num">04 · LOW-POLY</div><div class="kind">3D / vector</div>
+      <h2>Faceted front</h2>
+      <p class="what">Iridescent planes, two red gem eyes, symmetrical wings. Direct gaze, no cartoon face.</p>
+      <div class="stage"><img src="front/low-poly.svg" width="165" height="165" alt="" /><div class="small"><img src="front/low-poly.svg" width="44" height="44" alt="" /><span>44</span></div><div class="small"><img src="front/low-poly.svg" width="24" height="24" alt="" /><span>24</span></div></div>
+      <div class="note"><b>Reads as:</b> premium, sculptural. <b>Risk:</b> cold.</div>
+    </article>
+
+    <article class="card">
+      <div class="num">05 · KINETIC</div><div class="kind">object</div>
+      <h2>Wire front</h2>
+      <p class="what">A suspended wire sculpture facing the viewer: brass rods, violet joints, red bead eyes.</p>
+      <div class="stage"><img src="front/kinetic.svg" width="165" height="165" alt="" /><div class="small"><img src="front/kinetic.svg" width="44" height="44" alt="" /><span>44</span></div><div class="small"><img src="front/kinetic.svg" width="24" height="24" alt="" /><span>24</span></div></div>
+      <div class="note"><b>Reads as:</b> art object, motion. <b>Risk:</b> fragile at 24.</div>
+    </article>
+  </section>
+
+  <footer class="footer"><span><b>Pick one</b> · front gaze kept · no app changes</span><span>concept draft</span></footer>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Mira — front low-poly</title>
+  <defs>
+    <linearGradient id="a" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2B2F3A"/><stop offset="1" stop-color="#0B0D12"/></linearGradient>
+    <linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8B5CF6"/><stop offset="1" stop-color="#3B0F7A"/></linearGradient>
+    <linearGradient id="c" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5EEAD4"/><stop offset="1" stop-color="#1D4ED8"/></linearGradient>
+    <linearGradient id="d" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F4EFE3"/><stop offset="1" stop-color="#C6BAA6"/></linearGradient>
+    <linearGradient id="e" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F6C46A"/><stop offset="1" stop-color="#B45309"/></linearGradient>
+  </defs>
+  <ellipse cx="256" cy="470" rx="150" ry="20" fill="#16141B" opacity=".1" filter="blur(9px)"/>
+  <!-- tail -->
+  <path d="M 220 370 L 150 478 L 200 486 L 256 416 Z" fill="url(#a)"/>
+  <path d="M 256 416 L 200 486 L 232 490 L 256 430 Z" fill="url(#b)"/>
+  <path d="M 256 416 L 256 496 L 286 486 L 256 430 Z" fill="url(#a)"/>
+  <path d="M 292 370 L 362 478 L 312 486 L 256 416 Z" fill="url(#a)"/>
+  <!-- wings -->
+  <path d="M 206 280 L 92 340 L 116 414 L 210 360 Z" fill="url(#a)"/>
+  <path d="M 306 280 L 420 340 L 396 414 L 302 360 Z" fill="url(#a)"/>
+  <path d="M 206 280 L 210 360 L 156 378 L 128 340 Z" fill="url(#b)"/>
+  <path d="M 306 280 L 302 360 L 356 378 L 384 340 Z" fill="url(#b)"/>
+  <path d="M 156 378 L 210 360 L 190 414 Z" fill="url(#c)"/>
+  <path d="M 356 378 L 302 360 L 322 414 Z" fill="url(#c)"/>
+  <!-- body -->
+  <path d="M 256 250 L 330 300 L 318 386 L 256 420 L 194 386 L 182 300 Z" fill="url(#a)"/>
+  <path d="M 256 250 L 182 300 L 256 330 Z" fill="url(#b)"/>
+  <path d="M 256 250 L 330 300 L 256 330 Z" fill="url(#c)"/>
+  <path d="M 194 386 L 256 420 L 256 330 Z" fill="url(#b)"/>
+  <path d="M 318 386 L 256 420 L 256 330 Z" fill="url(#a)"/>
+  <path d="M 256 330 L 300 350 L 290 390 L 256 404 L 222 390 L 212 350 Z" fill="url(#d)"/>
+  <!-- head -->
+  <path d="M 214 158 L 298 158 L 316 214 L 256 248 L 196 214 Z" fill="url(#a)"/>
+  <path d="M 214 158 L 256 178 L 256 248 L 196 214 Z" fill="url(#b)"/>
+  <path d="M 298 158 L 256 178 L 256 248 L 316 214 Z" fill="url(#c)"/>
+  <circle cx="232" cy="194" r="6" fill="#E2452F"/><circle cx="280" cy="194" r="6" fill="#E2452F"/>
+  <path d="M 256 206 L 278 226 L 256 246 L 234 226 Z" fill="url(#e)"/>
+  <!-- legs -->
+  <path d="M 240 420 L 236 456 L 218 466 M 236 456 L 252 466" stroke="#0B0D12" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M 272 420 L 276 456 L 260 466 M 276 456 L 294 466" stroke="#0B0D12" stroke-width="6" fill="none" stroke-linecap="round"/>
+</svg>

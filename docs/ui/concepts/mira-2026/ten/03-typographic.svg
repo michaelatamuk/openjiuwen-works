@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-labelledby="title">
+  <title id="title">Mira typographic M bird</title>
+  <path d="M 42 204 V 62 L 98 152 L 148 62 V 204" fill="none" stroke="#16141B" stroke-width="26" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M 148 70 L 196 84 L 148 100 Z" fill="#16141B"/>
+  <path d="M 42 198 L 18 232 L 62 232 Z" fill="#16141B"/>
+  <path d="M 98 152 L 122 170 L 98 190 Z" fill="#6D28D9"/>
+</svg>

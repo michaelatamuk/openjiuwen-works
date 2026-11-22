@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Mira 2026 — motion study</title>
+<style>
+  :root {
+    --ink: #16141b; --paper: #f4f0e6; --paper-2: #efe9dc;
+    --violet: #6d28d9; --violet-2: #8b5cf6; --vermilion: #e2452f;
+    --muted: #8b95a7; --line: rgba(244,240,230,.12);
+    --serif: Georgia, "Times New Roman", serif;
+    --mono: "Cascadia Code", Consolas, monospace;
+    --sans: "Segoe UI", Inter, system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { min-height: 100vh; background: #0d1016; color: var(--paper); font-family: var(--sans); padding: 46px 54px; }
+  header { display: flex; justify-content: space-between; gap: 30px; align-items: flex-start; }
+  .kicker { font: 700 10px/1 var(--mono); letter-spacing: .2em; text-transform: uppercase; color: var(--violet-2); }
+  h1 { font: 400 54px/1 var(--serif); letter-spacing: -.03em; margin: 12px 0 8px; }
+  p.lede { max-width: 520px; color: var(--muted); font-size: 13.5px; line-height: 1.6; margin: 0; }
+  .spec { font: 10px/1.7 var(--mono); letter-spacing: .06em; color: var(--muted); text-align: right; text-transform: uppercase; }
+  .spec b { display: block; color: var(--paper); }
+  .stage { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 30px; }
+  .panel { border: 1px solid var(--line); border-radius: 16px; background: #121620; padding: 18px; min-height: 430px; display: flex; flex-direction: column; }
+  .panel-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .panel h2 { font: 400 22px/1.1 var(--serif); margin: 0; letter-spacing: -.02em; }
+  .panel .tag { font: 9px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--violet-2); }
+  .canvas { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 270px; }
+  .canvas svg { width: 210px; height: 210px; overflow: visible; }
+  .caption { color: var(--muted); font-size: 12px; line-height: 1.55; min-height: 44px; }
+  .caption b { color: var(--paper); font-weight: 600; }
+  .btn { align-self: flex-start; margin-top: 12px; border: 1px solid var(--line); background: #1a2030; color: var(--paper); border-radius: 999px; padding: 7px 14px; font: 10px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
+  .btn:hover { border-color: var(--violet-2); }
+  .timeline { margin-top: 22px; border: 1px solid var(--line); border-radius: 16px; padding: 18px; background: #121620; }
+  .timeline h3 { font: 400 20px/1.1 var(--serif); margin: 0 0 4px; }
+  .timeline p { color: var(--muted); font-size: 12px; margin: 0 0 14px; }
+  .track { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  .tick { border-left: 2px solid var(--violet); padding: 8px 10px; background: rgba(139,92,246,.08); border-radius: 0 8px 8px 0; }
+  .tick b { display: block; font: 700 10px/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--paper); }
+  .tick span { font: 10px/1.5 var(--mono); color: var(--muted); }
+  .foot { margin-top: 16px; color: var(--muted); font: 10px/1.7 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+  /* idle */
+  .run .bird { animation: breathe 4.2s ease-in-out infinite; }
+  .run .tail { animation: tail 3.4s ease-in-out infinite; transform-box: fill-box; transform-origin: 70% 20%; }
+  .run .eye { animation: blink 6.4s infinite; transform-box: fill-box; transform-origin: center; }
+  .run .bob { animation: bob 3.4s ease-in-out infinite; }
+  @keyframes breathe { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+  @keyframes tail { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(2.4deg); } }
+  @keyframes blink { 0%,96%,100% { transform: scaleY(1); } 97%,99% { transform: scaleY(.08); } }
+  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+  /* route */
+  .run .route { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 2.4s cubic-bezier(.4,0,.2,1) forwards; }
+  .run .route.d2 { animation-delay: .18s; }
+  .run .route.d3 { animation-delay: .32s; }
+  .run .node { opacity: 0; animation: pop .4s .8s ease-out forwards; transform-box: fill-box; transform-origin: center; }
+  .run .check { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw .5s 1.9s ease-out forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  @keyframes pop { from { opacity: 0; transform: scale(.2); } to { opacity: 1; transform: scale(1); } }
+  /* seal */
+  .run .stamp { animation: stamp 1.8s cubic-bezier(.2,.9,.2,1) forwards; transform-box: fill-box; transform-origin: center; }
+  .run .stampdot { opacity: 0; animation: pop .35s 1.1s ease-out forwards; transform-box: fill-box; transform-origin: center; }
+  @keyframes stamp { 0% { opacity: 0; transform: translateY(-38px) scale(1.18) rotate(-4deg); } 55% { opacity: 1; transform: translateY(4px) scale(.97) rotate(0); } 100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); } }
+  @media (prefers-reduced-motion: reduce) { .run * { animation: none !important; } }
+  @media (max-width: 1000px) { body { padding: 28px; } .stage { grid-template-columns: 1fr; } .spec { display: none; } }
+</style>
+</head>
+<body>
+  <header>
+    <div>
+      <div class="kicker">Mira · motion study · 2026</div>
+      <h1>Quiet motion.</h1>
+      <p class="lede">Three behaviours, one system. Short, purposeful, no bounce loops. A person should notice the state, not the animation.</p>
+    </div>
+    <div class="spec"><b>Idle</b>4.2 s · 3 px<br><b>Route</b>2.4 s · draw<br><b>Stamp</b>1.8 s · snap<br><b>Reduce</b>honoured</div>
+  </header>
+
+  <section class="stage">
+    <article class="panel run" id="p-idle">
+      <div class="panel-head"><h2>Ink idle</h2><span class="tag">character</span></div>
+      <div class="canvas">
+        <svg viewBox="0 0 512 512" aria-label="Ink magpie idle">
+          <g class="bird">
+            <path d="M 82 438 H 438" stroke="#F4F0E6" stroke-width="4" stroke-linecap="round" opacity=".18"/>
+            <g class="tail">
+              <path d="M 238 346 C 196 382 150 420 92 462 C 120 476 160 468 194 444 C 222 424 246 396 262 368 Z" fill="#F4F0E6"/>
+              <path d="M 252 366 C 220 400 186 430 146 456 C 170 464 198 456 222 436 C 244 418 260 394 272 374 Z" fill="#BDB6A8"/>
+            </g>
+            <path d="M 246 214 C 304 206 354 240 366 294 C 378 350 346 394 296 406 C 246 418 206 390 196 348 C 186 304 206 250 246 214 Z" fill="#F4F0E6"/>
+            <path d="M 244 338 C 280 328 322 338 340 368 C 322 394 286 404 256 394 C 236 386 230 360 244 338 Z" fill="#16141B"/>
+            <path d="M 232 268 C 278 254 322 270 338 308 C 324 338 282 350 246 332 C 230 314 224 288 232 268 Z" fill="#16141B"/>
+            <path d="M 238 278 C 260 268 286 272 302 288 C 288 302 262 304 246 296 Z" fill="#F4F0E6"/>
+            <circle cx="356" cy="188" r="60" fill="#F4F0E6"/>
+            <path d="M 330 138 C 316 118 296 110 280 114 C 298 122 308 134 312 150 Z" fill="#F4F0E6"/>
+            <path d="M 358 132 C 350 110 332 98 314 100 C 330 110 338 122 340 138 Z" fill="#F4F0E6"/>
+            <path d="M 412 178 L 470 196 L 412 214 Z" fill="#F4F0E6"/>
+            <path d="M 414 196 H 454" stroke="#16141B" stroke-width="3" stroke-linecap="round" opacity=".85"/>
+            <g class="eye"><circle cx="378" cy="174" r="7.5" fill="#16141B"/><circle cx="380" cy="174" r="2.6" fill="#F4F0E6"/></g>
+            <path d="M 308 238 C 336 252 386 252 414 236 L 408 260 C 378 274 342 274 314 260 Z" fill="#8B5CF6"/>
+            <path d="M 318 262 C 304 284 306 312 326 324 C 338 310 332 288 342 272 Z" fill="#6D28D9"/>
+            <path d="M 294 404 L 290 432 M 290 432 L 274 440 M 290 432 L 304 440" stroke="#F4F0E6" stroke-width="5" stroke-linecap="round" fill="none"/>
+            <path d="M 338 398 L 334 426 M 334 426 L 318 434 M 334 426 L 348 434" stroke="#F4F0E6" stroke-width="5" stroke-linecap="round" fill="none"/>
+            <g class="bob" transform="translate(244 292) rotate(-8)">
+              <rect width="50" height="50" rx="11" fill="#8B5CF6"/>
+              <path d="M12 26 L22 36 L39 16" stroke="#16141B" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </g>
+          </g>
+        </svg>
+      </div>
+      <p class="caption"><b>Idle.</b> Three pixels, one blink every 6–8 s. No loop that pulls the eye away from the queue.</p>
+      <button class="btn" data-replay="p-idle">Replay</button>
+    </article>
+
+    <article class="panel run" id="p-route">
+      <div class="panel-head"><h2>Route draw</h2><span class="tag">progress</span></div>
+      <div class="canvas">
+        <svg viewBox="0 0 512 512" aria-label="Route bird drawing">
+          <path d="M 64 444 H 448" stroke="#8B5CF6" stroke-width="2" stroke-dasharray="2 10" stroke-linecap="round" opacity=".5"/>
+          <path class="route" pathLength="1" d="M 238 346 C 196 382 150 420 92 462 C 120 476 160 468 194 444 C 222 424 246 396 262 368 Z" fill="none" stroke="#8B5CF6" stroke-width="16" stroke-linejoin="round"/>
+          <path class="route d2" pathLength="1" d="M 246 214 C 304 206 354 240 366 294 C 378 350 346 394 296 406 C 246 418 206 390 196 348 C 186 304 206 250 246 214 Z" fill="none" stroke="#8B5CF6" stroke-width="16" stroke-linejoin="round"/>
+          <circle class="route d3" pathLength="1" cx="356" cy="188" r="60" fill="none" stroke="#8B5CF6" stroke-width="16"/>
+          <path d="M 330 138 C 316 118 296 110 280 114 C 298 122 308 134 312 150 Z" fill="#8B5CF6"/>
+          <path d="M 412 178 L 470 196 L 412 214 Z" fill="#8B5CF6"/>
+          <circle cx="378" cy="174" r="7" fill="#8B5CF6"/>
+          <path class="route d2" pathLength="1" d="M 232 268 C 278 254 322 270 338 308 C 324 338 282 350 246 332" fill="none" stroke="#8B5CF6" stroke-width="12" stroke-linecap="round"/>
+          <path d="M 294 404 L 290 432 M 290 432 L 274 440 M 290 432 L 304 440" stroke="#8B5CF6" stroke-width="7" stroke-linecap="round" fill="none"/>
+          <path d="M 338 398 L 334 426 M 334 426 L 318 434 M 334 426 L 348 434" stroke="#8B5CF6" stroke-width="7" stroke-linecap="round" fill="none"/>
+          <g class="node" transform="translate(244 292) rotate(-8)">
+            <rect width="50" height="50" rx="11" fill="#8B5CF6"/>
+            <path class="check" pathLength="1" d="M12 26 L22 36 L39 16" stroke="#16141B" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </g>
+        </svg>
+      </div>
+      <p class="caption"><b>Progress.</b> The route draws once, then the proof node lands. It is a status change, not a loading spinner.</p>
+      <button class="btn" data-replay="p-route">Replay</button>
+    </article>
+
+    <article class="panel run" id="p-seal">
+      <div class="panel-head"><h2>Seal approve</h2><span class="tag">gate</span></div>
+      <div class="canvas">
+        <svg viewBox="0 0 512 512" aria-label="Proof seal stamp">
+          <g class="stamp">
+            <rect x="106" y="106" width="300" height="300" rx="42" fill="#8B5CF6"/>
+            <rect x="124" y="124" width="264" height="264" rx="30" fill="none" stroke="#16141B" stroke-width="3" opacity=".35"/>
+            <path d="M 190 330 C 198 286 236 258 282 262 C 318 266 342 292 336 322 C 330 352 300 370 268 366 C 238 362 210 348 190 330 Z" fill="#16141B"/>
+            <circle cx="322" cy="248" r="36" fill="#16141B"/>
+            <path d="M 350 240 L 390 252 L 350 264 Z" fill="#16141B"/>
+            <path d="M 200 352 C 178 380 154 404 132 422 C 148 430 168 426 186 412 C 204 398 218 378 228 358 Z" fill="#16141B"/>
+            <path d="M 214 300 C 244 288 276 294 294 314 C 278 334 246 340 222 328 C 210 320 208 308 214 300 Z" fill="#8B5CF6"/>
+            <circle cx="336" cy="240" r="5" fill="#8B5CF6"/>
+            <circle class="stampdot" cx="246" cy="318" r="8" fill="#E2452F"/>
+          </g>
+        </svg>
+      </div>
+      <p class="caption"><b>Approve.</b> One stamp, one snap, one vermilion dot. The seal is the only mark allowed next to gate 2.</p>
+      <button class="btn" data-replay="p-seal">Replay</button>
+    </article>
+  </section>
+
+  <section class="timeline">
+    <h3>State model</h3>
+    <p>One source of truth per state; no decorative idle loops on gates or evidence.</p>
+    <div class="track">
+      <div class="tick"><b>Idle</b><span>tail settles · 4.2 s · 3 px</span></div>
+      <div class="tick"><b>Carry</b><span>seal becomes the object · 180 ms</span></div>
+      <div class="tick"><b>Wait</b><span>head tilt 4° · 160 ms</span></div>
+      <div class="tick"><b>Alert</b><span>route redraws · 320 ms</span></div>
+      <div class="tick"><b>Approve</b><span>stamp + dot · 1.8 s</span></div>
+    </div>
+    <div class="foot">Reduced motion: all loops stop; the final state is still legible. Concept study — not applied.</div>
+  </section>
+
+  <script>
+    document.querySelectorAll("[data-replay]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const panel = document.getElementById(button.dataset.replay);
+        panel.classList.remove("run");
+        void panel.offsetWidth;
+        panel.classList.add("run");
+      });
+    });
+  </script>
+</body>
+</html>

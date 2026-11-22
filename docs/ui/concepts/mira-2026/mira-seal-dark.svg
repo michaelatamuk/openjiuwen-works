@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Mira proof seal on dark</title>
+  <desc id="desc">A light violet proof seal with a paper-cut magpie and one vermilion stamp dot.</desc>
+  <rect x="106" y="106" width="300" height="300" rx="42" fill="#8B5CF6"/>
+  <rect x="124" y="124" width="264" height="264" rx="30" fill="none" stroke="#16141B" stroke-width="3" opacity="0.35"/>
+  <path d="M 190 330 C 198 286 236 258 282 262 C 318 266 342 292 336 322 C 330 352 300 370 268 366 C 238 362 210 348 190 330 Z" fill="#16141B"/>
+  <circle cx="322" cy="248" r="36" fill="#16141B"/>
+  <path d="M 350 240 L 390 252 L 350 264 Z" fill="#16141B"/>
+  <path d="M 200 352 C 170 386 132 414 96 438 C 116 446 142 440 164 424 C 186 408 206 384 220 360 Z" fill="#16141B"/>
+  <path d="M 214 300 C 244 288 276 294 294 314 C 278 334 246 340 222 328 C 210 320 208 308 214 300 Z" fill="#8B5CF6"/>
+  <circle cx="336" cy="240" r="5" fill="#8B5CF6"/>
+  <circle cx="246" cy="318" r="8" fill="#E2452F"/>
+</svg>

@@ -469,3 +469,135 @@ def test_source_endpoint_imports_github_and_jira(paths, repo, monkeypatch) -> No
         )
         assert status == 200, body
         assert json.loads(body)["created"] == 1
+
+
+def test_task_detail_exposes_a_thread_and_a_rail(paths, submit) -> None:
+    from works.queue import Queue
+
+    task = submit()
+    queue = Queue(paths)
+    queue.append(
+        task.id, "plan.drafted", {"scenario_ids": ["p0", "p1"], "p0": ["p0"], "p1": ["p1"]}
+    )
+    queue.append(
+        task.id,
+        "gate.decided",
+        {"gate": "plan", "decision": "approved", "by": "michael", "commit": "abc1234"},
+    )
+    queue.append(
+        task.id, "thread.note", {"message": "Please check the login flow.", "by": "person"}
+    )
+    with running(paths) as base:
+        status, body = get(base, f"/api/tasks/{task.id}")
+        assert status == 200
+        data = json.loads(body)
+        roles = [message["role"] for message in data["thread"]]
+        titles = [message["title"] for message in data["thread"]]
+        assert "person" in roles
+        assert "builder" in roles
+        assert "Reported" in titles
+        assert "Plan drafted" in titles
+        assert "Plan approved" in titles
+        assert "Context added" in titles
+        assert data["rail"]["task"]["id"] == task.id
+        assert data["rail"]["factory"]["flow"] == "fix-issue"
+        assert any(item["label"] == "Proof" for item in data["rail"]["deliverables"])
+
+
+def test_add_context_appends_a_thread_note(paths, submit) -> None:
+    from works.queue import Queue
+
+    task = submit()
+    with running(paths, write=True) as base:
+        status, body = post(
+            base,
+            "/api/actions",
+            {"action": "add-context", "task_id": task.id, "message": "The customer uses SSO."},
+        )
+        assert status == 200, body
+        assert json.loads(body)["event"]["type"] == "thread.note"
+        status, detail = get(base, f"/api/tasks/{task.id}")
+        assert status == 200
+        messages = json.loads(detail)["thread"]
+        assert any(
+            message["title"] == "Context added" and "SSO" in message["body"] for message in messages
+        )
+        status, _ = post(
+            base, "/api/actions", {"action": "add-context", "task_id": task.id, "message": ""}
+        )
+        assert status == 400
+    events = Queue(paths).events(task.id)
+    assert events[-1].type == "thread.note"
+
+
+def test_health_reports_agent_availability(paths, monkeypatch) -> None:
+    monkeypatch.setattr(
+        "works.agent_chat.availability",
+        lambda: {"available": True, "reason": "", "model": "deepseek-chat", "base": "https://x"},
+    )
+    with running(paths) as base:
+        status, body = get(base, "/api/health")
+        assert status == 200
+        assert json.loads(body)["ai"]["available"] is True
+
+
+def test_ask_action_and_stream(paths, submit, monkeypatch) -> None:
+    task = submit()
+    monkeypatch.setattr(
+        "works.agent_chat.ask_mira",
+        lambda p, t, q: {"text": "Not released.", "model": "m", "tokens": 4, "usd": 0.0},
+    )
+    monkeypatch.setattr(
+        "works.agent_chat.ask_mira_stream",
+        lambda p, t, q: iter(
+            [
+                {"type": "delta", "text": "Not "},
+                {"type": "delta", "text": "released."},
+                {"type": "done", "text": "Not released.", "model": "m", "tokens": 4, "usd": 0.0},
+            ]
+        ),
+    )
+    with running(paths, write=True) as base:
+        status, body = post(
+            base,
+            "/api/actions",
+            {"action": "ask", "task_id": task.id, "question": "Is it released?"},
+        )
+        assert status == 200, body
+        assert json.loads(body)["answer"]["text"] == "Not released."
+        status, body = post(
+            base,
+            "/api/ask/stream",
+            {"task_id": task.id, "question": "Is it released?"},
+        )
+        assert status == 200, body
+        assert 'data: {"type": "delta", "text": "Not "}' in body
+        assert 'data: {"type": "done"' in body
+
+
+def test_detail_exposes_a_mira_answer(paths, submit) -> None:
+    from works.queue import Queue
+
+    task = submit()
+    Queue(paths).append(
+        task.id,
+        "thread.agent",
+        {
+            "question": "Is it released?",
+            "answer": "Not released.",
+            "model": "m",
+            "tokens": 4,
+            "usd": 0.0,
+            "by": "mira",
+        },
+    )
+    with running(paths) as base:
+        status, body = get(base, f"/api/tasks/{task.id}")
+        assert status == 200
+        messages = json.loads(body)["thread"]
+        assert any(
+            message["role"] == "mira"
+            and message["title"] == "Mira answered"
+            and message["body"] == "Not released."
+            for message in messages
+        )

@@ -675,6 +675,9 @@ Internal only: nothing is published to the upstream fork until M2 is green.
     LAIX shadow), inline artifacts and before/after images, product map, detector panel,
     `--write` actions, a full new-task form, GitHub/Jira/detector intake, timeline filters, queue
     product/source filters and a release-aware Story. Still local, vanilla JS and polling.
+  - 2026-11-23: added the Thread view: event-sourced roles and cards, a right rail, add-context,
+    and a real openjiuwen-backed `Ask Mira` with SSE streaming and `thread.agent` recording.
+    The assistant is advisory and cannot open a gate.
 - [ ] **T1.25** Verification cost split: builder, challenger and verifier tokens/USD in `run.json`
   and the proof; verification share is reported next to the total. **S**
 - [x] **T1.26** PPMA memory backfill: `works memory backfill` reports already-finished runs from
