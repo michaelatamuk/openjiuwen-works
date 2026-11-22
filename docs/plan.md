@@ -761,6 +761,9 @@ Internal only: nothing is published to the upstream fork until M2 is green.
 ### M3 — Release, return, escape (weeks 7–8)
 
 - [ ] **T3.1** Release gate: normalized path matching, deny-wins, approval bound to commit hash. **M**
+  - 2026-11-22: `works release` builds a read-only packet bound to run, base commit, proof, plan
+    approval and release approval; blockers are explicit and exit `8`. Publishing and the actual
+    gate transition remain open with T3.2–T3.4.
 - [ ] **T3.2** Publish asserts `HEAD == approved_commit`; otherwise re-gate. **S**
 - [ ] **T3.3** Branch + PR with proof, `Works-Run:` trailer, bot identity. **M**
 - [ ] **T3.4** Return: one comment per run on the source issue, idempotent. **M**

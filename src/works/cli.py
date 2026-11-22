@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 from .errors import (
     EXIT_BLOCKED,
     EXIT_INTERNAL,
+    EXIT_OK,
     EXIT_POLICY,
     EXIT_STATE,
     ConfigError,
@@ -230,6 +231,24 @@ def cmd_approve(args: argparse.Namespace) -> int:
     else:
         print(f"plan approved: {args.task_id} is now {updated.state.value}")
     return 0
+
+
+def cmd_release(args: argparse.Namespace) -> int:
+    from .release import release_packet
+
+    packet = release_packet(_paths(args), args.task_id)
+    if args.json:
+        _emit(packet.as_dict())
+    else:
+        print(f"Release packet for {packet.task_id}")
+        print(f"  run:    {packet.run_id or '-'}")
+        print(f"  commit: {packet.commit or '-'}")
+        print(f"  proof:  {packet.proof_sha256 or '-'}")
+        print(f"  ready:  {'yes' if packet.ready else 'no'}")
+        for blocker in packet.blockers:
+            print(f"  blocker: {blocker}")
+        print("  publisher: not configured (dry run only)")
+    return EXIT_OK if packet.ready else EXIT_BLOCKED
 
 
 def _supervisor(args: argparse.Namespace) -> Supervisor:
@@ -981,6 +1000,11 @@ def build_parser() -> argparse.ArgumentParser:
     approve.add_argument("--gate", default="plan", help="plan or release")
     approve.add_argument("--json", action="store_true")
     approve.set_defaults(func=cmd_approve)
+
+    release = sub.add_parser("release", help="Build the read-only release packet")
+    release.add_argument("task_id")
+    release.add_argument("--json", action="store_true")
+    release.set_defaults(func=cmd_release)
 
     run = sub.add_parser("run", help="Reproduce, plan, build, check, prove")
     run.add_argument("task_id")

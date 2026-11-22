@@ -92,6 +92,7 @@ uv sync --extra live
 uv run works readiness --repo /path/to/repo
 uv run works submit --repo /path/to/repo --product MyProduct --ref GH-42 --title "The export drops the last column"
 uv run works run <task-id> --live --approve-plan --scenarios scenarios.yaml
+uv run works release <task-id>
 ```
 
 The live builder needs `ANTHROPIC_API_KEY` (or `WORKS_MODEL_KEY`). PPMA memory is optional:
@@ -143,6 +144,7 @@ CI runs lint, tests, bandit and gitleaks; mutation and `pip-audit` run weekly. D
 |---|---|
 | [`docs/plan.md`](docs/plan.md) | Milestones, checkboxes, standards and refactoring gates |
 | [`docs/ui.md`](docs/ui.md) | Story, Evidence, report intake and the read-only/write boundary |
+| [`docs/release.md`](docs/release.md) | Commit-bound release packet and publisher boundary |
 | [`docs/readiness.md`](docs/readiness.md) | `.works/readiness.yaml` and the autonomy gate |
 | [`docs/features.md`](docs/features.md) | Feature map format and proof coverage |
 | [`docs/live-harness.md`](docs/live-harness.md) | Real `openjiuwen` builder setup |
