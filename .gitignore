@@ -28,3 +28,5 @@ build/
 # system
 Thumbs.db
 .DS_Store
+
+logs/
