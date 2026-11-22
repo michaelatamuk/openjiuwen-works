@@ -167,14 +167,23 @@ def _credentials_check(environ: dict[str, str]) -> CheckResult:
     builder = environ.get("ANTHROPIC_API_KEY") or environ.get("WORKS_MODEL_KEY")
     verifier = environ.get("WORKS_VERIFIER_API_KEY")
     if builder and verifier:
+        if builder == verifier:
+            return CheckResult(
+                name="credentials",
+                status="warn",
+                detail=(
+                    "builder and verifier use the same key; set WORKS_VERIFIER_API_KEY "
+                    "to a different credential for a real provider split"
+                ),
+            )
         return CheckResult(
-            name="credentials", status="ok", detail="builder and verifier keys are set"
+            name="credentials", status="ok", detail="builder and verifier keys are separate"
         )
     missing = []
     if not builder:
         missing.append("ANTHROPIC_API_KEY / WORKS_MODEL_KEY (builder)")
     if not verifier:
-        missing.append("WORKS_VERIFIER_API_KEY (verifier, M2)")
+        missing.append("WORKS_VERIFIER_API_KEY (verifier)")
     return CheckResult(
         name="credentials",
         status="warn",

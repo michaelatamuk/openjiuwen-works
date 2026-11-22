@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="dark light" />
-    <title>openJiuwen Works — read-only preview</title>
+    <title>openJiuwen Works — local factory</title>
     <link rel="stylesheet" href="/app.css" />
   </head>
   <body>
@@ -14,7 +14,7 @@
           <div class="mark" aria-hidden="true">W</div>
           <div class="brand-copy">
             <strong>openJiuwen Works</strong>
-            <span class="preview">LOCAL PREVIEW</span>
+            <span class="preview">LOCAL FACTORY</span>
           </div>
           <button class="icon-btn" id="theme" type="button" aria-label="Toggle theme" title="Theme">◐</button>
         </header>
@@ -31,7 +31,17 @@
           <button type="button" class="filter" data-filter="done">Done</button>
         </div>
 
-        <button class="btn report-btn" id="report" type="button" hidden>+ Report a bug</button>
+        <div class="filter-selects">
+          <select id="product-filter" aria-label="Filter by product"><option value="">All products</option></select>
+          <select id="source-filter" aria-label="Filter by source">
+            <option value="">All sources</option>
+            <option value="manual">A person</option>
+            <option value="tracker">Tracker</option>
+            <option value="detector">Monitoring</option>
+          </select>
+        </div>
+
+        <button class="btn report-btn" id="report" type="button" hidden>+ New task</button>
 
         <div id="task-list" class="task-list" aria-live="polite"></div>
       </aside>
@@ -44,6 +54,7 @@
             <p id="subtitle">Select a report to read its story, proof and decision.</p>
           </div>
           <div class="head-actions">
+            <button class="btn ghost" id="intake" type="button" hidden>Import</button>
             <button class="btn ghost" id="cmdk" type="button" aria-label="Command palette" title="Command palette">Ctrl K</button>
             <button class="btn ghost" id="density" type="button" aria-label="Toggle density" title="Density">☷</button>
             <button class="btn ghost" id="refresh" type="button">Refresh</button>
@@ -68,13 +79,14 @@
     </dialog>
 
     <dialog id="report-dialog" aria-labelledby="report-title">
-      <h2 id="report-title">Report a bug</h2>
+      <h2 id="report-title">New task</h2>
       <form id="report-form">
-        <label>Repository
-          <input name="repo" required placeholder="C:\path\to\repo" autocomplete="off" />
-        </label>
         <label>Product
-          <input name="product" value="openjiuwen" required />
+          <input name="product" value="openjiuwen" required list="product-list" />
+          <datalist id="product-list"></datalist>
+        </label>
+        <label>Repository <span class="small muted">(optional when the product is mapped)</span>
+          <input name="repo" placeholder="C:\path\to\repo" autocomplete="off" />
         </label>
         <label>Reference
           <input name="ref" required placeholder="GH-123" autocomplete="off" />
@@ -82,10 +94,75 @@
         <label>Title
           <input name="title" required placeholder="What went wrong?" autocomplete="off" />
         </label>
+        <div class="form-row">
+          <label>Source
+            <select name="kind">
+              <option value="manual">A person</option>
+              <option value="tracker">Tracker</option>
+              <option value="detector">Monitoring</option>
+            </select>
+          </label>
+          <label>Task kind
+            <select name="task_kind">
+              <option value="fix">Fix</option>
+              <option value="check-change">Check a change</option>
+            </select>
+          </label>
+          <label>Flow
+            <input name="flow" value="fix-issue" />
+          </label>
+        </div>
         <p class="small muted">This only adds a queued task. It never starts a run or approves a gate.</p>
         <div class="dialog-actions">
           <button type="button" class="btn ghost" id="report-cancel">Cancel</button>
           <button type="submit" class="btn">Create task</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="intake-dialog" aria-labelledby="intake-title">
+      <h2 id="intake-title">Import signals</h2>
+      <form id="intake-form">
+        <label>Source
+          <select name="source">
+            <option value="github">GitHub Issues</option>
+            <option value="jira">Jira</option>
+            <option value="detector">Detector</option>
+          </select>
+        </label>
+        <div class="form-row" data-intake="github">
+          <label>Repository
+            <input name="repository" placeholder="owner/name" autocomplete="off" />
+          </label>
+          <label>Label
+            <input name="label" placeholder="bug" autocomplete="off" />
+          </label>
+        </div>
+        <div class="form-row" data-intake="jira" hidden>
+          <label>Jira URL
+            <input name="url" placeholder="https://jira.example" autocomplete="off" />
+          </label>
+          <label>JQL
+            <input name="jql" placeholder="project = FIRE AND status = Open" autocomplete="off" />
+          </label>
+        </div>
+        <div class="form-row" data-intake="detector" hidden>
+          <label>Detector
+            <select name="detector" id="detector-select"></select>
+          </label>
+        </div>
+        <div class="form-row">
+          <label>Product
+            <input name="product" placeholder="firefox" required list="product-list" />
+          </label>
+          <label>Repository override
+            <input name="repo" placeholder="(optional)" autocomplete="off" />
+          </label>
+        </div>
+        <p class="small muted">Imports only firing or open signals. Duplicates return the same task.</p>
+        <div class="dialog-actions">
+          <button type="button" class="btn ghost" id="intake-cancel">Cancel</button>
+          <button type="submit" class="btn">Import</button>
         </div>
       </form>
     </dialog>

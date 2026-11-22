@@ -37,6 +37,27 @@ def test_missing_credentials_are_a_warning(paths: WorksPaths, repo, monkeypatch)
     assert credentials.status == "warn"
 
 
+def test_the_same_key_for_builder_and_verifier_is_not_a_split(paths: WorksPaths, repo) -> None:
+    results = run_checks(
+        paths,
+        repo=repo.path,
+        environ={"WORKS_MODEL_KEY": "same", "WORKS_VERIFIER_API_KEY": "same"},
+    )
+    credentials = next(result for result in results if result.name == "credentials")
+    assert credentials.status == "warn"
+    assert "same key" in credentials.detail
+
+
+def test_separate_builder_and_verifier_keys_are_ok(paths: WorksPaths, repo) -> None:
+    results = run_checks(
+        paths,
+        repo=repo.path,
+        environ={"WORKS_MODEL_KEY": "builder", "WORKS_VERIFIER_API_KEY": "verifier"},
+    )
+    credentials = next(result for result in results if result.name == "credentials")
+    assert credentials.status == "ok"
+
+
 def test_a_failed_required_check_fails_the_command(paths: WorksPaths) -> None:
     results = run_checks(paths, repo=paths.root)
     result = results[0]

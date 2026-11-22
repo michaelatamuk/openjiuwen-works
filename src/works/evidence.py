@@ -56,6 +56,8 @@ class Evidence(BaseModel):
     stop_reason: StopReason
     model: str | None = None
     provider: str | None = None
+    verifier: str = "local"
+    verifier_isolation: str = "process"
     prompt_name: str | None = None
     prompt_sha256: str | None = None
     tokens: int = 0

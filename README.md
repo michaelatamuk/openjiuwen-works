@@ -92,6 +92,7 @@ uv sync --extra live
 # openjiuwen must be installed or on PYTHONPATH; see docs/live-harness.md
 uv run works readiness --repo /path/to/repo
 uv run works source github owner/name --product MyProduct --label bug
+uv run works source detector --file alerts.json --product MyProduct
 uv run works submit --repo /path/to/repo --product MyProduct --ref GH-42 --title "The export drops the last column"
 uv run works run <task-id> --live --approve-plan --scenarios scenarios.yaml
 uv run works run <task-id> --live --verifier docker --scenarios scenarios.yaml
@@ -121,14 +122,15 @@ uv run works memory recall --ppma http://127.0.0.1:8766
 | **Loop** | Queue, policy, disposable worktree, reproduce, build, check, proof and ledger work end to end. |
 | **Live builder** | Real `openjiuwen` Claude Code harness on an Anthropic-compatible endpoint; model, tokens, USD and prompt hash are recorded. |
 | **Proof** | Computed evidence page and immutable ledger row; P0/P1 verdict, policy, risk, cost, diff and residual gaps. |
-| **GUI** | Story is the default human reading; Evidence is one click away; mobile route, replay, Present mode and a specific blocked rail. |
+| **GUI** | Story is the default human reading; Evidence is one click away; a Release view carries the packet, delivery, confirmation and team verdict; inline artifacts, product map, detectors, intake and a new-task form. |
 | **Readiness** | `works readiness` runs lint, format, types, fast tests, product verify, architecture and import boundaries; the report carries the internal import graph and fails on cycles, and a red gate blocks live runs. |
 | **Feature map** | `features/<product>.yaml`; Evidence shows covered, failed and not-covered features. |
 | **Memory** | When configured, finished runs are reported to PPMA; older runs can be backfilled; `works memory recall` reads statements. |
 | **Decision layer** | `DecisionPort` and `LaixGate` exist behind a deterministic fallback; off by default, shadow opt-in. |
 | **Agent-core team** | `works team verify` runs inspector + challenger + reporter on `BaseTeam`/`TeamRuntime`; model-free, no API key. |
-| **Intake** | GitHub Issues and Jira become queued tasks with `(kind, ref)` deduplication; `.works/products.yaml` maps a product to its checkout. |
+| **Intake** | GitHub Issues, Jira and firing detector alerts become queued tasks with `(kind, ref)` deduplication; `.works/products.yaml` maps a product to its checkout. |
 | **Verifier container** | `--verifier docker` runs checks with no network, dropped capabilities and only the worktree mounted; a missing daemon is an error, never a silent host fallback. |
+| **Provider split** | The verifier environment drops builder credentials, `works doctor` warns when both roles share one key, and the proof records the verifier and its isolation. |
 | **JiuwenSwarm boundary** | `works run --swarm` speaks `works.swarm.v1` to an isolated entrypoint; `works swarm doctor` reports why the local checkout cannot start yet. |
 | **Release gate** | `works approve --gate release` binds gate 2 to the base commit and proof, moves the task to `released`, and records `release.json`; a repeat is idempotent. |
 | **Delivery** | `works deliver` commits the approved diff with `Works-Run:` trailers, pushes `works/<task-id>`, opens one GitHub PR or GitLab MR, and returns one comment to GitHub, GitLab or Jira. |
@@ -168,7 +170,7 @@ CI runs lint, tests, bandit and gitleaks; mutation and `pip-audit` run weekly. D
 | [`docs/features.md`](docs/features.md) | Feature map format and proof coverage |
 | [`docs/live-harness.md`](docs/live-harness.md) | Real `openjiuwen` builder setup |
 | [`docs/agent-core.md`](docs/agent-core.md) | agent-core harness and verification team |
-| [`docs/intake.md`](docs/intake.md) | GitHub/Jira intake and product-to-repository map |
+| [`docs/intake.md`](docs/intake.md) | GitHub/Jira/detector intake and product-to-repository map |
 | [`docs/swarm.md`](docs/swarm.md) | Isolated JiuwenSwarm builder contract |
 | [`docs/ppma.md`](docs/ppma.md) | PPMA north contract, backfill and recall |
 | [`docs/laix.md`](docs/laix.md) | Decision-layer boundary and rollout |

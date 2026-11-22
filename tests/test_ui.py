@@ -56,7 +56,7 @@ def test_static_page_and_assets(paths) -> None:
         status, body = get(base, "/")
         assert status == 200
         assert "openJiuwen Works" in body
-        assert "LOCAL PREVIEW" in body
+        assert "LOCAL FACTORY" in body
         assert "Nothing selected" not in body
         assert "Start with a report" in body
         status, script = get(base, "/app.js")
@@ -305,3 +305,167 @@ def test_write_endpoint_rejects_a_non_git_repo_and_unknown_kind(paths, tmp_path,
         assert status == 400
         status, _ = post(base, "/api/readiness", {})
         assert status == 400
+
+
+def test_products_endpoint_reflects_the_map(paths, repo) -> None:
+    with running(paths) as base:
+        status, body = get(base, "/api/products")
+        assert status == 200
+        assert json.loads(body)["configured"] is False
+    (paths.root / ".works").mkdir()
+    (paths.root / ".works" / "products.yaml").write_text(
+        f'products:\n  firefox:\n    repo: "{repo.path.as_posix()}"\n', encoding="utf-8"
+    )
+    with running(paths) as base:
+        status, body = get(base, "/api/products")
+        assert status == 200
+        data = json.loads(body)
+        assert data["configured"] is True
+        assert data["products"][0]["git"] is True
+
+
+def test_a_new_task_can_use_the_product_map(paths, repo) -> None:
+    (paths.root / ".works").mkdir()
+    (paths.root / ".works" / "products.yaml").write_text(
+        f'products:\n  firefox:\n    repo: "{repo.path.as_posix()}"\n', encoding="utf-8"
+    )
+    with running(paths, write=True) as base:
+        status, body = post(
+            base,
+            "/api/tasks",
+            {"product": "firefox", "ref": "GH-9", "title": "It broke"},
+        )
+        assert status == 201, body
+        data = json.loads(body)
+        assert data["repo"] == str(repo.path.resolve())
+
+
+def test_detector_endpoint_and_intake(paths, repo) -> None:
+    (paths.root / ".works").mkdir()
+    alerts = paths.root / ".works" / "alerts.json"
+    alerts.write_text(json.dumps([{"id": "a1", "title": "Disk full"}]), encoding="utf-8")
+    (paths.root / ".works" / "detectors.yaml").write_text(
+        "detectors:\n"
+        "  prod:\n"
+        f'    file: "{alerts.as_posix()}"\n'
+        "    product: firefox\n"
+        f'    repo: "{repo.path.as_posix()}"\n',
+        encoding="utf-8",
+    )
+    with running(paths, write=True) as base:
+        status, body = get(base, "/api/detectors")
+        assert status == 200
+        data = json.loads(body)
+        assert data["detectors"][0]["alerts"][0]["title"] == "Disk full"
+        status, body = post(base, "/api/sources", {"source": "detector", "name": "prod"})
+        assert status == 200, body
+        assert json.loads(body)["created"] == 1
+        status, body = post(base, "/api/sources", {"source": "detector", "name": "prod"})
+        assert json.loads(body)["created"] == 0
+
+
+def test_unknown_actions_and_blocked_release_are_refused(paths, submit) -> None:
+    task = submit()
+    with running(paths, write=True) as base:
+        status, _ = post(base, "/api/actions", {"action": "pigeon", "task_id": task.id})
+        assert status == 400
+        status, body = post(base, "/api/actions", {"action": "release", "task_id": task.id})
+        assert status == 400
+        assert "blocked" in json.loads(body)["error"]
+
+
+def test_task_detail_exposes_release_ops_and_verifier(paths, submit) -> None:
+    task = submit()
+    with running(paths) as base:
+        status, body = get(base, f"/api/tasks/{task.id}")
+        assert status == 200
+        data = json.loads(body)
+        assert "release" in data
+        assert data["release"]["ready"] is False
+        assert data["verifier"]["name"] == "local"
+        assert data["team"]["latest"] is None
+        assert data["artifacts"] == []
+
+
+def test_actions_dispatch_release_deliver_confirm_and_team(paths, submit, monkeypatch) -> None:
+    from works.confirm import Confirmation
+    from works.deliver import Delivery
+    from works.release import ReleasePacket
+
+    task = submit()
+    monkeypatch.setattr(
+        "works.release.approve_release",
+        lambda p, t: (
+            task,
+            ReleasePacket(task_id=t, commit="abc1234", proof_sha256="a" * 64, run_id="r-1"),
+            True,
+        ),
+    )
+    monkeypatch.setattr(
+        "works.deliver.deliver",
+        lambda p, t, **k: Delivery(
+            task_id=t, run_id="r-1", commit="abc1234", branch="works/t", pr_url="https://x/pr"
+        ),
+    )
+    monkeypatch.setattr(
+        "works.confirm.confirm",
+        lambda p, t, **k: Confirmation(
+            task_id=t, run_id="r-1", commit="abc1234", ok=True, target="http x"
+        ),
+    )
+    monkeypatch.setattr(
+        "works.team_task.run_team_verify",
+        lambda p, t, **k: {"verdict": "allow", "blockers": []},
+    )
+    with running(paths, write=True) as base:
+        status, body = post(base, "/api/actions", {"action": "release", "task_id": task.id})
+        assert status == 200, body
+        assert json.loads(body)["created"] is True
+        status, body = post(
+            base, "/api/actions", {"action": "deliver", "task_id": task.id, "provider": "github"}
+        )
+        assert status == 200, body
+        assert json.loads(body)["delivery"]["pr_url"] == "https://x/pr"
+        status, body = post(base, "/api/actions", {"action": "confirm", "task_id": task.id})
+        assert status == 200, body
+        assert json.loads(body)["confirmation"]["ok"] is True
+        status, body = post(base, "/api/actions", {"action": "team-verify", "task_id": task.id})
+        assert status == 200, body
+        assert json.loads(body)["team"]["verdict"] == "allow"
+
+
+def test_source_endpoint_imports_github_and_jira(paths, repo, monkeypatch) -> None:
+    from works.sources import Issue
+
+    monkeypatch.setattr(
+        "works.sources.github_issues", lambda *a, **k: [Issue(ref="o/r#1", title="One")]
+    )
+    monkeypatch.setattr(
+        "works.sources.jira_issues", lambda *a, **k: [Issue(ref="FIRE-1", title="Two")]
+    )
+    with running(paths, write=True) as base:
+        status, body = post(
+            base,
+            "/api/sources",
+            {
+                "source": "github",
+                "product": "firefox",
+                "repo": str(repo.path),
+                "repository": "o/r",
+            },
+        )
+        assert status == 200, body
+        assert json.loads(body)["created"] == 1
+        status, body = post(
+            base,
+            "/api/sources",
+            {
+                "source": "jira",
+                "product": "firefox",
+                "repo": str(repo.path),
+                "url": "https://jira.example",
+                "jql": "project = X",
+            },
+        )
+        assert status == 200, body
+        assert json.loads(body)["created"] == 1

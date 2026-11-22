@@ -44,6 +44,8 @@ class Confirmation:
     exit_code: int = 0
     duration_ms: int = 0
     output_sha256: str = ""
+    url: str | None = None
+    command: list[str] | None = None
     notes: list[str] = field(default_factory=list)
     comment_url: str | None = None
     created: bool = True
@@ -58,6 +60,8 @@ class Confirmation:
             "exit_code": self.exit_code,
             "duration_ms": self.duration_ms,
             "output_sha256": self.output_sha256,
+            "url": self.url,
+            "command": self.command,
             "notes": self.notes,
             "comment_url": self.comment_url,
             "created": self.created,
@@ -169,12 +173,14 @@ def confirm(
     output = ""
     target = "scenario set"
     exit_code = 0
+    command_argv: list[str] | None = None
     if url is not None:
         target = f"http {url}"
         ok, exit_code, output = _http_check(url)
     elif command is not None:
         target = f"command {command}"
         argv = command if isinstance(command, list) else shlex.split(command, posix=os.name != "nt")
+        command_argv = argv
         result: CommandResult = command_runner.run(
             argv, worktree, env={"PYTHONPATH": str(worktree)}, timeout_s=600
         )
@@ -197,6 +203,8 @@ def confirm(
         target=target,
         exit_code=exit_code,
         output_sha256=hashlib.sha256(output.encode("utf-8", errors="replace")).hexdigest(),
+        url=url,
+        command=command_argv,
         notes=notes,
     )
     if effective_tracker != "none":

@@ -9,12 +9,14 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, cast
-from urllib.parse import parse_qs, unquote, urlparse
+from urllib.parse import parse_qs, quote, unquote, urlparse
 
 from ..config import WorksPaths
+from ..detectors import alerts_for, ingest_named, load_config
 from ..errors import ConfigError
 from ..ledger import Ledger
 from ..metrics import collect
+from ..products import MAP_PATH, load_products, resolve_repo
 from ..queue import Queue
 from ..records import Event, Source, SourceKind, Task, TaskKind
 
@@ -90,7 +92,13 @@ def _first_at(events: list[Event], kind: str, *, step: str | None = None) -> str
     return event.ts.isoformat() if event is not None else None
 
 
-def _pipeline(task: Task, events: list[Event], evidence: dict[str, Any] | None) -> dict[str, Any]:
+def _pipeline(
+    task: Task,
+    events: list[Event],
+    evidence: dict[str, Any] | None,
+    delivery: dict[str, Any] | None = None,
+    confirmation: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """A story line and a technical line, both derived from events and evidence."""
     state = task.state.value
     stop = str((evidence or {}).get("stop_reason", ""))
@@ -104,8 +112,12 @@ def _pipeline(task: Task, events: list[Event], evidence: dict[str, Any] | None) 
         "checking": 5,
         "proved": 7,
         "releasing": 7,
-        "released": 9,
+        "released": 8,
     }.get(state, 0)
+    if confirmation is not None:
+        current = 10
+    elif delivery is not None:
+        current = 9
     if state == "blocked":
         current = {
             "not_reproducible": 1,
@@ -197,8 +209,18 @@ def _pipeline(task: Task, events: list[Event], evidence: dict[str, Any] | None) 
                 f"commit {str(gate_release.data.get('commit', '?'))[:10]}",
             ]
         if index == 8:
-            return [f"back to {task.source.kind.value}:{task.source.ref}"]
-        return ["awaiting confirmation"]
+            if delivery is None:
+                return ["not delivered" if state == "released" else "not reached"]
+            return [
+                f"branch {delivery.get('branch', '?')!s}",
+                f"commit {str(delivery.get('commit', '?'))[:10]}",
+            ]
+        if confirmation is None:
+            return ["awaiting confirmation"]
+        return [
+            f"confirmation {'pass' if confirmation.get('ok') else 'fail'}",
+            str(confirmation.get("target", "—")),
+        ]
 
     at = [
         _first_at(events, "task.created"),
@@ -219,7 +241,22 @@ def _pipeline(task: Task, events: list[Event], evidence: dict[str, Any] | None) 
             ),
             None,
         ),
-        None,
+        next(
+            (
+                event.ts.isoformat()
+                for event in reversed(events)
+                if event.type == "delivery.finished"
+            ),
+            None,
+        ),
+        next(
+            (
+                event.ts.isoformat()
+                for event in reversed(events)
+                if event.type == "confirmation.finished"
+            ),
+            None,
+        ),
     ]
     technical: list[dict[str, Any]] = [
         {
@@ -285,20 +322,29 @@ def _pipeline(task: Task, events: list[Event], evidence: dict[str, Any] | None) 
         else:
             stage = "pending"
         if key == "delivered":
-            label = (
-                f"Release to {task.product}"
-                if state == "proved"
-                else f"Back in {task.product}"
-                if state == "released"
-                else f"Deliver to {task.product}"
-            )
-            caption = (
-                f"The fix is ready to go back to {task.product}."
-                if state == "proved"
-                else f"The fix is back in {task.product}."
-                if state == "released"
-                else f"The fix is on its way back to {task.product}."
-            )
+            if confirmation is not None:
+                label = f"Confirmed in {task.product}"
+                caption = (
+                    f"The released fix was confirmed in {task.product}."
+                    if confirmation.get("ok")
+                    else f"The confirmation in {task.product} failed."
+                )
+            elif delivery is not None:
+                label = f"Back in {task.product}"
+                caption = f"The fix was delivered to {task.product}. Confirmation is next."
+            else:
+                label = (
+                    f"Release to {task.product}"
+                    if state == "proved"
+                    else f"Deliver to {task.product}"
+                )
+                caption = (
+                    f"The fix is ready to go back to {task.product}."
+                    if state == "proved"
+                    else f"The fix is released and ready to be delivered to {task.product}."
+                    if state == "released"
+                    else f"The fix is on its way back to {task.product}."
+                )
         story_at = (
             at[0]
             if key == "reported"
@@ -344,13 +390,30 @@ def _pipeline(task: Task, events: list[Event], evidence: dict[str, Any] | None) 
                 ]
             )
         elif key == "delivered":
-            story_artifacts = (
-                ["The fix went back to the source"]
-                if state == "released"
-                else ["The fix is ready to go back to the source"]
-                if state == "proved"
-                else ["Not delivered yet"]
-            )
+            if confirmation is not None:
+                story_artifacts = [
+                    "The released fix was confirmed"
+                    if confirmation.get("ok")
+                    else "The confirmation failed",
+                    str(confirmation.get("target", "—")),
+                ]
+            elif delivery is not None:
+                story_artifacts = [
+                    f"Delivered on {delivery.get('branch', 'a branch')}",
+                    str(
+                        delivery.get("pr_url")
+                        or delivery.get("comment_url")
+                        or "back to the source"
+                    ),
+                ]
+            else:
+                story_artifacts = (
+                    ["The fix is released and ready to deliver"]
+                    if state == "released"
+                    else ["The fix is ready to go back to the source"]
+                    if state == "proved"
+                    else ["Not delivered yet"]
+                )
         else:
             story_artifacts = ["Not reached yet"]
         story.append(
@@ -465,6 +528,113 @@ def _task_summary(task: Task, events: list[Event]) -> dict[str, Any]:
     }
 
 
+def product_map(paths: WorksPaths) -> dict[str, Any]:
+    mapping = load_products(paths)
+    items: list[dict[str, Any]] = []
+    for name, entry in sorted(mapping.products.items()):
+        repo = Path(entry.repo).expanduser()
+        if not repo.is_absolute():
+            repo = paths.root / repo
+        repo = repo.resolve()
+        items.append(
+            {
+                "name": name,
+                "repo": str(repo),
+                "exists": repo.is_dir(),
+                "git": (repo / ".git").exists(),
+            }
+        )
+    return {
+        "path": MAP_PATH.as_posix(),
+        "configured": bool(items),
+        "products": items,
+    }
+
+
+def detector_map(paths: WorksPaths, *, refresh: bool = False) -> dict[str, Any]:
+    config = load_config(paths)
+    items: list[dict[str, Any]] = []
+    for name, source in sorted(config.detectors.items()):
+        alerts: list[dict[str, Any]] = []
+        error: str | None = None
+        if source.file or refresh:
+            try:
+                alerts = [
+                    {
+                        "ref": alert.ref,
+                        "title": alert.title,
+                        "severity": alert.severity,
+                        "status": alert.status,
+                    }
+                    for alert in alerts_for(paths, name)
+                ]
+            except ConfigError as exc:
+                error = str(exc)
+        items.append(
+            {
+                "name": name,
+                "product": source.product,
+                "file": source.file,
+                "url": source.url,
+                "alerts": alerts,
+                "error": error,
+                "needs_refresh": bool(source.url and not refresh),
+            }
+        )
+    return {"path": ".works/detectors.yaml", "configured": bool(items), "detectors": items}
+
+
+def _artifact_kind(name: str) -> str:
+    suffix = Path(name).suffix.lower()
+    if suffix in {".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"}:
+        return "image"
+    if suffix in {".mp4", ".webm", ".mov"}:
+        return "video"
+    if suffix in {".log", ".txt", ".md"}:
+        return "log"
+    if suffix in {".json", ".trace"}:
+        return "trace"
+    return "file"
+
+
+def _artifact_list(
+    run_dir: Path | None, task_id: str, evidence: dict[str, Any] | None
+) -> list[dict[str, Any]]:
+    items: dict[str, dict[str, Any]] = {}
+    for artifact in (evidence or {}).get("artifacts") or []:
+        if not isinstance(artifact, dict):
+            continue
+        relative = str(artifact.get("path") or "").removeprefix("artifacts/")
+        if not relative:
+            continue
+        items[relative] = {
+            "path": relative,
+            "name": Path(relative).name,
+            "kind": str(artifact.get("kind") or _artifact_kind(relative)),
+            "sha256": str(artifact.get("sha256") or ""),
+            "url": f"/api/tasks/{quote(task_id)}/artifacts/"
+            + "/".join(quote(part) for part in relative.split("/")),
+        }
+    root = (run_dir / "artifacts") if run_dir is not None else None
+    if root is not None and root.exists():
+        for path in sorted(root.rglob("*")):
+            if not path.is_file():
+                continue
+            relative = path.relative_to(root).as_posix()
+            if relative in items:
+                continue
+            items[relative] = {
+                "path": relative,
+                "name": path.name,
+                "kind": _artifact_kind(relative),
+                "sha256": "",
+                "size": path.stat().st_size,
+                "url": f"/api/tasks/{quote(task_id)}/artifacts/"
+                + "/".join(quote(part) for part in relative.split("/")),
+            }
+    return sorted(items.values(), key=lambda item: item["path"])
+
+
 def _task_detail(queue: Queue, paths: WorksPaths, task_id: str) -> dict[str, Any]:
     task = queue.load(task_id)
     events = queue.events(task_id)
@@ -473,6 +643,7 @@ def _task_detail(queue: Queue, paths: WorksPaths, task_id: str) -> dict[str, Any
     run: dict[str, Any] | None = None
     evidence: dict[str, Any] | None = None
     proof_md = ""
+    run_dir: Path | None = None
     if run_info is not None:
         run_dir = run_info[1]
         run = _read_json(run_dir / "run.json")
@@ -489,6 +660,24 @@ def _task_detail(queue: Queue, paths: WorksPaths, task_id: str) -> dict[str, Any
         }
         for event in events[-60:]
     ]
+    from ..release import release_packet
+
+    try:
+        release = release_packet(paths, task_id).as_dict()
+    except Exception as exc:  # a broken packet is shown as a blocker, not a 500
+        release = {"ready": False, "released": False, "blockers": [str(exc)]}
+    delivery = _read_json(run_dir / "delivery.json") if run_dir is not None else None
+    confirmation = _read_json(run_dir / "confirmation.json") if run_dir is not None else None
+    team_events = [event.data for event in events if event.type == "team.verified"]
+    laix = [event.data for event in events if event.type == "decision.shadow"][-10:]
+    verifier = {
+        "name": str((evidence or {}).get("verifier") or (run or {}).get("verifier") or "local"),
+        "isolation": str(
+            (evidence or {}).get("verifier_isolation")
+            or (run or {}).get("verifier_isolation")
+            or "process"
+        ),
+    }
     return {
         "task": task.model_dump(mode="json"),
         "summary": _task_summary(task, events),
@@ -496,9 +685,19 @@ def _task_detail(queue: Queue, paths: WorksPaths, task_id: str) -> dict[str, Any
         "evidence": evidence,
         "proof_md": proof_md,
         "timeline": timeline,
-        "pipeline": _pipeline(task, events, evidence),
+        "pipeline": _pipeline(task, events, evidence, delivery, confirmation),
         "readiness": readiness(Path(task.repo)),
         "features": feature_map(Path(task.repo), evidence),
+        "release": release,
+        "delivery": delivery,
+        "confirmation": confirmation,
+        "team": {
+            "latest": team_events[-1] if team_events else None,
+            "history": team_events[-10:],
+        },
+        "laix": laix,
+        "verifier": verifier,
+        "artifacts": _artifact_list(run_dir, task_id, evidence),
     }
 
 
@@ -553,7 +752,12 @@ class Handler(BaseHTTPRequestHandler):
                 {"ok": False, "error": "read-only preview; start `works ui --write` to report"},
             )
             return
-        if urlparse(self.path).path not in ("/api/tasks", "/api/readiness"):
+        if urlparse(self.path).path not in (
+            "/api/tasks",
+            "/api/readiness",
+            "/api/actions",
+            "/api/sources",
+        ):
             self._drain_body()
             self._json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "unknown endpoint"})
             return
@@ -584,8 +788,13 @@ class Handler(BaseHTTPRequestHandler):
             self._json(HTTPStatus.BAD_REQUEST, {"ok": False, "error": "body must be an object"})
             return
         try:
-            if urlparse(self.path).path == "/api/readiness":
+            path = urlparse(self.path).path
+            if path == "/api/readiness":
                 self._run_readiness(payload)
+            elif path == "/api/actions":
+                self._run_action(payload)
+            elif path == "/api/sources":
+                self._run_source(payload)
             else:
                 self._create_task(payload)
         except (ConfigError, ValueError) as exc:
@@ -613,10 +822,16 @@ class Handler(BaseHTTPRequestHandler):
         title = str(payload.get("title") or "").strip()
         product = str(payload.get("product") or "openjiuwen").strip()
         flow = str(payload.get("flow") or "fix-issue").strip()
-        if not repo_raw:
-            raise ValueError("repository path is required")
-        repo = Path(repo_raw).expanduser()
-        repo = (Path.cwd() / repo).resolve() if not repo.is_absolute() else repo.resolve()
+        if not product:
+            raise ValueError("product is required")
+        if repo_raw:
+            repo = Path(repo_raw).expanduser()
+            repo = (Path.cwd() / repo).resolve() if not repo.is_absolute() else repo.resolve()
+        else:
+            try:
+                repo = resolve_repo(self.paths, product)
+            except ConfigError as exc:
+                raise ValueError(str(exc)) from exc
         if not repo.is_dir():
             raise ValueError(f"repository does not exist: {repo}")
         if not (repo / ".git").exists():
@@ -648,9 +863,151 @@ class Handler(BaseHTTPRequestHandler):
                 "ok": True,
                 "created": created,
                 "task": task.model_dump(mode="json"),
+                "repo": str(repo),
                 "url": f"#/task/{task.id}/story",
             },
         )
+
+    def _run_action(self, payload: dict[str, Any]) -> None:
+        action = str(payload.get("action") or "").strip()
+        task_id = str(payload.get("task_id") or "").strip()
+        if not task_id:
+            raise ValueError("task_id is required")
+        queue = Queue(self.paths)
+        queue.load(task_id)
+        with cast(WorksHTTPServer, self.server).write_lock:
+            if action == "release":
+                from ..release import approve_release
+
+                task, packet, created = approve_release(self.paths, task_id)
+                self._json(
+                    HTTPStatus.OK,
+                    {
+                        "ok": True,
+                        "action": action,
+                        "created": created,
+                        "task": task.model_dump(mode="json"),
+                        "release": packet.as_dict(),
+                    },
+                )
+                return
+            if action == "deliver":
+                from ..deliver import deliver
+
+                delivery = deliver(
+                    self.paths,
+                    task_id,
+                    provider=str(payload.get("provider") or "none"),
+                    tracker=payload.get("tracker") or None,
+                    dry_run=bool(payload.get("dry_run")),
+                )
+                self._json(
+                    HTTPStatus.OK,
+                    {"ok": True, "action": action, "delivery": delivery.as_dict()},
+                )
+                return
+            if action == "confirm":
+                from ..confirm import confirm
+
+                result = confirm(
+                    self.paths,
+                    task_id,
+                    url=str(payload.get("url") or "").strip() or None,
+                    command=payload.get("command"),
+                    tracker=payload.get("tracker") or None,
+                    close_issue=bool(payload.get("close")),
+                    force=bool(payload.get("force")),
+                )
+                self._json(
+                    HTTPStatus.OK,
+                    {"ok": result.ok, "action": action, "confirmation": result.as_dict()},
+                )
+                return
+            if action == "team-verify":
+                from ..team_task import run_team_verify
+
+                team_result = run_team_verify(self.paths, task_id)
+                self._json(
+                    HTTPStatus.OK,
+                    {
+                        "ok": team_result.get("verdict") == "allow",
+                        "action": action,
+                        "team": team_result,
+                    },
+                )
+                return
+        raise ValueError(f"unknown action {action!r}")
+
+    def _run_source(self, payload: dict[str, Any]) -> None:
+        source = str(payload.get("source") or "").strip()
+        product = str(payload.get("product") or "").strip()
+        repo_raw = str(payload.get("repo") or "").strip()
+        try:
+            limit = max(1, min(50, int(payload.get("limit") or 20)))
+        except (TypeError, ValueError):
+            limit = 20
+        if source in ("github", "jira"):
+            if not product:
+                raise ValueError("product is required")
+            try:
+                repo = (
+                    Path(repo_raw).expanduser().resolve()
+                    if repo_raw
+                    else resolve_repo(self.paths, product)
+                )
+            except ConfigError as exc:
+                raise ValueError(str(exc)) from exc
+            queue = Queue(self.paths)
+            if source == "github":
+                from ..sources import github_issues, ingest_issues
+
+                repository = str(payload.get("repository") or "").strip()
+                if not repository:
+                    raise ValueError("repository is required (owner/name)")
+                issues = github_issues(
+                    repository,
+                    label=str(payload.get("label") or "").strip() or None,
+                    limit=limit,
+                )
+            else:
+                from ..sources import ingest_issues, jira_issues
+
+                url = str(payload.get("url") or "").strip()
+                jql = str(payload.get("jql") or "").strip()
+                if not url or not jql:
+                    raise ValueError("Jira needs url and jql")
+                issues = jira_issues(url, jql, limit=limit)
+            with cast(WorksHTTPServer, self.server).write_lock:
+                created = ingest_issues(queue, product=product, repo=str(repo), issues=issues)
+            self._json(
+                HTTPStatus.OK,
+                {
+                    "ok": True,
+                    "source": source,
+                    "found": len(issues),
+                    "created": sum(1 for _, was_created in created if was_created),
+                    "tasks": [task.id for task, _ in created],
+                },
+            )
+            return
+        if source == "detector":
+            name = str(payload.get("name") or "").strip()
+            if not name:
+                raise ValueError("detector name is required")
+            with cast(WorksHTTPServer, self.server).write_lock:
+                created = ingest_named(self.paths, name)
+            self._json(
+                HTTPStatus.OK,
+                {
+                    "ok": True,
+                    "source": source,
+                    "found": len(created),
+                    "created": sum(1 for _, was_created in created if was_created),
+                    "tasks": [task.id for task, _ in created],
+                },
+            )
+            return
+        raise ValueError(f"unknown source {source!r}")
 
     def _api(self, path: str, query: dict[str, list[str]]) -> None:
         queue = Queue(self.paths)
@@ -666,6 +1023,13 @@ class Handler(BaseHTTPRequestHandler):
                         "version": "0.0.1",
                     },
                 )
+                return
+            if path == "/api/products":
+                self._json(HTTPStatus.OK, {"ok": True, **product_map(self.paths)})
+                return
+            if path == "/api/detectors":
+                refresh = query.get("refresh", ["0"])[0] in ("1", "true", "yes")
+                self._json(HTTPStatus.OK, {"ok": True, **detector_map(self.paths, refresh=refresh)})
                 return
             if path == "/api/tasks":
                 limit_raw = query.get("limit", ["200"])[0]

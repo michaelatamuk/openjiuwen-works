@@ -81,6 +81,38 @@ def test_source_refuses_an_unmapped_product(paths, monkeypatch) -> None:
     assert "known products: blender" in err
 
 
+def test_source_detector_queues_firing_alerts(paths, tmp_path) -> None:
+    repo = tmp_path / "firefox"
+    repo.mkdir()
+    write_map(paths, repo)
+    alerts = tmp_path / "alerts.json"
+    alerts.write_text(
+        json.dumps(
+            [
+                {"id": "a1", "title": "Disk full", "severity": "critical"},
+                {"status": "resolved", "id": "a2", "title": "Recovered"},
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    code, out, err = invoke(
+        paths,
+        "source",
+        "detector",
+        "--file",
+        str(alerts),
+        "--product",
+        "firefox",
+        "--json",
+    )
+
+    assert code == 0, err
+    body = json.loads(out.strip().splitlines()[-1])
+    assert body["found"] == 1
+    assert body["created"] == 1
+
+
 def test_source_jira_requires_credentials(paths, monkeypatch) -> None:
     repo = paths.root / "repo"
     repo.mkdir()

@@ -46,6 +46,31 @@ works source jira --url https://jira.example --jql "project = FIRE AND status = 
 - An issue becomes `source.kind=tracker`, `source.ref=FIRE-123`.
 - The same `(kind, ref)` rule makes the poll idempotent.
 
+## Detector
+
+```bash
+works source detector --file alerts.json --product firefox
+works source detector --url http://alertmanager:9093/api/v2/alerts --product firefox
+works source detector --name prod
+```
+
+- Accepts an Alertmanager payload, a generic list, or NDJSON.
+- Keeps firing alerts only; resolved alerts are ignored.
+- A stable `fingerprint` or `id` is the source ref; a payload without one gets a content hash, so a
+  repeated poll returns the same task.
+- `DETECTOR_TOKEN` adds a bearer token for a protected endpoint.
+- Named detectors live in `.works/detectors.yaml`:
+
+```yaml
+detectors:
+  prod:
+    file: alerts.json
+    product: firefox
+```
+
+The GUI lists configured detectors and their firing alerts; it does not accept an arbitrary file
+path from a browser request.
+
 ## Tests and the honest boundary
 
 The HTTP layer is behind a `Transport` callable, so tests use recorded payloads and never touch the

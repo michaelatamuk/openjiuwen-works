@@ -79,6 +79,10 @@ configuration error instead of quietly using the host. `works doctor` reports th
 Tests drive the Docker argument builder through a recorded runner; a live container run needs a
 running daemon.
 
+The process verifier drops every name that looks like a credential, including `WORKS_MODEL_KEY` and
+`WORKS_VERIFIER_API_KEY`; only an explicit command env reaches a check. `works doctor` warns when the
+builder and verifier share one key, and Evidence records the verifier name and isolation.
+
 ## Trusted base
 
 - The worktree is the subject, never the judge.

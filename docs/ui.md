@@ -1,10 +1,12 @@
-# Read-only preview
+# Local GUI
 
-`works ui` opens a local, read-only window over the queue and run artifacts. It is the first
-deliverable of the GUI path; the full window follows the 2026 standard in plan §6.5.
+`works ui` opens a local window over the queue and run artifacts. Read-only by default;
+`works ui --write` enables task creation, intake, readiness, release, delivery, confirmation and
+team verification.
 
 ```powershell
 works --home C:\path\to\workspace ui --port 8765
+works --home C:\path\to\workspace ui --port 8765 --write
 # open the printed URL; Ctrl+C stops the server
 ```
 
@@ -24,11 +26,16 @@ The same evidence page serves two audiences without a second data source:
   keeps the replay out of the headline. The hero also states the recorded memory status —
   “PPMA synced”, “PPMA failed” or “Not recorded” — so the preview never fakes a green memory badge.
 - **Evidence**: the answer for an engineer — the ten-step technical line, run metadata, verdict and
-  scenarios, risk, decision, commands, diff, policy, residual risk and timeline.
+  scenarios, risk, decision, commands, diff, policy, residual risk, verifier, team, inline artifacts
+  and a filtered timeline.
+- **Release**: the operational answer — packet and blockers, gate 2, delivery (branch, commit, PR/MR,
+  tracker comment), confirmation (pass/fail, target, output SHA), team verdict, verifier isolation,
+  LAIX shadow, product map and detector alerts. In `--write`, the same view can release, deliver,
+  confirm and verify.
 
 There is no separate Summary tab: the human answer lives in the Story hero and the receipt strip.
 Both views are computed from the same proof, so they cannot disagree. Deep links carry the view:
-`#/task/<id>/story`, `#/task/<id>/evidence` and `#/task/<id>/story?at=5`.
+`#/task/<id>/story`, `#/task/<id>/evidence`, `#/task/<id>/release` and `#/task/<id>/story?at=5`.
 
 A blocked task explains the stop in place: the failed check, why it matters, what was not released
 and who decides next. “See what failed” scrolls to that rail. The same rule holds in the hero: no

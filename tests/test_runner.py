@@ -12,7 +12,8 @@ def test_env_drops_credentials() -> None:
             "DB_PASSWORD": "secret",
             "AWS_CREDENTIALS": "secret",
             "MONKEY": "also dropped because KEY is in the name",
-            "WORKS_BUILDER_API_KEY": "kept on purpose",
+            "WORKS_BUILDER_API_KEY": "dropped: the verifier never inherits the builder key",
+            "WORKS_VERIFIER_API_KEY": "dropped: even the verifier key needs an explicit env",
             "HOME": "/home/me",
         }
     )
@@ -20,9 +21,11 @@ def test_env_drops_credentials() -> None:
     assert "GITHUB_TOKEN" not in clean
     assert "DB_PASSWORD" not in clean
     assert "AWS_CREDENTIALS" not in clean
+    assert "MONKEY" not in clean
+    assert "WORKS_BUILDER_API_KEY" not in clean
+    assert "WORKS_VERIFIER_API_KEY" not in clean
     assert clean["PATH"] == "/bin"
     assert clean["HOME"] == "/home/me"
-    assert clean["WORKS_BUILDER_API_KEY"] == "kept on purpose"
 
 
 def test_allow_list_keeps_a_credential_when_explicit() -> None:

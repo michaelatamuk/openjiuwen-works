@@ -193,6 +193,8 @@ class RunRecord(BaseModel):
     decision_id: str | None = None
     model: str | None = None
     provider: str | None = None
+    verifier: str = "local"
+    verifier_isolation: str = "process"
     attempts: int = 0
     tokens: int = 0
     usd: float = 0.0

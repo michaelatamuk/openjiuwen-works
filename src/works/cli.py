@@ -268,79 +268,9 @@ def cmd_approve(args: argparse.Namespace) -> int:
 
 
 def cmd_team_verify(args: argparse.Namespace) -> int:
-    import subprocess  # nosec B404
-    import tempfile
+    from .team_task import run_team_verify
 
-    from .evidence import Evidence
-    from .records import RunRecord
-    from .release import latest_run_dir
-
-    paths = _paths(args)
-    queue = _queue(args)
-    task = queue.load(args.task_id)
-    run_dir = latest_run_dir(paths, task.id)
-    if run_dir is None:
-        raise ConfigError(f"task {task.id} has no finished run")
-    evidence = Evidence.model_validate_json((run_dir / "evidence.json").read_text(encoding="utf-8"))
-    record = RunRecord.model_validate_json((run_dir / "run.json").read_text(encoding="utf-8"))
-    agent_python = Path(
-        os.environ.get("WORKS_AGENT_PYTHON")
-        or r"C:\Workspace\openjiuwen\agent-core\.venv\Scripts\python.exe"
-    )
-    if not agent_python.exists():
-        raise ConfigError("agent-core Python not found; set WORKS_AGENT_PYTHON to its interpreter")
-    payload = {
-        "task_id": task.id,
-        "run_id": record.run_id,
-        "gate": "release",
-        "policy_ok": bool(evidence.policy.ok),
-        "verdict_allow": bool(evidence.verdict and evidence.verdict.allow),
-        "challenge_allow": evidence.challenge.allow if evidence.challenge else None,
-        "proof_sha256": evidence.proof_sha256,
-        "commit": record.base_commit,
-        "risk": evidence.risk.level.value if evidence.risk else "low",
-        "not_tested": evidence.not_tested,
-    }
-    repo_root = Path(__file__).resolve().parents[2]
-    agent_core = Path(os.environ.get("WORKS_AGENT_CORE") or r"C:\Workspace\openjiuwen\agent-core")
-    env = os.environ.copy()
-    env["PYTHONPATH"] = os.pathsep.join(
-        [str(repo_root / "src"), str(agent_core), env.get("PYTHONPATH", "")]
-    ).strip(os.pathsep)
-    handle, tmp_name = tempfile.mkstemp(prefix="works-team-", suffix=".json")
-    os.close(handle)
-    result_path = Path(tmp_name)
-    try:
-        completed = subprocess.run(  # noqa: S603  # nosec B603
-            [
-                str(agent_python),
-                str(repo_root / "scripts" / "team_verify_worker.py"),
-                str(result_path),
-            ],
-            input=json.dumps(payload),
-            text=True,
-            capture_output=True,
-            env=env,
-            timeout=120,
-            check=False,
-        )
-        if completed.returncode != 0:
-            detail = (completed.stderr or completed.stdout or "").strip().splitlines()
-            raise ConfigError(
-                f"agent-core team failed: {detail[-1] if detail else completed.returncode}"
-            )
-        result = json.loads(result_path.read_text(encoding="utf-8"))
-    finally:
-        result_path.unlink(missing_ok=True)
-    queue.append(
-        task.id,
-        "team.verified",
-        {
-            "verdict": result.get("verdict"),
-            "blockers": result.get("blockers") or [],
-            "team": "inspector+challenger+reporter",
-        },
-    )
+    result = run_team_verify(_paths(args), args.task_id)
     if args.json:
         _emit(result)
     else:
@@ -452,6 +382,46 @@ def cmd_confirm(args: argparse.Namespace) -> int:
         if result.comment_url:
             print(f"  source comment: {result.comment_url}")
     return 0 if result.ok else EXIT_BLOCKED
+
+
+def cmd_source_detector(args: argparse.Namespace) -> int:
+    from pathlib import Path
+
+    from .detectors import (
+        fetch_alerts,
+        ingest_alerts,
+        ingest_named,
+        read_alert_file,
+    )
+    from .products import resolve_repo
+
+    if args.name:
+        created = ingest_named(_paths(args), args.name)[: args.limit]
+    else:
+        if not args.product:
+            raise ConfigError("--product is required unless --name selects a configured detector")
+        if args.file:
+            alerts = read_alert_file(Path(args.file).expanduser())
+        elif args.url:
+            alerts = fetch_alerts(args.url)
+        else:
+            raise ConfigError("pass --name, --file or --url")
+        alerts = alerts[: args.limit]
+        repo = resolve_repo(_paths(args), args.product, args.repo)
+        created = ingest_alerts(_queue(args), product=args.product, repo=str(repo), alerts=alerts)
+    fresh = sum(1 for _, was_created in created if was_created)
+    if args.json:
+        _emit(
+            {
+                "source": "detector",
+                "found": len(created),
+                "created": fresh,
+                "tasks": [task.id for task, _ in created],
+            }
+        )
+    else:
+        print(f"detector: {len(created)} alert(s), {fresh} new")
+    return 0
 
 
 def cmd_swarm_doctor(args: argparse.Namespace) -> int:
@@ -1283,6 +1253,16 @@ def build_parser() -> argparse.ArgumentParser:
     source_jira.add_argument("--limit", type=int, default=20)
     source_jira.add_argument("--json", action="store_true")
     source_jira.set_defaults(func=cmd_source_jira)
+    source_detector = source_sub.add_parser("detector", help="Firing alerts into the queue")
+    detector_target = source_detector.add_mutually_exclusive_group(required=True)
+    detector_target.add_argument("--name", default=None, help="Configured detector name")
+    detector_target.add_argument("--file", default=None, help="JSON or NDJSON alert file")
+    detector_target.add_argument("--url", default=None, help="Alertmanager-style endpoint")
+    source_detector.add_argument("--product", default=None)
+    source_detector.add_argument("--repo", type=Path, default=None)
+    source_detector.add_argument("--limit", type=int, default=50)
+    source_detector.add_argument("--json", action="store_true")
+    source_detector.set_defaults(func=cmd_source_detector)
 
     status = sub.add_parser("status", help="Show one task or the queue")
     status.add_argument("task_id", nargs="?", default=None)

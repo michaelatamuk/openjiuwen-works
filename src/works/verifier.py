@@ -64,6 +64,7 @@ def _rewrite_path(value: str, mounts: tuple[Mount, ...]) -> str:
 
 class LocalVerifier:
     name = "local"
+    isolation = "process"
 
     def __init__(self, runner: CommandRunner) -> None:
         self._runner = runner
@@ -101,6 +102,7 @@ class DockerVerifier:
     mounts: tuple[Mount, ...] = ()
     policy: ContainerPolicy = field(default_factory=ContainerPolicy)
     name: str = "docker"
+    isolation: str = "container"
 
     def available(self) -> bool:
         result = self.runner.run(

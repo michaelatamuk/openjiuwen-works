@@ -17,18 +17,20 @@ from typing import Any, Protocol
 from .records import CommandRecord
 
 _SECRET_MARKERS = ("KEY", "TOKEN", "SECRET", "PASSWORD", "PASSWD", "CREDENTIAL")
-_SECRET_ALLOW = ("WORKS_",)
 
 
 def sanitize_env(environ: dict[str, str], *, allow: tuple[str, ...] = ()) -> dict[str, str]:
-    """Drop anything that looks like a credential before a builder sees it."""
+    """Drop anything that looks like a credential before a command sees it.
+
+    There is no blanket `WORKS_` exception: a verifier must not inherit the builder's model key.
+    A caller that really needs a variable passes it in `allow` or in the explicit command env.
+    """
     clean: dict[str, str] = {}
     for name, value in environ.items():
-        upper = name.upper()
-        if upper.startswith(_SECRET_ALLOW) or name in allow:
+        if name in allow:
             clean[name] = value
             continue
-        if any(marker in upper for marker in _SECRET_MARKERS):
+        if any(marker in name.upper() for marker in _SECRET_MARKERS):
             continue
         clean[name] = value
     return clean

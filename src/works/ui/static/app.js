@@ -6,12 +6,17 @@ const state = {
   selected: null,
   detail: null,
   filter: "all",
+  productFilter: "",
+  sourceFilter: "",
   query: "",
   view: localStorage.getItem("works.view.v3") || "story",
   storyAt: null,
   storySelected: null,
   storyTimer: null,
   writable: false,
+  timelineFilter: "all",
+  products: null,
+  detectors: null,
 };
 
 const stateHuman = {
@@ -222,6 +227,33 @@ async function api(path, options = {}) {
   return parsed;
 }
 
+async function performAction(button, action, body, message) {
+  button.disabled = true;
+  try {
+    const result = await api("/api/actions", {
+      method: "POST",
+      headers: { "X-Works-Write": "1" },
+      body: { action, task_id: state.selected, ...body },
+    });
+    toast(message(result));
+    await loadDetail(state.selected);
+    await loadTasks();
+  } catch (error) {
+    toast(`${action} failed: ${error.message}`);
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function refreshDetectors() {
+  try {
+    state.detectors = await api("/api/detectors?refresh=1");
+    if (state.detail) renderDetail();
+  } catch (error) {
+    toast(`Detectors unavailable: ${error.message}`);
+  }
+}
+
 function toast(message) {
   const node = $("#toast");
   node.textContent = message;
@@ -246,6 +278,8 @@ function renderTasks() {
   const states = Object.fromEntries(groupDefs.map(([id, , group]) => [id, group]));
   const tasks = state.tasks.filter((task) => {
     if (state.filter !== "all" && !(states[state.filter] || []).includes(task.state)) return false;
+    if (state.productFilter && task.product !== state.productFilter) return false;
+    if (state.sourceFilter && String(task.source || "").split(":")[0] !== state.sourceFilter) return false;
     if (!query) return true;
     return [task.title, task.id, task.source, task.product, task.flow, stateLabel(task.state)]
       .join(" ")
@@ -374,6 +408,15 @@ function renderReadiness(detail) {
     })
     .join("");
   const ratio = readiness.total ? Math.round((readiness.passed / readiness.total) * 100) : 0;
+  const cycles = (readiness.import_cycles || [])
+    .map((cycle) => `<li>${cycle.map((item) => `<span class="mono">${esc(item)}</span>`).join(" → ")} → start</li>`)
+    .join("");
+  const edges = Object.entries(readiness.import_edges || {})
+    .map(([source, targets]) => `<li><span class="mono">${esc(source)}</span> → ${targets.map((item) => `<span class="mono">${esc(item)}</span>`).join(", ")}</li>`)
+    .join("");
+  const graph = edges
+    ? `<details class="graph"><summary>Import graph · ${esc(Object.keys(readiness.import_edges || {}).length)} module(s)</summary><ul class="small muted">${edges}</ul></details>`
+    : "";
   const run = state.writable
     ? `<button type="button" class="btn ghost" data-action="run-readiness">Run checks</button>`
     : "";
@@ -382,6 +425,8 @@ function renderReadiness(detail) {
     `${checks}
     <div class="progress"><i style="width:${ratio}%"></i></div>
     <p class="muted small" style="margin:10px 0 0">${esc(readiness.note)}</p>
+    ${cycles ? `<p class="bad small" style="margin:10px 0 4px">Import cycles</p><ul class="small">${cycles}</ul>` : ""}
+    ${graph}
     ${run}`,
     { actions: `${esc(readiness.passed)}/${esc(readiness.total)}` },
   );
@@ -417,26 +462,40 @@ function renderFeatures(detail) {
   );
 }
 
-function renderArtifacts(evidence, taskId) {
-  const artifacts = evidence?.artifacts || [];
+function renderArtifacts(detail) {
+  const artifacts = detail.artifacts || [];
   if (!artifacts.length) {
     return card("Runtime artifacts", `<p class="muted small">No screenshot, log, video or trace was attached to this proof.</p>`);
   }
+  const images = artifacts.filter((item) => item.kind === "image");
+  const before = images.find((item) => /before/i.test(item.name || item.path));
+  const after = images.find((item) => /after/i.test(item.name || item.path));
+  const compare =
+    before && after
+      ? `<div class="artifact-compare">
+           <figure><img src="${esc(before.url)}" alt="before the fix" loading="lazy" /><figcaption>Before · ${esc(before.name)}</figcaption></figure>
+           <figure><img src="${esc(after.url)}" alt="after the fix" loading="lazy" /><figcaption>After · ${esc(after.name)}</figcaption></figure>
+         </div>`
+      : "";
   const rows = artifacts
     .map((item) => {
-      const relative = String(item.path || "").replace(/^artifacts\//, "");
-      const href = `/api/tasks/${encodeURIComponent(taskId)}/artifacts/${relative
-        .split("/")
-        .map(encodeURIComponent)
-        .join("/")}`;
-      return `<div class="check pass">
-        <span class="box" aria-hidden="true">✓</span>
-        <span class="feature-copy"><strong>${esc(item.kind)}</strong><em>${esc(item.path)}</em></span>
-        <span class="check-detail"><a href="${esc(href)}" target="_blank" rel="noopener">open</a> · ${esc(item.sha256.slice(0, 12))}</span>
+      const sha = item.sha256 ? ` · ${esc(shortSha(item.sha256))}` : "";
+      let preview = "";
+      if (item.kind === "image") {
+        preview = `<a href="${esc(item.url)}" target="_blank" rel="noopener"><img class="artifact-thumb" src="${esc(item.url)}" alt="${esc(item.name)}" loading="lazy" /></a>`;
+      } else if (item.kind === "video") {
+        preview = `<video class="artifact-video" controls preload="metadata" src="${esc(item.url)}"></video>`;
+      } else if (item.kind === "log" || item.kind === "trace") {
+        preview = `<details class="artifact-text" data-artifact-url="${esc(item.url)}"><summary>${esc(item.kind)}</summary><pre>Loading…</pre></details>`;
+      }
+      return `<div class="artifact-row">
+        <div class="artifact-main"><strong>${esc(item.kind)}</strong><span class="mono small">${esc(item.path)}</span></div>
+        ${preview || `<a href="${esc(item.url)}" target="_blank" rel="noopener">open</a>`}
+        <span class="check-detail">${sha || ""}</span>
       </div>`;
     })
     .join("");
-  return card("Runtime artifacts", rows, { actions: `${artifacts.length}` });
+  return card("Runtime artifacts", `${compare}${rows}`, { actions: `${artifacts.length}` });
 }
 
 function renderMemoryRecall(evidence) {
@@ -532,6 +591,314 @@ function renderCost(evidence) {
       <div><div class="label">Model</div><div class="small muted" style="margin-top:8px">${esc(evidence.model || "—")}</div></div>
     </div>`,
   );
+}
+
+function shortSha(value) {
+  const text = String(value || "");
+  return text ? text.slice(0, 12) : "—";
+}
+
+function externalLink(url, label = "open") {
+  if (!url) return "";
+  return `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(label)}</a>`;
+}
+
+function renderReleasePacket(detail) {
+  const release = detail.release || {};
+  const blockers = (release.blockers || [])
+    .map((item) => `<li>${esc(item)}</li>`)
+    .join("");
+  const commit = release.commit || detail.evidence?.base_commit || "—";
+  const rows = [
+    ["Commit", `<span class="mono">${esc(shortSha(commit))}</span>`],
+    ["Proof SHA-256", `<span class="mono">${esc(shortSha(release.proof_sha256))}</span>`],
+    ["Plan gate", release.plan_gate ? pill("APPROVED", "green") : pill("MISSING", "red")],
+    ["Release gate", release.released ? pill("RELEASED", "green") : pill("NOT YET", "")],
+    ["Packet", release.ready ? pill("READY", "green") : pill("BLOCKED", "red")],
+  ];
+  const action =
+    state.writable && release.ready && !release.released
+      ? `<button type="button" class="btn" data-action="release">Release this commit</button>`
+      : release.released
+        ? `<p class="ok small" style="margin:0">Gate 2 is open. Delivery is the next step.</p>`
+        : state.writable
+          ? `<p class="muted small" style="margin:0">A blocker must be resolved before a person can release this commit.</p>`
+          : "";
+  return card(
+    "Release packet",
+    `${table(["Field", "Value"], rows)}
+     ${blockers ? `<ul class="small bad-list">${blockers}</ul>` : ""}
+     ${action}`,
+    { actions: release.ready ? "ready" : "blocked" },
+  );
+}
+
+function renderDelivery(detail) {
+  const delivery = detail.delivery;
+  const released = detail.task.state === "released";
+  if (!delivery) {
+    const form = state.writable && released
+      ? `<div class="form-row">
+           <label>Forge
+             <select id="deliver-provider">
+               <option value="none">branch only</option>
+               <option value="github">GitHub pull request</option>
+               <option value="gitlab">GitLab merge request</option>
+             </select>
+           </label>
+           <label>Tracker
+             <select id="deliver-tracker">
+               <option value="">follow the forge</option>
+               <option value="none">no comment</option>
+               <option value="github">GitHub issue</option>
+               <option value="gitlab">GitLab issue</option>
+               <option value="jira">Jira issue</option>
+             </select>
+           </label>
+           <label class="inline"><input type="checkbox" id="deliver-dry" /> dry run</label>
+         </div>
+         <button type="button" class="btn" data-action="deliver">Deliver</button>`
+      : `<p class="muted small" style="margin:0">${
+          released
+            ? "Gate 2 is open. Start the write UI to deliver."
+            : "Delivery waits for the release gate."
+        }</p>`;
+    return card("Delivery", `<p class="muted small" style="margin:0 0 10px">No branch has been pushed for this run.</p>${form}`);
+  }
+  const rows = [
+    ["Branch", `<span class="mono">${esc(delivery.branch || "—")}</span>`],
+    ["Commit", `<span class="mono">${esc(shortSha(delivery.commit))}</span>`],
+    ["Forge", esc(delivery.provider || "none")],
+    ["Tracker", esc(delivery.tracker || "none")],
+    ["Pull / merge request", externalLink(delivery.pr_url, delivery.provider === "gitlab" ? "merge request" : "pull request") || "—"],
+    ["Source comment", externalLink(delivery.comment_url) || "—"],
+    ["Pushed", delivery.pushed ? pill("YES", "green") : pill("NO", "")],
+  ];
+  const notes = (delivery.notes || []).map((note) => `<li>${esc(note)}</li>`).join("");
+  const again =
+    state.writable && delivery.dry_run
+      ? `<div class="form-row">
+           <input type="hidden" id="deliver-provider" value="${esc(delivery.provider || "none")}" />
+           <input type="hidden" id="deliver-tracker" value="${esc(delivery.tracker || "")}" />
+           <input type="hidden" id="deliver-dry" value="0" />
+         </div>
+         <button type="button" class="btn" data-action="deliver">Push this commit</button>`
+      : "";
+  return card(
+    "Delivery",
+    `${table(["Field", "Value"], rows)}
+     ${notes ? `<ul class="small muted">${notes}</ul>` : ""}
+     ${delivery.dry_run ? `<p class="warn small">This was a dry run; nothing was pushed.</p>` : ""}
+     ${again}`,
+    { actions: delivery.dry_run ? "dry run" : "delivered" },
+  );
+}
+
+function renderConfirmation(detail) {
+  const confirmation = detail.confirmation;
+  const delivery = detail.delivery;
+  if (!confirmation) {
+    if (!delivery) {
+      return card("Confirmation", `<p class="muted small" style="margin:0">Deliver the fix before confirming it.</p>`);
+    }
+    const form = state.writable
+      ? `<div class="form-row">
+           <label>HTTP check
+             <input id="confirm-url" placeholder="https://app.example/health" autocomplete="off" />
+           </label>
+           <label>or command
+             <input id="confirm-command" placeholder='["python","-m","pytest"]' autocomplete="off" />
+           </label>
+         </div>
+         <div class="form-row">
+           <label>Tracker
+             <select id="confirm-tracker">
+               <option value="">none</option>
+               <option value="github">GitHub issue</option>
+               <option value="gitlab">GitLab issue</option>
+               <option value="jira">Jira issue</option>
+             </select>
+           </label>
+           <label class="inline"><input type="checkbox" id="confirm-close" /> close on success</label>
+         </div>
+         <p class="muted small" style="margin:0 0 10px">No target: the plan's scenario set is re-run.</p>
+         <button type="button" class="btn" data-action="confirm">Confirm</button>`
+      : `<p class="muted small" style="margin:0">No confirmation was recorded.</p>`;
+    return card("Confirmation", form);
+  }
+  const rows = [
+    ["Result", confirmation.ok ? pill("PASS", "green") : pill("FAIL", "red")],
+    ["Target", `<span class="mono">${esc(confirmation.target || "—")}</span>`],
+    ["Exit code", `<span class="mono">${esc(confirmation.exit_code)}</span>`],
+    ["Output SHA-256", `<span class="mono">${esc(shortSha(confirmation.output_sha256))}</span>`],
+    ["Source comment", externalLink(confirmation.comment_url) || "—"],
+  ];
+  const notes = (confirmation.notes || []).map((note) => `<li>${esc(note)}</li>`).join("");
+  const rerun = state.writable
+    ? `<div class="form-row">
+         <label>HTTP check
+           <input id="confirm-url" value="${esc(confirmation.url || "")}" placeholder="https://app.example/health" />
+         </label>
+         <label>or command
+           <input id="confirm-command" value="${esc(confirmation.command ? JSON.stringify(confirmation.command) : "")}" placeholder='["python","-m","pytest"]' />
+         </label>
+       </div>
+       <button type="button" class="btn ghost" data-action="confirm" data-force="1">Confirm again</button>`
+    : "";
+  return card(
+    "Confirmation",
+    `${table(["Field", "Value"], rows)}
+     ${notes ? `<ul class="small muted">${notes}</ul>` : ""}
+     ${rerun}`,
+    { actions: confirmation.ok ? "confirmed" : "failed" },
+  );
+}
+
+function renderTeam(detail) {
+  const team = detail.team || {};
+  const latest = team.latest;
+  const button =
+    state.writable && detail.evidence
+      ? `<button type="button" class="btn ghost" data-action="team-verify">Verify with team</button>`
+      : "";
+  if (!latest) {
+    return card(
+      "Verification team",
+      `<p class="muted small" style="margin:0 0 10px">Inspector, challenger and reporter have not run on this proof yet.</p>${button}`,
+    );
+  }
+  const inspector = latest.inspector || {};
+  const challenger = latest.challenger || {};
+  const checks = Object.entries(inspector.checks || {})
+    .map(([key, value]) => `<li><span class="mono">${esc(key)}</span> · ${value ? "pass" : "fail"}</li>`)
+    .join("");
+  const gaps = (challenger.gaps || []).map((gap) => `<li>${esc(gap)}</li>`).join("");
+  const history = (team.history || [])
+    .map((item) => `<li>${esc(item.verdict || "?")} · ${esc((item.blockers || []).join("; ") || "no blockers")}</li>`)
+    .join("");
+  return card(
+    "Verification team",
+    `<div class="split" style="margin-bottom:10px">
+       ${pill(latest.verdict === "allow" ? "ALLOW" : "BLOCK", latest.verdict === "allow" ? "green" : "red")}
+       <span class="muted small">${esc(latest.team || "inspector + challenger + reporter")}</span>
+     </div>
+     ${checks ? `<ul class="small muted">${checks}</ul>` : ""}
+     ${gaps ? `<p class="small muted" style="margin:0">Challenger gaps</p><ul class="small muted">${gaps}</ul>` : ""}
+     ${(latest.blockers || []).length ? `<ul class="small bad-list">${latest.blockers.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>` : ""}
+     ${history ? `<p class="faint small" style="margin:12px 0 4px">History</p><ul class="small muted">${history}</ul>` : ""}
+     ${button}`,
+  );
+}
+
+function renderVerifier(detail) {
+  const verifier = detail.verifier || {};
+  const name = verifier.name || "local";
+  const isolation = verifier.isolation || "process";
+  return card(
+    "Verifier",
+    `<div class="split" style="margin-bottom:8px">
+       ${pill(name.toUpperCase(), name === "docker" ? "green" : "")}
+       ${pill(isolation)}
+     </div>
+     <p class="muted small" style="margin:0">${
+       name === "docker"
+         ? "The verifier runs in a container with no network, dropped capabilities and only the worktree mounted."
+         : "The verifier runs as a separate process; builder credentials are removed from its environment."
+     }</p>`,
+  );
+}
+
+function renderLaix(detail) {
+  const events = detail.laix || [];
+  if (!events.length) {
+    return card(
+      "LAIX shadow",
+      `<p class="muted small" style="margin:0">LAIX is off, or no shadow decision was recorded for this run.</p>`,
+    );
+  }
+  const rows = events.map((event) => [
+    esc(event.agrees == null ? "—" : event.agrees ? "agree" : "disagree"),
+    esc(event.deterministic?.verb || event.deterministic || "—"),
+    esc(event.candidate?.verb || event.candidate || "—"),
+    esc((event.reason_codes || event.reasons || []).join(", ") || "—"),
+  ]);
+  return card("LAIX shadow", table(["Comparison", "Deterministic", "LAIX", "Reason codes"], rows));
+}
+
+function renderProducts() {
+  const products = state.products;
+  if (!products) return card("Product map", `<p class="muted small">Loading.</p>`);
+  if (!products.configured) {
+    return card(
+      "Product map",
+      `<p class="muted small" style="margin:0">No <span class="mono">${esc(products.path || ".works/products.yaml")}</span> yet. A product name still falls back to the working directory.</p>`,
+    );
+  }
+  const rows = (products.products || []).map((item) => [
+    `<strong>${esc(item.name)}</strong>`,
+    `<span class="mono">${esc(item.repo)}</span>`,
+    item.exists ? pill("EXISTS", "green") : pill("MISSING", "red"),
+    item.git ? pill("GIT", "green") : pill("NOT GIT", "red"),
+  ]);
+  return card("Product map", table(["Product", "Repository", "Path", "Git"], rows), {
+    actions: esc(products.path),
+  });
+}
+
+function renderDetectors() {
+  const detectors = state.detectors;
+  if (!detectors) return card("Detectors", `<p class="muted small">Loading.</p>`);
+  if (!detectors.configured) {
+    return card(
+      "Detectors",
+      `<p class="muted small" style="margin:0">No <span class="mono">${esc(detectors.path || ".works/detectors.yaml")}</span> yet. Firing alerts can still be imported from the CLI.</p>`,
+    );
+  }
+  const body = (detectors.detectors || [])
+    .map((detector) => {
+      const alerts = (detector.alerts || [])
+        .map(
+          (alert) => `<div class="check ${alert.severity === "critical" ? "fail" : "skip"}">
+            <span class="box" aria-hidden="true">!</span>
+            <span class="feature-copy"><strong>${esc(alert.title)}</strong><em>${esc(alert.severity || "alert")} · ${esc(alert.ref)}</em></span>
+            <span class="check-detail">${state.writable ? `<button type="button" class="btn ghost" data-action="detector-create" data-name="${esc(detector.name)}">Create task</button>` : ""}</span>
+          </div>`,
+        )
+        .join("");
+      const note = detector.error
+        ? `<p class="bad small" style="margin:8px 0 0">${esc(detector.error)}</p>`
+        : detector.needs_refresh
+          ? `<p class="muted small" style="margin:8px 0 0">Remote alerts are fetched on refresh.</p>`
+          : "";
+      return `<div class="detector">
+        <div class="split"><strong>${esc(detector.name)}</strong>${pill(detector.product || "—")}</div>
+        ${alerts || `<p class="muted small" style="margin:8px 0 0">No firing alerts.</p>`}
+        ${note}
+      </div>`;
+    })
+    .join("");
+  return card("Detectors", body, {
+    actions: state.writable
+      ? `<button type="button" class="btn ghost" data-action="refresh-detectors">Refresh alerts</button>`
+      : `${(detectors.detectors || []).length} configured`,
+  });
+}
+
+function renderReleaseView(detail) {
+  return `<div class="grid">
+    <div class="stack">
+      ${renderReleasePacket(detail)}
+      ${renderDelivery(detail)}
+      ${renderConfirmation(detail)}
+    </div>
+    <div class="stack">
+      ${renderTeam(detail)}
+      ${renderVerifier(detail)}
+      ${renderLaix(detail)}
+      ${renderProducts()}
+      ${renderDetectors()}
+    </div>
+  </div>`;
 }
 
 function eventSummary(event) {
@@ -642,11 +1009,36 @@ function summaryNext(detail) {
   const state = detail.task.state;
   if (state === "blocked") return "Nothing will ship until a person decides. The report stays open.";
   if (state === "proved") return "The fix goes back to the app, tracker or person that reported it.";
-  if (state === "released") return "The fix is back where it was seen. The report is closed.";
+  if (state === "released") {
+    if (detail.confirmation) {
+      return detail.confirmation.ok
+        ? "The released fix was confirmed at the source. The report can be closed."
+        : "The confirmation failed. A person decides whether to retry or reopen the work.";
+    }
+    if (detail.delivery) return "The fix is delivered. Confirmation is the next step.";
+    return "A person released it. Delivery is the next step.";
+  }
   if (state === "reverted") return "The release was reverted; a person is deciding the next step.";
   if (state.startsWith("waiting")) return "The next step starts when the waiting event arrives.";
   if (state === "queued") return "The factory will pick it up from the queue.";
   return "The factory is still preparing the change.";
+}
+
+function renderNextActions(detail) {
+  if (!state.writable) return "";
+  const release = detail.release || {};
+  const buttons = [];
+  if (release.ready && !release.released) {
+    buttons.push(`<button type="button" class="btn" data-action="release">Release this commit</button>`);
+  }
+  if (release.released && !detail.delivery) {
+    buttons.push(`<button type="button" class="btn" data-action="deliver">Deliver</button>`);
+  }
+  if (detail.delivery && !detail.confirmation) {
+    buttons.push(`<button type="button" class="btn" data-action="confirm">Confirm</button>`);
+  }
+  buttons.push(`<button type="button" class="btn ghost" data-action="open-release">Release view</button>`);
+  return `<div class="form-row" style="margin:10px 0 0">${buttons.join(" ")}</div>`;
 }
 
 function renderSummary(detail) {
@@ -679,7 +1071,8 @@ function renderSummary(detail) {
     "What you can do",
     `<p class="muted" style="margin:0 0 10px">${esc(summaryAction(detail))}</p>
      <button class="btn" data-action="evidence">See the evidence</button>
-     <button class="btn ghost" data-action="copy">Copy link</button>`,
+     <button class="btn ghost" data-action="copy">Copy link</button>
+     ${renderNextActions(detail)}`,
   );
   const timeline = card(
     "What happened",
@@ -701,6 +1094,7 @@ function renderEvidenceMeta(detail) {
     ["Evidence fingerprint", evidence?.proof_sha256 || "—"],
     ["Model", evidence?.model || "—"],
     ["Provider", evidence?.provider || "—"],
+    ["Verifier", `${detail.verifier?.name || "local"} · ${detail.verifier?.isolation || "process"}`],
     ["Memory", memoryStatus(detail).label],
   ];
   return card(
@@ -710,7 +1104,18 @@ function renderEvidenceMeta(detail) {
 }
 
 function renderTimeline(timeline) {
+  const filters = {
+    all: () => true,
+    gates: (event) => ["gate.decided", "decision.made", "decision.shadow"].includes(event.type),
+    delivery: (event) =>
+      event.type.startsWith("delivery") ||
+      (event.type === "state.changed" && event.data?.to === "released"),
+    confirmation: (event) => event.type.startsWith("confirmation"),
+    readiness: (event) => ["readiness.checked", "team.verified"].includes(event.type),
+  };
+  const active = filters[state.timelineFilter] ? state.timelineFilter : "all";
   const rows = (timeline || [])
+    .filter(filters[active])
     .slice()
     .reverse()
     .map((event) => `<li>
@@ -718,9 +1123,16 @@ function renderTimeline(timeline) {
       <span class="type">${esc(timelineLabel(event.type))}</span>
       <span class="data" title="${esc(eventSummary(event))}">${esc(eventSummary(event))}</span>
     </li>`);
+  const buttons = Object.keys(filters)
+    .map(
+      (key) =>
+        `<button type="button" class="chip ${active === key ? "active" : ""}" data-timeline-filter="${key}">${esc(key)}</button>`,
+    )
+    .join(" ");
   return card(
     "Timeline",
-    `<ol class="timeline">${rows.join("") || "<li class='muted small'>No events.</li>"}</ol>`,
+    `<div class="chips" style="margin-bottom:10px">${buttons}</div>
+     <ol class="timeline">${rows.join("") || "<li class='muted small'>No events for this filter.</li>"}</ol>`,
     { actions: `${esc((timeline || []).length)} recent events` },
   );
 }
@@ -747,14 +1159,16 @@ function renderEvidence(detail) {
           ${renderDecision(evidence)}
           ${renderReadiness(detail)}
           ${renderFeatures(detail)}
-          ${renderArtifacts(evidence, detail.task.id)}
+          ${renderArtifacts(detail)}
           ${renderMemoryRecall(evidence)}
           ${renderResidual(evidence)}
           ${renderCost(evidence)}
+          ${renderVerifier(detail)}
+          ${renderTeam(detail)}
           ${renderTimeline(detail.timeline)}
         </div>
       </div>`
-    : `<div class="grid"><div class="stack">${renderEmptyProof()}</div><div class="stack">${renderReadiness(detail)}${renderFeatures(detail)}${renderArtifacts(evidence, detail.task.id)}${renderMemoryRecall(evidence)}${renderTimeline(detail.timeline)}</div></div>`;
+    : `<div class="grid"><div class="stack">${renderEmptyProof()}</div><div class="stack">${renderReadiness(detail)}${renderFeatures(detail)}${renderArtifacts(detail)}${renderMemoryRecall(evidence)}${renderVerifier(detail)}${renderTimeline(detail.timeline)}</div></div>`;
 }
 
 function stopStory() {
@@ -1278,6 +1692,7 @@ function renderTabs() {
   return `<div class="view-tabs" role="tablist" aria-label="Detail view">
     <button type="button" class="view-tab ${state.view === "story" ? "active" : ""}" data-view="story" role="tab" aria-selected="${state.view === "story"}">Story</button>
     <button type="button" class="view-tab ${state.view === "evidence" ? "active" : ""}" data-view="evidence" role="tab" aria-selected="${state.view === "evidence"}">Evidence <span class="faint">for engineers</span></button>
+    <button type="button" class="view-tab ${state.view === "release" ? "active" : ""}" data-view="release" role="tab" aria-selected="${state.view === "release"}">Release <span class="faint">deliver & confirm</span></button>
   </div>`;
 }
 
@@ -1318,10 +1733,105 @@ function bindView() {
       }
     });
   });
+  $$("#detail [data-action='release']").forEach((button) => {
+    button.addEventListener("click", () =>
+      performAction(button, "release", {}, () => "Release approved. The task is released."),
+    );
+  });
+  $$("#detail [data-action='open-release']").forEach((button) => {
+    button.addEventListener("click", () => setView("release"));
+  });
+  $$("#detail [data-action='deliver']").forEach((button) => {
+    button.addEventListener("click", () => {
+      const provider = $("#deliver-provider")?.value || "none";
+      const tracker = $("#deliver-tracker")?.value || "";
+      const dry = Boolean($("#deliver-dry")?.checked);
+      return performAction(
+        button,
+        "deliver",
+        { provider, tracker: tracker || null, dry_run: dry },
+        (result) =>
+          result.delivery?.dry_run
+            ? "Dry run: the commit is ready; nothing was pushed."
+            : `Delivered ${String(result.delivery?.commit || "").slice(0, 10)}.`,
+      );
+    });
+  });
+  $$("#detail [data-action='confirm']").forEach((button) => {
+    button.addEventListener("click", () => {
+      const url = $("#confirm-url")?.value?.trim() || null;
+      const command = $("#confirm-command")?.value?.trim() || null;
+      const tracker = $("#confirm-tracker")?.value || "";
+      const close = Boolean($("#confirm-close")?.checked);
+      const force = button.dataset.force === "1";
+      return performAction(
+        button,
+        "confirm",
+        { url, command, tracker: tracker || null, close, force },
+        (result) =>
+          result.confirmation?.ok
+            ? "Confirmed: the released commit passed."
+            : "Confirmation failed; the result is recorded.",
+      );
+    });
+  });
+  $$("#detail [data-action='team-verify']").forEach((button) => {
+    button.addEventListener("click", () =>
+      performAction(
+        button,
+        "team-verify",
+        {},
+        (result) =>
+          result.team?.verdict === "allow"
+            ? "Team verdict: allow."
+            : "Team verdict: block.",
+      ),
+    );
+  });
+  $$("#detail [data-action='detector-create']").forEach((button) => {
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      try {
+        const result = await api("/api/sources", {
+          method: "POST",
+          headers: { "X-Works-Write": "1" },
+          body: { source: "detector", name: button.dataset.name },
+        });
+        toast(`${result.found} alert(s), ${result.created} new task(s).`);
+        await loadTasks();
+        await refreshDetectors();
+      } catch (error) {
+        toast(`Detector intake failed: ${error.message}`);
+        button.disabled = false;
+      }
+    });
+  });
+  $$("#detail [data-action='refresh-detectors']").forEach((button) => {
+    button.addEventListener("click", () => refreshDetectors());
+  });
+  $$("#detail [data-timeline-filter]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.timelineFilter = button.dataset.timelineFilter;
+      renderDetail();
+    });
+  });
+  $$("#detail details[data-artifact-url]").forEach((node) => {
+    node.addEventListener("toggle", async () => {
+      if (!node.open || node.dataset.loaded === "1") return;
+      node.dataset.loaded = "1";
+      const pre = node.querySelector("pre");
+      try {
+        const response = await fetch(node.dataset.artifactUrl);
+        pre.textContent = (await response.text()).slice(0, 40_000);
+      } catch (error) {
+        pre.textContent = `Could not load: ${error.message}`;
+      }
+    });
+  });
 }
 
 function setView(view) {
-  state.view = view === "evidence" ? "evidence" : "story";
+  state.view = ["story", "evidence", "release"].includes(view) ? view : "story";
   localStorage.setItem("works.view.v3", state.view);
   if (state.selected) {
     history.replaceState(null, "", taskHash(state.selected));
@@ -1331,7 +1841,7 @@ function setView(view) {
 }
 
 function taskHash(id) {
-  const suffix = state.view === "evidence" ? "/evidence" : "/story";
+  const suffix = state.view === "evidence" ? "/evidence" : state.view === "release" ? "/release" : "/story";
   const params = new URLSearchParams();
   if (state.view === "story" && state.storyAt != null) params.set("at", String(state.storyAt));
   const query = params.toString() ? `?${params.toString()}` : "";
@@ -1347,12 +1857,12 @@ function renderDetail() {
   }
   const task = detail.task;
   const title = task.source?.title || `Task ${task.id}`;
-  const label = state.view === "evidence" ? "Evidence" : "Story";
+  const label = state.view === "evidence" ? "Evidence" : state.view === "release" ? "Release" : "Story";
   $("#crumb").innerHTML = `<button type="button" class="crumb-link" id="crumb-home">Queue</button><span class="crumb-sep">/</span>${esc(label)}`;
   $("#crumb-home").addEventListener("click", () => clearSelection());
   $("#title").textContent = title;
   $("#subtitle").textContent = `${stateLabel(task.state)} · reported ${timeAgo(reportedAt(detail))}`;
-  const body = state.view === "evidence" ? renderEvidence(detail) : renderStory(detail);
+  const body = state.view === "evidence" ? renderEvidence(detail) : state.view === "release" ? renderReleaseView(detail) : renderStory(detail);
   $("#detail").innerHTML = `${renderTabs()}${body}`;
   $("#empty").hidden = true;
   $("#detail").hidden = false;
@@ -1381,17 +1891,107 @@ async function loadHealth() {
   const health = await api("/api/health");
   state.writable = Boolean(health.write);
   $("#report").hidden = !state.writable;
+  $("#intake").hidden = !state.writable;
+  await Promise.all([loadProducts(), loadDetectors()]);
   if (state.detail) renderDetail();
+}
+
+async function loadProducts() {
+  try {
+    state.products = await api("/api/products");
+  } catch {
+    state.products = { configured: false, products: [], path: ".works/products.yaml" };
+  }
+  const list = $("#product-list");
+  if (list) {
+    list.innerHTML = (state.products.products || [])
+      .map((item) => `<option value="${esc(item.name)}">${esc(item.repo)}</option>`)
+      .join("");
+  }
+  if (state.detail) renderDetail();
+}
+
+async function loadDetectors(refresh = false) {
+  try {
+    state.detectors = await api(`/api/detectors${refresh ? "?refresh=1" : ""}`);
+  } catch {
+    state.detectors = { configured: false, detectors: [], path: ".works/detectors.yaml" };
+  }
+  const select = $("#detector-select");
+  if (select) {
+    select.innerHTML = (state.detectors.detectors || [])
+      .map((item) => `<option value="${esc(item.name)}">${esc(item.name)} · ${esc(item.product)}</option>`)
+      .join("");
+  }
+  if (state.detail) renderDetail();
+}
+
+function openIntake() {
+  if (!state.writable) return;
+  const dialog = $("#intake-dialog");
+  const form = $("#intake-form");
+  form.elements.product.value = state.detail?.task?.product || "";
+  form.elements.repo.value = localStorage.getItem("works.repo") || "";
+  toggleIntakeSource();
+  dialog.showModal();
+}
+
+function toggleIntakeSource() {
+  const form = $("#intake-form");
+  const source = form.elements.source.value;
+  $$("#intake-form [data-intake]").forEach((node) => {
+    node.hidden = node.dataset.intake !== source;
+  });
+}
+
+async function submitIntake(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const button = form.querySelector("button[type='submit']");
+  const data = new FormData(form);
+  const source = String(data.get("source") || "github");
+  const body = {
+    source,
+    product: String(data.get("product") || "").trim(),
+    repo: String(data.get("repo") || "").trim(),
+  };
+  if (source === "github") {
+    body.repository = String(data.get("repository") || "").trim();
+    body.label = String(data.get("label") || "").trim();
+  } else if (source === "jira") {
+    body.url = String(data.get("url") || "").trim();
+    body.jql = String(data.get("jql") || "").trim();
+  } else {
+    body.name = String(data.get("detector") || "").trim();
+  }
+  button.disabled = true;
+  try {
+    const result = await api("/api/sources", {
+      method: "POST",
+      headers: { "X-Works-Write": "1" },
+      body,
+    });
+    $("#intake-dialog").close();
+    toast(`${result.found} signal(s), ${result.created} new task(s).`);
+    await loadTasks();
+    if (result.tasks?.length) selectTask(result.tasks[0]);
+    else if (state.selected) await loadDetail(state.selected);
+  } catch (error) {
+    toast(`Import failed: ${error.message}`);
+  } finally {
+    button.disabled = false;
+  }
 }
 
 function openReport() {
   if (!state.writable) return;
   const dialog = $("#report-dialog");
   const form = $("#report-form");
+  form.elements.product.value = state.detail?.task?.product || "openjiuwen";
   form.elements.repo.value =
     state.detail?.task?.repo || localStorage.getItem("works.repo") || "";
   dialog.showModal();
-  form.elements.repo.focus();
+  form.elements.product.focus();
 }
 
 async function submitReport(event) {
@@ -1404,7 +2004,9 @@ async function submitReport(event) {
     product: String(data.get("product") || "").trim(),
     ref: String(data.get("ref") || "").trim(),
     title: String(data.get("title") || "").trim(),
-    kind: "manual",
+    kind: String(data.get("kind") || "manual"),
+    task_kind: String(data.get("task_kind") || "fix"),
+    flow: String(data.get("flow") || "fix-issue"),
   };
   button.disabled = true;
   try {
@@ -1413,14 +2015,15 @@ async function submitReport(event) {
       headers: { "X-Works-Write": "1" },
       body,
     });
-    localStorage.setItem("works.repo", body.repo);
+    if (body.repo) localStorage.setItem("works.repo", body.repo);
     $("#report-dialog").close();
     form.reset();
     await loadTasks();
+    await loadProducts();
     selectTask(result.task.id);
-    toast(result.created ? `Reported ${result.task.id}. It is queued.` : `${result.task.id} was already reported.`);
+    toast(result.created ? `Created ${result.task.id}. It is queued.` : `${result.task.id} already existed.`);
   } catch (error) {
-    toast(`Report failed: ${error.message}`);
+    toast(`Create failed: ${error.message}`);
   } finally {
     button.disabled = false;
   }
@@ -1430,6 +2033,16 @@ async function loadTasks() {
   try {
     const data = await api("/api/tasks?limit=200");
     state.tasks = data.tasks || [];
+    const products = [...new Set(state.tasks.map((task) => task.product).filter(Boolean))].sort();
+    const select = $("#product-filter");
+    if (select) {
+      const current = state.productFilter;
+      select.innerHTML =
+        '<option value="">All products</option>' +
+        products.map((product) => `<option value="${esc(product)}">${esc(product)}</option>`).join("");
+      select.value = products.includes(current) ? current : "";
+      state.productFilter = select.value;
+    }
     const exists = state.selected && state.tasks.some((task) => task.id === state.selected);
     if (state.selected && !exists) {
       state.selected = null;
@@ -1475,8 +2088,8 @@ function nextTask(step) {
 }
 
 function applyHash() {
-  const match = location.hash.match(/^#\/task\/([^/?]+)(?:\/(story|summary|evidence))?(?:\?(.*))?$/);
-  if (match && match[2]) state.view = match[2] === "evidence" ? "evidence" : "story";
+  const match = location.hash.match(/^#\/task\/([^/?]+)(?:\/(story|summary|evidence|release))?(?:\?(.*))?$/);
+  if (match && match[2]) state.view = match[2] === "evidence" ? "evidence" : match[2] === "release" ? "release" : "story";
   const params = new URLSearchParams(match && match[3] ? match[3] : "");
   state.storyAt = params.has("at") ? Number(params.get("at")) : null;
   loadTasks().then(() => {
@@ -1500,8 +2113,11 @@ function toggleDensity() {
 
 function paletteItems(query) {
   const actions = [
-    { label: "Summary view", run: () => setView("summary") },
+    { label: "Story view", run: () => setView("story") },
     { label: "Evidence view", run: () => setView("evidence") },
+    { label: "Release view", run: () => setView("release") },
+    { label: "New task", run: openReport },
+    { label: "Import signals", run: openIntake },
     { label: "Refresh", run: () => $("#refresh").click() },
     { label: "Toggle theme", run: toggleTheme },
     { label: "Toggle density", run: toggleDensity },
@@ -1511,6 +2127,26 @@ function paletteItems(query) {
     label: `${task.title || task.id} · ${stateLabel(task.state)}`,
     run: () => selectTask(task.id),
   }));
+  if (state.writable && state.detail) {
+    actions.push({ label: "Open release actions", run: () => setView("release") });
+    actions.push({
+      label: "Verify with the team",
+      run: () => document.querySelector("#detail [data-action='team-verify']")?.click(),
+    });
+    if (state.detail.delivery?.pr_url) {
+      actions.push({
+        label: "Copy pull request link",
+        run: async () => {
+          try {
+            await navigator.clipboard.writeText(state.detail.delivery.pr_url);
+            toast("Pull request link copied.");
+          } catch {
+            toast("Could not copy the link.");
+          }
+        },
+      });
+    }
+  }
   const all = [...actions, ...tasks];
   const needle = query.trim().toLowerCase();
   return needle ? all.filter((item) => item.label.toLowerCase().includes(needle)) : all;
@@ -1548,8 +2184,12 @@ function bind() {
   $("#density").addEventListener("click", toggleDensity);
   $("#cmdk").addEventListener("click", openPalette);
   $("#report").addEventListener("click", openReport);
+  $("#intake").addEventListener("click", openIntake);
   $("#report-cancel").addEventListener("click", () => $("#report-dialog").close());
+  $("#intake-cancel").addEventListener("click", () => $("#intake-dialog").close());
   $("#report-form").addEventListener("submit", submitReport);
+  $("#intake-form").addEventListener("submit", submitIntake);
+  $("#intake-form").elements.source.addEventListener("change", toggleIntakeSource);
   $("#palette-input").addEventListener("input", (event) => renderPalette(event.target.value));
   $("#palette-input").addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
@@ -1571,6 +2211,14 @@ function bind() {
       $$(".filter").forEach((item) => item.classList.toggle("active", item === button));
       renderTasks();
     });
+  });
+  $("#product-filter").addEventListener("change", (event) => {
+    state.productFilter = event.target.value;
+    renderTasks();
+  });
+  $("#source-filter").addEventListener("change", (event) => {
+    state.sourceFilter = event.target.value;
+    renderTasks();
   });
   document.addEventListener("keydown", (event) => {
     const tag = document.activeElement?.tagName;
