@@ -91,7 +91,7 @@ def default_swarm_home() -> Path:
 def default_entrypoint() -> list[str]:
     raw = os.environ.get("WORKS_SWARM_ENTRYPOINT")
     if not raw:
-        return ["-m", "jiuwenswarm.channels.cli", "--help"]
+        return ["-m", "jiuwenswarm.channels.cli.main", "--help"]
     try:
         parsed = json.loads(raw)
     except json.JSONDecodeError as exc:

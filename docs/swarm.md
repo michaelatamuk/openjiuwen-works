@@ -69,7 +69,7 @@ A2A/CLI. Set `WORKS_SWARM_ENTRYPOINT` to the adapter's JSON argv.
 |---|---|
 | `WORKS_SWARM_PYTHON` | `C:\Workspace\openjiuwen\jiuwenswarm\.venv\Scripts\python.exe` |
 | `WORKS_SWARM_HOME` | `C:\Workspace\openjiuwen\jiuwenswarm` |
-| `WORKS_SWARM_ENTRYPOINT` | `["-m", "jiuwenswarm.channels.cli", "--help"]` |
+| `WORKS_SWARM_ENTRYPOINT` | `["-m", "jiuwenswarm.channels.cli.main", "--help"]` |
 
 ## Boundary
 
