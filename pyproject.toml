@@ -92,6 +92,8 @@ markers = [
 [tool.coverage.run]
 source = ["src/works"]
 branch = true
+# This bridge imports the host agent-core runtime and is exercised in agent-core's own Python.
+omit = ["src/works/team_verify.py"]
 
 [tool.coverage.report]
 skip_covered = true

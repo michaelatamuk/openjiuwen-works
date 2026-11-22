@@ -59,6 +59,10 @@ def _latest_run(paths: WorksPaths, task_id: str) -> Path | None:
     return latest[1] if latest is not None else None
 
 
+def latest_run_dir(paths: WorksPaths, task_id: str) -> Path | None:
+    return _latest_run(paths, task_id)
+
+
 def release_packet(paths: WorksPaths, task_id: str) -> ReleasePacket:
     queue = Queue(paths)
     task = queue.load(task_id)

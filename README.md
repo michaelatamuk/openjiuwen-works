@@ -93,6 +93,7 @@ uv run works readiness --repo /path/to/repo
 uv run works submit --repo /path/to/repo --product MyProduct --ref GH-42 --title "The export drops the last column"
 uv run works run <task-id> --live --approve-plan --scenarios scenarios.yaml
 uv run works release <task-id>
+uv run works team verify <task-id>
 ```
 
 The live builder needs `ANTHROPIC_API_KEY` (or `WORKS_MODEL_KEY`). PPMA memory is optional:
@@ -115,6 +116,7 @@ uv run works memory recall --ppma http://127.0.0.1:8766
 | **Feature map** | `features/<product>.yaml`; Evidence shows covered, failed and not-covered features. |
 | **Memory** | When configured, finished runs are reported to PPMA; older runs can be backfilled; `works memory recall` reads statements. |
 | **Decision layer** | `DecisionPort` and `LaixGate` exist behind a deterministic fallback; off by default, shadow opt-in. |
+| **Agent-core team** | `works team verify` runs inspector + challenger + reporter on `BaseTeam`/`TeamRuntime`; model-free, no API key. |
 
 ## Roadmap
 
@@ -148,6 +150,7 @@ CI runs lint, tests, bandit and gitleaks; mutation and `pip-audit` run weekly. D
 | [`docs/readiness.md`](docs/readiness.md) | `.works/readiness.yaml` and the autonomy gate |
 | [`docs/features.md`](docs/features.md) | Feature map format and proof coverage |
 | [`docs/live-harness.md`](docs/live-harness.md) | Real `openjiuwen` builder setup |
+| [`docs/agent-core.md`](docs/agent-core.md) | agent-core harness and verification team |
 | [`docs/ppma.md`](docs/ppma.md) | PPMA north contract, backfill and recall |
 | [`docs/laix.md`](docs/laix.md) | Decision-layer boundary and rollout |
 | [`docs/verification.md`](docs/verification.md) | Verification and approval boundaries |

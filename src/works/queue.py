@@ -164,6 +164,7 @@ def _apply(task: Task | None, event: Event) -> Task:
         "memory.recalled",
         "memory.recall_failed",
         "readiness.checked",
+        "team.verified",
     ):
         return task.model_copy(update={"updated_at": event.ts})
 

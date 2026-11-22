@@ -254,3 +254,54 @@ def test_a_run_artifact_is_served_and_traversal_is_refused(paths, submit) -> Non
             assert exc.code == 404
         else:
             raise AssertionError("path traversal must be refused")
+        status, _ = get(base, f"/api/tasks/{task.id}/artifacts/absent.png")
+        assert status == 404
+        status, _ = get(base, "/api/tasks/t-absent/artifacts/story.png")
+        assert status == 404
+
+
+def test_write_endpoint_rejects_unknown_path_bad_json_and_non_object(paths, repo) -> None:
+    with running(paths, write=True) as base:
+        status, _ = post(base, "/api/unknown", {"repo": str(repo.path)})
+        assert status == 404
+        request = Request(
+            f"{base}/api/tasks",
+            data=b"{",
+            headers={"Content-Type": "application/json", "X-Works-Write": "1"},
+            method="POST",
+        )
+        try:
+            urlopen(request, timeout=10)
+        except HTTPError as exc:
+            assert exc.code == 400
+        else:
+            raise AssertionError("invalid JSON must be refused")
+        status, _ = post(base, "/api/tasks", ["not", "an", "object"])
+        assert status == 400
+
+
+def test_write_endpoint_rejects_a_non_git_repo_and_unknown_kind(paths, tmp_path, repo) -> None:
+    plain = tmp_path / "plain"
+    plain.mkdir()
+    with running(paths, write=True) as base:
+        status, body = post(
+            base,
+            "/api/tasks",
+            {"repo": str(plain), "ref": "BUG-1", "title": "It broke"},
+        )
+        assert status == 400
+        assert "not a git repository" in json.loads(body)["error"]
+        status, body = post(
+            base,
+            "/api/tasks",
+            {"repo": str(repo.path), "ref": "BUG-1", "title": "It broke", "kind": "pigeon"},
+        )
+        assert status == 400
+        status, _ = post(
+            base,
+            "/api/tasks",
+            {"repo": str(repo.path), "ref": "", "title": ""},
+        )
+        assert status == 400
+        status, _ = post(base, "/api/readiness", {})
+        assert status == 400

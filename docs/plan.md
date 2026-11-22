@@ -759,7 +759,11 @@ Internal only: nothing is published to the upstream fork until M2 is green.
   reachable PPMA the run continues and says “memory unavailable”. Moved up from T4.8 because recall
   is the point of the memory product, not a late add-on. **M**
 
-**Demo M2:** a patch that passes CI and the builder's tests is caught by a sneaky-patch scenario.
+- [ ] **T2.22** agent-core verification team: inspector, challenger and reporter on `BaseTeam` +
+  `TeamRuntime`, model-free, reading recorded evidence only; the team cannot open a gate. **M**
+  - 2026-11-22: `works team verify` runs the three roles in agent-core's own Python via subprocess,
+    records `team.verified`, and returns `allow` or `block`. The isolated verifier runtime is still
+    M2.
 
 ### M3 — Release, return, escape (weeks 7–8)
 
