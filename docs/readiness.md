@@ -57,7 +57,8 @@ opts in. Recorded (`--trace`) runs are not gated.
 | Lint, format, types | the repository's own commands |
 | Fast tests | the cheap test path |
 | Product verify | the product's own smoke/verify command |
-| Architecture boundaries | the repository's structural check |
+| Architecture boundaries | import-boundary rules and an internal import graph |
+| Import cycles | circular imports across the repository's own modules fail the gate |
 
 The GUI Evidence panel shows the static result; commands are not run from a GET request. In
 `works ui --write` it also offers **Run checks**, which runs the full gate through a local-only

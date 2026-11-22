@@ -738,8 +738,9 @@ Internal only: nothing is published to the upstream fork until M2 is green.
   - 2026-11-21: `.works/readiness.yaml`, `works readiness`, exact suppression audit, feature-map
     presence, `EXIT_BLOCKED` red gate, `readiness.checked` event, run-time refusal for configured
     repositories, and the Evidence panel are in. Live runs now require a green gate even without a
-    config; the Evidence panel can run the checks in `--write` mode. Open: import-graph/structural
-    checks inside the independent verifier and the feature-map content check (T2.19).
+    config; the Evidence panel can run the checks in `--write` mode. The readiness report also
+    carries the internal import graph and fails on import cycles. Open: container-level verifier
+    isolation, provider split and review-the-reviewers.
 - [ ] **T2.19** Feature map and runtime artifacts: versioned `features/<product>.yaml` with id, user
   path, selectors or command and expected observation; `preview` attaches screenshot, video, log and
   trace; proof shows covered and uncovered features. **M**

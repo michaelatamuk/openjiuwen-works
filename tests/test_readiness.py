@@ -9,7 +9,7 @@ import pytest
 
 from works.cli import main
 from works.errors import PolicyError
-from works.readiness import BoundaryRule, assess, ensure_ready, import_violations
+from works.readiness import BoundaryRule, assess, ensure_ready, import_graph, import_violations
 
 
 def _repo(tmp_path: Path, *, command: str | None = None, allow: list[str] | None = None) -> Path:
@@ -54,7 +54,7 @@ def test_a_configured_repository_is_green(tmp_path) -> None:
     report = assess(_repo(tmp_path))
 
     assert report.status == "pass"
-    assert report.passed == report.total == 11
+    assert report.passed == report.total == 12
     assert all(check.status == "pass" for check in report.checks)
 
 
@@ -116,3 +116,15 @@ def test_import_boundaries_find_a_denied_edge(tmp_path) -> None:
     violations = import_violations(tmp_path, [rule])
 
     assert violations == ["works.ui.app imports works.supervisor (denied by works.ui)"]
+
+
+def test_import_cycles_are_found(tmp_path) -> None:
+    package = tmp_path / "src" / "pkg"
+    package.mkdir(parents=True)
+    (package / "__init__.py").write_text("", encoding="utf-8")
+    (package / "a.py").write_text("from pkg.b import b\n", encoding="utf-8")
+    (package / "b.py").write_text("from pkg.a import a\n", encoding="utf-8")
+
+    _, cycles = import_graph(tmp_path)
+
+    assert ["pkg.a", "pkg.b", "pkg.a"] in cycles

@@ -110,7 +110,7 @@ uv run works memory recall --ppma http://127.0.0.1:8766
 | **Live builder** | Real `openjiuwen` Claude Code harness on an Anthropic-compatible endpoint; model, tokens, USD and prompt hash are recorded. |
 | **Proof** | Computed evidence page and immutable ledger row; P0/P1 verdict, policy, risk, cost, diff and residual gaps. |
 | **GUI** | Story is the default human reading; Evidence is one click away; mobile route, replay, Present mode and a specific blocked rail. |
-| **Readiness** | `works readiness` runs lint, format, types, fast tests, product verify, architecture and import boundaries; a red gate blocks live runs. |
+| **Readiness** | `works readiness` runs lint, format, types, fast tests, product verify, architecture and import boundaries; the report carries the internal import graph and fails on cycles, and a red gate blocks live runs. |
 | **Feature map** | `features/<product>.yaml`; Evidence shows covered, failed and not-covered features. |
 | **Memory** | When configured, finished runs are reported to PPMA; older runs can be backfilled; `works memory recall` reads statements. |
 | **Decision layer** | `DecisionPort` and `LaixGate` exist behind a deterministic fallback; off by default, shadow opt-in. |

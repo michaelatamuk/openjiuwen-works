@@ -135,6 +135,8 @@ class ReadinessReport:
     suppressions: list[SuppressionFinding] = field(default_factory=list)
     unknown_suppressions: list[SuppressionFinding] = field(default_factory=list)
     feature_files: list[str] = field(default_factory=list)
+    import_cycles: list[list[str]] = field(default_factory=list)
+    import_edges: dict[str, list[str]] = field(default_factory=dict)
     note: str = ""
 
     def as_dict(self) -> dict[str, Any]:
@@ -149,6 +151,8 @@ class ReadinessReport:
             "suppressions": [item.as_dict() for item in self.suppressions],
             "unknown_suppressions": [item.as_dict() for item in self.unknown_suppressions],
             "features": self.feature_files,
+            "import_cycles": self.import_cycles,
+            "import_edges": self.import_edges,
             "note": self.note,
         }
 
@@ -247,6 +251,51 @@ def import_violations(repo: Path, rules: list[BoundaryRule]) -> list[str]:
                 if any(name == denied or name.startswith(f"{denied}.") for denied in rule.deny):
                     violations.append(f"{module} imports {name} (denied by {rule.source})")
     return sorted(set(violations))
+
+
+def _find_cycles(graph: dict[str, list[str]]) -> list[list[str]]:
+    state: dict[str, int] = {}
+    stack: list[str] = []
+    found: set[tuple[str, ...]] = set()
+
+    def visit(node: str) -> None:
+        state[node] = 1
+        stack.append(node)
+        for target in graph.get(node, []):
+            if state.get(target) == 1:
+                start = stack.index(target)
+                found.add((*stack[start:], target))
+            elif state.get(target, 0) == 0:
+                visit(target)
+        stack.pop()
+        state[node] = 2
+
+    for node in sorted(graph):
+        if state.get(node, 0) == 0:
+            visit(node)
+    return [list(cycle) for cycle in sorted(found)]
+
+
+def import_graph(repo: Path) -> tuple[dict[str, list[str]], list[list[str]]]:
+    modules: dict[str, list[str]] = {}
+    for path, _relative in _iter_python_files(repo):
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8", errors="replace"))
+        except (OSError, SyntaxError):
+            continue
+        imports: list[str] = []
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                imports.extend(alias.name for alias in node.names)
+            elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
+                imports.append(node.module)
+        modules[_module_name(repo, path)] = imports
+    internal = set(modules)
+    graph = {
+        module: sorted({name for name in imports if name in internal})
+        for module, imports in modules.items()
+    }
+    return graph, _find_cycles(graph)
 
 
 def _run_command(repo: Path, command: str, timeout_s: int) -> CheckResult:
@@ -348,6 +397,16 @@ def assess(
         )
     )
 
+    graph, cycles = import_graph(repo)
+    checks.append(
+        CheckResult(
+            "cycles",
+            "Import cycles",
+            "pass" if not cycles else "fail",
+            f"{len(cycles)} cycle(s)" if cycles else f"{len(graph)} module(s)",
+        )
+    )
+
     commands = spec.commands if spec is not None else Commands()
     for command_id, label in COMMANDS:
         command = getattr(commands, command_id)
@@ -399,6 +458,8 @@ def assess(
         suppressions=suppressions,
         unknown_suppressions=unknown,
         feature_files=features,
+        import_cycles=cycles,
+        import_edges=graph,
         note=note,
     )
 
