@@ -109,8 +109,8 @@ without a failure or a finished run. The runs are local fixtures, not upstream f
 
 ## Design and interaction
 
-Dark and light themes, comfortable and compact density, a warm neutral canvas with a white session
-pane and one coral accent, subtle depth instead of stacked borders, visible focus, text labels for
+Dark and light themes, comfortable and compact density, a warm neutral canvas with a flat session
+column, a tinted sidebar and one coral accent, subtle depth instead of stacked borders, visible focus, text labels for
 every status, `prefers-reduced-motion`, and Mira in the empty state. Below 720 px the route becomes
 a vertical list with the same states and per-milestone screen-reader names; the queue moves below
 the Story so the task is visible first. Replay updates the route and receipt in place.
