@@ -36,3 +36,8 @@ node_modules/
 web/node_modules/
 !src/works/ui/static/dist/
 !src/works/ui/static/dist/**
+
+# local verifier credentials (never commit)
+.env
+.env.*
+!.env.example
