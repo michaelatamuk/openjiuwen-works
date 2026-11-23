@@ -62,7 +62,17 @@ def test_the_verifier_can_use_a_separate_provider() -> None:
     assert live.provider == "deepseek"
     assert live.verifier_provider == "anthropic"
     assert live.provider_split is True
+    assert live.credential_split is True
     assert live.verifier_model == "claude-verifier"
+
+    same_key = LiveHarness(
+        api_key="shared",
+        base_url="https://api.deepseek.com/anthropic",
+        verifier_api_key="shared",
+        verifier_base_url="https://api.deepseek.com/anthropic",
+    )
+    assert same_key.provider_split is False
+    assert same_key.credential_split is False
 
 
 def test_artifacts_are_not_edits() -> None:

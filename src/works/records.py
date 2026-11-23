@@ -138,6 +138,7 @@ class Challenge(BaseModel):
     concerns: list[str] = Field(default_factory=list)
     model: str = "unknown"
     provider: str = "unknown"
+    credential_split: bool = False
     tokens: int = 0
     usd: float = 0.0
     prompt_sha256: str | None = None
@@ -198,6 +199,7 @@ class RunRecord(BaseModel):
     verifier_model: str | None = None
     verifier_provider: str | None = None
     provider_split: bool = False
+    credential_split: bool = False
     attempts: int = 0
     tokens: int = 0
     usd: float = 0.0

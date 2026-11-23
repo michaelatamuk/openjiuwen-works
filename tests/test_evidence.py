@@ -178,6 +178,7 @@ def test_cost_and_provider_split_are_rendered_when_recorded() -> None:
             "verifier_model": "verifier-1",
             "verifier_provider": "anthropic",
             "provider_split": True,
+            "credential_split": True,
         }
     )
 
@@ -187,6 +188,7 @@ def test_cost_and_provider_split_are_rendered_when_recorded() -> None:
     assert "verifier tokens: `300`" in page
     assert "verification share: `25.0%`" in page
     assert "provider split: `yes`" in page
+    assert "credential split: `yes`" in page
 
 
 def test_the_page_answers_the_four_questions() -> None:

@@ -795,6 +795,7 @@ class Supervisor:
             and ctx.challenge is not None
             and ctx.challenge.provider != proposal.provider
         )
+        credential_split = bool(ctx.challenge and ctx.challenge.credential_split)
         findings: list[Finding] = []
         for event in self._queue.events(ctx.task.id):
             if event.type != "finding":
@@ -821,6 +822,7 @@ class Supervisor:
             verifier_model=ctx.challenge.model if ctx.challenge else None,
             verifier_provider=ctx.challenge.provider if ctx.challenge else None,
             provider_split=provider_split,
+            credential_split=credential_split,
             prompt_name=proposal.prompt_name if proposal else None,
             prompt_sha256=proposal.prompt_sha256 if proposal else None,
             tokens=tokens,
@@ -873,6 +875,7 @@ class Supervisor:
             verifier_model=ctx.challenge.model if ctx.challenge else None,
             verifier_provider=ctx.challenge.provider if ctx.challenge else None,
             provider_split=provider_split,
+            credential_split=credential_split,
             attempts=self._queue.load(ctx.task.id).attempts,
             tokens=tokens,
             usd=usd,

@@ -82,7 +82,7 @@ the real container in CI, and locally when `WORKS_TEST_DOCKER=1` and Docker is r
 The process verifier drops every name that looks like a credential, including `WORKS_MODEL_KEY` and
 `WORKS_VERIFIER_API_KEY`; only an explicit command env reaches a check. `works doctor` warns when the
 builder and verifier share one key. Evidence records the verifier name and isolation, the verifier
-model/provider, whether the provider split held, and builder vs verifier tokens/USD.
+model/provider, whether the provider and credential splits held, and builder vs verifier tokens/USD.
 
 ## Trusted base
 

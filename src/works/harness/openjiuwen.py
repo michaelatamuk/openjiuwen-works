@@ -133,6 +133,10 @@ class LiveHarness:
         return self.verifier_provider != self.provider
 
     @property
+    def credential_split(self) -> bool:
+        return self._verifier_key != self._key
+
+    @property
     def verifier_model(self) -> str:
         return self._verifier_model
 
@@ -287,6 +291,7 @@ class LiveHarness:
                 reason=f"challenger could not run: {exc}",
                 model=self._verifier_model,
                 provider=self.verifier_provider,
+                credential_split=self.credential_split,
                 prompt_sha256=self._challenge_prompt.sha256,
             )
         finally:
@@ -314,6 +319,7 @@ class LiveHarness:
                 reason="challenger did not finish",
                 model=self._verifier_model,
                 provider=self.verifier_provider,
+                credential_split=self.credential_split,
                 tokens=tokens,
                 usd=usd,
                 prompt_sha256=self._challenge_prompt.sha256,
@@ -333,6 +339,7 @@ class LiveHarness:
                 concerns=[str(item) for item in concerns],
                 model=self._verifier_model,
                 provider=self.verifier_provider,
+                credential_split=self.credential_split,
                 tokens=tokens,
                 usd=usd,
                 prompt_sha256=self._challenge_prompt.sha256,
@@ -344,6 +351,7 @@ class LiveHarness:
                 concerns=[text[:300]] if text else [],
                 model=self._verifier_model,
                 provider=self.verifier_provider,
+                credential_split=self.credential_split,
                 tokens=tokens,
                 usd=usd,
                 prompt_sha256=self._challenge_prompt.sha256,

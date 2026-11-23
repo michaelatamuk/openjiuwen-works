@@ -61,6 +61,7 @@ class Evidence(BaseModel):
     verifier_model: str | None = None
     verifier_provider: str | None = None
     provider_split: bool = False
+    credential_split: bool = False
     prompt_name: str | None = None
     prompt_sha256: str | None = None
     tokens: int = 0
@@ -321,6 +322,7 @@ def render_markdown(evidence: Evidence) -> str:
                     f"provider: `{evidence.verifier_provider or '-'}` | "
                     f"provider split: `{'yes' if evidence.provider_split else 'no'}`"
                 ),
+                f"- credential split: `{'yes' if evidence.credential_split else 'no'}`",
                 "",
             ]
         )
