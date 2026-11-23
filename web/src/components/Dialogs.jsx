@@ -330,25 +330,220 @@ export function FactoryDialog({ onClose }) {
   );
 }
 
-export function SettingsDialog({ theme, density, pollMs, onSave, onClose }) {
+const PROVIDER_FALLBACK = {
+  claudecode: { label: "Claude Code", kind: "General coding harness", available: true },
+  dsh: { label: "DeepSeek Harness", kind: "DeepSeek native", available: false },
+  codex: { label: "Codex", kind: "OpenAI Codex", available: false },
+};
+
+const PROVIDER_ORDER = ["claudecode", "dsh", "codex"];
+
+function credentialLabel(provider, state, providers) {
+  if (!providers[provider]?.available) return "Needs SDK";
+  if (provider !== "claudecode") return "Provider-managed";
+  return {
+    ready: "Ready",
+    missing: "Needs setup",
+    separate: "Separate credential",
+    shared: "Shared credential",
+    builder: "Uses builder credential",
+  }[state] || "Managed locally";
+}
+
+function ProviderCard({ id, meta, active, disabled, onSelect }) {
+  const letter = { claudecode: "C", dsh: "D", codex: "X" }[id] || (meta.label || id).slice(0, 1).toUpperCase();
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={active}
+      className={`provider-card provider-${id} ${active ? "active" : ""}`}
+      disabled={disabled}
+      onClick={() => onSelect(id)}
+    >
+      <span className="provider-mark" aria-hidden="true">{letter}</span>
+      <span className="provider-copy">
+        <b>{meta.label || id}</b>
+        <em>{meta.kind || "Model harness"}</em>
+      </span>
+      <span className={`provider-state ${meta.available ? "ready" : "missing"}`}>
+        {meta.available ? "Ready" : "Needs SDK"}
+      </span>
+    </button>
+  );
+}
+
+export function SettingsDialog({
+  theme,
+  density,
+  pollMs,
+  builder,
+  writable = true,
+  onSave,
+  onClose,
+}) {
+  const providers = { ...PROVIDER_FALLBACK, ...(builder?.providers || {}) };
   const [nextTheme, setNextTheme] = useState(theme);
   const [nextDensity, setNextDensity] = useState(density);
   const [nextPoll, setNextPoll] = useState(String(pollMs));
   const [repo, setRepo] = useState(localStorage.getItem("works.repo") || "");
+  const [provider, setProvider] = useState(builder?.provider || "claudecode");
+  const [separateVerifier, setSeparateVerifier] = useState(
+    Boolean(builder?.verifier_provider && builder.verifier_provider !== builder.provider)
+  );
+  const [verifier, setVerifier] = useState(builder?.verifier_provider || builder?.provider || "claudecode");
+  const [model, setModel] = useState(builder?.model || "");
+  const [verifierModel, setVerifierModel] = useState(builder?.verifier_model || "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const builderMeta = providers[provider] || PROVIDER_FALLBACK.claudecode;
+  const verifierMeta = providers[separateVerifier ? verifier : provider] || provider;
+  const builderCredential = credentialLabel(provider, builder?.credentials?.builder, providers);
+  const verifierCredential = separateVerifier
+    ? credentialLabel(verifier, builder?.credentials?.verifier, providers)
+    : builder?.credentials?.builder === "ready"
+      ? "Uses builder credential"
+      : "Needs setup";
+
+  async function submit(event) {
+    event.preventDefault();
+    setSaving(true);
+    setError("");
+    try {
+      await onSave({
+        theme: nextTheme,
+        density: nextDensity,
+        pollMs: Number(nextPoll),
+        repo,
+        builder: {
+          provider,
+          verifier_provider: separateVerifier && verifier !== provider ? verifier : null,
+          model: model.trim() || null,
+          verifier_model: separateVerifier ? (verifierModel.trim() || null) : null,
+        },
+      });
+    } catch (err) {
+      setError(err.message || "Could not save these settings.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
-    <Modal onClose={onClose}>
-      <h2>Settings</h2>
-      <form onSubmit={(event) => { event.preventDefault(); onSave({ theme: nextTheme, density: nextDensity, pollMs: Number(nextPoll), repo }); }}>
-        <div className="form-row">
-          <label>Theme <select value={nextTheme} onChange={(event) => setNextTheme(event.target.value)}><option value="light">Light</option><option value="dark">Dark</option></select></label>
-          <label>Density <select value={nextDensity} onChange={(event) => setNextDensity(event.target.value)}><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></label>
-          <label>Fallback refresh <select value={nextPoll} onChange={(event) => setNextPoll(event.target.value)}><option value="5000">5 s</option><option value="15000">15 s</option><option value="30000">30 s</option><option value="60000">60 s</option></select></label>
+    <Modal className="settings-dialog" onClose={onClose}>
+      <div className="settings-head">
+        <div>
+          <span className="settings-kicker">Workspace</span>
+          <h2>Settings</h2>
         </div>
-        <label>Default repository <input value={repo} onChange={(event) => setRepo(event.target.value)} placeholder="C:\path\to\repo" /></label>
-        <p className="small muted">Live updates arrive over SSE; fallback refresh is used only if the stream drops.</p>
+        <span className={`settings-mode ${writable ? "write" : ""}`}>
+          {writable ? "Local / writable" : "Read-only"}
+        </span>
+      </div>
+      <form onSubmit={submit}>
+        <section className="settings-section">
+          <div className="settings-section-head">
+            <div>
+              <h3>Builder</h3>
+              <p>Who writes the fix in live runs.</p>
+            </div>
+            <span className={`settings-credential ${builderCredential === "Ready" ? "ready" : builderCredential === "Needs setup" ? "missing" : ""}`}>
+              {builderCredential}
+            </span>
+          </div>
+          <div className="provider-grid" role="radiogroup" aria-label="Builder provider">
+            {PROVIDER_ORDER.map((id) => (
+              <ProviderCard
+                key={id}
+                id={id}
+                meta={providers[id] || PROVIDER_FALLBACK[id]}
+                active={provider === id}
+                disabled={!writable || !(providers[id] || PROVIDER_FALLBACK[id]).available}
+                onSelect={setProvider}
+              />
+            ))}
+          </div>
+          <label className="settings-field">
+            <span>Model <em>{builderMeta.label} default</em></span>
+            <input
+              value={model}
+              disabled={!writable}
+              onChange={(event) => setModel(event.target.value)}
+              placeholder="Provider default"
+            />
+          </label>
+          <p className="settings-note">
+            Credentials stay in the local environment. Works never stores a key in this screen or in the browser.
+          </p>
+        </section>
+
+        <section className="settings-section">
+          <div className="settings-section-head">
+            <div>
+              <h3>Verifier</h3>
+              <p>Who challenges the builder&apos;s work.</p>
+            </div>
+            <span className={`settings-credential ${verifierCredential === "Ready" || verifierCredential === "Separate credential" ? "ready" : verifierCredential === "Needs setup" || verifierCredential === "Needs SDK" ? "missing" : ""}`}>
+              {verifierCredential}
+            </span>
+          </div>
+          <label className="settings-switch">
+            <input
+              type="checkbox"
+              checked={separateVerifier}
+              disabled={!writable}
+              onChange={(event) => setSeparateVerifier(event.target.checked)}
+            />
+            Use a separate provider for review
+          </label>
+          {separateVerifier ? (
+            <>
+              <div className="provider-grid compact" role="radiogroup" aria-label="Verifier provider">
+                {PROVIDER_ORDER.map((id) => (
+                  <ProviderCard
+                    key={id}
+                    id={id}
+                    meta={providers[id] || PROVIDER_FALLBACK[id]}
+                    active={verifier === id}
+                    disabled={!writable || !(providers[id] || PROVIDER_FALLBACK[id]).available}
+                    onSelect={setVerifier}
+                  />
+                ))}
+              </div>
+              <label className="settings-field">
+                <span>Verifier model <em>{verifierMeta.label} default</em></span>
+                <input
+                  value={verifierModel}
+                  disabled={!writable}
+                  onChange={(event) => setVerifierModel(event.target.value)}
+                  placeholder="Provider default"
+                />
+              </label>
+            </>
+          ) : (
+            <p className="settings-note">The challenger uses the same provider and credential as the builder.</p>
+          )}
+        </section>
+
+        <section className="settings-section">
+          <h3>Workspace</h3>
+          <div className="form-row">
+            <label>Theme <select value={nextTheme} onChange={(event) => setNextTheme(event.target.value)}><option value="light">Light</option><option value="dark">Dark</option></select></label>
+            <label>Density <select value={nextDensity} onChange={(event) => setNextDensity(event.target.value)}><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></label>
+            <label>Fallback refresh <select value={nextPoll} onChange={(event) => setNextPoll(event.target.value)}><option value="5000">5 s</option><option value="15000">15 s</option><option value="30000">30 s</option><option value="60000">60 s</option></select></label>
+          </div>
+          <label className="settings-field">
+            <span>Default repository</span>
+            <input value={repo} onChange={(event) => setRepo(event.target.value)} placeholder="C:\path\to\repo" />
+          </label>
+          <p className="settings-note">Live updates arrive over SSE; fallback refresh is used only if the stream drops.</p>
+        </section>
+
+        {error ? <p className="settings-error" role="alert">{error}</p> : null}
         <div className="dialog-actions">
           <button type="button" className="btn ghost" onClick={onClose}>Cancel</button>
-          <button type="submit" className="btn">Save</button>
+          <button type="submit" className="btn" disabled={saving}>{saving ? "Saving..." : "Save"}</button>
         </div>
       </form>
     </Modal>

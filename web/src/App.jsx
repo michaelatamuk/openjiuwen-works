@@ -351,8 +351,10 @@ export default function App() {
           theme={theme}
           density={density}
           pollMs={pollMs}
+          builder={health?.builder}
+          writable={Boolean(health?.write)}
           onClose={() => setDialog(null)}
-          onSave={({ theme: nextTheme, density: nextDensity, pollMs: nextPoll, repo }) => {
+          onSave={async ({ theme: nextTheme, density: nextDensity, pollMs: nextPoll, repo, builder }) => {
             setTheme(nextTheme);
             setDensity(nextDensity);
             setPollMs(nextPoll);
@@ -360,6 +362,14 @@ export default function App() {
             localStorage.setItem("works.density", nextDensity);
             localStorage.setItem("works.poll", String(nextPoll));
             localStorage.setItem("works.repo", repo.trim());
+            if (builder && health?.write) {
+              const result = await api("/api/settings/builder", {
+                method: "POST",
+                headers: { "X-Works-Write": "1" },
+                body: builder,
+              });
+              setHealth((current) => current ? { ...current, builder: result.builder } : current);
+            }
             setDialog(null);
             notify("Settings saved.");
           }}

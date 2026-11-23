@@ -1397,6 +1397,7 @@ class Handler(BaseHTTPRequestHandler):
             "/api/tasks",
             "/api/readiness",
             "/api/actions",
+            "/api/settings/builder",
             "/api/sources",
             "/api/ask/stream",
         ):
@@ -1435,6 +1436,8 @@ class Handler(BaseHTTPRequestHandler):
                 self._run_readiness(payload)
             elif path == "/api/actions":
                 self._run_action(payload)
+            elif path == "/api/settings/builder":
+                self._save_builder_settings(payload)
             elif path == "/api/sources":
                 self._run_source(payload)
             elif path == "/api/ask/stream":
@@ -1744,12 +1747,23 @@ class Handler(BaseHTTPRequestHandler):
             return
         raise ValueError(f"unknown source {source!r}")
 
+    def _save_builder_settings(self, payload: dict[str, Any]) -> None:
+        from ..settings import builder_health, save_builder_settings
+
+        settings = save_builder_settings(self.paths, payload)
+        self._json(HTTPStatus.OK, {"ok": True, "builder": builder_health(self.paths, settings)})
+
     def _api(self, path: str, query: dict[str, list[str]]) -> None:
         queue = Queue(self.paths)
         try:
             if path == "/api/health":
                 from ..agent_chat import availability
+                from ..settings import builder_health, load_builder_settings
 
+                try:
+                    settings = load_builder_settings(self.paths)
+                except ConfigError:
+                    settings = None
                 self._json(
                     HTTPStatus.OK,
                     {
@@ -1759,6 +1773,7 @@ class Handler(BaseHTTPRequestHandler):
                         "root": str(self.paths.root),
                         "version": "0.0.1",
                         "ai": availability(),
+                        "builder": builder_health(self.paths, settings),
                     },
                 )
                 return

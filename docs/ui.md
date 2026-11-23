@@ -70,7 +70,10 @@ The same evidence page serves two audiences without a second data source:
 - **Factory**: a header action opens metrics and the ledger. The Release view carries the run history
   and a two-run comparison; Evidence offers proof/run/release/delivery/confirmation downloads.
   Artifacts open in a lightbox; a before/after pair has a drag slider; timeline rows open their raw
-  event. Settings control theme, density, polling and the default repository.
+  event. **Settings ? Builder** selects the live builder provider (Claude Code, DeepSeek Harness
+  or Codex) with availability and credential status shown in provider terms, never as environment
+  variable names. Keys stay in the local environment. The same panel selects a separate verifier
+  provider, optional models, theme, density, polling and the default repository.
 
 There is no separate Summary tab: the human answer lives in the Story hero and the receipt strip.
 Both views are computed from the same proof, so they cannot disagree. Deep links carry the view:

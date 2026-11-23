@@ -537,6 +537,36 @@ def test_add_context_appends_a_thread_note(paths, submit) -> None:
     assert events[-1].type == "thread.note"
 
 
+def test_builder_settings_are_saved_and_health_is_provider_neutral(paths) -> None:
+    with running(paths, write=True) as base:
+        status, body = post(
+            base,
+            "/api/settings/builder",
+            {
+                "provider": "codex",
+                "verifier_provider": "claudecode",
+                "model": "gpt-5",
+                "verifier_model": "sonnet",
+            },
+        )
+        assert status == 200, body
+        saved = json.loads(body)["builder"]
+        assert saved["provider"] == "codex"
+        assert saved["verifier_provider"] == "claudecode"
+        assert "ANTHROPIC_API_KEY" not in body
+        assert "WORKS_VERIFIER_API_KEY" not in body
+
+        status, health = get(base, "/api/health")
+        assert status == 200
+        builder = json.loads(health)["builder"]
+        assert builder["provider"] == "codex"
+        assert builder["model"] == "gpt-5"
+        assert "ANTHROPIC_API_KEY" not in health
+
+        status, _ = post(base, "/api/settings/builder", {"provider": "unknown"})
+        assert status == 400
+
+
 def test_health_reports_agent_availability(paths, monkeypatch) -> None:
     monkeypatch.setattr(
         "works.agent_chat.availability",

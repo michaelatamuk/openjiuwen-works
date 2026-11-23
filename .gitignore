@@ -41,3 +41,6 @@ web/node_modules/
 .env
 .env.*
 !.env.example
+
+# local UI builder settings (no secrets, but machine-specific)
+/.works/settings.json

@@ -505,7 +505,9 @@ def _supervisor(args: argparse.Namespace) -> Supervisor:
         harness = swarm_harness
     elif args.live:
         from .harness.openjiuwen import LiveHarness
+        from .settings import load_builder_settings
 
+        builder_settings = load_builder_settings(paths)
         task_id = getattr(args, "task_id", None)
         flow = "fix-issue"
         if task_id:
@@ -516,8 +518,11 @@ def _supervisor(args: argparse.Namespace) -> Supervisor:
             prompt_path = candidate if candidate.exists() else None
         challenge_path = paths.flows / flow / "prompts" / "challenge.md"
         harness = LiveHarness(
-            model=args.model,
+            model=args.model or builder_settings.model,
+            verifier_model=builder_settings.verifier_model,
             base_url=args.model_base,
+            harness_provider=builder_settings.provider,
+            verifier_harness_provider=builder_settings.verifier_provider,
             prompt_path=prompt_path,
             challenge_prompt_path=challenge_path if challenge_path.exists() else None,
         )
