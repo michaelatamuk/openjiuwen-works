@@ -892,3 +892,24 @@ dialog dd { margin: 0; }
 .thread-msg.generated .thread-body { border-style: dashed; border-color: #c4b5fd; background: linear-gradient(180deg, var(--panel), var(--violet-soft)); }
 .ai-badge { display: inline-block; border-radius: 5px; padding: 2px 5px; background: var(--violet-soft); color: var(--violet-text); font: 700 8px/1.2 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
 .run-dialog-body { max-height: 55vh; overflow: auto; background: var(--panel-3); border-radius: 10px; padding: 12px; font: 11px/1.6 var(--mono); white-space: pre-wrap; }
+
+/* Factory, compare slider, lightbox, settings and event drawer */
+.metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+.metric { border: 1px solid var(--line); background: var(--panel-2); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+.metric span { font: 700 8px/1.3 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+.metric strong { font-size: 18px; letter-spacing: -.02em; }
+.factory-subtitle { font: 700 9px/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--faint); margin: 14px 0 6px; }
+.run-compare { max-height: 52vh; overflow: auto; }
+.export-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.export-row .btn { font-size: 10px; padding: 5px 8px; }
+.artifact-compare-wrap { margin-bottom: 12px; }
+.artifact-compare-stage { position: relative; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--line); }
+.artifact-compare-stage img { display: block; width: 100%; }
+.artifact-compare-stage .compare-after { position: absolute; inset: 0; height: 100%; object-fit: cover; clip-path: inset(0 0 0 var(--pos, 50%)); }
+.artifact-compare-wrap input[type="range"] { width: 100%; margin-top: 6px; accent-color: var(--violet); }
+.compare-labels { display: flex; justify-content: space-between; font: 8px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+.lightbox-image { display: block; max-width: 82vw; max-height: 72vh; border-radius: 10px; }
+#event-dialog { width: min(760px, 92vw); }
+#factory-dialog { width: min(980px, 94vw); }
+.event-row { cursor: pointer; }
+.event-row:hover { background: var(--panel-2); }

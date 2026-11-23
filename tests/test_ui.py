@@ -617,3 +617,41 @@ def test_approve_plan_action_opens_gate_one(paths, submit) -> None:
         assert status == 200, body
         assert json.loads(body)["event"]["data"]["gate"] == "plan"
     assert queue.load(task.id).state is TaskState.PLAN_APPROVED
+
+
+def test_run_history_and_export(paths, submit) -> None:
+    task = submit()
+    run_dir = paths.runs / "r-history"
+    run_dir.mkdir(parents=True)
+    (run_dir / "run.json").write_text(
+        json.dumps(
+            {
+                "task_id": task.id,
+                "run_id": "r-history",
+                "state": "proved",
+                "finished_at": "2026-11-23T10:00:00Z",
+                "base_commit": "abc1234",
+                "tokens": 10,
+                "usd": 0.1,
+                "duration_ms": 100,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (run_dir / "evidence.json").write_text(
+        json.dumps(
+            {"proof_sha256": "a" * 64, "verdict": {"allow": True}, "risk": {"level": "low"}}
+        ),
+        encoding="utf-8",
+    )
+    (run_dir / "evidence.md").write_text("# Proof\n", encoding="utf-8")
+    with running(paths) as base:
+        status, body = get(base, f"/api/tasks/{task.id}/runs")
+        assert status == 200
+        assert json.loads(body)["runs"][0]["run_id"] == "r-history"
+        with urlopen(f"{base}/api/tasks/{task.id}/export/evidence.md", timeout=10) as response:
+            assert response.status == 200
+            assert response.headers["Content-Disposition"].startswith("attachment;")
+            assert response.read().decode("utf-8").replace("\r\n", "\n") == "# Proof\n"
+        status, _ = get(base, f"/api/tasks/{task.id}/export/absent")
+        assert status == 404

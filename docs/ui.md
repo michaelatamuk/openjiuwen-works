@@ -37,7 +37,13 @@ The same evidence page serves two audiences without a second data source:
   factory, people, agents, deliverables, checks, cost and artifacts. In `--write` it has two inputs:
   **Add context** appends a `thread.note`; **Ask Mira** asks a real `openjiuwen` model about the
   recorded run. The answer streams token-by-token, is stored as `thread.agent`, and is advisory:
-  it cannot approve, release, retry or change anything.
+  it cannot approve, release, retry or change anything. Inline plan/release questions carry
+  recommended actions and `Open run`; `Generate commentary` adds labelled Builder / Inspector /
+  Reporter messages.
+- **Factory**: a header action opens metrics and the ledger. The Release view carries the run history
+  and a two-run comparison; Evidence offers proof/run/release/delivery/confirmation downloads.
+  Artifacts open in a lightbox; a before/after pair has a drag slider; timeline rows open their raw
+  event. Settings control theme, density, polling and the default repository.
 
 There is no separate Summary tab: the human answer lives in the Story hero and the receipt strip.
 Both views are computed from the same proof, so they cannot disagree. Deep links carry the view:

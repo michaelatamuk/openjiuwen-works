@@ -54,8 +54,10 @@
             <p id="subtitle">Select a report to read its story, proof and decision.</p>
           </div>
           <div class="head-actions">
+            <button class="btn ghost" id="factory" type="button">Factory</button>
             <button class="btn ghost" id="intake" type="button" hidden>Import</button>
             <button class="btn ghost" id="cmdk" type="button" aria-label="Command palette" title="Command palette">Ctrl K</button>
+            <button class="btn ghost" id="settings" type="button" aria-label="Settings" title="Settings">⚙</button>
             <button class="btn ghost" id="density" type="button" aria-label="Toggle density" title="Density">☷</button>
             <button class="btn ghost" id="refresh" type="button">Refresh</button>
           </div>
@@ -175,6 +177,64 @@
       </div>
     </dialog>
 
+    <dialog id="runs-dialog" aria-labelledby="runs-title">
+      <h2 id="runs-title">Compare runs</h2>
+      <div class="form-row">
+        <label>Run A <select id="run-a"></select></label>
+        <label>Run B <select id="run-b"></select></label>
+      </div>
+      <div id="run-compare-body" class="run-compare"></div>
+      <div class="dialog-actions"><button type="button" class="btn" id="runs-close">Close</button></div>
+    </dialog>
+
+    <dialog id="factory-dialog" aria-labelledby="factory-title">
+      <h2 id="factory-title">Factory</h2>
+      <div id="factory-body" class="factory-body"></div>
+      <div class="dialog-actions">
+        <button type="button" class="btn ghost" id="factory-refresh">Refresh</button>
+        <button type="button" class="btn" id="factory-close">Close</button>
+      </div>
+    </dialog>
+
+    <dialog id="lightbox" aria-labelledby="lightbox-title">
+      <h2 id="lightbox-title" class="small muted">Artifact</h2>
+      <img id="lightbox-image" class="lightbox-image" alt="" />
+      <div class="dialog-actions"><button type="button" class="btn" id="lightbox-close">Close</button></div>
+    </dialog>
+
+    <dialog id="event-dialog" aria-labelledby="event-title">
+      <h2 id="event-title">Event</h2>
+      <pre id="event-dialog-body" class="run-dialog-body"></pre>
+      <div class="dialog-actions"><button type="button" class="btn" id="event-close">Close</button></div>
+    </dialog>
+
+    <dialog id="settings-dialog" aria-labelledby="settings-title">
+      <h2 id="settings-title">Settings</h2>
+      <form id="settings-form">
+        <div class="form-row">
+          <label>Theme
+            <select name="theme"><option value="dark">Dark</option><option value="light">Light</option></select>
+          </label>
+          <label>Density
+            <select name="density"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select>
+          </label>
+          <label>Refresh
+            <select name="poll">
+              <option value="5000">5 s</option><option value="15000">15 s</option>
+              <option value="30000">30 s</option><option value="60000">60 s</option>
+            </select>
+          </label>
+        </div>
+        <label>Default repository
+          <input name="repo" placeholder="C:\path\to\repo" autocomplete="off" />
+        </label>
+        <div class="dialog-actions">
+          <button type="button" class="btn ghost" id="settings-cancel">Cancel</button>
+          <button type="submit" class="btn">Save</button>
+        </div>
+      </form>
+    </dialog>
+
     <dialog id="help" aria-labelledby="help-title">
       <h2 id="help-title">Keyboard</h2>
       <dl>
@@ -192,6 +252,6 @@
     </dialog>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script src="/app.js?v=20261124"></script>
+    <script src="/app.js?v=20261125"></script>
   </body>
 </html>

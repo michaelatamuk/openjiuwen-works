@@ -16,6 +16,8 @@ const state = {
   writable: false,
   ai: null,
   composeMode: "ask",
+  pollMs: Number(localStorage.getItem("works.poll") || 15000),
+  pollTimer: null,
   timelineFilter: "all",
   products: null,
   detectors: null,
@@ -248,6 +250,95 @@ async function performAction(button, action, body, message) {
   } finally {
     button.disabled = false;
   }
+}
+
+async function loadFactory() {
+  const body = $("#factory-body");
+  body.innerHTML = `<p class="muted small">Loading factory metrics…</p>`;
+  try {
+    const [metrics, ledger] = await Promise.all([api("/api/metrics"), api("/api/ledger")]);
+    const m = metrics.metrics || {};
+    const cards = [
+      ["Tasks", m.tasks ?? 0],
+      ["Proved", m.proved ?? 0],
+      ["Blocked", m.blocked ?? 0],
+      ["Human touches", m.human_touches ?? 0],
+      ["Runs without human", m.runs_without_human ?? 0],
+      ["Median wall", fmtMs(m.median_duration_ms ?? 0)],
+      ["Tokens", m.tokens ?? 0],
+      ["USD", fmtUsd(m.usd ?? 0)],
+    ]
+      .map(([label, value]) => `<div class="metric"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`)
+      .join("");
+    const rows = (ledger.rows || [])
+      .slice()
+      .reverse()
+      .slice(0, 30)
+      .map((row) => [
+        esc(new Date(row.ts).toLocaleString()),
+        `<span class="mono">${esc(row.task_id)}</span>`,
+        esc(row.state),
+        esc(row.verdict || "—"),
+        esc(row.tokens ?? 0),
+        esc(fmtUsd(row.usd ?? 0)),
+      ]);
+    body.innerHTML = `<div class="metrics-grid">${cards}</div>
+      <h3 class="factory-subtitle">Ledger</h3>
+      ${table(["Time", "Task", "State", "Verdict", "Tokens", "USD"], rows, [4, 5])}`;
+  } catch (error) {
+    body.innerHTML = `<p class="bad small">${esc(error.message)}</p>`;
+  }
+}
+
+function openFactory() {
+  $("#factory-dialog").showModal();
+  void loadFactory();
+}
+
+function openSettings() {
+  const form = $("#settings-form");
+  form.elements.theme.value = document.documentElement.dataset.theme || "dark";
+  form.elements.density.value = document.documentElement.dataset.density || "comfortable";
+  form.elements.poll.value = String(state.pollMs);
+  form.elements.repo.value = localStorage.getItem("works.repo") || "";
+  $("#settings-dialog").showModal();
+}
+
+function saveSettings(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  applyTheme(form.elements.theme.value);
+  applyDensity(form.elements.density.value);
+  state.pollMs = Number(form.elements.poll.value);
+  localStorage.setItem("works.poll", String(state.pollMs));
+  localStorage.setItem("works.repo", form.elements.repo.value.trim());
+  $("#settings-dialog").close();
+  startPolling();
+  toast("Settings saved.");
+}
+
+function startPolling() {
+  if (state.pollTimer) window.clearInterval(state.pollTimer);
+  state.pollTimer = window.setInterval(() => {
+    loadTasks();
+    if (state.selected) loadDetail(state.selected);
+  }, state.pollMs);
+}
+
+function openLightbox(url, alt) {
+  const image = $("#lightbox-image");
+  image.src = url;
+  image.alt = alt || "artifact";
+  $("#lightbox").showModal();
+}
+
+function openEventDialog(seq) {
+  const detail = state.detail;
+  if (!detail) return;
+  const event = (detail.timeline || []).find((item) => item.seq === seq);
+  if (!event) return;
+  $("#event-dialog-body").textContent = JSON.stringify(event, null, 2);
+  $("#event-dialog").showModal();
 }
 
 function openRunDialog() {
@@ -558,9 +649,13 @@ function renderArtifacts(detail) {
   const after = images.find((item) => /after/i.test(item.name || item.path));
   const compare =
     before && after
-      ? `<div class="artifact-compare">
-           <figure><img src="${esc(before.url)}" alt="before the fix" loading="lazy" /><figcaption>Before · ${esc(before.name)}</figcaption></figure>
-           <figure><img src="${esc(after.url)}" alt="after the fix" loading="lazy" /><figcaption>After · ${esc(after.name)}</figcaption></figure>
+      ? `<div class="artifact-compare-wrap" style="--pos:50%">
+           <div class="artifact-compare-stage">
+             <img src="${esc(before.url)}" alt="before the fix" loading="lazy" />
+             <img class="compare-after" src="${esc(after.url)}" alt="after the fix" loading="lazy" />
+           </div>
+           <input type="range" min="0" max="100" value="50" data-compare aria-label="Before and after" />
+           <div class="compare-labels"><span>Before</span><span>After</span></div>
          </div>`
       : "";
   const rows = artifacts
@@ -568,7 +663,7 @@ function renderArtifacts(detail) {
       const sha = item.sha256 ? ` · ${esc(shortSha(item.sha256))}` : "";
       let preview = "";
       if (item.kind === "image") {
-        preview = `<a href="${esc(item.url)}" target="_blank" rel="noopener"><img class="artifact-thumb" src="${esc(item.url)}" alt="${esc(item.name)}" loading="lazy" /></a>`;
+        preview = `<img class="artifact-thumb" src="${esc(item.url)}" data-lightbox="${esc(item.url)}" alt="${esc(item.name)}" loading="lazy" />`;
       } else if (item.kind === "video") {
         preview = `<video class="artifact-video" controls preload="metadata" src="${esc(item.url)}"></video>`;
       } else if (item.kind === "log" || item.kind === "trace") {
@@ -970,12 +1065,88 @@ function renderDetectors() {
   });
 }
 
+function renderRunHistory(detail) {
+  const runs = detail.runs || [];
+  if (!runs.length) {
+    return card("Run history", `<p class="muted small" style="margin:0">No finished runs yet.</p>`);
+  }
+  const rows = runs
+    .slice()
+    .reverse()
+    .map((run) => [
+      `<span class="mono">${esc(run.run_id)}</span>`,
+      `<span class="mono">${esc(shortSha(run.base_commit))}</span>`,
+      pill(run.verdict, run.verdict === "allow" ? "green" : run.verdict === "block" ? "red" : ""),
+      esc(run.risk),
+      esc(fmtMs(run.duration_ms)),
+      esc(fmtUsd(run.usd)),
+      `<button type="button" class="btn ghost" data-action="compare-runs">Compare</button>`,
+    ]);
+  return card(
+    "Run history",
+    table(["Run", "Commit", "Verdict", "Risk", "Wall", "USD", ""], rows, [4, 5]),
+    { actions: `${runs.length} run(s)` },
+  );
+}
+
+function openRunsDialog() {
+  const detail = state.detail;
+  if (!detail) return;
+  const runs = (detail.runs || []).slice().reverse();
+  const fill = (selector) => {
+    const node = $(selector);
+    node.innerHTML = runs
+      .map((run) => `<option value="${esc(run.run_id)}">${esc(run.run_id)} · ${esc(run.verdict)}</option>`)
+      .join("");
+    return node;
+  };
+  fill("#run-a");
+  const b = fill("#run-b");
+  if (runs.length > 1) b.value = runs[1].run_id;
+  renderRunComparison();
+  $("#runs-dialog").showModal();
+}
+
+function renderRunComparison() {
+  const detail = state.detail;
+  if (!detail) return;
+  const runs = detail.runs || [];
+  const find = (id) => runs.find((run) => run.run_id === id);
+  const a = find($("#run-a").value);
+  const b = find($("#run-b").value);
+  if (!a || !b) {
+    $("#run-compare-body").innerHTML = `<p class="muted small">Choose two runs.</p>`;
+    return;
+  }
+  const fields = [
+    ["State", "state", (value) => esc(value)],
+    ["Base commit", "base_commit", (value) => `<span class="mono">${esc(shortSha(value))}</span>`],
+    ["Proof SHA-256", "proof_sha256", (value) => `<span class="mono">${esc(shortSha(value))}</span>`],
+    ["Verdict", "verdict", (value) => pill(value, value === "allow" ? "green" : "red")],
+    ["Risk", "risk", (value) => esc(value)],
+    ["Files", "files", (value) => esc((value || []).join(", ") || "—")],
+    ["Not tested", "not_tested", (value) => esc((value || []).join(", ") || "none")],
+    ["Tokens", "tokens", (value) => esc(value)],
+    ["USD", "usd", (value) => esc(fmtUsd(value))],
+    ["Wall", "duration_ms", (value) => esc(fmtMs(value))],
+    ["Delivered", "delivered", (value) => (value ? pill("yes", "green") : pill("no", ""))],
+    ["Confirmed", "confirmed", (value) => (value ? pill("pass", "green") : pill("no", ""))],
+  ];
+  const rows = fields.map(([label, key, render]) => [
+    esc(label),
+    render(a[key]),
+    render(b[key]),
+  ]);
+  $("#run-compare-body").innerHTML = table(["Field", a.run_id, b.run_id], rows);
+}
+
 function renderReleaseView(detail) {
   return `<div class="grid">
     <div class="stack">
       ${renderReleasePacket(detail)}
       ${renderDelivery(detail)}
       ${renderConfirmation(detail)}
+      ${renderRunHistory(detail)}
     </div>
     <div class="stack">
       ${renderTeam(detail)}
@@ -1188,7 +1359,15 @@ function renderEvidenceMeta(detail) {
   ];
   return card(
     "Run metadata",
-    `<dl class="kv">${rows.map(([key, value]) => `<dt>${esc(key)}</dt><dd class="mono">${esc(value)}</dd>`).join("")}</dl>`,
+    `<dl class="kv">${rows.map(([key, value]) => `<dt>${esc(key)}</dt><dd class="mono">${esc(value)}</dd>`).join("")}</dl>
+     <div class="export-row">
+       <a class="btn ghost" href="/api/tasks/${encodeURIComponent(task.id)}/export/evidence.md" download>proof.md</a>
+       <a class="btn ghost" href="/api/tasks/${encodeURIComponent(task.id)}/export/evidence.json" download>evidence.json</a>
+       <a class="btn ghost" href="/api/tasks/${encodeURIComponent(task.id)}/export/run.json" download>run.json</a>
+       ${detail.release?.released ? `<a class="btn ghost" href="/api/tasks/${encodeURIComponent(task.id)}/export/release.json" download>release.json</a>` : ""}
+       ${detail.delivery ? `<a class="btn ghost" href="/api/tasks/${encodeURIComponent(task.id)}/export/delivery.json" download>delivery.json</a>` : ""}
+       ${detail.confirmation ? `<a class="btn ghost" href="/api/tasks/${encodeURIComponent(task.id)}/export/confirmation.json" download>confirmation.json</a>` : ""}
+     </div>`,
   );
 }
 
@@ -1421,7 +1600,7 @@ function renderTimeline(timeline) {
     .filter(filters[active])
     .slice()
     .reverse()
-    .map((event) => `<li>
+    .map((event) => `<li data-event-seq="${event.seq}" class="event-row">
       <time>${esc(new Date(event.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))}</time>
       <span class="type">${esc(timelineLabel(event.type))}</span>
       <span class="data" title="${esc(eventSummary(event))}">${esc(eventSummary(event))}</span>
@@ -2178,6 +2357,22 @@ function bindView() {
       ),
     );
   });
+  $$("#detail [data-action='compare-runs']").forEach((button) => {
+    button.addEventListener("click", () => openRunsDialog());
+  });
+  $$("#detail [data-lightbox]").forEach((image) => {
+    image.addEventListener("click", () =>
+      openLightbox(image.dataset.lightbox, image.alt || "artifact"),
+    );
+  });
+  $$("#detail [data-event-seq]").forEach((node) => {
+    node.addEventListener("click", () => openEventDialog(Number(node.dataset.eventSeq)));
+  });
+  $$("#detail [data-compare]").forEach((range) => {
+    range.addEventListener("input", () => {
+      range.closest(".artifact-compare-wrap")?.style.setProperty("--pos", `${range.value}%`);
+    });
+  });
   $$("#detail [data-thread-action]").forEach((button) => {
     button.addEventListener("click", () => {
       const action = button.dataset.threadAction;
@@ -2554,6 +2749,17 @@ function bind() {
   $("#density").addEventListener("click", toggleDensity);
   $("#cmdk").addEventListener("click", openPalette);
   $("#report").addEventListener("click", openReport);
+  $("#factory").addEventListener("click", openFactory);
+  $("#settings").addEventListener("click", openSettings);
+  $("#factory-close").addEventListener("click", () => $("#factory-dialog").close());
+  $("#factory-refresh").addEventListener("click", () => loadFactory());
+  $("#settings-cancel").addEventListener("click", () => $("#settings-dialog").close());
+  $("#settings-form").addEventListener("submit", saveSettings);
+  $("#lightbox-close").addEventListener("click", () => $("#lightbox").close());
+  $("#event-close").addEventListener("click", () => $("#event-dialog").close());
+  $("#runs-close").addEventListener("click", () => $("#runs-dialog").close());
+  $("#run-a").addEventListener("change", renderRunComparison);
+  $("#run-b").addEventListener("change", renderRunComparison);
   $("#intake").addEventListener("click", openIntake);
   $("#report-cancel").addEventListener("click", () => $("#report-dialog").close());
   $("#intake-cancel").addEventListener("click", () => $("#intake-dialog").close());
@@ -2646,10 +2852,7 @@ function bind() {
     }
   });
   window.addEventListener("hashchange", applyHash);
-  window.setInterval(() => {
-    loadTasks();
-    if (state.selected) loadDetail(state.selected);
-  }, 15_000);
+  startPolling();
 }
 
 function boot() {

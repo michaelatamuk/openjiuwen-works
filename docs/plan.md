@@ -678,6 +678,10 @@ Internal only: nothing is published to the upstream fork until M2 is green.
   - 2026-11-23: added the Thread view: event-sourced roles and cards, a right rail, add-context,
     and a real openjiuwen-backed `Ask Mira` with SSE streaming and `thread.agent` recording.
     The assistant is advisory and cannot open a gate.
+  - 2026-11-23: worklog questions with recommended actions and `Open run`, a merged Tell Mira
+    composer, AI commentary for builder/inspector/reporter, run history and comparison, a Factory
+    metrics/ledger dialog, export links, artifact lightbox and before/after slider, settings,
+    and an event drawer.
 - [ ] **T1.25** Verification cost split: builder, challenger and verifier tokens/USD in `run.json`
   and the proof; verification share is reported next to the total. **S**
 - [x] **T1.26** PPMA memory backfill: `works memory backfill` reports already-finished runs from

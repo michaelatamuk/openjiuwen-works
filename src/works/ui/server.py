@@ -1077,6 +1077,61 @@ def _thread_rail(
     }
 
 
+def _run_summaries(paths: WorksPaths, task_id: str) -> list[dict[str, Any]]:
+    items: list[dict[str, Any]] = []
+    if not paths.runs.exists():
+        return items
+    for run_json in paths.runs.glob("*/run.json"):
+        data = _read_json(run_json)
+        if not isinstance(data, dict) or data.get("task_id") != task_id:
+            continue
+        run_dir = run_json.parent
+        evidence = _read_json(run_dir / "evidence.json") or {}
+        delivery = _read_json(run_dir / "delivery.json")
+        confirmation = _read_json(run_dir / "confirmation.json")
+        verdict = evidence.get("verdict") or {}
+        risk = evidence.get("risk") or {}
+        items.append(
+            {
+                "run_id": str(data.get("run_id") or run_dir.name),
+                "state": str(data.get("state") or ""),
+                "finished_at": str(data.get("finished_at") or ""),
+                "base_commit": str(data.get("base_commit") or ""),
+                "proof_sha256": str(evidence.get("proof_sha256") or ""),
+                "verdict": "allow" if verdict.get("allow") else "block" if verdict else "—",
+                "risk": str(risk.get("level") or "—"),
+                "tokens": int(data.get("tokens") or 0),
+                "usd": float(data.get("usd") or 0.0),
+                "duration_ms": int(data.get("duration_ms") or 0),
+                "files": list(evidence.get("files_changed") or []),
+                "not_tested": list(evidence.get("not_tested") or []),
+                "delivered": bool(delivery),
+                "confirmed": bool(confirmation and confirmation.get("ok")),
+            }
+        )
+    items.sort(key=lambda item: item["finished_at"])
+    return items
+
+
+def _export(paths: WorksPaths, task_id: str, kind: str) -> tuple[Path, str] | None:
+    run_info = _run_index(paths).get(task_id)
+    if run_info is None:
+        return None
+    run_dir = run_info[1]
+    names = {
+        "evidence.md": run_dir / "evidence.md",
+        "evidence.json": run_dir / "evidence.json",
+        "run.json": run_dir / "run.json",
+        "release.json": run_dir / "release.json",
+        "delivery.json": run_dir / "delivery.json",
+        "confirmation.json": run_dir / "confirmation.json",
+    }
+    target = names.get(kind)
+    if target is None or not target.is_file():
+        return None
+    return target, f"{task_id}-{kind}"
+
+
 def _task_detail(queue: Queue, paths: WorksPaths, task_id: str) -> dict[str, Any]:
     task = queue.load(task_id)
     events = queue.events(task_id)
@@ -1141,6 +1196,7 @@ def _task_detail(queue: Queue, paths: WorksPaths, task_id: str) -> dict[str, Any
         "laix": laix,
         "verifier": verifier,
         "artifacts": _artifact_list(run_dir, task_id, evidence),
+        "runs": _run_summaries(paths, task_id),
         "thread": _thread(task, events),
         "rail": _thread_rail(
             task, events, run, evidence, release, delivery, confirmation, team_payload, verifier
@@ -1577,6 +1633,13 @@ class Handler(BaseHTTPRequestHandler):
             if path.startswith("/api/tasks/") and "/artifacts/" in path:
                 self._artifact(path)
                 return
+            if path.startswith("/api/tasks/") and "/export/" in path:
+                self._export(path)
+                return
+            if path.startswith("/api/tasks/") and path.endswith("/runs"):
+                task_id = unquote(path.removeprefix("/api/tasks/").removesuffix("/runs"))
+                self._json(HTTPStatus.OK, {"runs": _run_summaries(self.paths, task_id)})
+                return
             if path.startswith("/api/tasks/"):
                 task_id = unquote(path.removeprefix("/api/tasks/"))
                 self._json(HTTPStatus.OK, _task_detail(queue, self.paths, task_id))
@@ -1596,6 +1659,26 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as exc:
             LOG.debug("api error", exc_info=True)
             self._json(HTTPStatus.NOT_FOUND, {"ok": False, "error": str(exc)})
+
+    def _export(self, path: str) -> None:
+        rest = unquote(path.removeprefix("/api/tasks/"))
+        task_id, separator, kind = rest.partition("/export/")
+        if not separator or not task_id or not kind:
+            self._json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "export not found"})
+            return
+        found = _export(self.paths, task_id, kind)
+        if found is None:
+            self._json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "export not found"})
+            return
+        target, filename = found
+        body = target.read_bytes()
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", _content_type(target))
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+        self.end_headers()
+        self.wfile.write(body)
 
     def _artifact(self, path: str) -> None:
         rest = unquote(path.removeprefix("/api/tasks/"))
