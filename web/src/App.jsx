@@ -227,9 +227,7 @@ export default function App() {
 
   const title = detail?.task?.source?.title || "A signal in, a released fix out";
   const subtitle = detail
-    ? view === "thread"
-      ? `reported ${timeAgo(detail.task.created_at)} · ${detail.task.product}`
-      : `${stateLabel(detail.task.state)} · reported ${timeAgo(detail.task.created_at)}`
+    ? `${stateLabel(detail.task.state)} / reported ${timeAgo(detail.task.created_at)}`
     : "Select a report to read its story, proof and decision.";
   const crumb = detail ? (view === "evidence" ? "Evidence" : view === "release" ? "Release" : view === "thread" ? "Thread" : "Story") : "Queue";
 
@@ -266,8 +264,7 @@ export default function App() {
         onNew={() => setDialog("new")}
       />
       <main className="main">
-        {view !== "thread" ? (
-          <div className="sticky-top">
+        <div className="sticky-top">
             <header className="main-head">
               <div className="head-copy">
                 <div className="crumb">
@@ -286,8 +283,7 @@ export default function App() {
                 <span className={`cl-live ${connected ? "on" : ""}`} title={connected ? "Live updates connected" : "Reconnecting"} />
               </div>
             ) : null}
-          </div>
-        ) : null}
+        </div>
         <section className={`content ${view === "thread" ? "content-session" : ""}`}>
           {!detail ? (
             <div className="empty">

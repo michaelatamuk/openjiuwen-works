@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { postAction, streamAsk } from "../lib/api.js";
-import { roleLabel, roleLetter, shortSha, stateLabel, stateTone } from "../lib/format.js";
+import { eventSummary, roleLabel, roleLetter, shortSha, stateLabel, stateTone, timelineLabel } from "../lib/format.js";
 import { AiText } from "./ui.jsx";
 
 const REVIEW_TYPES = new Set(["thread.commentary", "thread.discussion"]);
@@ -246,10 +246,14 @@ function Rail({ detail, onAction, onView }) {
         <p className="cl-rail-note">{blocker || "No blocker recorded."}</p>
       </section>
       <section>
-        <h3>Next</h3>
-        <div className="cl-rail-next">
-          {decision ? decision.button : detail.task.state === "released" ? "Delivered" : "No action needed"}
-        </div>
+        <h3>Activity</h3>
+        {(detail.timeline || []).slice(-4).reverse().map((item) => (
+          <div className="cl-activity" key={item.seq}>
+            <time>{new Date(item.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time>
+            <span>{timelineLabel(item.type)}</span>
+            <b>{eventSummary(item).slice(0, 70)}</b>
+          </div>
+        ))}
       </section>
       <section>
         <h3>Run</h3>
@@ -412,37 +416,25 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
   return (
     <div className="cl-thread">
       <div className="cl-main">
-        <div className="cl-titlebar">
-          <div className="cl-title-copy">
-            <h1>{detail.task.source.title || detail.task.id}</h1>
-            <div className="cl-submeta">
-              <span className={`cl-state ${stateTone(detail.task.state)}`}>{stateLabel(detail.task.state)}</span>
-              {source
-                ? <a href={source} target="_blank" rel="noopener noreferrer">{detail.task.source.ref}</a>
-                : <span>{detail.task.source.ref}</span>}
-              <span>{detail.task.product}</span>
-              <span className="cl-live-text"><i /> Live</span>
-            </div>
-          </div>
-          <div className="cl-title-actions">
-            <button type="button" className="cl-text-btn" onClick={() => { setShowAll((value) => !value); setOpenPhase(null); }}>
-              {showAll ? "Digest" : "Full log"}
-            </button>
-            {writable && canAsk ? (
-              <>
-                <button type="button" className="cl-text-btn" onClick={() => onAction("discussion")}>Review</button>
-                <button type="button" className="cl-text-btn" onClick={() => onAction("commentary")}>Commentary</button>
-              </>
-            ) : null}
-          </div>
-          <div className="cl-title-tabs" role="tablist" aria-label="Detail view">
-            {[["story", "Story"], ["evidence", "Evidence"], ["release", "Release"]].map(([id, label]) => (
-              <button key={id} type="button" role="tab" className="view-tab" onClick={() => onView(id)}>{label}</button>
-            ))}
-            <button type="button" role="tab" aria-selected="true" className="view-tab active">Session</button>
-          </div>
-        </div>
         <div className="cl-head">
+          <div className="cl-eyebrow">
+            {source
+              ? <a href={source} target="_blank" rel="noopener noreferrer">{detail.task.source.ref}</a>
+              : <span>{detail.task.source.ref}</span>}
+            <span>{detail.task.product}</span>
+            <span className="cl-live-text"><i /> Live</span>
+            <span className="cl-head-actions">
+              <button type="button" className="cl-text-btn" onClick={() => { setShowAll((value) => !value); setOpenPhase(null); }}>
+                {showAll ? "Digest" : "Full log"}
+              </button>
+              {writable && canAsk ? (
+                <>
+                  <button type="button" className="cl-text-btn" onClick={() => onAction("discussion")}>Review</button>
+                  <button type="button" className="cl-text-btn" onClick={() => onAction("commentary")}>Commentary</button>
+                </>
+              ) : null}
+            </span>
+          </div>
           {decision ? (
             <div className={`cl-decision ${decision.tone}`}>
               <div>
@@ -456,7 +448,6 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
             </div>
           ) : null}
         </div>
-
 
         {origin ? (
           <div className="cl-origin">
@@ -537,6 +528,24 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
           ) : null}
           {busy && !streamed ? (
             <div className="cl-working"><span /> Mira is reading the proof…</div>
+          ) : null}
+          {writable && canAsk ? (
+            <div className="cl-suggest">
+              <span>Ask about this run</span>
+              {["What changed?", "Is it released?", "What was not tested?"].map((prompt) => (
+                <button
+                  key={prompt}
+                  type="button"
+                  onClick={() => {
+                    setMode("ask");
+                    setText(prompt);
+                    formRef.current?.querySelector("textarea")?.focus();
+                  }}
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
           ) : null}
         </div>
 

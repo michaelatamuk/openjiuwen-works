@@ -2098,3 +2098,83 @@ html::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--line-strong
   .appbar-brand { width: auto; }
   .appbar-actions .btn { display: none; }
 }
+
+/* One content frame: Story, Evidence, Release and Session share the same spine */
+.content {
+  width: 100%;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+.content-session { overflow: hidden; padding-top: 16px; padding-bottom: 16px; }
+.cl-thread {
+  height: 100%;
+  grid-template-columns: minmax(0, 940px) 340px;
+  gap: 24px;
+  justify-content: start;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+.cl-main { width: 100%; max-width: none; height: 100%; }
+.cl-head, .cl-line, .cl-composer { width: 760px; max-width: calc(100% - 52px); margin-left: auto; margin-right: auto; }
+.cl-rail { width: 340px; }
+.cl-suggest { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 12px 0 2px; color: var(--faint); font-size: 10.5px; }
+.cl-suggest button { border: 1px solid var(--line); background: var(--panel-2); color: var(--muted); border-radius: 999px; padding: 4px 9px; font: 500 10.5px/1.4 var(--sans); cursor: pointer; }
+.cl-suggest button:hover { color: var(--text); border-color: var(--line-strong); }
+.cl-activity { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 2px 6px; padding: 4px 0; border-top: 1px solid var(--line); }
+.cl-activity:first-of-type { border-top: 0; }
+.cl-activity time { color: var(--faint); font: 9px/1.4 var(--mono); }
+.cl-activity span { color: var(--faint); font-size: 10.5px; }
+.cl-activity b { grid-column: 2; color: var(--muted); font-size: 10.5px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 1200px) {
+  .content { max-width: 100%; }
+  .cl-thread { grid-template-columns: minmax(0, 1fr); }
+  .cl-rail { display: none; }
+}
+.sticky-top {
+  width: 100%;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+.main-head { padding: 10px 0 5px; }
+.view-tabs { padding: 0 0 5px; }
+
+/* 2026: full-screen shell, full-width panes, readable measure only inside the session */
+.content {
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+.sticky-top {
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: 0 24px;
+}
+.cl-thread {
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 24px;
+  justify-content: stretch;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+.cl-main { width: 100%; max-width: none; }
+.cl-head, .cl-line, .cl-composer { width: 900px; max-width: calc(100% - 60px); margin-left: auto; margin-right: auto; }
+.cl-rail { width: 340px; }
+@media (max-width: 1200px) {
+  .cl-thread { grid-template-columns: minmax(0, 1fr); }
+  .cl-rail { display: none; }
+}
+.cl-head, .cl-line, .cl-composer {
+  width: min(1400px, calc(100% - 60px));
+  max-width: none;
+  margin-left: 0;
+  margin-right: auto;
+}
+.cl-head, .cl-line, .cl-composer { width: min(1200px, calc(100% - 60px)); }

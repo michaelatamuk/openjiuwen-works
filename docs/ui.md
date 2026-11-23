@@ -47,15 +47,16 @@ The same evidence page serves two audiences without a second data source:
   tracker comment), confirmation (pass/fail, target, output SHA), team verdict, verifier isolation,
   LAIX shadow and run history with a two-run comparison. In `--write`, the same view can release,
   deliver, confirm and verify.
-- **Session** (the Thread worklog, deep link `/thread`): a full-height pane between the queue and
-  the context rail. The pane owns the task title, state, tabs, decision card, phase chapters and
-  composer, so the whole screen has one alignment spine. The **Plan / Build / Check / Release**
-  strip navigates by chapter: past chapters collapse to one summary row, the current chapter opens,
-  and **Full log** expands everything. Agent commentary and discussion collapse into one **Review**
-  block. A decision card at the top surfaces the next human gate: approve the plan, approve the
-  release or open the evidence for a blocked run. The composer is one row — `Ask`/`Note`, the input
-  and a filled send button; the advisory helper appears only on focus. The rail is a separate pane:
-  Decision / Next / Run / People, with hashes and agents behind **Technical**. In `--write`, `Add
+- **Session** (the Thread worklog, deep link `/thread`): a full-height pane inside the same 1360px
+  content frame as Story, Evidence and Release. The task title, state and tabs are global and
+  aligned with the pane; the pane itself starts with source + Live, the decision card and the
+  **Plan / Build / Check / Release** chapters. Past chapters collapse to one summary row, the
+  current chapter opens, and **Full log** expands everything. Agent commentary and discussion
+  collapse into one **Review** block. A decision card at the top surfaces the next human gate:
+  approve the plan, approve the release or open the evidence for a blocked run. The composer is one
+  row — `Ask`/`Note`, the input and a filled send button; the advisory helper appears only on focus.
+  Suggested questions fill the empty conversation state. The context rail is a separate pane:
+  Decision, Activity, Run, People, with hashes and agents behind **Technical**. In `--write`, `Add
   context` appends a `thread.note`; `Ask Mira` asks a real `openjiuwen` model and streams the answer
   into `thread.agent`. Follow-up questions carry the last three recorded answers. Every model
   answer is labelled and advisory: it cannot approve, release, retry or change a gate. `Review`
@@ -109,10 +110,10 @@ without a failure or a finished run. The runs are local fixtures, not upstream f
 
 ## Design and interaction
 
-Dark and light themes, comfortable and compact density, a 52px app bar, a 280px queue, a 980px
-session pane with a 760px measure and a 340px context pane, one coral accent, subtle depth instead
-of stacked borders, visible focus, text labels for every status, `prefers-reduced-motion`, and Mira
-in the empty state. Below 720 px the route becomes
+Dark and light themes, comfortable and compact density, a 52px app bar, a 280px queue, one 1360px
+content frame shared by Story / Evidence / Release / Session, a 940px session pane with a 760px
+measure and a 340px context pane, one coral accent, subtle depth instead of stacked borders,
+visible focus, text labels for every status, `prefers-reduced-motion`, and Mira in the empty state. Below 720 px the route becomes
 a vertical list with the same states and per-milestone screen-reader names; the queue moves below
 the Story so the task is visible first. Replay updates the route and receipt in place.
 `Ctrl K` opens a command palette; `/` focuses search; `j`/`k` move through the queue; `t` toggles
