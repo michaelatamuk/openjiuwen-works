@@ -1100,10 +1100,15 @@ function openRunsDialog() {
       .join("");
     return node;
   };
-  fill("#run-a");
-  const b = fill("#run-b");
-  if (runs.length > 1) b.value = runs[1].run_id;
-  renderRunComparison();
+  const selects = $("#runs-dialog .form-row");
+  selects.hidden = runs.length < 2;
+  if (runs.length < 2) {
+    $("#run-compare-body").innerHTML = `<p class="muted small">Comparison needs at least two finished runs. This task has ${runs.length}.</p>`;
+  } else {
+    fill("#run-a");
+    fill("#run-b").value = runs[1].run_id;
+    renderRunComparison();
+  }
   $("#runs-dialog").showModal();
 }
 
