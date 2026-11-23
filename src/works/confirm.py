@@ -26,6 +26,7 @@ from .config import WorksPaths
 from .deliver import _source_marker
 from .errors import ConfigError
 from .gitops import GitRepo
+from .preview import PlaywrightPreview, Preview, PreviewScript
 from .queue import Queue
 from .records import TaskState
 from .release import latest_run_dir, release_packet
@@ -46,6 +47,7 @@ class Confirmation:
     output_sha256: str = ""
     url: str | None = None
     command: list[str] | None = None
+    screenshots: list[str] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
     comment_url: str | None = None
     created: bool = True
@@ -62,6 +64,7 @@ class Confirmation:
             "output_sha256": self.output_sha256,
             "url": self.url,
             "command": self.command,
+            "screenshots": self.screenshots,
             "notes": self.notes,
             "comment_url": self.comment_url,
             "created": self.created,
@@ -128,6 +131,8 @@ def confirm(
     *,
     url: str | None = None,
     command: str | list[str] | None = None,
+    preview: PreviewScript | None = None,
+    preview_runner: Preview | None = None,
     provider: str = "none",
     tracker: str | None = None,
     close_issue: bool = False,
@@ -170,11 +175,20 @@ def confirm(
     repo.worktree_add(worktree, commit)
     command_runner = runner or SubprocessRunner()
     notes: list[str] = []
+    screenshots: list[str] = []
     output = ""
     target = "scenario set"
     exit_code = 0
     command_argv: list[str] | None = None
-    if url is not None:
+    if preview is not None:
+        preview_result = (preview_runner or PlaywrightPreview()).run(preview, run_dir)
+        target = preview_result.target
+        ok = preview_result.ok
+        exit_code = preview_result.exit_code
+        output = preview_result.output_tail
+        notes.extend(preview_result.notes)
+        screenshots.extend(preview_result.screenshots)
+    elif url is not None:
         target = f"http {url}"
         ok, exit_code, output = _http_check(url)
     elif command is not None:
@@ -205,6 +219,7 @@ def confirm(
         output_sha256=hashlib.sha256(output.encode("utf-8", errors="replace")).hexdigest(),
         url=url,
         command=command_argv,
+        screenshots=screenshots,
         notes=notes,
     )
     if effective_tracker != "none":

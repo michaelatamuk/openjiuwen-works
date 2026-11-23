@@ -843,6 +843,9 @@ Internal only: nothing is published to the upstream fork until M2 is green.
   - 2026-11-22: `works deliver` creates `works/<task-id>`, commits with the trailers, pushes to
     `origin`, and with `--provider github|gitlab` opens one pull or merge request. Idempotent by
     branch, commit and run marker. Live creation needs the matching token.
+  - 2026-11-23: `works deploy` runs the owner-approved deploy command (or the product map's
+    `deploy:`) on the delivered commit, with a dry run, `deployment.json`, a `deploy.finished`
+    event and idempotency. Production credentials and rollback stay operational.
 - [ ] **T3.4** Return: one comment per run on the source issue, idempotent. **M**
   - 2026-11-22: delivery and confirmation both write one marker comment per run to GitHub, GitLab
     or Jira. `--close` closes a GitHub/GitLab issue or transitions Jira to Done. Live calls need
@@ -850,9 +853,13 @@ Internal only: nothing is published to the upstream fork until M2 is green.
 - [ ] **T3.5** Confirm: re-run the reproduction; result recorded. **M**
   - 2026-11-22: `works confirm` runs an HTTP check, an explicit command, or the plan's scenario set
     against the delivered commit in a fresh worktree; the result is `confirmation.json` plus a
-    `confirmation.finished` event. A GUI product still needs a real driver.
+    `confirmation.finished` event. `--preview` supplies an optional Playwright driver; a live
+    browser install remains.
 - [ ] **T3.6** **Escape detection**: arm a 14-day window per release; a revert, hotfix or red main
   touching the same paths attributes a row to the release. **L**
+  - 2026-11-23: `works escapes` scans local git history for reverts and hotfixes on the released
+    paths and records repeated-source rework; `escapes.json`, `escape.detected`, `rework.detected`
+    and metrics counts are in. A remote main/CI feed is still open.
 - [ ] **T3.7** Revert path: revert PR, note, post-mortem, ledger row. **M**
 - [ ] **T3.8** Human minutes from gate timestamps. **S**
 - [x] **T3.9** Waiting states and wake subscriptions: `waiting_review`, `waiting_ci`,

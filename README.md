@@ -109,13 +109,17 @@ uv run works run <task-id> --live --verifier docker --scenarios scenarios.yaml
 uv run works release <task-id>
 uv run works approve <task-id> --gate release
 uv run works deliver <task-id> --provider github
+uv run works deploy <task-id> --command "python scripts/deploy.py --env staging"
 uv run works confirm <task-id> --url https://app.example/health --provider github --close
+uv run works confirm <task-id> --preview preview.yaml
+uv run works escapes
 uv run works team verify <task-id>
 uv run works swarm doctor
 ```
 
 A product can point at its checkout once in `.works/products.yaml`, so `--product MyProduct` is
-enough; see [`docs/intake.md`](docs/intake.md).
+enough; add `deploy: [python, scripts/deploy.py]` to the same entry for `works deploy` without
+`--command`. See [`docs/intake.md`](docs/intake.md).
 
 The live builder needs `ANTHROPIC_API_KEY` (or `WORKS_MODEL_KEY`). PPMA memory is optional:
 
@@ -145,16 +149,20 @@ uv run works memory recall --ppma http://127.0.0.1:8766
 | **JiuwenSwarm boundary** | `works run --swarm` speaks `works.swarm.v1` to an isolated entrypoint; `works swarm doctor` reports why the local checkout cannot start yet. |
 | **Release gate** | `works approve --gate release` binds gate 2 to the base commit and proof, moves the task to `released`, and records `release.json`; a repeat is idempotent. |
 | **Delivery** | `works deliver` commits the approved diff with `Works-Run:` trailers, pushes `works/<task-id>`, opens one GitHub PR or GitLab MR, and returns one comment to GitHub, GitLab or Jira. |
-| **Confirmation** | `works confirm` re-checks the delivered commit (HTTP, command or the plan's scenarios) and returns to the tracker, optionally closing a GitHub/GitLab issue or moving a Jira issue to Done. |
+| **Deploy** | `works deploy` consumes the delivered commit and runs one owner-approved argv command (or the product map's `deploy:`), with `--dry-run`, an idempotent `deployment.json`, and a `deploy.finished` event. No shell, no automatic merge. |
+| **Confirmation** | `works confirm` re-checks the delivered commit (HTTP, command or the plan's scenarios) and returns to the tracker, optionally closing a GitHub/GitLab issue or moving a Jira issue to Done. `--preview` drives an optional Playwright YAML script and records screenshots with the confirmation. |
+| **Escapes** | `works escapes` scans the release window for reverts, hotfixes touching the same paths and repeated source references; writes `escapes.json` and records `escape.detected` / `rework.detected`; `works metrics` reports both counts. |
 
 ## Roadmap
 
 Three things turn the preview into the full factory:
 
 - **Independent verifier.** The container boundary exists; the remaining work is the provider split and a live daemon in CI.
-- **Release and return.** Gate 2, delivery and confirmation exist; a live pull request, comment and
-  issue close need a real remote and `GITHUB_TOKEN`.
+- **Release and return.** Gate 2, delivery, deploy, confirmation and preview adapters exist; a live
+  pull request, deploy, comment and issue close need a real remote, the matching token and a browser.
 - **Depth in memory and evidence.** Feed PPMA recall into the planner, attach runtime artifacts, and execute feature selectors in the preview.
+- **Escape feedback.** `works escapes` classifies local reverts, hotfixes and repeated sources; a
+  remote main/CI feed and a promotion back into a deterministic check are next.
 
 LAIX is optional and keeps the deterministic gate as the fallback. Merging stays human.
 

@@ -903,6 +903,39 @@ def _thread_message(event: Event, task: Task) -> dict[str, Any] | None:
             ],
         }
         tone = "ok" if ok else "bad"
+    elif kind == "deploy.finished":
+        role = "delivery"
+        status = str(data.get("status") or "unknown")
+        title = {
+            "deployed": "Deployed",
+            "failed": "Deployment failed",
+            "dry_run": "Deployment dry run",
+        }.get(status, f"Deployment: {status}")
+        body = f"{data.get('environment', '?')} A� {str(data.get('commit', '?'))[:12]}"
+        facts = [f"exit {data.get('exit_code', '?')}", status]
+        environment = str(data.get("environment", "-"))
+        commit = str(data.get("commit", "-"))[:12]
+        card = {
+            "kind": "deploy",
+            "rows": [
+                ["Environment", environment],
+                ["Commit", commit],
+                ["Status", status],
+            ],
+        }
+        tone = "ok" if status == "deployed" else "bad"
+    elif kind == "escape.detected":
+        role = "verifier"
+        title = "Escape detected"
+        body = str(data.get("subject") or "A released change came back.")
+        facts = [str(data.get("kind") or "escape"), str(data.get("evidence_commit", ""))[:12]]
+        tone = "bad"
+    elif kind == "rework.detected":
+        role = "verifier"
+        title = "Rework detected"
+        body = str(data.get("reason") or "A later task repeats the same source.")
+        facts = [f"after {data.get('previous_task_id', '?')}"]
+        tone = "bad"
     elif kind == "thread.agent":
         role = "mira"
         title = "Mira answered"

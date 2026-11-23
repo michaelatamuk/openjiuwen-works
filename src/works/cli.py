@@ -328,8 +328,32 @@ def cmd_deliver(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_deploy(args: argparse.Namespace) -> int:
+    from .deploy import deploy
+
+    deployment = deploy(
+        _paths(args),
+        args.task_id,
+        command=args.command,
+        environment=args.environment,
+        dry_run=args.dry_run,
+        force=args.force,
+    )
+    if args.json:
+        _emit(deployment.as_dict())
+    else:
+        state = "dry run" if deployment.dry_run else deployment.status
+        print(f"{state}: {deployment.task_id} {deployment.commit} -> {deployment.environment}")
+        if deployment.output_tail:
+            print(deployment.output_tail)
+        for note in deployment.notes:
+            print(f"  {note}")
+    return 0 if deployment.status in ("deployed", "dry_run") else EXIT_BLOCKED
+
+
 def cmd_confirm(args: argparse.Namespace) -> int:
     from .confirm import confirm
+    from .preview import PreviewScript
 
     command: str | list[str] | None = args.command
     if isinstance(command, str) and command.lstrip().startswith("["):
@@ -340,11 +364,13 @@ def cmd_confirm(args: argparse.Namespace) -> int:
         if not isinstance(parsed, list) or not all(isinstance(item, str) for item in parsed):
             raise ConfigError("--command must be a JSON array of strings")
         command = parsed
+    preview = PreviewScript.from_path(Path(args.preview)) if args.preview else None
     result = confirm(
         _paths(args),
         args.task_id,
         url=args.url,
         command=command,
+        preview=preview,
         provider=args.provider,
         tracker=args.tracker,
         close_issue=args.close,
@@ -787,10 +813,15 @@ def cmd_finding_list(args: argparse.Namespace) -> int:
 
 
 def cmd_metrics(args: argparse.Namespace) -> int:
+    from .escapes import read_report
     from .ledger import Ledger
     from .metrics import collect
 
-    metrics = collect(_queue(args), Ledger(_paths(args).ledger))
+    metrics = collect(
+        _queue(args),
+        Ledger(_paths(args).ledger),
+        escape_report=read_report(_paths(args)),
+    )
     if args.json:
         _emit({"metrics": metrics.model_dump(mode="json")})
         return 0
@@ -807,6 +838,8 @@ def cmd_metrics(args: argparse.Namespace) -> int:
                 ("median duration (ms)", metrics.median_duration_ms or "-"),
                 ("tokens", metrics.tokens),
                 ("usd", f"{metrics.usd:.4f}"),
+                ("escapes", metrics.escapes),
+                ("rework", metrics.rework),
             ],
         )
     )
@@ -829,6 +862,38 @@ def cmd_metrics(args: argparse.Namespace) -> int:
                 ],
             )
         )
+    return 0
+
+
+def cmd_escapes(args: argparse.Namespace) -> int:
+    from .escapes import append_events, scan, write_report
+
+    report = scan(_paths(args), days=args.days)
+    if not args.dry_run:
+        write_report(_paths(args), report)
+        append_events(_paths(args), report)
+    if args.json:
+        _emit(
+            {
+                "escapes": report.as_dict(),
+                "written": not args.dry_run,
+            }
+        )
+        return 0
+    print(
+        table(
+            ("metric", "value"),
+            [
+                ("window (days)", report.window_days),
+                ("escapes", report.escapes),
+                ("rework", len(report.rework)),
+            ],
+        )
+    )
+    for finding in report.findings:
+        print(f"  {finding.kind.value}: {finding.task_id} at {finding.evidence_commit[:12]}")
+    for rework in report.rework:
+        print(f"  rework: {rework.task_id} repeats {rework.previous_task_id}")
     return 0
 
 
@@ -1278,11 +1343,21 @@ def build_parser() -> argparse.ArgumentParser:
     deliver.add_argument("--json", action="store_true")
     deliver.set_defaults(func=cmd_deliver)
 
+    deploy = sub.add_parser("deploy", help="Run the owner-approved deploy command")
+    deploy.add_argument("task_id")
+    deploy.add_argument("--command", default=None, help="Deploy command or JSON argv array")
+    deploy.add_argument("--environment", default="staging", help="Target environment name")
+    deploy.add_argument("--dry-run", action="store_true")
+    deploy.add_argument("--force", action="store_true", help="Repeat a recorded deploy")
+    deploy.add_argument("--json", action="store_true")
+    deploy.set_defaults(func=cmd_deploy)
+
     confirm = sub.add_parser("confirm", help="Re-check the released commit and close the loop")
     confirm.add_argument("task_id")
     target = confirm.add_mutually_exclusive_group()
     target.add_argument("--url", default=None, help="HTTP endpoint to check")
     target.add_argument("--command", default=None, help="Command to run in a fresh worktree")
+    target.add_argument("--preview", default=None, help="Playwright preview script (YAML)")
     confirm.add_argument("--provider", choices=("none", "github", "gitlab", "jira"), default="none")
     confirm.add_argument("--tracker", choices=("none", "github", "gitlab", "jira"), default=None)
     confirm.add_argument("--close", action="store_true", help="Close the source issue on success")
@@ -1397,6 +1472,12 @@ def build_parser() -> argparse.ArgumentParser:
     metrics = sub.add_parser("metrics", help="Attention and cost metrics")
     metrics.add_argument("--json", action="store_true")
     metrics.set_defaults(func=cmd_metrics)
+
+    escapes = sub.add_parser("escapes", help="Attribute reverts, hotfixes and repeated work")
+    escapes.add_argument("--days", type=int, default=14)
+    escapes.add_argument("--dry-run", action="store_true", help="Scan without writing the report")
+    escapes.add_argument("--json", action="store_true")
+    escapes.set_defaults(func=cmd_escapes)
 
     memory = sub.add_parser("memory", help="PPMA memory tools")
     memory_sub = memory.add_subparsers(dest="memory_command", required=True)

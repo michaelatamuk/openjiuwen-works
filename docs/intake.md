@@ -11,11 +11,13 @@ kind of task, so nothing downstream knows which tracker it came from.
 products:
   firefox:
     repo: C:\src\firefox
+    deploy: [python, scripts\deploy.py, --env, staging]
   blender:
     repo: C:\src\blender
 ```
 
 - `works submit --product firefox --ref BUG-7` resolves the repository.
+- `works deploy <task-id>` uses the optional `deploy` argv when `--command` is absent.
 - `--repo` always wins, for an ad-hoc checkout.
 - A relative `repo` is resolved against the Works home.
 - Names are matched case-insensitively.

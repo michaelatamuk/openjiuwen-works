@@ -7,6 +7,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
+from .escapes import EscapeReport
 from .ledger import Ledger
 from .queue import Queue
 from .records import Event, Task, TaskState
@@ -36,6 +37,8 @@ class FactoryMetrics(BaseModel):
     median_duration_ms: int | None
     tokens: int
     usd: float
+    escapes: int = 0
+    rework: int = 0
     per_task: list[TaskMetric] = Field(default_factory=list)
 
 
@@ -71,7 +74,12 @@ def task_metric(task: Task, events: list[Event], *, tokens: int, usd: float) -> 
     )
 
 
-def collect(queue: Queue, ledger: Ledger) -> FactoryMetrics:
+def collect(
+    queue: Queue,
+    ledger: Ledger,
+    *,
+    escape_report: EscapeReport | None = None,
+) -> FactoryMetrics:
     totals: dict[str, tuple[int, float]] = {}
     for row in ledger.rows():
         old_tokens, old_usd = totals.get(row.task_id, (0, 0.0))
@@ -93,5 +101,7 @@ def collect(queue: Queue, ledger: Ledger) -> FactoryMetrics:
         ),
         tokens=sum(item.tokens for item in per_task),
         usd=round(sum(item.usd for item in per_task), 6),
+        escapes=escape_report.escapes if escape_report else 0,
+        rework=len(escape_report.rework) if escape_report else 0,
         per_task=per_task,
     )

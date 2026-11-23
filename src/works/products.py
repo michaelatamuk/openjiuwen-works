@@ -15,6 +15,7 @@ MAP_PATH = Path(".works") / "products.yaml"
 
 class ProductRepo(BaseModel):
     repo: str
+    deploy: list[str] | None = None
 
 
 class ProductMap(BaseModel):
@@ -59,3 +60,13 @@ def resolve_repo(paths: WorksPaths, product: str, explicit: Path | None = None) 
     if not target.is_absolute():
         target = paths.root / target
     return target.resolve()
+
+
+def deploy_command(paths: WorksPaths, product: str) -> list[str] | None:
+    """The owner-approved deploy command for a product, if one is configured."""
+    mapping = load_products(paths)
+    entry = mapping.products.get(product)
+    if entry is None:
+        lowered = {name.lower(): value for name, value in mapping.products.items()}
+        entry = lowered.get(product.lower())
+    return list(entry.deploy) if entry is not None and entry.deploy else None

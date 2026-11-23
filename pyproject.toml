@@ -34,6 +34,9 @@ dev = [
 live = [
   "claude-agent-sdk>=0.2.121,<0.3",
 ]
+preview = [
+  "playwright>=1.49",
+]
 
 [project.scripts]
 works = "works.cli:main_entry"
@@ -80,6 +83,11 @@ ignore_missing_imports = true
 module = ["laix.*"]
 ignore_missing_imports = true
 # laix is an optional local checkout; CI does not install it, and the adapter is the only consumer.
+
+[[tool.mypy.overrides]]
+module = ["playwright.*"]
+ignore_missing_imports = true
+# Playwright is the optional `preview` extra; the import is lazy and fails closed.
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

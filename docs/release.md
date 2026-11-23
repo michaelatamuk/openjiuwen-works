@@ -6,7 +6,9 @@ Three separate acts, in order. None of them decides for a person.
 works release <task-id>                 # read-only packet
 works approve <task-id> --gate release  # gate 2: a person releases
 works deliver <task-id> --provider none # commit the approved diff, push a branch
+works deploy <task-id> --command "..."   # owner-approved command on the delivered commit
 works confirm <task-id> --url https://app/health
+works escapes                            # reverts, hotfixes, repeated sources
 ```
 
 ## 1. The packet
@@ -69,13 +71,35 @@ Live output needs credentials and a real remote:
 
 Tests use a local bare remote and fake forge/tracker transports.
 
+## 3b. Deploy
+
+`works deploy <task-id>` runs the deploy command for the exact commit that was delivered:
+
+- requires `released` and a real `delivery.json` with a commit;
+- refuses a dry-run delivery that was never pushed (unless `--dry-run` is used again);
+- takes `--command` as an argv list, a JSON array or a quoted string, or reads `deploy:` from
+  `.works/products.yaml`;
+- runs from the task's repository with `WORKS_TASK_ID`, `WORKS_RUN_ID`, `WORKS_COMMIT`,
+  `WORKS_ENVIRONMENT` and `WORKS_DEPLOY_DRY_RUN`;
+- records `runs/<run-id>/deployment.json` and a `deploy.finished` event;
+- is idempotent per run, commit and environment; `--force` repeats a successful deploy.
+
+No shell is used. A failed command is recorded as `failed` and the CLI exits `8`. Merge, production
+credentials and rollback stay human/operations concerns.
+
 ## 4. Confirmation
 
 `works confirm <task-id>` checks the delivered commit in a fresh worktree:
 
 - `--url URL` → one HTTP check;
 - `--command CMD` → one command (a JSON array is accepted for exact argv);
+- `--preview FILE` — a Playwright YAML script that drives the real user path;
 - otherwise the plan's scenario set is re-run.
+
+`--preview` needs the optional browser extra (`uv sync --extra preview`, then
+`playwright install chromium`). The script has a `start_url` and an ordered list of `goto`, `click`,
+`fill`, `expect_text`, `expect_visible`, `wait` and `screenshot` steps. Screenshots are written
+under `runs/<run-id>/preview/` and listed in `confirmation.json`; a missing extra fails closed.
 
 The result is written to `runs/<run-id>/confirmation.json` and recorded as
 `confirmation.finished`. A repeat returns the recorded result; `--force` runs again.
@@ -84,5 +108,17 @@ With `--tracker github|gitlab|jira`, the result is commented on the source issue
 a GitHub/GitLab issue or transitions a Jira issue to Done, but only when the confirmation passed.
 All return calls are idempotent by run marker.
 
-A desktop GUI needs a real driver. Without one, Works confirms CLI, HTTP and scenario targets and
-says what it did; it does not claim a person clicked through the product.
+A desktop GUI needs a real driver. CLI, HTTP and scenario targets work without one; `--preview`
+supplies the browser driver instead of claiming a green result it did not observe.
+
+## 5. Escapes and rework
+
+`works escapes` derives quality signals from recorded history:
+
+- a `Revert "..."` commit whose body reverts the delivered commit is a `revert` escape;
+- a `hotfix` commit touching the same paths inside the release window is a `hotfix` escape;
+- a later task with the same source reference is rework.
+
+It writes `escapes.json`, records `escape.detected` / `rework.detected`, and `works metrics` reports
+both counts. `--days` changes the window and `--dry-run` scans without writing. The first version
+reads local git history; a remote main/CI feed can post the same findings later.
