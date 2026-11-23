@@ -543,6 +543,7 @@ def test_builder_settings_are_saved_and_health_is_provider_neutral(paths) -> Non
             base,
             "/api/settings/builder",
             {
+                "runtime": "swarm",
                 "provider": "codex",
                 "verifier_provider": "claudecode",
                 "model": "gpt-5",
@@ -551,6 +552,7 @@ def test_builder_settings_are_saved_and_health_is_provider_neutral(paths) -> Non
         )
         assert status == 200, body
         saved = json.loads(body)["builder"]
+        assert saved["runtime"] == "swarm"
         assert saved["provider"] == "codex"
         assert saved["verifier_provider"] == "claudecode"
         assert "ANTHROPIC_API_KEY" not in json.dumps(saved)
@@ -559,8 +561,10 @@ def test_builder_settings_are_saved_and_health_is_provider_neutral(paths) -> Non
         status, health = get(base, "/api/health")
         assert status == 200
         builder = json.loads(health)["builder"]
+        assert builder["runtime"] == "swarm"
         assert builder["provider"] == "codex"
         assert builder["model"] == "gpt-5"
+        assert builder["providers"]["native"]["label"] == "Jiuwen native"
         assert "ANTHROPIC_API_KEY" not in json.dumps(builder)
         assert "WORKS_VERIFIER_API_KEY" not in json.dumps(builder)
 

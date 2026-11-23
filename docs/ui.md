@@ -70,10 +70,15 @@ The same evidence page serves two audiences without a second data source:
 - **Factory**: a header action opens metrics and the ledger. The Release view carries the run history
   and a two-run comparison; Evidence offers proof/run/release/delivery/confirmation downloads.
   Artifacts open in a lightbox; a before/after pair has a drag slider; timeline rows open their raw
-  event. **Settings ? Builder** selects the live builder provider (Claude Code, DeepSeek Harness
-  or Codex) with availability and credential status shown in provider terms, never as environment
-  variable names. Keys stay in the local environment. The same panel selects a separate verifier
-  provider, optional models, theme, density, polling and the default repository.
+  event. **Settings → Builder** has two levels, so the two Jiuwen paths cannot be mistaken for
+  interchangeable providers: first the runtime (**OpenJiuwen harness**, one agent inside Works, or
+  **JiuwenSwarm**, a multi-agent team outside Works), then — only for OpenJiuwen — the provider
+  (Claude Code, DeepSeek Harness, Jiuwen native or Codex). The runtime cards carry `inside Works` /
+  `outside Works` badges and a one-line comparison, and availability and credential status are
+  shown in provider terms, never as environment variable names. Keys stay in the local environment.
+  The same panel selects a separate verifier provider for OpenJiuwen, optional models, theme,
+  density, polling and the default repository. JiuwenSwarm is shown as a separate team with its own
+  adapter and challenger, not as a provider card.
 
 There is no separate Summary tab: the human answer lives in the Story hero and the receipt strip.
 Both views are computed from the same proof, so they cannot disagree. Deep links carry the view:

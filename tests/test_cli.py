@@ -104,6 +104,66 @@ def test_policy_refuses_a_test_edit(paths) -> None:
     assert payload(allowed)["allowed"] is True
 
 
+def test_a_saved_swarm_runtime_is_the_default_builder(
+    paths, repo, scenario_set: Path, monkeypatch
+) -> None:
+    from works.harness.swarm import SwarmDiagnostic
+    from works.settings import save_builder_settings
+
+    submitted = submit_cli(paths, repo)
+    save_builder_settings(paths, {"runtime": "swarm"})
+    monkeypatch.setattr(
+        "works.harness.swarm.SwarmHarness.diagnostic",
+        lambda self: SwarmDiagnostic(ok=True, detail="stub swarm"),
+    )
+
+    result = invoke(
+        paths,
+        "run",
+        submitted["task"]["id"],
+        "--dry-run",
+        "--scenarios",
+        str(scenario_set),
+        "--json",
+    )
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert [node["id"] for node in payload(result)["nodes"]] == [
+        "reproduce",
+        "build",
+        "test",
+        "challenge",
+    ]
+
+
+def test_a_saved_openjiuwen_runtime_is_the_default_builder(
+    paths, repo, scenario_set: Path, monkeypatch
+) -> None:
+    from works.settings import save_builder_settings
+
+    submitted = submit_cli(paths, repo)
+    save_builder_settings(paths, {"runtime": "openjiuwen"})
+    monkeypatch.setenv("WORKS_MODEL_KEY", "dummy")
+
+    result = invoke(
+        paths,
+        "run",
+        submitted["task"]["id"],
+        "--dry-run",
+        "--scenarios",
+        str(scenario_set),
+        "--json",
+    )
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert [node["id"] for node in payload(result)["nodes"]] == [
+        "reproduce",
+        "build",
+        "test",
+        "challenge",
+    ]
+
+
 def test_dry_run_shows_nodes_and_changes_nothing(paths, repo, scenario_set: Path) -> None:
     submitted = submit_cli(paths, repo)
     task_id = submitted["task"]["id"]

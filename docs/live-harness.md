@@ -1,8 +1,20 @@
 # Live harness
 
 `works run --live` uses the real builder through an `openjiuwen` harness. The default provider is
-Claude Code on an Anthropic-compatible endpoint; `dsh` (DeepSeek Harness) and `codex` are selectable
-when their SDKs are installed. The provider is recorded separately from the model provider.
+Claude Code on an Anthropic-compatible endpoint; `dsh` (DeepSeek Harness), `native` (Jiuwen's
+in-process DeepAgent) and `codex` are selectable when their runtime is installed. The provider is
+recorded separately from the model provider.
+
+There are two builder levels, deliberately kept apart:
+
+| Runtime | What it is | How Works talks to it |
+|---|---|---|
+| **OpenJiuwen harness** | Provider harnesses inside the Works process: Claude Code, DeepSeek Harness, Jiuwen native, Codex | `openjiuwen.harness_protocol` |
+| **JiuwenSwarm** | External multi-agent platform with its own gateway, models and challenger | `works.swarm.v1` adapter (`works run --swarm`) |
+
+Settings stores the runtime and, for OpenJiuwen, the provider and optional verifier provider. A saved
+runtime is used by `works run`/`works dispatch` when no explicit `--trace`, `--live` or `--swarm`
+flag is passed; explicit flags still win per run.
 
 ## Setup
 
@@ -19,15 +31,21 @@ Environment:
 | `WORKS_MODEL` | `deepseek-chat` | model id recorded per run |
 | `WORKS_MODEL_BASE` | `https://api.deepseek.com/anthropic` | Anthropic-compatible endpoint |
 | `CLAUDE_CLI` | SDK-bundled `claude.exe` | must be an `.exe`; `.cmd`/`.bat` are refused |
-| `WORKS_HARNESS_PROVIDER` | `claudecode` | `claudecode`, `dsh` or `codex` |
+| `WORKS_HARNESS_PROVIDER` | `claudecode` | `claudecode`, `dsh`, `native` or `codex` |
 | `WORKS_VERIFIER_HARNESS_PROVIDER` | builder provider | separate challenger provider |
 | `WORKS_DSH_HOME` | required for `dsh` | DeepSeek Harness home; never falls back to `~/.dsh` |
 | `WORKS_DSH_PROVIDER` | `deepseek-official` | DSH model provider label |
 | `WORKS_CODEX_PROVIDER` | `deepseek` | Codex model provider label |
 
-`dsh` needs the `deepseek_harness` SDK; `codex` needs `openai_codex` or a Codex CLI. A missing SDK is
-a configuration error, never a fake build. The `native` DeepAgent provider is not wired into Works
-yet because it needs a full `DeepAgentSpec` (tools, workspace, rails), not just a model key.
+`dsh` needs the `deepseek_harness` SDK; `codex` needs `openai_codex` or a Codex CLI. `native` needs
+openjiuwen's in-process DeepAgent runtime (`openjiuwen.harness_providers.native`, `httpx`, the
+endpoint SDK and openjiuwen's other core dependencies). A missing runtime or SDK is a configuration
+error, never a fake build.
+
+Jiuwen native is built by Works from a minimal `DeepAgentSpec`: the worktree is the workspace and
+sandbox, `core.sys_operation` registers the file and shell tools, and the verifier gets the same
+rail read-only. It is not the same product as JiuwenSwarm: native is one DeepAgent in the Works
+process, Swarm is an external multi-agent platform.
 
 `ANTHROPIC_BASE_URL` in the shell may point elsewhere; the harness injects the explicit
 `--model-base` through the CLI settings layer, so the run is reproducible. The variable name is a

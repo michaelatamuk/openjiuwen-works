@@ -15,9 +15,10 @@ from works.settings import (
 )
 
 
-def test_defaults_are_the_claude_code_provider(paths) -> None:
+def test_defaults_are_the_openjiuwen_claude_code_runtime(paths) -> None:
     settings = load_builder_settings(paths)
 
+    assert settings.runtime == "openjiuwen"
     assert settings.provider == "claudecode"
     assert settings.resolved_verifier_provider == "claudecode"
 
@@ -26,6 +27,7 @@ def test_settings_round_trip_and_ignore_unknown_keys(paths) -> None:
     saved = save_builder_settings(
         paths,
         {
+            "runtime": "swarm",
             "provider": "dsh",
             "verifier_provider": "codex",
             "model": "deepseek-chat",
@@ -35,7 +37,13 @@ def test_settings_round_trip_and_ignore_unknown_keys(paths) -> None:
 
     assert settings_path(paths).exists()
     assert load_builder_settings(paths) == saved
+    assert saved.runtime == "swarm"
     assert saved.resolved_verifier_provider == "codex"
+
+
+def test_an_invalid_runtime_is_refused(paths) -> None:
+    with pytest.raises(ConfigError, match="runtime must be one of"):
+        save_builder_settings(paths, {"runtime": "cloud"})
 
 
 def test_an_invalid_provider_is_refused(paths) -> None:
@@ -73,6 +81,10 @@ def test_builder_health_exposes_labels_not_secret_names(paths) -> None:
 
     assert health["provider"] == "dsh"
     assert health["verifier_provider"] == "codex"
-    assert set(health["providers"]) == {"claudecode", "dsh", "codex"}
+    assert set(health["providers"]) == {"claudecode", "dsh", "native", "codex"}
+    assert health["runtime"] == "openjiuwen"
+    assert set(health["runtimes"]) == {"openjiuwen", "swarm"}
+    assert health["providers"]["native"]["label"] == "Jiuwen native"
+    assert health["swarm"]["contract"] == "works.swarm.v1"
     assert "ANTHROPIC_API_KEY" not in json.dumps(health)
     assert "WORKS_VERIFIER_API_KEY" not in json.dumps(health)

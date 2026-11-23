@@ -162,6 +162,49 @@ def preflight(
     )
 
 
+def status(
+    python: Path | None = None,
+    *,
+    home: Path | None = None,
+) -> dict[str, Any]:
+    """Cheap readiness for the Settings panel: no subprocess, no model call.
+
+    A real run still probes the entrypoint (`preflight`); this only answers whether the checkout
+    and adapter are present, so the UI can label the runtime without starting a process on every
+    poll.
+    """
+    interpreter = python or default_swarm_python()
+    checkout = home or default_swarm_home()
+    if not interpreter.exists():
+        return {
+            "available": False,
+            "detail": "JiuwenSwarm interpreter not found; point WORKS_SWARM_PYTHON at its venv",
+            "contract": CONTRACT,
+        }
+    if not checkout.exists():
+        return {
+            "available": False,
+            "detail": "JiuwenSwarm checkout not found; point WORKS_SWARM_HOME at it",
+            "contract": CONTRACT,
+        }
+    try:
+        entrypoint = default_entrypoint()
+    except ConfigError as exc:
+        return {"available": False, "detail": str(exc), "contract": CONTRACT}
+    first = entrypoint[0] if entrypoint else ""
+    if first.lower().endswith(".py") and not Path(first).is_file():
+        return {
+            "available": False,
+            "detail": "the works.swarm.v1 adapter is missing",
+            "contract": CONTRACT,
+        }
+    return {
+        "available": True,
+        "detail": "JiuwenSwarm checkout and adapter found; a run probes the entrypoint",
+        "contract": CONTRACT,
+    }
+
+
 def _diagnose(tail: str) -> str:
     if "agent_gateway" in tail:
         return (

@@ -481,12 +481,22 @@ def _supervisor(args: argparse.Namespace) -> Supervisor:
     from .runner import SubprocessRunner
     from .supervisor import Supervisor
 
+    paths = _paths(args)
+    from .settings import load_builder_settings, settings_path
+
+    builder_settings = load_builder_settings(paths) if settings_path(paths).exists() else None
+    explicit_builder = args.trace is not None or args.live or getattr(args, "swarm", False)
+    if not explicit_builder and builder_settings is not None:
+        # A saved Settings choice is the default builder. Explicit flags still win per run.
+        if builder_settings.runtime == "swarm":
+            args.swarm = True
+        else:
+            args.live = True
     if args.trace is not None and args.live:
         raise ConfigError("use either --trace (recorded) or --live (real model), not both")
     swarm = getattr(args, "swarm", False)
     if swarm and (args.trace is not None or args.live):
         raise ConfigError("use either --swarm, --trace or --live; one builder per run")
-    paths = _paths(args)
     harness: Harness | None = None
     if args.trace is not None:
         harness = FakeHarness(args.trace)
@@ -505,9 +515,9 @@ def _supervisor(args: argparse.Namespace) -> Supervisor:
         harness = swarm_harness
     elif args.live:
         from .harness.openjiuwen import LiveHarness
-        from .settings import load_builder_settings
 
-        builder_settings = load_builder_settings(paths)
+        if builder_settings is None:
+            builder_settings = load_builder_settings(paths)
         task_id = getattr(args, "task_id", None)
         flow = "fix-issue"
         if task_id:
@@ -579,10 +589,11 @@ def cmd_run(args: argparse.Namespace) -> int:
             print(json.dumps(payload, indent=2, ensure_ascii=False, default=str))
         return 0
 
-    if args.trace is None and not args.live:
+    if args.trace is None and not args.live and not getattr(args, "swarm", False):
         raise ConfigError(
-            "no harness configured: pass --trace PATH for a recorded run "
-            "or --live for the real openjiuwen harness"
+            "no builder configured: pass --trace PATH for a recorded run, "
+            "--live for the OpenJiuwen harness, or --swarm for JiuwenSwarm; "
+            "or save a builder in Settings"
         )
 
     task = _queue(args).load(args.task_id)

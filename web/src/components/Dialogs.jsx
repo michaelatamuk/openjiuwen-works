@@ -331,16 +331,35 @@ export function FactoryDialog({ onClose }) {
 }
 
 const PROVIDER_FALLBACK = {
-  claudecode: { label: "Claude Code", kind: "General coding harness", available: true },
-  dsh: { label: "DeepSeek Harness", kind: "DeepSeek native", available: false },
-  codex: { label: "Codex", kind: "OpenAI Codex", available: false },
+  claudecode: { label: "Claude Code", kind: "General coding harness", available: true, missing: "Needs SDK" },
+  dsh: { label: "DeepSeek Harness", kind: "DeepSeek native", available: false, missing: "Needs SDK" },
+  native: { label: "Jiuwen native", kind: "In-process DeepAgent", available: false, missing: "Needs runtime" },
+  codex: { label: "Codex", kind: "OpenAI Codex", available: false, missing: "Needs SDK" },
 };
 
-const PROVIDER_ORDER = ["claudecode", "dsh", "codex"];
+const PROVIDER_ORDER = ["claudecode", "dsh", "native", "codex"];
+
+const RUNTIME_FALLBACK = {
+  openjiuwen: {
+    label: "OpenJiuwen harness",
+    kind: "One agent inside Works; pick a provider",
+    scope: "inside Works",
+    available: true,
+  },
+  swarm: {
+    label: "JiuwenSwarm",
+    kind: "A multi-agent team outside Works",
+    scope: "outside Works",
+    available: false,
+  },
+};
+
+const RUNTIME_ORDER = ["openjiuwen", "swarm"];
 
 function credentialLabel(provider, state, providers) {
-  if (!providers[provider]?.available) return "Needs SDK";
-  if (provider !== "claudecode") return "Provider-managed";
+  const meta = providers[provider];
+  if (!meta?.available) return meta?.missing || "Needs setup";
+  if (provider === "dsh" || provider === "codex") return "Provider-managed";
   return {
     ready: "Ready",
     missing: "Needs setup",
@@ -350,8 +369,10 @@ function credentialLabel(provider, state, providers) {
   }[state] || "Managed locally";
 }
 
+const PROVIDER_LETTERS = { claudecode: "C", dsh: "D", native: "J", codex: "X" };
+
 function ProviderCard({ id, meta, active, disabled, onSelect }) {
-  const letter = { claudecode: "C", dsh: "D", codex: "X" }[id] || (meta.label || id).slice(0, 1).toUpperCase();
+  const letter = PROVIDER_LETTERS[id] || (meta.label || id).slice(0, 1).toUpperCase();
   return (
     <button
       type="button"
@@ -367,8 +388,30 @@ function ProviderCard({ id, meta, active, disabled, onSelect }) {
         <em>{meta.kind || "Model harness"}</em>
       </span>
       <span className={`provider-state ${meta.available ? "ready" : "missing"}`}>
-        {meta.available ? "Ready" : "Needs SDK"}
+        {meta.available ? "Ready" : (meta.missing || "Needs setup")}
       </span>
+    </button>
+  );
+}
+
+function RuntimeCard({ id, meta, active, onSelect }) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={active}
+      className={`runtime-card runtime-${id} ${active ? "active" : ""}`}
+      onClick={() => onSelect(id)}
+    >
+      <span className="runtime-copy">
+        <b>{meta.label}</b>
+        <em>{meta.kind}</em>
+      </span>
+      <span className={`runtime-state ${meta.available ? "ready" : "missing"}`}>
+        {meta.available ? "Ready" : "Needs setup"}
+      </span>
+      <span className="runtime-scope">{meta.scope || "inside Works"}</span>
+      {id === "swarm" ? <span className="runtime-contract">works.swarm.v1</span> : null}
     </button>
   );
 }
@@ -383,10 +426,15 @@ export function SettingsDialog({
   onClose,
 }) {
   const providers = { ...PROVIDER_FALLBACK, ...(builder?.providers || {}) };
+  const runtimes = { ...RUNTIME_FALLBACK, ...(builder?.runtimes || {}) };
+  if (builder?.swarm?.available) {
+    runtimes.swarm = { ...runtimes.swarm, available: true };
+  }
   const [nextTheme, setNextTheme] = useState(theme);
   const [nextDensity, setNextDensity] = useState(density);
   const [nextPoll, setNextPoll] = useState(String(pollMs));
   const [repo, setRepo] = useState(localStorage.getItem("works.repo") || "");
+  const [runtime, setRuntime] = useState(builder?.runtime || "openjiuwen");
   const [provider, setProvider] = useState(builder?.provider || "claudecode");
   const [separateVerifier, setSeparateVerifier] = useState(
     Boolean(builder?.verifier_provider && builder.verifier_provider !== builder.provider)
@@ -397,14 +445,22 @@ export function SettingsDialog({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  const openjiuwen = runtime === "openjiuwen";
   const builderMeta = providers[provider] || PROVIDER_FALLBACK.claudecode;
   const verifierMeta = providers[separateVerifier ? verifier : provider] || provider;
-  const builderCredential = credentialLabel(provider, builder?.credentials?.builder, providers);
-  const verifierCredential = separateVerifier
-    ? credentialLabel(verifier, builder?.credentials?.verifier, providers)
-    : builder?.credentials?.builder === "ready"
-      ? "Uses builder credential"
+  const swarm = builder?.swarm || {};
+  const builderCredential = openjiuwen
+    ? credentialLabel(provider, builder?.credentials?.builder, providers)
+    : swarm.available
+      ? "External runtime"
       : "Needs setup";
+  const verifierCredential = !openjiuwen
+    ? "Own challenger"
+    : separateVerifier
+      ? credentialLabel(verifier, builder?.credentials?.verifier, providers)
+      : builder?.credentials?.builder === "ready"
+        ? "Uses builder credential"
+        : "Needs setup";
 
   async function submit(event) {
     event.preventDefault();
@@ -417,6 +473,7 @@ export function SettingsDialog({
         pollMs: Number(nextPoll),
         repo,
         builder: {
+          runtime,
           provider,
           verifier_provider: separateVerifier && verifier !== provider ? verifier : null,
           model: model.trim() || null,
@@ -446,85 +503,135 @@ export function SettingsDialog({
           <div className="settings-section-head">
             <div>
               <h3>Builder</h3>
-              <p>Who writes the fix in live runs.</p>
+              <p>First choose where the builder runs. Provider cards belong to OpenJiuwen inside Works only.</p>
             </div>
-            <span className={`settings-credential ${builderCredential === "Ready" ? "ready" : builderCredential === "Needs setup" ? "missing" : ""}`}>
+            <span className={`settings-credential ${builderCredential === "Ready" || builderCredential === "External runtime" ? "ready" : builderCredential === "Needs setup" || builderCredential === "Needs runtime" ? "missing" : ""}`}>
               {builderCredential}
             </span>
           </div>
-          <div className="provider-grid" role="radiogroup" aria-label="Builder provider">
-            {PROVIDER_ORDER.map((id) => (
-              <ProviderCard
+          <div className="runtime-grid" role="radiogroup" aria-label="Builder runtime">
+            {RUNTIME_ORDER.map((id) => (
+              <RuntimeCard
                 key={id}
                 id={id}
-                meta={providers[id] || PROVIDER_FALLBACK[id]}
-                active={provider === id}
-                disabled={!writable || !(providers[id] || PROVIDER_FALLBACK[id]).available}
-                onSelect={setProvider}
+                meta={runtimes[id] || RUNTIME_FALLBACK[id]}
+                active={runtime === id}
+                onSelect={setRuntime}
               />
             ))}
           </div>
-          <label className="settings-field">
-            <span>Model <em>{builderMeta.label} default</em></span>
-            <input
-              value={model}
-              disabled={!writable}
-              onChange={(event) => setModel(event.target.value)}
-              placeholder="Provider default"
-            />
-          </label>
-          <p className="settings-note">
-            Credentials stay in the local environment. Works never stores a key in this screen or in the browser.
+          <p className="settings-note runtime-note">
+            <b>Jiuwen native</b> is one agent inside Works. <b>JiuwenSwarm</b> is a separate multi-agent team outside Works.
           </p>
-        </section>
-
-        <section className="settings-section">
-          <div className="settings-section-head">
-            <div>
-              <h3>Verifier</h3>
-              <p>Who challenges the builder&apos;s work.</p>
-            </div>
-            <span className={`settings-credential ${verifierCredential === "Ready" || verifierCredential === "Separate credential" ? "ready" : verifierCredential === "Needs setup" || verifierCredential === "Needs SDK" ? "missing" : ""}`}>
-              {verifierCredential}
-            </span>
-          </div>
-          <label className="settings-switch">
-            <input
-              type="checkbox"
-              checked={separateVerifier}
-              disabled={!writable}
-              onChange={(event) => setSeparateVerifier(event.target.checked)}
-            />
-            Use a separate provider for review
-          </label>
-          {separateVerifier ? (
+          {openjiuwen ? (
             <>
-              <div className="provider-grid compact" role="radiogroup" aria-label="Verifier provider">
+              <div className="provider-grid" role="radiogroup" aria-label="Builder provider">
                 {PROVIDER_ORDER.map((id) => (
                   <ProviderCard
                     key={id}
                     id={id}
                     meta={providers[id] || PROVIDER_FALLBACK[id]}
-                    active={verifier === id}
+                    active={provider === id}
                     disabled={!writable || !(providers[id] || PROVIDER_FALLBACK[id]).available}
-                    onSelect={setVerifier}
+                    onSelect={setProvider}
                   />
                 ))}
               </div>
               <label className="settings-field">
-                <span>Verifier model <em>{verifierMeta.label} default</em></span>
+                <span>Model <em>{builderMeta.label} default</em></span>
                 <input
-                  value={verifierModel}
+                  value={model}
                   disabled={!writable}
-                  onChange={(event) => setVerifierModel(event.target.value)}
+                  onChange={(event) => setModel(event.target.value)}
                   placeholder="Provider default"
                 />
               </label>
+              <p className="settings-note">
+                Credentials stay in the local environment. Works never stores a key in this screen or in the browser.
+                {provider === "native" ? " Jiuwen native runs in the Works process and uses the same builder credential." : ""}
+              </p>
             </>
           ) : (
-            <p className="settings-note">The challenger uses the same provider and credential as the builder.</p>
+            <div className="swarm-panel">
+              <div className="swarm-panel-head">
+                <b>JiuwenSwarm is a separate team, not a provider</b>
+                <span className={`settings-credential ${swarm.available ? "ready" : "missing"}`}>
+                  {swarm.available ? "Ready" : "Needs setup"}
+                </span>
+              </div>
+              <p>
+                It runs outside Works with its own multi-agent builder, challenger, gateway and models.
+                Works sends the task through the <code>works.swarm.v1</code> adapter and records the returned
+                patch, challenge and usage as evidence.
+              </p>
+              <p className="settings-note">{swarm.detail || "A run probes the adapter before it starts."}</p>
+            </div>
           )}
         </section>
+
+        {openjiuwen ? (
+          <section className="settings-section">
+            <div className="settings-section-head">
+              <div>
+                <h3>Verifier</h3>
+                <p>Who challenges the builder&apos;s work.</p>
+              </div>
+              <span className={`settings-credential ${verifierCredential === "Ready" || verifierCredential === "Separate credential" ? "ready" : verifierCredential === "Needs setup" || verifierCredential === "Needs SDK" || verifierCredential === "Needs runtime" ? "missing" : ""}`}>
+                {verifierCredential}
+              </span>
+            </div>
+            <label className="settings-switch">
+              <input
+                type="checkbox"
+                checked={separateVerifier}
+                disabled={!writable}
+                onChange={(event) => setSeparateVerifier(event.target.checked)}
+              />
+              Use a separate provider for review
+            </label>
+            {separateVerifier ? (
+              <>
+                <div className="provider-grid compact" role="radiogroup" aria-label="Verifier provider">
+                  {PROVIDER_ORDER.map((id) => (
+                    <ProviderCard
+                      key={id}
+                      id={id}
+                      meta={providers[id] || PROVIDER_FALLBACK[id]}
+                      active={verifier === id}
+                      disabled={!writable || !(providers[id] || PROVIDER_FALLBACK[id]).available}
+                      onSelect={setVerifier}
+                    />
+                  ))}
+                </div>
+                <label className="settings-field">
+                  <span>Verifier model <em>{verifierMeta.label} default</em></span>
+                  <input
+                    value={verifierModel}
+                    disabled={!writable}
+                    onChange={(event) => setVerifierModel(event.target.value)}
+                    placeholder="Provider default"
+                  />
+                </label>
+              </>
+            ) : (
+              <p className="settings-note">The challenger uses the same provider and credential as the builder.</p>
+            )}
+          </section>
+        ) : (
+          <section className="settings-section">
+            <div className="settings-section-head">
+              <div>
+                <h3>Verifier</h3>
+                <p>JiuwenSwarm runs its own challenger through the adapter.</p>
+              </div>
+              <span className="settings-credential">Own challenger</span>
+            </div>
+            <p className="settings-note">
+              Works does not apply its OpenJiuwen provider or credential split to this runtime. The adapter
+              returns the challenge verdict, and Works records it as evidence.
+            </p>
+          </section>
+        )}
 
         <section className="settings-section">
           <h3>Workspace</h3>

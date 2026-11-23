@@ -180,6 +180,7 @@ class LiveHarness:
             cli_path=self._cli,
             permission_mode=permission_mode,
             max_turns=self._max_turns,
+            read_only=verifier,
         )
 
     async def propose(self, request: ProposalRequest) -> Proposal:
