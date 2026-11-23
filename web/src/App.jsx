@@ -234,7 +234,22 @@ export default function App() {
   const crumb = detail ? (view === "evidence" ? "Evidence" : view === "release" ? "Release" : view === "thread" ? "Thread" : "Story") : "Queue";
 
   return (
-    <div className="app">
+    <div className="workspace">
+      <header className="appbar">
+        <div className="appbar-brand">
+          <span className="mark" aria-hidden="true">W</span>
+          <div>
+            <strong>openJiuwen Works</strong>
+            <span>LOCAL FACTORY</span>
+          </div>
+        </div>
+        <div className="appbar-actions">
+          <button className="btn ghost" type="button" onClick={() => setDialog("factory")}>Factory</button>
+          <button className="btn ghost" type="button" aria-label="Command palette" title="Command palette" onClick={() => setDialog("palette")}>Ctrl K</button>
+          <button className="btn ghost" type="button" aria-label="Settings" title="Settings" onClick={() => setDialog("settings")}>Settings</button>
+        </div>
+      </header>
+      <div className="app">
       <Queue
         tasks={tasks}
         selected={selected}
@@ -251,42 +266,29 @@ export default function App() {
         onNew={() => setDialog("new")}
       />
       <main className="main">
-        <div className="sticky-top">
-          <header className="main-head">
-            <div className="head-copy">
-              <div className="crumb">
-                <button type="button" className="crumb-link" onClick={() => { setSelected(null); selectedRef.current = null; setDetail(null); history.replaceState(null, "", "#/"); }}>Queue</button>
-                {detail ? <><span className="crumb-sep">/</span>{crumb}</> : null}
+        {view !== "thread" ? (
+          <div className="sticky-top">
+            <header className="main-head">
+              <div className="head-copy">
+                <div className="crumb">
+                  <button type="button" className="crumb-link" onClick={() => { setSelected(null); selectedRef.current = null; setDetail(null); history.replaceState(null, "", "#/"); }}>Queue</button>
+                  {detail ? <><span className="crumb-sep">/</span>{crumb}</> : null}
+                </div>
+                <h1>{title}</h1>
+                <p>{subtitle}</p>
               </div>
-              <h1>{title}</h1>
-              <p>{subtitle}</p>
-            </div>
-            <div className="head-actions">
-              <button className="btn ghost" type="button" onClick={() => setDialog("factory")}>Factory</button>
-              <button className="btn ghost" type="button" aria-label="Command palette" title="Command palette" onClick={() => setDialog("palette")}>Ctrl K</button>
-              <button className="btn ghost" type="button" aria-label="Settings" title="Settings" onClick={() => setDialog("settings")}>Settings</button>
-            </div>
-          </header>
-          {detail ? (
-            <div className="view-tabs" role="tablist" aria-label="Detail view">
-              {[["story", "Story"], ["evidence", "Evidence"], ["release", "Release"], ["thread", "Session"]].map(([id, label]) => (
-                <button
-                  key={id}
-                  type="button"
-                  role="tab"
-                  aria-selected={view === id}
-                  className={`view-tab ${view === id ? "active" : ""}`}
-                  onClick={() => changeView(id)}
-                >
-                  {label}
-                </button>
-              ))}
-              <span className={`cl-live ${connected ? "on" : ""}`} title={connected ? "Live updates connected" : "Reconnecting"} />
-            </div>
-          ) : null}
-        </div>
-
-        <section className={`content ${view === "thread" ? "content-thread" : ""}`}>
+            </header>
+            {detail ? (
+              <div className="view-tabs" role="tablist" aria-label="Detail view">
+                {[["story", "Story"], ["evidence", "Evidence"], ["release", "Release"], ["thread", "Session"]].map(([id, label]) => (
+                  <button key={id} type="button" role="tab" aria-selected={view === id} className={`view-tab ${view === id ? "active" : ""}`} onClick={() => changeView(id)}>{label}</button>
+                ))}
+                <span className={`cl-live ${connected ? "on" : ""}`} title={connected ? "Live updates connected" : "Reconnecting"} />
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+        <section className={`content ${view === "thread" ? "content-session" : ""}`}>
           {!detail ? (
             <div className="empty">
               <img src="/mira.svg" alt="" width="132" height="132" />
@@ -337,6 +339,7 @@ export default function App() {
           )}
         </section>
       </main>
+      </div>
 
       {health?.write ? (
         <button className="btn report-btn mobile-new" type="button" onClick={() => setDialog("new")}>+ New task</button>

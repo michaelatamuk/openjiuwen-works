@@ -1,9 +1,88 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { postAction, streamAsk } from "../lib/api.js";
-import { roleLabel, roleLetter, shortSha, stateLabel } from "../lib/format.js";
+import { roleLabel, roleLetter, shortSha, stateLabel, stateTone } from "../lib/format.js";
 import { AiText } from "./ui.jsx";
 
 const REVIEW_TYPES = new Set(["thread.commentary", "thread.discussion"]);
+
+const PHASES = [
+  { id: "plan", label: "Plan" },
+  { id: "build", label: "Build" },
+  { id: "check", label: "Check" },
+  { id: "release", label: "Release" },
+];
+
+function phaseFor(message) {
+  const type = message.type;
+  if (type === "task.created" || type?.startsWith("memory.")) return null;
+  if (type === "team.verified" || type === "decision.made") return null;
+  if (type === "plan.drafted") return "plan";
+  if (type === "gate.decided") return /plan/i.test(message.title || "") ? "plan" : "release";
+  if (type === "attempt.started") return "build";
+  if (type === "risk.rated") return "build";
+  if (type === "note") return /proposal/i.test(`${message.title} ${message.body}`) ? "build" : "release";
+  if (type === "step.started" || type === "step.finished") {
+    const text = `${message.title} ${message.body} ${(message.facts || []).join(" ")}`;
+    return /test/i.test(text) ? "check" : "plan";
+  }
+  if (["challenge.decided", "finding"].includes(type)) return "check";
+  if (type === "delivery.finished" || type === "confirmation.finished") return "release";
+  if (type?.startsWith("thread.")) return "release";
+  return "release";
+}
+
+function currentPhase(state) {
+  if (["queued", "reproducing", "reproduced", "planning"].includes(state)) return "plan";
+  if (["plan_approved", "building"].includes(state)) return "build";
+  if (state === "checking") return "check";
+  return "release";
+}
+
+function phaseState(phase, currentId, taskState) {
+  if (["released", "reverted"].includes(taskState)) return "done";
+  const order = ["plan", "build", "check", "release"];
+  const index = order.indexOf(phase);
+  const current = order.indexOf(currentId);
+  if (index < current) return "done";
+  if (index === current) return taskState === "blocked" ? "blocked" : "current";
+  return "pending";
+}
+
+function phaseSummary(id, detail, items) {
+  if (!items.length) return "Not started";
+  if (id === "plan") {
+    const plan = items.find((item) => item.type === "plan.drafted");
+    const rows = plan?.card?.rows || [];
+    return rows[0]?.[1] ? `${rows[0][1]} scenarios` : "Plan drafted";
+  }
+  if (id === "build") {
+    const files = detail.evidence?.files_changed?.length || 0;
+    return files ? `${files} file${files === 1 ? "" : "s"} changed` : "Build recorded";
+  }
+  if (id === "check") {
+    const outcomes = detail.evidence?.verdict?.outcomes || [];
+    const passed = outcomes.filter((item) => item.passed).length;
+    return outcomes.length ? `${passed}/${outcomes.length} checks passed` : "Check recorded";
+  }
+  if (detail.release?.released) return "Released";
+  if (detail.task.state === "proved") return "Needs your approval";
+  if (detail.task.state === "blocked") return "Blocked";
+  return "Waiting";
+}
+
+function groupItems(items) {
+  const out = [];
+  for (const message of items) {
+    if (REVIEW_TYPES.has(message.type)) {
+      const last = out[out.length - 1];
+      if (last?.review) last.review.push(message);
+      else out.push({ key: `review-${message.seq}`, review: [message] });
+    } else {
+      out.push({ key: message.seq, message });
+    }
+  }
+  return out;
+}
 
 function sourceUrl(task) {
   const ref = String(task?.source?.ref || "");
@@ -113,7 +192,8 @@ function ThreadCard({ card, onAction }) {
 
 function Message({ message, onThreadAction }) {
   const role = message.role || "system";
-  const card = message.type === "thread.agent" ? null : message.card;
+  const inlineRelease = message.type === "note" && /release this commit/i.test(message.card?.prompt || "");
+  const card = message.type === "thread.agent" || inlineRelease ? null : message.card;
   const hideTitle = message.generated || message.type === "thread.agent" || message.type === "thread.note";
   const details = message.generated ? (message.facts || []) : [];
   return (
@@ -163,8 +243,7 @@ function Rail({ detail, onAction, onView }) {
     <aside className="cl-rail" aria-label="Task context">
       <section>
         <h3>Decision</h3>
-        <div className="cl-rail-state">{stateLabel(detail.task.state)}</div>
-        {blocker ? <p className="cl-rail-note">{blocker}</p> : null}
+        <p className="cl-rail-note">{blocker || "No blocker recorded."}</p>
       </section>
       <section>
         <h3>Next</h3>
@@ -210,27 +289,41 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
   const [focused, setFocused] = useState(false);
   const [busy, setBusy] = useState(false);
   const [atLatest, setAtLatest] = useState(true);
+  const [showAll, setShowAll] = useState(false);
+  const [openPhase, setOpenPhase] = useState(null);
   const formRef = useRef(null);
   const lineRef = useRef(null);
   const stickRef = useRef(true);
+  const phaseRefs = useRef({});
   const messages = detail.thread || [];
   const canAsk = Boolean(ai?.available);
   const activeMode = canAsk ? mode : "note";
   const source = sourceUrl(detail.task);
   const decision = decisionFor(detail);
-  const blocks = useMemo(() => {
-    const out = [];
+  const currentId = currentPhase(detail.task.state);
+  const origin = messages.find((message) => message.type === "task.created");
+  const phases = useMemo(() => {
+    const groups = Object.fromEntries(PHASES.map((phase) => [phase.id, []]));
     for (const message of messages) {
-      if (REVIEW_TYPES.has(message.type)) {
-        const last = out[out.length - 1];
-        if (last?.review) last.review.push(message);
-        else out.push({ key: `review-${message.seq}`, review: [message] });
-      } else {
-        out.push({ key: message.seq, message });
-      }
+      const phase = phaseFor(message);
+      if (phase) groups[phase].push(message);
     }
-    return out;
-  }, [messages]);
+    return PHASES.map((phase) => ({
+      ...phase,
+      state: phaseState(phase.id, currentId, detail.task.state),
+      summary: phaseSummary(phase.id, detail, groups[phase.id]),
+      items: groups[phase.id],
+      blocks: groupItems(groups[phase.id]),
+    }));
+  }, [messages, currentId, detail]);
+  const outcomes = detail.evidence?.verdict?.outcomes || [];
+  const passed = outcomes.filter((item) => item.passed).length;
+  const files = detail.evidence?.files_changed || [];
+  const decisionStats = [
+    outcomes.length ? `${passed}/${outcomes.length} checks` : null,
+    files.length ? `${files.length} file${files.length === 1 ? "" : "s"}` : null,
+    detail.summary?.risk ? `${detail.summary.risk} risk` : null,
+  ].filter(Boolean);
 
   useEffect(() => {
     stickRef.current = true;
@@ -289,40 +382,105 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
     }
   }
 
+  function jumpToPhase(id) {
+    setShowAll(false);
+    setOpenPhase(id);
+    window.requestAnimationFrame(() => {
+      phaseRefs.current[id]?.scrollIntoView({ block: "start", behavior: "smooth" });
+    });
+  }
+
+  function renderBlock(block) {
+    if (block.review) return <ReviewGroup key={block.key} items={block.review} />;
+    const message = block.message;
+    const question = message.type === "thread.agent"
+      ? (message.card?.rows || []).find(([label]) => String(label).toLowerCase() === "question")?.[1]
+      : null;
+    return (
+      <Fragment key={block.key}>
+        {question ? (
+          <div className="cl-user-turn">
+            <p>{question}</p>
+            <time>{new Date(message.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time>
+          </div>
+        ) : null}
+        <Message message={message} onThreadAction={threadAction} />
+      </Fragment>
+    );
+  }
+
   return (
     <div className="cl-thread">
       <div className="cl-main">
-        <header className="cl-head">
-          <div className="cl-eyebrow">
-            {source
-              ? <a href={source} target="_blank" rel="noopener noreferrer">{detail.task.source.ref}</a>
-              : <span>{detail.task.source.ref}</span>}
-            <span>{detail.task.product}</span>
-            <span className="cl-live-text"><i /> Live</span>
-            <span className="cl-head-actions">
-              {writable && canAsk ? (
-                <>
-                  <button type="button" className="cl-text-btn" onClick={() => onAction("discussion")}>Review</button>
-                  <button type="button" className="cl-text-btn" onClick={() => onAction("commentary")}>Commentary</button>
-                </>
-              ) : null}
-            </span>
+        <div className="cl-titlebar">
+          <div className="cl-title-copy">
+            <h1>{detail.task.source.title || detail.task.id}</h1>
+            <div className="cl-submeta">
+              <span className={`cl-state ${stateTone(detail.task.state)}`}>{stateLabel(detail.task.state)}</span>
+              {source
+                ? <a href={source} target="_blank" rel="noopener noreferrer">{detail.task.source.ref}</a>
+                : <span>{detail.task.source.ref}</span>}
+              <span>{detail.task.product}</span>
+              <span className="cl-live-text"><i /> Live</span>
+            </div>
           </div>
+          <div className="cl-title-actions">
+            <button type="button" className="cl-text-btn" onClick={() => { setShowAll((value) => !value); setOpenPhase(null); }}>
+              {showAll ? "Digest" : "Full log"}
+            </button>
+            {writable && canAsk ? (
+              <>
+                <button type="button" className="cl-text-btn" onClick={() => onAction("discussion")}>Review</button>
+                <button type="button" className="cl-text-btn" onClick={() => onAction("commentary")}>Commentary</button>
+              </>
+            ) : null}
+          </div>
+          <div className="cl-title-tabs" role="tablist" aria-label="Detail view">
+            {[["story", "Story"], ["evidence", "Evidence"], ["release", "Release"]].map(([id, label]) => (
+              <button key={id} type="button" role="tab" className="view-tab" onClick={() => onView(id)}>{label}</button>
+            ))}
+            <button type="button" role="tab" aria-selected="true" className="view-tab active">Session</button>
+          </div>
+        </div>
+        <div className="cl-head">
           {decision ? (
             <div className={`cl-decision ${decision.tone}`}>
               <div>
                 <span>{decision.label}</span>
                 <b>{decision.text}</b>
+                {decisionStats.length ? <em>{decisionStats.join(" / ")}</em> : null}
               </div>
-              <button
-                type="button"
-                onClick={() => (decision.action ? onAction(decision.action) : onView(decision.view))}
-              >
+              <button type="button" onClick={() => (decision.action ? onAction(decision.action) : onView(decision.view))}>
                 {decision.button}
               </button>
             </div>
           ) : null}
-        </header>
+        </div>
+
+
+        {origin ? (
+          <div className="cl-origin">
+            <span>Reported</span>
+            <b>{origin.body || detail.task.source.title}</b>
+            <time>{new Date(origin.at).toLocaleDateString([], { month: "short", day: "numeric" })}</time>
+          </div>
+        ) : null}
+
+        <div className="cl-phases" role="tablist" aria-label="Session phases">
+          {phases.map((phase) => (
+            <button
+              key={phase.id}
+              type="button"
+              role="tab"
+              aria-selected={phase.id === currentId}
+              className={`cl-phase ${phase.state}`}
+              onClick={() => jumpToPhase(phase.id)}
+            >
+              <i aria-hidden="true" />
+              <span>{phase.label}</span>
+            </button>
+          ))}
+        </div>
 
         <div
           className="cl-line"
@@ -334,24 +492,35 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
             setAtLatest(distance < 80);
           }}
         >
-          {blocks.length ? blocks.map((block) => {
-            if (block.review) return <ReviewGroup key={block.key} items={block.review} />;
-            const message = block.message;
-            const question = message.type === "thread.agent"
-              ? (message.card?.rows || []).find(([label]) => String(label).toLowerCase() === "question")?.[1]
-              : null;
+          {phases.map((phase) => {
+            const isOpen = showAll || openPhase === phase.id || (openPhase === null && phase.id === currentId);
             return (
-              <Fragment key={block.key}>
-                {question ? (
-                  <div className="cl-user-turn">
-                    <p>{question}</p>
-                    <time>{new Date(message.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time>
-                  </div>
-                ) : null}
-                <Message message={message} onThreadAction={threadAction} />
-              </Fragment>
+              <details
+                key={phase.id}
+                id={`phase-${phase.id}`}
+                ref={(node) => { phaseRefs.current[phase.id] = node; }}
+                className={`cl-phase-block ${phase.state}`}
+                open={isOpen}
+                onToggle={(event) => {
+                  if (showAll) return;
+                  if (event.currentTarget.open) setOpenPhase(phase.id);
+                  else setOpenPhase(phase.id === currentId ? "none" : currentId);
+                }}
+              >
+                <summary>
+                  <span className="cl-phase-dot" aria-hidden="true" />
+                  <span className="cl-phase-title">{phase.label}</span>
+                  <span className="cl-phase-summary">{phase.summary}</span>
+                  <span className="cl-phase-count">{phase.items.length}</span>
+                </summary>
+                <div className="cl-phase-body">
+                  {phase.items.length
+                    ? phase.blocks.map(renderBlock)
+                    : <p className="cl-phase-empty">Not reached yet.</p>}
+                </div>
+              </details>
             );
-          }) : <p className="muted small">No events yet.</p>}
+          })}
           {streamed || pendingQuestion ? (
             <>
               {pendingQuestion ? <div className="cl-user-turn"><p>{pendingQuestion}</p></div> : null}

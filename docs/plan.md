@@ -696,6 +696,10 @@ Internal only: nothing is published to the upstream fork until M2 is green.
     one identity row per turn, 15.5px body, collapsed Review block, a top decision bar with the
     human gate, a one-row composer, and a Decision / Next / Run / People rail. Session replaces the
     Thread tab label; `/thread` stays the deep link.
+  - 2026-11-23: full-height shell: 52px app bar, 280px queue, 980px session pane with a 760px
+    measure and a 340px context pane. The pane owns the title/tabs; Plan / Build / Check / Release
+    chapters collapse past work and open the current one; Full log expands; Review collapses agent
+    discussion; one decision card.
   - 2026-11-23: the GUI moved to React/Vite (`web/`) with SSE `/api/events` for the queue and the
     open task; `Ask Mira` keeps its token stream. Thread is now a session pane with right-aligned
     user turns, left-aligned labelled AI answers, a docked composer and auto-follow. Story keeps the

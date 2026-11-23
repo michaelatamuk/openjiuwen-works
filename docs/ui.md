@@ -47,20 +47,20 @@ The same evidence page serves two audiences without a second data source:
   tracker comment), confirmation (pass/fail, target, output SHA), team verdict, verifier isolation,
   LAIX shadow and run history with a two-run comparison. In `--write`, the same view can release,
   deliver, confirm and verify.
-- **Session** (the Thread worklog, deep link `/thread`): the session pane. The workspace is
-  centered at 1400px: a 264px queue, a 760px session and a 288px rail. Real events become turns;
-  user questions sit on the right, Mira answers on the left with a small `AI` tag. The transcript
-  auto-follows the newest event until the person scrolls up, then shows **Jump to latest**. A
-  decision bar at the top surfaces the next human gate: approve the plan, approve the release or
-  open the evidence for a blocked run. Agent commentary and discussion collapse into one
-  **Review** block instead of six turns. The composer is one row — `Ask`/`Note`, the input and a
-  filled send button; the advisory helper appears only on focus. The rail is Decision / Next / Run
-  / People, with hashes and agents behind **Technical**. In `--write`, `Add context` appends a
-  `thread.note`; `Ask Mira` asks a real `openjiuwen` model and streams the answer into
-  `thread.agent`. Follow-up questions carry the last three recorded answers. Every model answer is
-  labelled and advisory: it cannot approve, release, retry or change a gate. `Review` adds a
-  labelled Inspector / Challenger / Reporter discussion; `Commentary` adds Builder / Inspector /
-  Reporter notes. Both are model output and cannot open a gate.
+- **Session** (the Thread worklog, deep link `/thread`): a full-height pane between the queue and
+  the context rail. The pane owns the task title, state, tabs, decision card, phase chapters and
+  composer, so the whole screen has one alignment spine. The **Plan / Build / Check / Release**
+  strip navigates by chapter: past chapters collapse to one summary row, the current chapter opens,
+  and **Full log** expands everything. Agent commentary and discussion collapse into one **Review**
+  block. A decision card at the top surfaces the next human gate: approve the plan, approve the
+  release or open the evidence for a blocked run. The composer is one row — `Ask`/`Note`, the input
+  and a filled send button; the advisory helper appears only on focus. The rail is a separate pane:
+  Decision / Next / Run / People, with hashes and agents behind **Technical**. In `--write`, `Add
+  context` appends a `thread.note`; `Ask Mira` asks a real `openjiuwen` model and streams the answer
+  into `thread.agent`. Follow-up questions carry the last three recorded answers. Every model
+  answer is labelled and advisory: it cannot approve, release, retry or change a gate. `Review`
+  adds a labelled Inspector / Challenger / Reporter discussion; `Commentary` adds Builder /
+  Inspector / Reporter notes. Both are model output and cannot open a gate.
 - **Factory**: a header action opens metrics and the ledger. The Release view carries the run history
   and a two-run comparison; Evidence offers proof/run/release/delivery/confirmation downloads.
   Artifacts open in a lightbox; a before/after pair has a drag slider; timeline rows open their raw
@@ -109,10 +109,10 @@ without a failure or a finished run. The runs are local fixtures, not upstream f
 
 ## Design and interaction
 
-Dark and light themes, comfortable and compact density, a warm neutral canvas with a flat session
-column, a 264px queue, a 760px chat, a 288px rail and a centered 1400px workspace, one coral
-accent, subtle depth instead of stacked borders, visible focus, text labels for
-every status, `prefers-reduced-motion`, and Mira in the empty state. Below 720 px the route becomes
+Dark and light themes, comfortable and compact density, a 52px app bar, a 280px queue, a 980px
+session pane with a 760px measure and a 340px context pane, one coral accent, subtle depth instead
+of stacked borders, visible focus, text labels for every status, `prefers-reduced-motion`, and Mira
+in the empty state. Below 720 px the route becomes
 a vertical list with the same states and per-milestone screen-reader names; the queue moves below
 the Story so the task is visible first. Replay updates the route and receipt in place.
 `Ctrl K` opens a command palette; `/` focuses search; `j`/`k` move through the queue; `t` toggles

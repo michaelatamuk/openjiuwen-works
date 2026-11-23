@@ -32,14 +32,6 @@ export function Queue({
 
   return (
     <aside className="sidebar" aria-label="Queue">
-      <header className="brand">
-        <div className="mark" aria-hidden="true">W</div>
-        <div className="brand-copy">
-          <strong>openJiuwen Works</strong>
-          <span className="preview">LOCAL FACTORY</span>
-        </div>
-      </header>
-
       <div className="search">
         <input
           type="search"
@@ -123,6 +115,10 @@ export function Queue({
           );
         })}
       </div>
+      <footer className="sidebar-foot">
+        <span className={`live-dot ${writable ? "on" : ""}`} />
+        {writable ? "Local / write" : "Local / read-only"}
+      </footer>
     </aside>
   );
 }
