@@ -18,7 +18,7 @@ from .config import WorksPaths
 from .errors import ConfigError
 from .evidence import Evidence
 from .queue import Queue
-from .records import RunRecord
+from .records import Event, RunRecord
 from .release import latest_run_dir, release_packet
 
 WORKER = Path(__file__).resolve().parents[2] / "scripts" / "agent_chat_worker.py"
@@ -159,6 +159,21 @@ def build_context(paths: WorksPaths, task_id: str) -> str:
     return "\n".join(lines)[:12000]
 
 
+def _history(events: list[Event], *, limit: int = 6) -> list[dict[str, str]]:
+    """Recent Ask Mira turns, so a follow-up question has the earlier answer in view."""
+    items: list[dict[str, str]] = []
+    for event in events:
+        if event.type != "thread.agent":
+            continue
+        question = str(event.data.get("question") or "").strip()
+        answer = str(event.data.get("answer") or "").strip()
+        if not question or not answer:
+            continue
+        items.append({"role": "user", "content": question[:2000]})
+        items.append({"role": "assistant", "content": answer[:4000]})
+    return items[-limit:]
+
+
 def _payload(paths: WorksPaths, task_id: str, question: str, *, stream: bool) -> dict[str, Any]:
     clean = question.strip()
     if not clean:
@@ -169,7 +184,7 @@ def _payload(paths: WorksPaths, task_id: str, question: str, *, stream: bool) ->
         "question": clean,
         "context": build_context(paths, task_id),
         "stream": stream,
-        "history": [],
+        "history": _history(Queue(paths).events(task_id)),
     }
 
 

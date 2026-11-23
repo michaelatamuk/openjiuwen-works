@@ -645,6 +645,7 @@ def _thread_message(event: Event, task: Task) -> dict[str, Any] | None:
     tone = ""
     card: dict[str, Any] | None = None
     generated_label = ""
+    generated = False
     stance = ""
 
     if kind == "task.created":
@@ -837,9 +838,11 @@ def _thread_message(event: Event, task: Task) -> dict[str, Any] | None:
         title = "Mira answered"
         body = str(data.get("answer") or "")
         facts = [
-            f"model {data.get('model') or '—'}",
+            f"model {data.get('model') or '-'}",
             f"{data.get('tokens') or 0} token(s)",
         ]
+        generated_label = "AI answer"
+        generated = True
         card = {
             "kind": "question",
             "rows": [["Question", str(data.get("question") or "")]],
@@ -854,6 +857,7 @@ def _thread_message(event: Event, task: Task) -> dict[str, Any] | None:
         body = str(data.get("text") or "")
         facts = ["AI commentary", f"model {data.get('model') or '-'}"]
         generated_label = "AI commentary"
+        generated = True
         card = None
     elif kind == "thread.discussion":
         role = str(data.get("role") or "mira")
@@ -866,6 +870,7 @@ def _thread_message(event: Event, task: Task) -> dict[str, Any] | None:
         stance = str(data.get("stance") or "")
         facts = ["AI discussion", f"model {data.get('model') or '-'}"]
         generated_label = "AI discussion"
+        generated = True
         card = None
     elif kind == "thread.note":
         role = "person"
@@ -954,7 +959,7 @@ def _thread_message(event: Event, task: Task) -> dict[str, Any] | None:
         "body": body,
         "facts": [item for item in facts if item],
         "tone": tone,
-        "generated": bool(data.get("generated")),
+        "generated": bool(data.get("generated")) or generated,
         "generated_label": generated_label,
         "stance": stance,
         "card": card,
@@ -1698,13 +1703,12 @@ class Handler(BaseHTTPRequestHandler):
             return
         target, filename = found
         body = target.read_bytes()
-        self.send_response(HTTPStatus.OK)
-        self.send_header("Content-Type", _content_type(target))
-        self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-store")
-        self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
-        self.end_headers()
-        self.wfile.write(body)
+        self._respond(
+            HTTPStatus.OK,
+            _content_type(target),
+            body,
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
 
     def _artifact(self, path: str) -> None:
         rest = unquote(path.removeprefix("/api/tasks/"))
@@ -1722,13 +1726,12 @@ class Handler(BaseHTTPRequestHandler):
             self._json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "artifact not found"})
             return
         body = target.read_bytes()
-        self.send_response(HTTPStatus.OK)
-        self.send_header("Content-Type", _content_type(target))
-        self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-store")
-        self.send_header("Content-Disposition", f'inline; filename="{target.name}"')
-        self.end_headers()
-        self.wfile.write(body)
+        self._respond(
+            HTTPStatus.OK,
+            _content_type(target),
+            body,
+            headers={"Content-Disposition": f'inline; filename="{target.name}"'},
+        )
 
     def _static(self, *, head: bool = False) -> None:
         name = urlparse(self.path).path.lstrip("/")
@@ -1740,22 +1743,34 @@ class Handler(BaseHTTPRequestHandler):
             self._json(HTTPStatus.INTERNAL_SERVER_ERROR, {"ok": False, "error": "asset missing"})
             return
         body = path.read_bytes()
-        self.send_response(HTTPStatus.OK)
-        self.send_header("Content-Type", _content_type(path))
-        self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-store")
-        self.end_headers()
-        if not head:
-            self.wfile.write(body)
+        self._respond(HTTPStatus.OK, _content_type(path), body, head=head)
+
+    def _respond(
+        self,
+        status: HTTPStatus,
+        content_type: str,
+        body: bytes,
+        *,
+        headers: dict[str, str] | None = None,
+        head: bool = False,
+    ) -> None:
+        """Write one response; a browser that navigated away is not a server error."""
+        try:
+            self.send_response(status)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", "no-store")
+            for name, value in (headers or {}).items():
+                self.send_header(name, value)
+            self.end_headers()
+            if not head:
+                self.wfile.write(body)
+        except (BrokenPipeError, ConnectionAbortedError, ConnectionResetError):
+            self.close_connection = True
 
     def _json(self, status: HTTPStatus, payload: dict[str, Any]) -> None:
         body = json.dumps(payload, ensure_ascii=False, default=str).encode("utf-8")
-        self.send_response(status)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-store")
-        self.end_headers()
-        self.wfile.write(body)
+        self._respond(status, "application/json; charset=utf-8", body)
 
     def log_message(self, format: str, *args: Any) -> None:
         LOG.debug(format, *args)

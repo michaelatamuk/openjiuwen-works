@@ -685,6 +685,10 @@ Internal only: nothing is published to the upstream fork until M2 is green.
   - 2026-11-23: added an advisory `Team discussion` layer: the model writes inspector, challenger
     and reporter messages with a support / concern / block stance, stored as `thread.discussion`
     and labelled AI text. It cannot change a verdict or open a gate.
+  - 2026-11-23: Ask Mira now carries the last three recorded question/answer pairs, so the
+    composer behaves like a worklog conversation without inventing memory outside the record.
+    Every model answer is labelled `AI answer` and AI text renders safe bold/code instead of raw
+    markdown. A client that navigates away no longer turns a closed socket into a server traceback.
 - [ ] **T1.25** Verification cost split: builder, challenger and verifier tokens/USD in `run.json`
   and the proof; verification share is reported next to the total. **S**
 - [x] **T1.26** PPMA memory backfill: `works memory backfill` reports already-finished runs from

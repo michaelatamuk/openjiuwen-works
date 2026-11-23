@@ -1440,6 +1440,12 @@ function sourceUrl(task) {
   return "";
 }
 
+function renderAiText(text) {
+  return esc(text)
+    .replace(/`([^`\n]+)`/g, "<code>$1</code>")
+    .replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+}
+
 function renderThreadMessage(message) {
   const role = message.role || "system";
   const facts = (message.facts || [])
@@ -1461,7 +1467,7 @@ function renderThreadMessage(message) {
         <time>${esc(new Date(message.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))}</time>
       </div>
       <h3>${esc(message.title)}</h3>
-      ${message.body ? `<p>${esc(message.body)}</p>` : ""}
+      ${message.body ? `<p>${message.generated ? renderAiText(message.body) : esc(message.body)}</p>` : ""}
       ${facts ? `<div class="thread-facts">${facts}</div>` : ""}
       ${renderThreadCard(message.card)}
     </div>
@@ -1559,7 +1565,7 @@ function renderThread(detail) {
         ${modes}
         <textarea id="thread-input" rows="2" placeholder="${mode === "ask" ? "Tell Mira more…" : "Add context to this run…"}"></textarea>
         <div class="thread-composer-actions">
-          <span class="muted small">${mode === "ask" ? "Advisory only. Mira reads the recorded proof and cannot open a gate." : "A note, not a command. It never opens a gate or starts a run."}</span>
+          <span class="muted small">${mode === "ask" ? "Advisory only. Mira reads the recorded proof and remembers earlier answers; she cannot open a gate." : "A note, not a command. It never opens a gate or starts a run."}</span>
           <button type="submit" class="btn">${mode === "ask" ? "Ask Mira" : "Add context"}</button>
         </div>
       </form>`

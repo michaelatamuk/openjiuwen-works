@@ -47,7 +47,8 @@ starts `scripts/agent_chat_worker.py` with agent-core's Python. The worker uses 
 Every answer is stored as `thread.agent` with the question, answer, model, tokens and USD. The
 system prompt forbids inventing evidence: if the context does not contain an answer, Mira says
 "Not recorded in this run." The answer is advisory and cannot approve, release, retry or change a
-task.
+task. Each request carries the last three recorded question/answer pairs as conversation history,
+so a follow-up question keeps the earlier answer in view.
 
 Two further model layers work over the same recorded context. `Generate commentary` stores three
 short messages as `thread.commentary` (builder, inspector, reporter). `Team discussion` stores

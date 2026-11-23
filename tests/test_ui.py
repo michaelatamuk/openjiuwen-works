@@ -599,6 +599,8 @@ def test_detail_exposes_a_mira_answer(paths, submit) -> None:
             message["role"] == "mira"
             and message["title"] == "Mira answered"
             and message["body"] == "Not released."
+            and message["generated"] is True
+            and message["generated_label"] == "AI answer"
             for message in messages
         )
 

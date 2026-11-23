@@ -212,3 +212,41 @@ def test_generate_discussion_records_stances_as_advisory_events(paths, monkeypat
     assert events[0].data["tokens"] == 9
     assert events[1].data["tokens"] == 0
     assert events[1].data["stance"] == "block"
+
+
+def test_ask_carries_recent_worklog_turns_as_history(paths, monkeypatch) -> None:
+    task = _proved(paths)
+    _run(paths, task)
+    queue = Queue(paths)
+    for index in range(4):
+        queue.append(
+            task.id,
+            "thread.agent",
+            {"question": f"question {index}", "answer": f"answer {index}"},
+        )
+    captured: dict[str, object] = {}
+
+    class CapturingRun:
+        stdout = json.dumps(
+            {"type": "done", "text": "follow-up", "model": "m", "tokens": 3, "usd": 0.0}
+        )
+        stderr = ""
+        returncode = 0
+
+    def fake_run(*args, **kwargs):
+        captured.update(json.loads(kwargs["input"]))
+        return CapturingRun()
+
+    monkeypatch.setattr("works.agent_chat._command", lambda: ["python", "worker.py"])
+    monkeypatch.setattr("works.agent_chat._environment", lambda: {})
+    monkeypatch.setattr("works.agent_chat.subprocess.run", fake_run)
+
+    ask_mira(paths, task.id, "And now?")
+
+    history = captured["history"]
+    assert isinstance(history, list)
+    assert history[-2:] == [
+        {"role": "user", "content": "question 3"},
+        {"role": "assistant", "content": "answer 3"},
+    ]
+    assert len(history) == 6

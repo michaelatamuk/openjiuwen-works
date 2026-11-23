@@ -37,7 +37,9 @@ The same evidence page serves two audiences without a second data source:
   factory, people, agents, deliverables, checks, cost and artifacts. In `--write` it has two inputs:
   **Add context** appends a `thread.note`; **Ask Mira** asks a real `openjiuwen` model about the
   recorded run. The answer streams token-by-token, is stored as `thread.agent`, and is advisory:
-  it cannot approve, release, retry or change anything. Inline plan/release questions carry
+  it cannot approve, release, retry or change anything. Follow-up questions carry the last three
+  recorded answers as history. Every model answer carries an `AI answer` badge; commentary and
+  discussion carry their own labels. Inline plan/release questions carry
   recommended actions and `Open run`; `Generate commentary` adds labelled Builder / Inspector /
   Reporter messages, and `Team discussion` adds labelled Inspector / Challenger / Reporter
   messages with a stance. Both are model output: they are advisory and cannot open a gate.
