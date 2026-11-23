@@ -60,7 +60,8 @@ The same evidence page serves two audiences without a second data source:
   labelled Builder / Inspector / Reporter messages, and `Team discussion` adds labelled Inspector /
   Challenger / Reporter messages with a stance. Both are model output: advisory and unable to open
   a gate. The context rail shows Task, Run and People; agents, deliverables, checks and cost stay
-  behind one disclosure.
+  behind one disclosure. The transcript hides the native scrollbar, follows new events and shows a
+  `Latest ?` pill after the person scrolls up; the page itself uses a thin overlay scrollbar.
 - **Factory**: a header action opens metrics and the ledger. The Release view carries the run history
   and a two-run comparison; Evidence offers proof/run/release/delivery/confirmation downloads.
   Artifacts open in a lightbox; a before/after pair has a drag slider; timeline rows open their raw
@@ -110,7 +111,8 @@ without a failure or a finished run. The runs are local fixtures, not upstream f
 ## Design and interaction
 
 Dark and light themes, comfortable and compact density, a warm neutral canvas with a flat session
-column, a tinted sidebar and one coral accent, subtle depth instead of stacked borders, visible focus, text labels for
+column, a 280px tinted sidebar, a 1180px fluid chat and a 300px rail, one coral accent, subtle depth
+instead of stacked borders, visible focus, text labels for
 every status, `prefers-reduced-motion`, and Mira in the empty state. Below 720 px the route becomes
 a vertical list with the same states and per-milestone screen-reader names; the queue moves below
 the Story so the task is visible first. Replay updates the route and receipt in place.

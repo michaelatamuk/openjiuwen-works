@@ -1483,3 +1483,107 @@ body { background-image: none; background: var(--bg); }
   .cl-thread { grid-template-columns: minmax(0, 1fr); }
   .cl-rail { display: none; }
 }
+
+/* Use the whole workspace and hide the 2010s scrollbar */
+.app { grid-template-columns: 280px minmax(0, 1fr); }
+.cl-thread {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 30px;
+}
+.cl-line, .cl-head, .cl-composer { max-width: 1200px; }
+.cl-rail { width: 300px; }
+.cl-line, .cl-rail {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  scrollbar-gutter: auto;
+}
+.cl-line:hover, .cl-rail:hover { scrollbar-color: var(--line-strong) transparent; }
+.cl-line::-webkit-scrollbar, .cl-rail::-webkit-scrollbar { width: 6px; height: 6px; }
+.cl-line::-webkit-scrollbar-track, .cl-rail::-webkit-scrollbar-track { background: transparent; }
+.cl-line::-webkit-scrollbar-thumb, .cl-rail::-webkit-scrollbar-thumb { background: transparent; border-radius: 999px; }
+.cl-line:hover::-webkit-scrollbar-thumb, .cl-rail:hover::-webkit-scrollbar-thumb { background: var(--line-strong); }
+.cl-line { mask-image: linear-gradient(to bottom, transparent 0, #000 10px, #000 calc(100% - 4px), transparent 100%); }
+@media (max-width: 1300px) {
+  .cl-thread { grid-template-columns: minmax(0, 1fr); }
+  .cl-rail { display: none; }
+}
+
+/* The composer is a soft 2026 dock, not a bare line */
+.cl-composer {
+  position: relative;
+  margin: 10px 0 12px;
+  padding: 9px 12px 8px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgb(30 28 24 / .06);
+  backdrop-filter: none;
+}
+[data-theme="dark"] .cl-composer { box-shadow: 0 12px 32px rgb(0 0 0 / .25); }
+.cl-composer::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -22px;
+  height: 22px;
+  background: linear-gradient(transparent, var(--bg));
+  pointer-events: none;
+}
+.cl-composer-actions span { color: var(--faint); }
+.cl-latest {
+  position: absolute;
+  right: 26px;
+  bottom: 112px;
+  z-index: 5;
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font: 600 10px/1.4 var(--sans);
+  box-shadow: 0 4px 14px rgb(30 28 24 / .08);
+  cursor: pointer;
+}
+.cl-main { position: relative; }
+
+/* Thread uses the full workspace; the rail stays at the right edge */
+.content-thread { max-width: none; }
+.cl-thread {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 30px;
+}
+.cl-line, .cl-head, .cl-composer {
+  max-width: 1200px;
+  margin-left: 0;
+  margin-right: auto;
+}
+@media (max-width: 1300px) {
+  .cl-thread { grid-template-columns: minmax(0, 1fr); }
+  .cl-rail { display: none; }
+}
+.cl-line, .cl-head, .cl-composer { max-width: 1400px; }
+@media (min-width: 1600px) { .cl-msg p, .cl-user-turn p { font-size: 14.5px; } }
+
+/* Chat and rail sit together; the workspace is left-aligned, not centered */
+.cl-thread {
+  grid-template-columns: minmax(0, 1180px) 300px;
+  justify-content: start;
+  gap: 20px;
+}
+.cl-line, .cl-head, .cl-composer { max-width: 1180px; }
+.cl-line, .cl-rail { scrollbar-width: none; }
+.cl-line::-webkit-scrollbar, .cl-rail::-webkit-scrollbar { display: none; }
+.filters { flex-wrap: nowrap; gap: 3px; }
+.filter { padding: 4px 6px; font-size: 9.5px; white-space: nowrap; }
+.cl-thread { height: calc(100vh - 178px); }
+html { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+html::-webkit-scrollbar { width: 8px; height: 8px; }
+html::-webkit-scrollbar-track { background: transparent; }
+html::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--line-strong) 70%, transparent); border-radius: 999px; }

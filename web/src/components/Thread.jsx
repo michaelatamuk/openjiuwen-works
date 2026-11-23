@@ -133,6 +133,7 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
   const formRef = useRef(null);
   const lineRef = useRef(null);
   const stickRef = useRef(true);
+  const [atLatest, setAtLatest] = useState(true);
   const messages = detail.thread || [];
   const canAsk = Boolean(ai?.available);
   const activeMode = canAsk ? mode : "note";
@@ -141,14 +142,26 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
 
   useEffect(() => {
     stickRef.current = true;
+    setAtLatest(true);
     const line = lineRef.current;
     if (line) line.scrollTop = line.scrollHeight;
   }, [detail.task.id]);
 
   useEffect(() => {
     const line = lineRef.current;
-    if (line && stickRef.current) line.scrollTop = line.scrollHeight;
+    if (line && stickRef.current) {
+      line.scrollTop = line.scrollHeight;
+      setAtLatest(true);
+    }
   }, [messages.length, streamed]);
+
+  function jumpToLatest() {
+    const line = lineRef.current;
+    if (!line) return;
+    line.scrollTop = line.scrollHeight;
+    stickRef.current = true;
+    setAtLatest(true);
+  }
 
   function threadAction(action) {
     if (action === "open-run") return onShowRun();
@@ -208,7 +221,9 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
           ref={lineRef}
           onScroll={(event) => {
             const node = event.currentTarget;
-            stickRef.current = node.scrollHeight - node.scrollTop - node.clientHeight < 80;
+            const distance = node.scrollHeight - node.scrollTop - node.clientHeight;
+            stickRef.current = distance < 80;
+            setAtLatest(distance < 80);
           }}
         >
           {messages.length ? messages.map((message) => {
@@ -247,6 +262,10 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
             <div className="cl-working"><span /> Mira is reading the proof…</div>
           ) : null}
         </div>
+
+        {!atLatest ? (
+          <button type="button" className="cl-latest" onClick={jumpToLatest}>Latest ?</button>
+        ) : null}
 
         {writable ? (
           <form className="cl-composer" ref={formRef} onSubmit={submit}>

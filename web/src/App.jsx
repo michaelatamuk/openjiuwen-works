@@ -284,7 +284,7 @@ export default function App() {
           ) : null}
         </div>
 
-        <section className="content">
+        <section className={`content ${view === "thread" ? "content-thread" : ""}`}>
           {!detail ? (
             <div className="empty">
               <img src="/mira.svg" alt="" width="132" height="132" />
