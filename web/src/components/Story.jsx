@@ -86,7 +86,6 @@ function lengthAtX(path, x) {
 }
 
 function Route({ stages, selected, onSelect, taskState, detail }) {
-  const pathRef = useRef(null);
   const progressRef = useRef(null);
   const [points, setPoints] = useState([]);
   const activeIndex = Math.max(0, stages.findIndex((stage) =>
@@ -100,12 +99,13 @@ function Route({ stages, selected, onSelect, taskState, detail }) {
     y: routeYAt(index, stages.length),
   }));
   const routeD = smoothPath(routePoints);
+  const baseD = smoothPath(routePoints.slice(1));
   const intakeD = routePoints.length > 1
     ? `M ${routePoints[0].x} ${routePoints[0].y} C ${routePoints[0].x + 60} ${routePoints[0].y - 45} ${routePoints[1].x - 55} ${routePoints[0].y + 18} ${routePoints[1].x} ${routePoints[1].y}`
     : "";
 
   useLayoutEffect(() => {
-    const path = pathRef.current;
+    const path = progressRef.current;
     if (!path || !stages.length) return;
     const length = path.getTotalLength();
     const next = stages.map((stage, index) => {
@@ -150,7 +150,7 @@ function Route({ stages, selected, onSelect, taskState, detail }) {
       <div className="route-scroll">
         <div className="route-wrap">
           <svg className="route-svg" viewBox="0 0 1200 380" preserveAspectRatio="none" aria-hidden="true">
-            <path ref={pathRef} className="route-base" d={routeD} />
+            <path className="route-base" d={baseD} />
             <path className="route-intake" d={intakeD} />
             <path ref={progressRef} className="route-progress" d={routeD} />
           </svg>
