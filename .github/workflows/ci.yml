@@ -59,7 +59,7 @@ jobs:
       - name: Live Docker verifier
         env:
           WORKS_TEST_DOCKER: "1"
-        run: uv run pytest tests/test_docker_live.py -q
+        run: uv run pytest tests/integration/test_docker_live.py -q
 
   benchmark:
     runs-on: ubuntu-latest
@@ -72,7 +72,7 @@ jobs:
       - run: uv python install 3.12
       - run: uv sync --frozen --extra dev
       - name: Budgets
-        run: uv run pytest tests/test_performance.py -q -m slow
+        run: uv run pytest tests/integration/test_performance.py -q -m slow
 
   security:
     runs-on: ubuntu-latest

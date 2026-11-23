@@ -103,7 +103,7 @@ markers = [
 source = ["src/works"]
 branch = true
 # This bridge imports the host agent-core runtime and is exercised in agent-core's own Python.
-omit = ["src/works/team_verify.py"]
+omit = ["src/works/application/team/verify.py"]
 
 [tool.coverage.report]
 skip_covered = true
@@ -113,9 +113,9 @@ fail_under = 80
 [tool.mutmut]
 source_paths = ["src/works"]
 only_mutate = [
-  "src/works/state.py",
-  "src/works/policy.py",
-  "src/works/queue.py",
+  "src/works/domain/state.py",
+  "src/works/domain/policy.py",
+  "src/works/adapters/queue/store.py",
 ]
 pytest_add_cli_args_test_selection = ["tests", "--ignore=tests/integration"]
 also_copy = ["flows", "fixtures"]

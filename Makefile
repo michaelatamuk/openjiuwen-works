@@ -24,7 +24,7 @@ cov:
 	uv run pytest tests -q -m "not slow" --cov=src/works --cov-report=term-missing
 
 bench:
-	uv run pytest tests/test_performance.py -q -m slow
+	uv run pytest tests/integration/test_performance.py -q -m slow
 
 security:
 	uv run bandit -q -r src -c pyproject.toml
