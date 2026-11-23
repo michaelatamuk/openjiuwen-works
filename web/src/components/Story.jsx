@@ -100,7 +100,9 @@ function Route({ stages, selected, onSelect, taskState, detail }) {
     y: routeYAt(index, stages.length),
   }));
   const routeD = smoothPath(routePoints);
-  const intakeD = smoothPath(routePoints.slice(0, 2));
+  const intakeD = routePoints.length > 1
+    ? `M ${routePoints[0].x} ${routePoints[0].y} C ${routePoints[0].x + 60} ${routePoints[0].y - 45} ${routePoints[1].x - 55} ${routePoints[0].y + 18} ${routePoints[1].x} ${routePoints[1].y}`
+    : "";
 
   useLayoutEffect(() => {
     const path = pathRef.current;
