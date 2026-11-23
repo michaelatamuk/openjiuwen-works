@@ -707,7 +707,7 @@ Internal only: nothing is published to the upstream fork until M2 is green.
     conversation measure is 900px; Run log reuses the same column with a compact chapter bar.
   - 2026-11-23: Session controls are unambiguous: a two-tab Conversation / Run log switch, a
     separate Ask AI group for Review and Commentary with busy states and a return to
-    Conversation, and a static All chapters toggle in Run log (no more Digest / Full log labels).
+    Conversation, and an All chapters checkbox in Run log (no more Digest / Full log labels).
   - 2026-11-23: the GUI moved to React/Vite (`web/`) with SSE `/api/events` for the queue and the
     open task; `Ask Mira` keeps its token stream. Thread is now a session pane with right-aligned
     user turns, left-aligned labelled AI answers, a docked composer and auto-follow. Story keeps the

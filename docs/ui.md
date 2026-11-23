@@ -59,8 +59,9 @@ The same evidence page serves two audiences without a second data source:
   at the right edge of the session: Decision, human Activity, Run, People and Technical. The
   conversation measure is 900px inside the full pane; the app bar, title and tabs stay on the shared
   content frame. **Run log** keeps the same column and header, and adds a compact chapter bar
-  (Plan / Build / Check / Release) with event counts; the current chapter opens, **All chapters**
-  expands everything, and **Back to current** returns. In `--write`, `Add context` appends a
+  (Plan / Build / Check / Release) with event counts; the current chapter opens, the **All
+  chapters** checkbox expands everything, and **Back to current** returns. In `--write`, `Add
+  context` appends a
   `thread.note`; `Ask Mira` asks a real `openjiuwen` model and streams the answer into `thread.agent`. Follow-up questions
   carry the last three recorded answers. Every model answer is labelled and advisory: it cannot
   approve, release, retry or change a gate. `Review` adds a labelled Inspector / Challenger /

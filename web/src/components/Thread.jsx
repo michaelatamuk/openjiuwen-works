@@ -541,14 +541,17 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
                     <span className="cl-chapter-chip-count">{phase.items.length}</span>
                   </button>
                 ))}
-                <button
-                  type="button"
-                  className={`cl-chapter-chip all ${showAll ? "active" : ""}`}
-                  aria-pressed={showAll}
-                  onClick={() => { setShowAll((value) => !value); setSelectedPhase(null); }}
-                >
+                <label className="cl-chapter-all">
+                  <input
+                    type="checkbox"
+                    checked={showAll}
+                    onChange={(event) => {
+                      setShowAll(event.target.checked);
+                      setSelectedPhase(null);
+                    }}
+                  />
                   All chapters
-                </button>
+                </label>
                 {selectedPhase ? (
                   <button type="button" className="cl-chapter-reset" onClick={() => setSelectedPhase(null)}>
                     Back to current

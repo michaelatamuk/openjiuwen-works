@@ -2445,3 +2445,14 @@ body { background: var(--bg); background-image: none; }
   .cl-thread .cl-rail { display: none; }
 }
 .cl-thread .cl-main { background: transparent; border: 0; border-radius: 0; box-shadow: none; }
+.cl-chapter-all {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font: 600 10.5px/1.5 var(--sans);
+  cursor: pointer;
+  user-select: none;
+}
+.cl-chapter-all input { width: 13px; height: 13px; margin: 0; accent-color: var(--violet); }
