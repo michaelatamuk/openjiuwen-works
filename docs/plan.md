@@ -689,6 +689,9 @@ Internal only: nothing is published to the upstream fork until M2 is green.
     composer behaves like a worklog conversation without inventing memory outside the record.
     Every model answer is labelled `AI answer` and AI text renders safe bold/code instead of raw
     markdown. A client that navigates away no longer turns a closed socket into a server traceback.
+  - 2026-11-23: New task opened as a Claude-style prompt with exact fields under Details. The local
+    draft reads a reference, product, repository and title from the text; the person still presses
+    Create task, and no run or gate starts.
 - [ ] **T1.25** Verification cost split: builder, challenger and verifier tokens/USD in `run.json`
   and the proof; verification share is reported next to the total. **S**
 - [x] **T1.26** PPMA memory backfill: `works memory backfill` reports already-finished runs from

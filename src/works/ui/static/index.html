@@ -80,41 +80,55 @@
       <div id="palette-results" class="palette-results"></div>
     </dialog>
 
-    <dialog id="report-dialog" aria-labelledby="report-title">
+    <dialog id="report-dialog" aria-labelledby="report-title" class="report-dialog">
       <h2 id="report-title">New task</h2>
       <form id="report-form">
-        <label>Product
-          <input name="product" value="openjiuwen" required list="product-list" />
-          <datalist id="product-list"></datalist>
-        </label>
-        <label>Repository <span class="small muted">(optional when the product is mapped)</span>
-          <input name="repo" placeholder="C:\path\to\repo" autocomplete="off" />
-        </label>
-        <label>Reference
-          <input name="ref" required placeholder="GH-123" autocomplete="off" />
-        </label>
-        <label>Title
-          <input name="title" required placeholder="What went wrong?" autocomplete="off" />
-        </label>
-        <div class="form-row">
-          <label>Source
-            <select name="kind">
-              <option value="manual">A person</option>
-              <option value="tracker">Tracker</option>
-              <option value="detector">Monitoring</option>
-            </select>
-          </label>
-          <label>Task kind
-            <select name="task_kind">
-              <option value="fix">Fix</option>
-              <option value="check-change">Check a change</option>
-            </select>
-          </label>
-          <label>Flow
-            <input name="flow" value="fix-issue" />
-          </label>
+        <div class="report-composer">
+          <label class="sr-only" for="report-prompt">What should Mira work on?</label>
+          <textarea id="report-prompt" name="prompt" rows="3" placeholder="What should Mira work on? Paste a bug, an issue link or a few lines."></textarea>
+          <div class="report-composer-actions">
+            <span class="muted small">Nothing is created or started until you press Create task.</span>
+            <button type="button" class="btn ghost" id="report-draft-btn">Draft fields</button>
+          </div>
         </div>
-        <p class="small muted">This only adds a queued task. It never starts a run or approves a gate.</p>
+        <div class="report-draft" id="report-draft" hidden></div>
+        <details class="report-details" id="report-details">
+          <summary>Details <span class="muted small">product, repository, reference, title</span></summary>
+          <div class="report-fields">
+            <label>Product
+              <input name="product" value="openjiuwen" required list="product-list" />
+              <datalist id="product-list"></datalist>
+            </label>
+            <label>Repository <span class="small muted">(optional when the product is mapped)</span>
+              <input name="repo" placeholder="C:\path\to\repo" autocomplete="off" />
+            </label>
+            <label>Reference
+              <input name="ref" placeholder="GH-123, PROJ-7 or owner/repo#12" autocomplete="off" />
+            </label>
+            <label>Title
+              <input name="title" placeholder="What went wrong?" autocomplete="off" />
+            </label>
+            <div class="form-row">
+              <label>Source
+                <select name="kind">
+                  <option value="manual">A person</option>
+                  <option value="tracker">Tracker</option>
+                  <option value="detector">Monitoring</option>
+                </select>
+              </label>
+              <label>Task kind
+                <select name="task_kind">
+                  <option value="fix">Fix</option>
+                  <option value="check-change">Check a change</option>
+                </select>
+              </label>
+              <label>Flow
+                <input name="flow" value="fix-issue" />
+              </label>
+            </div>
+          </div>
+        </details>
+        <p class="small muted">Draft fields reads only the text you typed. This adds one queued task; it never starts a run or approves a gate.</p>
         <div class="dialog-actions">
           <button type="button" class="btn ghost" id="report-cancel">Cancel</button>
           <button type="submit" class="btn">Create task</button>
@@ -252,6 +266,6 @@
     </dialog>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script src="/app.js?v=20261129"></script>
+    <script src="/app.js?v=20261203"></script>
   </body>
 </html>

@@ -2577,27 +2577,161 @@ async function submitIntake(event) {
   }
 }
 
+function parseReportPrompt(text) {
+  const clean = String(text || "").trim();
+  const draft = { ref: "", repo: "", product: "", title: "" };
+  if (!clean) return draft;
+  let match = clean.match(
+    /https?:\/\/github\.com\/([\w.-]+)\/([\w.-]+)\/(?:issues|pull)\/(\d+)/i,
+  );
+  if (match) {
+    draft.repo = `${match[1]}/${match[2]}`;
+    draft.ref = `${match[1]}/${match[2]}#${match[3]}`;
+  }
+  if (!draft.ref) {
+    match = clean.match(/\b([\w.-]+)\/([\w.-]+)#(\d+)\b/);
+    if (match) {
+      draft.repo = draft.repo || `${match[1]}/${match[2]}`;
+      draft.ref = `${match[1]}/${match[2]}#${match[3]}`;
+    }
+  }
+  if (!draft.ref) {
+    match = clean.match(/\b([A-Z][A-Z0-9]{1,9}-\d+)\b/);
+    if (match) draft.ref = match[1];
+  }
+  if (!draft.repo) {
+    match = clean.match(/\b[A-Za-z]:\\[^\s"'<>]+/);
+    if (match) draft.repo = match[0].replace(/[.,;)]+$/, "");
+  }
+  const escape = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const products = [
+    ...new Set([
+      ...[...document.querySelectorAll("#product-list option")].map((option) => option.value),
+      ...(state.tasks || []).map((task) => task.product),
+    ]),
+  ].filter(Boolean);
+  draft.product =
+    products.find((product) =>
+      new RegExp(`(^|[^\\w.-])${escape(product)}([^\\w.-]|$)`, "i").test(clean),
+    ) || "";
+  const firstLine = clean.split(/\r?\n/).map((line) => line.trim()).find(Boolean) || clean;
+  let title = firstLine
+    .replace(/\s+/g, " ")
+    .replace(/\s+\bin\b\s+[A-Za-z]:\\.*$/i, "")
+    .trim();
+  if (!title || /^https?:\/\/\S+$/i.test(title)) {
+    title = draft.ref ? `Fix ${draft.ref}` : "";
+  }
+  draft.title = title.slice(0, 140);
+  return draft;
+}
+
+function reportDraftRows(draft) {
+  return [
+    ["Reference", draft.ref],
+    ["Product", draft.product],
+    ["Repository", draft.repo],
+    ["Title", draft.title],
+  ].filter(([, value]) => value);
+}
+
+function renderReportDraft() {
+  const prompt = $("#report-prompt");
+  const node = $("#report-draft");
+  if (!prompt || !node) return;
+  const rows = reportDraftRows(parseReportPrompt(prompt.value));
+  if (!rows.length) {
+    node.hidden = true;
+    node.innerHTML = "";
+    return;
+  }
+  node.hidden = false;
+  node.innerHTML = `<div class="report-draft-head">
+      <span class="eyebrow">Draft from your text</span>
+      <button type="button" class="btn ghost" id="report-use-draft">Use draft</button>
+    </div>
+    <div class="report-draft-rows">${rows
+      .map(([label, value]) => `<span class="chip">${esc(label)}: ${esc(value)}</span>`)
+      .join("")}</div>`;
+  $("#report-use-draft").addEventListener("click", () =>
+    applyReportDraft(parseReportPrompt(prompt.value), { overwrite: true }),
+  );
+}
+
+function syncReportDraftFields() {
+  const form = $("#report-form");
+  const draft = parseReportPrompt($("#report-prompt").value);
+  for (const key of ["ref", "repo", "product", "title"]) {
+    const field = form.elements[key];
+    if (!field || field.dataset.touched === "1") continue;
+    if (draft[key]) field.value = draft[key];
+    else if (key === "ref" || key === "title") field.value = "";
+  }
+}
+
+function applyReportDraft(draft, { overwrite = false } = {}) {
+  const form = $("#report-form");
+  let filled = 0;
+  for (const key of ["ref", "repo", "product", "title"]) {
+    const field = form.elements[key];
+    if (!field || !draft[key]) continue;
+    if (!overwrite && field.value.trim()) continue;
+    field.value = draft[key];
+    filled += 1;
+  }
+  $("#report-details").open = true;
+  toast(filled ? "Draft applied to the fields." : "Nothing in the draft to apply.");
+}
+
+function applyReportFromText() {
+  const draft = parseReportPrompt($("#report-prompt").value);
+  if (!reportDraftRows(draft).length) {
+    toast("Type a reference, a product or a title first.");
+    return;
+  }
+  applyReportDraft(draft, { overwrite: true });
+}
+
 function openReport() {
   if (!state.writable) return;
   const dialog = $("#report-dialog");
   const form = $("#report-form");
+  form.reset();
+  $("#report-prompt").value = "";
+  $("#report-draft").hidden = true;
+  $("#report-draft").innerHTML = "";
+  $("#report-details").open = false;
+  for (const name of ["ref", "repo", "product", "title"]) {
+    delete form.elements[name].dataset.touched;
+  }
   form.elements.product.value = state.detail?.task?.product || "openjiuwen";
   form.elements.repo.value =
     state.detail?.task?.repo || localStorage.getItem("works.repo") || "";
   dialog.showModal();
-  form.elements.product.focus();
+  form.elements.prompt.focus();
 }
 
 async function submitReport(event) {
   event.preventDefault();
   const form = event.currentTarget;
   const button = form.querySelector("button[type='submit']");
+  syncReportDraftFields();
+  const field = (name) => String(form.elements[name].value || "").trim();
+  const ref = field("ref");
+  const title = field("title");
+  if (!ref || !title) {
+    $("#report-details").open = true;
+    if (!ref) form.elements.ref.focus();
+    else form.elements.title.focus();
+    toast("Add a reference and a title under Details.");
+    return;
+  }
   const data = new FormData(form);
   const body = {
-    repo: String(data.get("repo") || "").trim(),
-    product: String(data.get("product") || "").trim(),
-    ref: String(data.get("ref") || "").trim(),
-    title: String(data.get("title") || "").trim(),
+    repo: field("repo"),
+    product: field("product"),
+    ref,
+    title,
     kind: String(data.get("kind") || "manual"),
     task_kind: String(data.get("task_kind") || "fix"),
     flow: String(data.get("flow") || "fix-issue"),
@@ -2612,6 +2746,10 @@ async function submitReport(event) {
     if (body.repo) localStorage.setItem("works.repo", body.repo);
     $("#report-dialog").close();
     form.reset();
+    $("#report-prompt").value = "";
+    $("#report-draft").hidden = true;
+    $("#report-draft").innerHTML = "";
+    $("#report-details").open = false;
     await loadTasks();
     await loadProducts();
     selectTask(result.task.id);
@@ -2794,6 +2932,23 @@ function bind() {
   $("#report-cancel").addEventListener("click", () => $("#report-dialog").close());
   $("#intake-cancel").addEventListener("click", () => $("#intake-dialog").close());
   $("#report-form").addEventListener("submit", submitReport);
+  for (const name of ["ref", "repo", "product", "title"]) {
+    const field = $("#report-form").elements[name];
+    field.addEventListener("input", () => {
+      field.dataset.touched = "1";
+    });
+  }
+  $("#report-prompt").addEventListener("input", renderReportDraft);
+  $("#report-details").addEventListener("toggle", () => {
+    if ($("#report-details").open) syncReportDraftFields();
+  });
+  $("#report-draft-btn").addEventListener("click", applyReportFromText);
+  $("#report-prompt").addEventListener("keydown", (event) => {
+    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+      event.preventDefault();
+      $("#report-form").requestSubmit();
+    }
+  });
   $("#intake-form").addEventListener("submit", submitIntake);
   $("#intake-form").elements.source.addEventListener("change", toggleIntakeSource);
   $("#run-close").addEventListener("click", () => $("#run-dialog").close());

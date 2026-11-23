@@ -59,6 +59,9 @@ def test_static_page_and_assets(paths) -> None:
         assert "LOCAL FACTORY" in body
         assert "Nothing selected" not in body
         assert "Start with a report" in body
+        assert 'id="report-prompt"' in body
+        assert "Draft fields" in body
+        assert 'id="report-details"' in body
         status, script = get(base, "/app.js")
         assert status == 200
         assert "boot()" in script

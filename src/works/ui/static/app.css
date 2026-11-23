@@ -712,6 +712,21 @@ dialog dl { display: grid; grid-template-columns: 120px 1fr; gap: 8px 12px; marg
 dialog dt { color: var(--faint); }
 dialog dd { margin: 0; }
 
+/* New task: a Claude-style prompt with exact fields one click away */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.report-dialog { width: min(620px, calc(100vw - 40px)); }
+.report-composer { border: 1px solid var(--line-strong); border-radius: 14px; background: var(--panel-2); padding: 12px; margin-bottom: 10px; }
+.report-composer textarea { width: 100%; min-height: 84px; resize: vertical; border: 0; outline: none; background: transparent; color: var(--text); font: 13px/1.6 var(--sans); }
+.report-composer-actions { display: flex; justify-content: space-between; align-items: center; gap: 10px; border-top: 1px solid var(--line); padding-top: 8px; }
+.report-draft { border: 1px dashed #c4b5fd; background: linear-gradient(180deg, var(--panel), var(--violet-soft)); border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; }
+.report-draft-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
+.report-draft .eyebrow { font: 700 9px/1.3 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--violet-text); }
+.report-draft-rows { display: flex; flex-wrap: wrap; gap: 4px; }
+.report-draft .chip { font-size: 10px; }
+.report-details { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 4px; }
+.report-details summary { cursor: pointer; font: 700 10px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.report-fields { padding-top: 10px; }
+
 [data-density="compact"] .task { padding: 8px 9px; }
 [data-density="compact"] .metric { padding: 11px 12px; }
 [data-density="compact"] .card-body { padding: 11px 13px; }

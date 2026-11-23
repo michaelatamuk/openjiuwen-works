@@ -75,7 +75,8 @@ Report from the GUI (opt-in writes, queued only):
 uv run works --home /path/printed/by/demo ui --write
 ```
 
-The `+ Report a bug` button creates a queued task. It never starts a run and never approves a gate.
+The `+ New task` prompt creates a queued task; exact fields sit under Details. It never starts a
+run and never approves a gate.
 
 The original recorded M0 demo:
 

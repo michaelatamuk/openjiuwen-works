@@ -106,9 +106,13 @@ Times have one source: the hero, the header and the route all read the reported 
 The server binds to `127.0.0.1` and serves GET/HEAD. A POST returns `405` in the default mode; it
 reads `queue/` and `runs/` and never writes them.
 
-`works ui --write` opens the first write path: a **+ Report a bug** button in the task list context.
-It creates only a `queued` task through `POST /api/tasks` (local-only, `X-Works-Write`, repo/.git,
-reference and title validation), never starts a run and never approves a gate. The same mode lets
+`works ui --write` opens the first write path: a **+ New task** button in the task list context.
+It opens a Claude-style prompt ("What should Mira work on?") with the exact fields under
+**Details**. The typed text is parsed locally for a reference, product, repository and title;
+untouched fields follow the draft and stop following it when a person edits one. No model is
+called and nothing is created by itself. It creates only a `queued`
+task through `POST /api/tasks` (local-only, `X-Works-Write`, repo/.git, reference and title
+validation), never starts a run and never approves a gate. The same mode lets
 the Evidence readiness panel run `works readiness` through a local POST.
 
 ## Limits
