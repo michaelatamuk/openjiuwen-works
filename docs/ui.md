@@ -12,6 +12,21 @@ works --home C:\path\to\workspace ui --port 8765 --write
 
 Global `--home` comes before the subcommand. Use `--no-open` to avoid launching a browser.
 
+## React/Vite and live updates
+
+The interface is a React/Vite app in `web/`; `works ui` serves its built assets from
+`src/works/ui/static/dist`. The queue and open task subscribe to `GET /api/events` (SSE), so a
+new run, event, gate, note or answer appears without a reload; the Settings fallback refresh is
+used only if the stream drops. `Ask Mira` keeps its own `POST /api/ask/stream` token stream.
+
+To rebuild after a UI change:
+
+```bash
+cd web
+npm ci
+npm run build
+```
+
 ## Two readings, one proof
 
 The same evidence page serves two audiences without a second data source:
@@ -30,19 +45,22 @@ The same evidence page serves two audiences without a second data source:
   and a filtered timeline.
 - **Release**: the operational answer — packet and blockers, gate 2, delivery (branch, commit, PR/MR,
   tracker comment), confirmation (pass/fail, target, output SHA), team verdict, verifier isolation,
-  LAIX shadow, product map and detector alerts. In `--write`, the same view can release, deliver,
-  confirm and verify.
-- **Thread**: the worklog. Real events become role-labelled messages (Person, Builder, Verifier,
-  Challenger, Team, Delivery, Confirmation, Mira) with structured cards and a right rail for task,
-  factory, people, agents, deliverables, checks, cost and artifacts. In `--write` it has two inputs:
-  **Add context** appends a `thread.note`; **Ask Mira** asks a real `openjiuwen` model about the
-  recorded run. The answer streams token-by-token, is stored as `thread.agent`, and is advisory:
-  it cannot approve, release, retry or change anything. Follow-up questions carry the last three
-  recorded answers as history. Every model answer carries an `AI answer` badge; commentary and
-  discussion carry their own labels. Inline plan/release questions carry
-  recommended actions and `Open run`; `Generate commentary` adds labelled Builder / Inspector /
-  Reporter messages, and `Team discussion` adds labelled Inspector / Challenger / Reporter
-  messages with a stance. Both are model output: they are advisory and cannot open a gate.
+  LAIX shadow and run history with a two-run comparison. In `--write`, the same view can release,
+  deliver, confirm and verify.
+- **Thread**: the session pane. Real events become role-labelled turns (Person, Builder, Verifier,
+  Challenger, Team, Delivery, Confirmation, Mira). User questions sit on the right; Mira answers
+  on the left with an `AI answer` badge. The transcript auto-follows the newest event until the
+  person scrolls up, and the composer is docked inside the pane, not floating over the log. In
+  `--write` it has two inputs: **Add context** appends a `thread.note`; **Ask Mira** asks a real
+  `openjiuwen` model about the recorded run. The answer streams token-by-token, is stored as
+  `thread.agent`, and is advisory: it cannot approve, release, retry or change anything. Follow-up
+  questions carry the last three recorded answers as history. Every model answer carries an
+  `AI answer` badge; commentary and discussion carry their own labels. Inline plan/release
+  questions become flat rows with recommended actions and `Open run`; `Generate commentary` adds
+  labelled Builder / Inspector / Reporter messages, and `Team discussion` adds labelled Inspector /
+  Challenger / Reporter messages with a stance. Both are model output: advisory and unable to open
+  a gate. The context rail shows Task, Run and People; agents, deliverables, checks and cost stay
+  behind one disclosure.
 - **Factory**: a header action opens metrics and the ledger. The Release view carries the run history
   and a two-run comparison; Evidence offers proof/run/release/delivery/confirmation downloads.
   Artifacts open in a lightbox; a before/after pair has a drag slider; timeline rows open their raw
@@ -50,13 +68,13 @@ The same evidence page serves two audiences without a second data source:
 
 There is no separate Summary tab: the human answer lives in the Story hero and the receipt strip.
 Both views are computed from the same proof, so they cannot disagree. Deep links carry the view:
-`#/task/<id>/story`, `#/task/<id>/evidence`, `#/task/<id>/release` and `#/task/<id>/story?at=5`.
+`#/task/<id>/story`, `#/task/<id>/evidence`, `#/task/<id>/release`, `#/task/<id>/thread` and `#/task/<id>/story?at=5`.
 
 A blocked task explains the stop in place: the failed check, why it matters, what was not released
 and who decides next. “See what failed” scrolls to that rail. The same rule holds in the hero: no
 green badge and no “fixed” claim without a passing proof.
 
-`C` toggles Present mode; `Esc` leaves it. The preview opens with **no task selected**: the queue is
+`C` toggles Present mode; `Esc` leaves it. `/` focuses search, `Ctrl K` opens the palette and `j`/`k` move through the queue. The preview opens with **no task selected**: the queue is
 visible and Mira waits in the main empty state. Selecting a report opens its Story; the breadcrumb
 returns to the queue.
 
@@ -91,12 +109,13 @@ without a failure or a finished run. The runs are local fixtures, not upstream f
 
 ## Design and interaction
 
-Dark and light themes, comfortable and compact density, one violet accent, borders instead of
-decorative gradients, visible focus, text labels for every status, `prefers-reduced-motion`, and
-Mira in the empty state. Below 720 px the route becomes a vertical list with the same states and
-per-milestone screen-reader names; the queue moves below the Story so the task is visible first.
-Replay updates the route and receipt in place. `Ctrl+K` opens a command palette; `/` focuses search;
-`t` toggles the theme; `c` toggles Present mode; `?` shows the keyboard help.
+Dark and light themes, comfortable and compact density, a warm neutral canvas with a white session
+pane and one coral accent, subtle depth instead of stacked borders, visible focus, text labels for
+every status, `prefers-reduced-motion`, and Mira in the empty state. Below 720 px the route becomes
+a vertical list with the same states and per-milestone screen-reader names; the queue moves below
+the Story so the task is visible first. Replay updates the route and receipt in place.
+`Ctrl K` opens a command palette; `/` focuses search; `j`/`k` move through the queue; `t` toggles
+the theme; `c` toggles Present mode; `?` shows the keyboard help.
 
 Times have one source: the hero, the header and the route all read the reported time from the same
 `task.created` event, so the page cannot show two different “Reported” moments.

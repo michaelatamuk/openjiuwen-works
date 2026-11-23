@@ -78,6 +78,15 @@ uv run works --home /path/printed/by/demo ui --write
 The `+ New task` prompt creates a queued task; exact fields sit under Details. It never starts a
 run and never approves a gate.
 
+The GUI is a React/Vite app in [`web/`](web/). The built assets in `src/works/ui/static/dist` are
+committed, so `works ui` needs no Node at runtime. After changing the UI:
+
+```bash
+cd web
+npm ci
+npm run build
+```
+
 The original recorded M0 demo:
 
 ```powershell
@@ -123,7 +132,7 @@ uv run works memory recall --ppma http://127.0.0.1:8766
 | **Loop** | Queue, policy, disposable worktree, reproduce, build, check, proof and ledger work end to end. |
 | **Live builder** | Real `openjiuwen` Claude Code harness on an Anthropic-compatible endpoint; model, tokens, USD and prompt hash are recorded. |
 | **Proof** | Computed evidence page and immutable ledger row; P0/P1 verdict, policy, risk, cost, diff and residual gaps. |
-| **GUI** | Story is the default human reading; Evidence is one click away; a Release view carries the packet, delivery, confirmation, run history and team verdict; a Thread worklog adds inline questions, a real-model `Ask Mira`, labelled AI commentary and an advisory team discussion. Factory shows metrics and the ledger; artifacts open in a lightbox; settings control theme, density and polling. |
+| **GUI** | A React/Vite app served by `works ui`: Story with the wave route, Evidence, Release and a Claude-style Thread session pane. SSE (`/api/events`) updates the queue and worklog without polling; `Ask Mira` streams over `/api/ask/stream`. The Thread has user turns, labelled AI answers, inline gates, a compact docked composer and a quiet context rail. Factory shows metrics and the ledger; artifacts open in a lightbox; settings control theme, density and fallback refresh. |
 | **Readiness** | `works readiness` runs lint, format, types, fast tests, product verify, architecture and import boundaries; the report carries the internal import graph and fails on cycles, and a red gate blocks live runs. |
 | **Feature map** | `features/<product>.yaml`; Evidence shows covered, failed and not-covered features. |
 | **Memory** | When configured, finished runs are reported to PPMA; older runs can be backfilled; `works memory recall` reads statements. |

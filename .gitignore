@@ -30,3 +30,9 @@ Thumbs.db
 .DS_Store
 
 logs/
+
+# React/Vite UI
+node_modules/
+web/node_modules/
+!src/works/ui/static/dist/
+!src/works/ui/static/dist/**

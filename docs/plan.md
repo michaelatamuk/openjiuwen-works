@@ -692,6 +692,10 @@ Internal only: nothing is published to the upstream fork until M2 is green.
   - 2026-11-23: New task opened as a Claude-style prompt with exact fields under Details. The local
     draft reads a reference, product, repository and title from the text; the person still presses
     Create task, and no run or gate starts.
+  - 2026-11-23: the GUI moved to React/Vite (`web/`) with SSE `/api/events` for the queue and the
+    open task; `Ask Mira` keeps its token stream. Thread is now a session pane with right-aligned
+    user turns, left-aligned labelled AI answers, a docked composer and auto-follow. Story keeps the
+    wave route; `j`/`k`, `t`, `?`, `c` and `?at=` deep links are ported.
 - [ ] **T1.25** Verification cost split: builder, challenger and verifier tokens/USD in `run.json`
   and the proof; verification share is reported next to the total. **S**
 - [x] **T1.26** PPMA memory backfill: `works memory backfill` reports already-finished runs from

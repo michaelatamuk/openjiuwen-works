@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import json
 import logging
+import queue as thread_queue
 import threading
+import time
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -29,6 +31,74 @@ STATIC = {
     "mira.svg": "mira.svg",
 }
 ASSETS = Path(__file__).parent / "static"
+DIST = ASSETS / "dist"
+
+
+class LiveState:
+    """Watch the workspace on disk and wake every open browser when it changes."""
+
+    def __init__(self, paths: WorksPaths, *, interval: float = 0.6) -> None:
+        self._paths = paths
+        self._interval = interval
+        self._subscribers: set[thread_queue.Queue[dict[str, Any]]] = set()
+        self._lock = threading.Lock()
+        self._stop = threading.Event()
+        self._thread: threading.Thread | None = None
+        self._signature: tuple[tuple[str, int, int], ...] | None = None
+
+    def start(self) -> None:
+        if self._thread is not None:
+            return
+        self._signature = self._snapshot()
+        self._thread = threading.Thread(target=self._loop, name="works-ui-events", daemon=True)
+        self._thread.start()
+
+    def stop(self) -> None:
+        self._stop.set()
+        thread = self._thread
+        if thread is not None:
+            thread.join(timeout=2)
+        self._thread = None
+
+    def subscribe(self) -> thread_queue.Queue[dict[str, Any]]:
+        channel: thread_queue.Queue[dict[str, Any]] = thread_queue.Queue(maxsize=64)
+        with self._lock:
+            self._subscribers.add(channel)
+        return channel
+
+    def unsubscribe(self, channel: thread_queue.Queue[dict[str, Any]]) -> None:
+        with self._lock:
+            self._subscribers.discard(channel)
+
+    def _snapshot(self) -> tuple[tuple[str, int, int], ...]:
+        files = [self._paths.ledger]
+        files.extend(self._paths.queue.glob("*/events.jsonl"))
+        files.extend(self._paths.queue.glob("*/task.json"))
+        files.extend(self._paths.runs.glob("*/*.json"))
+        files.extend(self._paths.runs.glob("*/artifacts/*"))
+        parts: list[tuple[str, int, int]] = []
+        for path in files:
+            try:
+                stat = path.stat()
+            except OSError:
+                continue
+            parts.append((str(path), stat.st_mtime_ns, stat.st_size))
+        return tuple(parts)
+
+    def _loop(self) -> None:
+        while not self._stop.wait(self._interval):
+            signature = self._snapshot()
+            if signature == self._signature:
+                continue
+            self._signature = signature
+            payload = {"type": "changed", "at": time.time()}
+            with self._lock:
+                subscribers = list(self._subscribers)
+            for channel in subscribers:
+                try:
+                    channel.put_nowait(payload)
+                except thread_queue.Full:
+                    continue
 
 
 def _read_json(path: Path) -> Any:
@@ -1237,6 +1307,13 @@ class WorksHTTPServer(ThreadingHTTPServer):
     paths: WorksPaths
     writable: bool = False
     write_lock: threading.Lock
+    live: LiveState
+
+    def server_close(self) -> None:
+        live = getattr(self, "live", None)
+        if live is not None:
+            live.stop()
+        super().server_close()
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -1256,6 +1333,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
+        if parsed.path == "/api/events":
+            self._events()
+            return
         if parsed.path.startswith("/api/"):
             self._api(parsed.path, parse_qs(parsed.query))
         else:
@@ -1733,8 +1813,38 @@ class Handler(BaseHTTPRequestHandler):
             headers={"Content-Disposition": f'inline; filename="{target.name}"'},
         )
 
+    def _events(self) -> None:
+        server = cast(WorksHTTPServer, self.server)
+        channel = server.live.subscribe()
+        try:
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "text/event-stream; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Connection", "keep-alive")
+            self.end_headers()
+            self.wfile.write(b": connected\n\n")
+            self.wfile.flush()
+            while True:
+                try:
+                    payload = channel.get(timeout=15)
+                except thread_queue.Empty:
+                    self.wfile.write(b": ping\n\n")
+                else:
+                    body = json.dumps(payload, ensure_ascii=False, default=str)
+                    self.wfile.write(f"data: {body}\n\n".encode())
+                self.wfile.flush()
+        except (BrokenPipeError, ConnectionAbortedError, ConnectionResetError):
+            self.close_connection = True
+        finally:
+            server.live.unsubscribe(channel)
+
     def _static(self, *, head: bool = False) -> None:
         name = urlparse(self.path).path.lstrip("/")
+        dist = _dist_asset(name)
+        if dist is not None:
+            body = dist.read_bytes()
+            self._respond(HTTPStatus.OK, _content_type(dist), body, head=head)
+            return
         if name not in STATIC:
             self._json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "not found"})
             return
@@ -1776,6 +1886,20 @@ class Handler(BaseHTTPRequestHandler):
         LOG.debug(format, *args)
 
 
+def _dist_asset(name: str) -> Path | None:
+    if not DIST.is_dir():
+        return None
+    if name in ("", "index.html"):
+        target = DIST / "index.html"
+    elif name.startswith("assets/"):
+        target = (DIST / name).resolve()
+    else:
+        return None
+    if DIST.resolve() not in target.parents and target != DIST / "index.html":
+        return None
+    return target if target.is_file() else None
+
+
 def _content_type(path: Path) -> str:
     return {
         ".html": "text/html; charset=utf-8",
@@ -1786,6 +1910,9 @@ def _content_type(path: Path) -> str:
         ".jpg": "image/jpeg",
         ".jpeg": "image/jpeg",
         ".webp": "image/webp",
+        ".ico": "image/x-icon",
+        ".woff2": "font/woff2",
+        ".map": "application/json",
         ".mp4": "video/mp4",
         ".webm": "video/webm",
         ".json": "application/json",
@@ -1806,4 +1933,6 @@ def serve(
     server.paths = paths
     server.writable = write
     server.write_lock = threading.Lock()
+    server.live = LiveState(paths)
+    server.live.start()
     return server

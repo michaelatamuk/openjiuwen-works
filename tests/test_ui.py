@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import threading
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -58,10 +59,13 @@ def test_static_page_and_assets(paths) -> None:
         assert "openJiuwen Works" in body
         assert "LOCAL FACTORY" in body
         assert "Nothing selected" not in body
-        assert "Start with a report" in body
-        assert 'id="report-prompt"' in body
-        assert "Draft fields" in body
-        assert 'id="report-details"' in body
+        assert 'id="root"' in body
+        assert "/assets/" in body
+        bundle = re.search(r'src="(/assets/[^"]+\.js)"', body)
+        assert bundle is not None
+        status, asset = get(base, bundle.group(1))
+        assert status == 200
+        assert len(asset) > 1000
         status, script = get(base, "/app.js")
         assert status == 200
         assert "boot()" in script
@@ -697,3 +701,31 @@ def test_discussion_action_records_advisory_messages(paths, submit, monkeypatch)
     events = [event for event in Queue(paths).events(task.id) if event.type == "thread.discussion"]
     assert len(events) == 2
     assert events[0].data["generated"] is True
+
+
+def test_event_stream_announces_a_change(paths, submit) -> None:
+    import http.client
+
+    task = submit()
+    with running(paths, write=True) as base:
+        host, port = base.removeprefix("http://").split(":")
+        connection = http.client.HTTPConnection(host, int(port), timeout=10)
+        connection.request("GET", "/api/events")
+        response = connection.getresponse()
+        assert response.status == 200
+        assert "text/event-stream" in response.getheader("Content-Type", "")
+        assert b":" in response.fp.readline()
+        status, body = post(
+            base,
+            "/api/actions",
+            {"action": "add-context", "task_id": task.id, "message": "stream me"},
+        )
+        assert status == 200, body
+        changed = False
+        for _ in range(12):
+            line = response.fp.readline()
+            if b'"type": "changed"' in line:
+                changed = True
+                break
+        connection.close()
+        assert changed
