@@ -101,6 +101,19 @@ export function Release({ detail, onAction, onShowRuns, onShowRun, onToast }) {
           )}
         </Card>
 
+        <Card title="Deployment" actions={detail.deployment ? <Pill tone={detail.deployment.status === "deployed" ? "green" : detail.deployment.status === "failed" ? "red" : "amber"}>{detail.deployment.status}</Pill> : null}>
+          {detail.deployment ? (
+            <dl className="kv">
+              <dt>Environment</dt><dd>{detail.deployment.environment || "—"}</dd>
+              <dt>Commit</dt><dd className="mono">{shortSha(detail.deployment.commit)}</dd>
+              <dt>Status</dt><dd>{detail.deployment.status}</dd>
+              {detail.deployment.output_tail ? <><dt>Output</dt><dd className="mono">{String(detail.deployment.output_tail).slice(-240)}</dd></> : null}
+            </dl>
+          ) : (
+            <p className="muted small">No deployment recorded. Run `works deploy &lt;task-id&gt;` with the product command.</p>
+          )}
+        </Card>
+
         <Card title="Confirmation" actions={detail.confirmation ? <Pill tone={detail.confirmation.ok ? "green" : "red"}>{detail.confirmation.ok ? "pass" : "fail"}</Pill> : null}>
           {detail.confirmation ? (
             <dl className="kv">

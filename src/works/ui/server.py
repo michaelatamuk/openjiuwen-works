@@ -1249,6 +1249,7 @@ def _export(paths: WorksPaths, task_id: str, kind: str) -> tuple[Path, str] | No
         "run.json": run_dir / "run.json",
         "release.json": run_dir / "release.json",
         "delivery.json": run_dir / "delivery.json",
+        "deployment.json": run_dir / "deployment.json",
         "confirmation.json": run_dir / "confirmation.json",
     }
     target = names.get(kind)
@@ -1289,6 +1290,7 @@ def _task_detail(queue: Queue, paths: WorksPaths, task_id: str) -> dict[str, Any
     except Exception as exc:  # a broken packet is shown as a blocker, not a 500
         release = {"ready": False, "released": False, "blockers": [str(exc)]}
     delivery = _read_json(run_dir / "delivery.json") if run_dir is not None else None
+    deployment = _read_json(run_dir / "deployment.json") if run_dir is not None else None
     confirmation = _read_json(run_dir / "confirmation.json") if run_dir is not None else None
     team_events = [event.data for event in events if event.type == "team.verified"]
     laix = [event.data for event in events if event.type == "decision.shadow"][-10:]
@@ -1316,6 +1318,7 @@ def _task_detail(queue: Queue, paths: WorksPaths, task_id: str) -> dict[str, Any
         "features": feature_map(Path(task.repo), evidence),
         "release": release,
         "delivery": delivery,
+        "deployment": deployment,
         "confirmation": confirmation,
         "team": team_payload,
         "laix": laix,

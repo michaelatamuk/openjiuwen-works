@@ -44,9 +44,9 @@ The same evidence page serves two audiences without a second data source:
   scenarios, risk, decision, commands, diff, policy, residual risk, verifier, team, inline artifacts
   and a filtered timeline.
 - **Release**: the operational answer — packet and blockers, gate 2, delivery (branch, commit, PR/MR,
-  tracker comment), confirmation (pass/fail, target, output SHA), team verdict, verifier isolation,
-  LAIX shadow and run history with a two-run comparison. In `--write`, the same view can release,
-  deliver, confirm and verify.
+  tracker comment), deployment status when recorded, confirmation (pass/fail, target, output SHA),
+  team verdict, verifier isolation, LAIX shadow and run history with a two-run comparison. In
+  `--write`, the same view can release, deliver, confirm and verify.
 - **Session** (the Thread worklog, deep link `/thread`): the whole run reads as one
   **conversation**. It opens with the person's report on the right, then the pipeline continues on
   the left — reproduction, plan, build, check and release — with a quiet phase divider before each
