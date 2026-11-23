@@ -11,6 +11,7 @@ from works.harness.openjiuwen import (
     default_key,
     is_artifact,
 )
+from works.harness.providers import availability, create_harness, validate_provider
 
 
 def request(title: str = "add subtracts") -> ProposalRequest:
@@ -73,6 +74,50 @@ def test_the_verifier_can_use_a_separate_provider() -> None:
     )
     assert same_key.provider_split is False
     assert same_key.credential_split is False
+
+
+def test_the_builder_provider_can_be_selected(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("WORKS_HARNESS_PROVIDER", "dsh")
+    monkeypatch.setenv("WORKS_VERIFIER_HARNESS_PROVIDER", "codex")
+    live = LiveHarness(api_key="x", base_url="https://api.deepseek.com/anthropic")
+
+    assert live.harness_provider == "dsh"
+    assert live.verifier_harness_provider == "codex"
+
+
+def test_an_unknown_provider_is_refused(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("WORKS_HARNESS_PROVIDER", "made-up")
+
+    with pytest.raises(ConfigError, match="unknown harness provider"):
+        validate_provider("made-up")
+
+
+def test_optional_providers_fail_closed_without_their_sdk(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "works.harness.providers.availability",
+        lambda: {"claudecode": True, "dsh": False, "codex": False},
+    )
+
+    with pytest.raises(ConfigError, match="DeepSeek Harness SDK"):
+        create_harness(
+            "dsh",
+            __import__("pathlib").Path("."),
+            model="deepseek-chat",
+            base_url="https://api.deepseek.com/anthropic",
+            api_key="x",
+        )
+    with pytest.raises(ConfigError, match="Codex SDK"):
+        create_harness(
+            "codex",
+            __import__("pathlib").Path("."),
+            model="gpt-5",
+            base_url="https://api.openai.com",
+            api_key="x",
+        )
+
+
+def test_availability_lists_every_provider() -> None:
+    assert set(availability()) == {"claudecode", "dsh", "codex"}
 
 
 def test_artifacts_are_not_edits() -> None:

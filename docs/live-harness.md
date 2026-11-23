@@ -1,7 +1,8 @@
 # Live harness
 
-`works run --live` uses the real builder: `openjiuwen`'s Claude Code harness, the native
-`claude.exe` bundled with `claude-agent-sdk`, and an Anthropic-compatible model endpoint.
+`works run --live` uses the real builder through an `openjiuwen` harness. The default provider is
+Claude Code on an Anthropic-compatible endpoint; `dsh` (DeepSeek Harness) and `codex` are selectable
+when their SDKs are installed. The provider is recorded separately from the model provider.
 
 ## Setup
 
@@ -18,9 +19,19 @@ Environment:
 | `WORKS_MODEL` | `deepseek-chat` | model id recorded per run |
 | `WORKS_MODEL_BASE` | `https://api.deepseek.com/anthropic` | Anthropic-compatible endpoint |
 | `CLAUDE_CLI` | SDK-bundled `claude.exe` | must be an `.exe`; `.cmd`/`.bat` are refused |
+| `WORKS_HARNESS_PROVIDER` | `claudecode` | `claudecode`, `dsh` or `codex` |
+| `WORKS_VERIFIER_HARNESS_PROVIDER` | builder provider | separate challenger provider |
+| `WORKS_DSH_HOME` | required for `dsh` | DeepSeek Harness home; never falls back to `~/.dsh` |
+| `WORKS_DSH_PROVIDER` | `deepseek-official` | DSH model provider label |
+| `WORKS_CODEX_PROVIDER` | `deepseek` | Codex model provider label |
+
+`dsh` needs the `deepseek_harness` SDK; `codex` needs `openai_codex` or a Codex CLI. A missing SDK is
+a configuration error, never a fake build. The `native` DeepAgent provider is not wired into Works
+yet because it needs a full `DeepAgentSpec` (tools, workspace, rails), not just a model key.
 
 `ANTHROPIC_BASE_URL` in the shell may point elsewhere; the harness injects the explicit
-`--model-base` through the CLI settings layer, so the run is reproducible.
+`--model-base` through the CLI settings layer, so the run is reproducible. The variable name is a
+Claude Code compatibility name: the endpoint and model decide the actual provider.
 
 ## Run
 

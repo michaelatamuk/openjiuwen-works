@@ -24,6 +24,7 @@ from ..gitops import GitRepo
 from ..prompts import DEFAULT_PROMPT, Prompt, load_prompt
 from ..records import Challenge
 from .base import Proposal, ProposalRequest
+from .providers import create_harness, selected_provider, validate_provider
 
 DEFAULT_MODEL = "deepseek-chat"
 DEFAULT_BASE = "https://api.deepseek.com/anthropic"
@@ -79,7 +80,7 @@ def builder_prompt(request: ProposalRequest, prompt: Prompt | None = None) -> st
 class LiveHarness:
     """Run one real agent turn per proposal. No fallback to a fake result."""
 
-    name = "openjiuwen-claudecode"
+    name = "openjiuwen"
 
     def __init__(
         self,
@@ -90,6 +91,8 @@ class LiveHarness:
         verifier_model: str | None = None,
         verifier_base_url: str | None = None,
         verifier_api_key: str | None = None,
+        harness_provider: str | None = None,
+        verifier_harness_provider: str | None = None,
         cli_path: str | None = None,
         max_turns: int = 16,
         timeout_s: int = 600,
@@ -108,6 +111,15 @@ class LiveHarness:
         )
         self._verifier_key = (
             verifier_api_key or os.environ.get("WORKS_VERIFIER_API_KEY") or self._key
+        )
+        self._harness_provider = validate_provider(
+            harness_provider or selected_provider(), env_name="WORKS_HARNESS_PROVIDER"
+        )
+        self._verifier_harness_provider = validate_provider(
+            verifier_harness_provider
+            or os.environ.get("WORKS_VERIFIER_HARNESS_PROVIDER")
+            or self._harness_provider,
+            env_name="WORKS_VERIFIER_HARNESS_PROVIDER",
         )
         self._cli = cli_path if cli_path is not None else default_cli()
         self._max_turns = max_turns
@@ -129,6 +141,14 @@ class LiveHarness:
         return "deepseek" if "deepseek" in self._verifier_base else "anthropic"
 
     @property
+    def harness_provider(self) -> str:
+        return self._harness_provider
+
+    @property
+    def verifier_harness_provider(self) -> str:
+        return self._verifier_harness_provider
+
+    @property
     def provider_split(self) -> bool:
         return self.verifier_provider != self.provider
 
@@ -147,28 +167,20 @@ class LiveHarness:
         permission_mode: str = "bypassPermissions",
         verifier: bool = False,
     ) -> Any:
-        try:
-            from openjiuwen.harness_providers.claudecode import (
-                ClaudeCodeHarness,
-                ClaudeCodeHarnessConfig,
-                ClaudeModelConfig,
-            )
-        except ImportError as exc:
-            raise ConfigError(
-                "the live harness needs openjiuwen with the claude extra and claude-agent-sdk"
-            ) from exc
+        provider = self._verifier_harness_provider if verifier else self._harness_provider
         model = self._verifier_model if verifier else self._model
         base = self._verifier_base if verifier else self._base
         key = self._verifier_key if verifier else self._key
-        config = ClaudeCodeHarnessConfig(
-            cwd=str(worktree),
-            add_dirs=(str(worktree),),
+        return create_harness(
+            provider,
+            worktree,
+            model=model,
+            base_url=base,
+            api_key=key,
             cli_path=self._cli,
-            model=ClaudeModelConfig(model=model, api_base=base, api_key=key),
             permission_mode=permission_mode,
             max_turns=self._max_turns,
         )
-        return ClaudeCodeHarness(config)
 
     async def propose(self, request: ProposalRequest) -> Proposal:
         if self._factory is not None:

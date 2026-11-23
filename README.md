@@ -134,7 +134,7 @@ uv run works memory recall --ppma http://127.0.0.1:8766
 | Area | State |
 |---|---|
 | **Loop** | Queue, policy, disposable worktree, reproduce, build, check, proof and ledger work end to end. |
-| **Live builder** | Real `openjiuwen` Claude Code harness on an Anthropic-compatible endpoint; model, tokens, USD and prompt hash are recorded. |
+| **Live builder** | Real `openjiuwen` harness on an Anthropic-compatible endpoint (default Claude Code; `dsh`/`codex` selectable when installed); model, tokens, USD and prompt hash are recorded. |
 | **Proof** | Computed evidence page and immutable ledger row; P0/P1 verdict, policy, risk, cost, diff and residual gaps. |
 | **GUI** | A React/Vite app served by `works ui`: Story with the wave route, Evidence, Release and a Claude-style Session that reads the whole run as one conversation — person report, plan, build, check, release — with a Run log switch, inline human gates, a 900px measure, a right-edge context rail and near-white panes. SSE (`/api/events`) updates the queue and worklog without polling; `Ask Mira` streams over `/api/ask/stream`. Every AI answer is labelled and advisory. Factory shows metrics and the ledger; artifacts open in a lightbox; settings control theme, density and fallback refresh. |
 | **Readiness** | `works readiness` runs lint, format, types, fast tests, product verify, architecture and import boundaries; the report carries the internal import graph and fails on cycles, and a red gate blocks live runs. |
