@@ -146,7 +146,7 @@ uv run works memory recall --ppma http://127.0.0.1:8766
 | **Intake** | GitHub Issues, Jira and firing detector alerts become queued tasks with `(kind, ref)` deduplication; `.works/products.yaml` maps a product to its checkout. |
 | **Verifier container** | `--verifier docker` runs checks with no network, dropped capabilities and only the worktree mounted; a missing daemon is an error, never a silent host fallback. |
 | **Provider split** | The verifier environment drops builder credentials, `works doctor` warns when both roles share one key, and the proof records the verifier and its isolation. |
-| **JiuwenSwarm boundary** | `works run --swarm` speaks `works.swarm.v1` to an isolated entrypoint; `works swarm doctor` reports why the local checkout cannot start yet. |
+| **JiuwenSwarm boundary** | `works run --swarm` speaks `works.swarm.v1` through `scripts/swarm_adapter.py`; `works swarm doctor` probes it, and the protocol is tested on a fixture. A live model run still needs the gateway and an isolated venv. |
 | **Release gate** | `works approve --gate release` binds gate 2 to the base commit and proof, moves the task to `released`, and records `release.json`; a repeat is idempotent. |
 | **Delivery** | `works deliver` commits the approved diff with `Works-Run:` trailers, pushes `works/<task-id>`, opens one GitHub PR or GitLab MR, and returns one comment to GitHub, GitLab or Jira. |
 | **Deploy** | `works deploy` consumes the delivered commit and runs one owner-approved argv command (or the product map's `deploy:`), with `--dry-run`, an idempotent `deployment.json`, and a `deploy.finished` event. No shell, no automatic merge. |

@@ -824,9 +824,11 @@ Internal only: nothing is published to the upstream fork until M2 is green.
     run is blocked until the Docker daemon is running.
 - [ ] **T2.26** JiuwenSwarm boundary: `works.swarm.v1` request/result contract, an isolated
   `SwarmHarness`, `works swarm doctor` and `works run --swarm`; no fake fallback. **M**
-  - 2026-11-22: adapter and preflight are in and tested. The local checkout still fails with
-    `ModuleNotFoundError: agent_gateway`, so `--swarm` refuses to start until an isolated venv or
-    image provides an entrypoint.
+  - 2026-11-22: adapter and preflight are in and tested. The local checkout now starts; the
+    `agent_gateway` import problem is gone.
+  - 2026-11-23: `scripts/swarm_adapter.py` is the default entrypoint. It drives the JiuwenSwarm
+    chat CLI, returns the worktree diff or a read-only challenge verdict, and is tested end to end
+    on a fixture with a fake CLI. A live model run still needs the gateway configuration.
 
 ### M3 — Release, return, escape (weeks 7–8)
 

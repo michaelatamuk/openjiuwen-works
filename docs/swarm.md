@@ -53,23 +53,28 @@ works run <task> --swarm
 `works run --swarm` refuses to start unless the preflight succeeds. There is no fallback to a fake
 proposal: a builder that cannot run must fail as a configuration error.
 
-## Why the local CLI is not enough
+## Adapter
 
-The checkout at `C:\Workspace\openjiuwen\jiuwenswarm` currently fails before its own parser:
+`scripts/swarm_adapter.py` is the repo's `works.swarm.v1` entrypoint. A source checkout uses it by
+default, so `works swarm doctor` probes the adapter and `works run --swarm` calls it with the
+request/result files.
 
-```
-ModuleNotFoundError: No module named 'agent_gateway'
-```
+For `propose` the adapter runs the JiuwenSwarm chat CLI in the disposable worktree, then returns
+`git diff HEAD` and the touched paths. For `challenge` it asks for one JSON verdict, refuses a
+review that modifies the worktree, and fails closed when no machine-readable verdict arrives.
 
-Its pinned dependencies also conflict with the Works environment. The supported shape is therefore
-an isolated venv or container plus a small adapter that translates this contract to JiuwenSwarm's
-A2A/CLI. Set `WORKS_SWARM_ENTRYPOINT` to the adapter's JSON argv.
+The adapter is stdlib-only. It never imports JiuwenSwarm into the Works environment.
 
 | Variable | Default |
 |---|---|
 | `WORKS_SWARM_PYTHON` | `C:\Workspace\openjiuwen\jiuwenswarm\.venv\Scripts\python.exe` |
 | `WORKS_SWARM_HOME` | `C:\Workspace\openjiuwen\jiuwenswarm` |
-| `WORKS_SWARM_ENTRYPOINT` | `["-m", "jiuwenswarm.channels.cli.main", "--help"]` |
+| `WORKS_SWARM_ENTRYPOINT` | the repo's `scripts/swarm_adapter.py` when present, else the CLI help probe |
+| `WORKS_SWARM_CLI` | `python -m jiuwenswarm.channels.cli.main` (JSON argv override for tests or wrappers) |
+| `WORKS_SWARM_TIMEOUT` | `1800` seconds |
+
+A live run still needs the JiuwenSwarm gateway/model configuration and an isolated venv. The
+protocol is tested on a fixture repository with a fake CLI; the live model is not part of CI.
 
 ## Boundary
 

@@ -88,9 +88,17 @@ def default_swarm_home() -> Path:
     return Path(os.environ.get("WORKS_SWARM_HOME") or r"C:\Workspace\openjiuwen\jiuwenswarm")
 
 
+def _repo_adapter() -> Path | None:
+    adapter = Path(__file__).resolve().parents[3] / "scripts" / "swarm_adapter.py"
+    return adapter if adapter.is_file() else None
+
+
 def default_entrypoint() -> list[str]:
     raw = os.environ.get("WORKS_SWARM_ENTRYPOINT")
     if not raw:
+        adapter = _repo_adapter()
+        if adapter is not None:
+            return [str(adapter)]
         return ["-m", "jiuwenswarm.channels.cli.main", "--help"]
     try:
         parsed = json.loads(raw)
@@ -125,13 +133,14 @@ def preflight(
         )
     resolved_entrypoint = entrypoint or default_entrypoint()
     argv = [str(interpreter), *resolved_entrypoint]
-    if not any(flag in resolved_entrypoint for flag in ("-m", "--help")):
+    is_script = bool(resolved_entrypoint) and resolved_entrypoint[0].lower().endswith(".py")
+    if not is_script and not any(flag in resolved_entrypoint for flag in ("-m", "--help")):
         return SwarmDiagnostic(
             ok=True,
             detail="entrypoint configured; it is probed on the first real run",
             argv=tuple(argv),
         )
-    if "-m" in resolved_entrypoint and "--help" not in resolved_entrypoint:
+    if "--help" not in resolved_entrypoint:
         argv.append("--help")
     result = (runner or SubprocessRunner()).run(
         argv,

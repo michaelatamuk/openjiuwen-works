@@ -183,7 +183,7 @@ def test_a_custom_entrypoint_is_probed_on_the_first_run(tmp_path: Path) -> None:
     diagnostic = preflight(
         Path(sys.executable),
         home=home,
-        entrypoint=["adapter.py"],
+        entrypoint=["adapter"],
         runner=runner,  # type: ignore[arg-type]
     )
 
