@@ -38,7 +38,10 @@ def verifier_provider() -> ProviderName:
 
 
 def _has(module: str) -> bool:
-    return importlib.util.find_spec(module) is not None
+    try:
+        return importlib.util.find_spec(module) is not None
+    except ModuleNotFoundError:
+        return False
 
 
 def availability() -> dict[str, bool]:
