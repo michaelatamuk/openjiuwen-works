@@ -118,9 +118,7 @@ def test_the_cli_deploys_and_exits_zero(paths, repo, tmp_path) -> None:
     command = json.dumps([sys.executable, "-c", "print('ok')"])
 
     with redirect_stdout(out), redirect_stderr(err):
-        code = main(
-            ["--home", str(paths.root), "deploy", task.id, "--command", command, "--json"]
-        )
+        code = main(["--home", str(paths.root), "deploy", task.id, "--command", command, "--json"])
 
     assert code == 0, err.getvalue()
     body = json.loads(out.getvalue().strip().splitlines()[-1])

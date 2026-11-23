@@ -47,9 +47,7 @@ def _run(paths, task_id: str, run_id: str, commit: str) -> None:
     run_dir = paths.runs / run_id
     run_dir.mkdir(parents=True)
     (run_dir / "delivery.json").write_text(
-        json.dumps(
-            {"task_id": task_id, "run_id": run_id, "commit": commit, "pushed": True}
-        ),
+        json.dumps({"task_id": task_id, "run_id": run_id, "commit": commit, "pushed": True}),
         encoding="utf-8",
     )
     (run_dir / "evidence.json").write_text(
