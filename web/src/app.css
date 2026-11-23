@@ -2229,3 +2229,10 @@ body { background: var(--bg); background-image: none; }
   .cl-chat { width: 100%; max-width: 900px; }
   .cl-head { max-width: 900px; margin: 0 auto; }
 }
+.cl-work.chat-only { grid-template-columns: minmax(0, 1fr); max-width: none; padding: 0 26px; }
+.cl-work.chat-only .cl-chat { width: 900px; max-width: 900px; margin-left: 0; }
+.cl-welcome { padding: 18px 0 8px; }
+.cl-welcome img { display: block; margin-bottom: 10px; }
+.cl-welcome h3 { margin: 0 0 6px; font-size: 19px; letter-spacing: -.02em; }
+.cl-welcome p { margin: 0; max-width: 620px; color: var(--muted); font-size: 14px; line-height: 1.6; }
+@media (max-width: 1200px) { .cl-work.chat-only .cl-chat { width: 100%; max-width: 900px; } }

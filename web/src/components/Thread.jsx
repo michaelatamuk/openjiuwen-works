@@ -299,6 +299,7 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
   const [atLatest, setAtLatest] = useState(true);
   const [showAll, setShowAll] = useState(false);
   const [selectedPhase, setSelectedPhase] = useState(null);
+  const [sessionMode, setSessionMode] = useState("chat");
   const formRef = useRef(null);
   const lineRef = useRef(null);
   const stickRef = useRef(true);
@@ -332,6 +333,8 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
     detail.summary?.risk ? `${detail.summary.risk} risk` : null,
   ].filter(Boolean);
   const visiblePhases = showAll ? phases : phases.filter((phase) => phase.id === (selectedPhase || currentId));
+  const chatMessages = messages.filter((message) => ["thread.agent", "thread.note"].includes(message.type));
+  const reviewItems = messages.filter((message) => REVIEW_TYPES.has(message.type));
 
   useEffect(() => {
     stickRef.current = true;
@@ -420,9 +423,14 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
             <span>{detail.task.product}</span>
             <span className="cl-live-text"><i /> Live</span>
             <span className="cl-head-actions">
-              <button type="button" className="cl-text-btn" onClick={() => { setShowAll((value) => !value); setSelectedPhase(null); }}>
-                {showAll ? "Digest" : "Full log"}
+              <button type="button" className="cl-text-btn" onClick={() => setSessionMode((value) => value === "chat" ? "log" : "chat")}>
+                {sessionMode === "chat" ? "Run log" : "Chat"}
               </button>
+              {sessionMode === "log" ? (
+                <button type="button" className="cl-text-btn" onClick={() => { setShowAll((value) => !value); setSelectedPhase(null); }}>
+                  {showAll ? "Digest" : "Full log"}
+                </button>
+              ) : null}
               {writable && canAsk ? (
                 <>
                   <button type="button" className="cl-text-btn" onClick={() => onAction("discussion")}>Review</button>
@@ -445,7 +453,8 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
           ) : null}
         </div>
 
-        <div className="cl-work">
+        <div className={`cl-work ${sessionMode === "chat" ? "chat-only" : ""}`}>
+          {sessionMode === "log" ? (
           <aside className="cl-outline" aria-label="Session chapters">
             <div className="cl-outline-head">
               <span>Chapters</span>
@@ -471,9 +480,10 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
               </button>
             ))}
           </aside>
+          ) : null}
 
           <div className="cl-chat">
-            {origin ? (
+            {sessionMode === "log" && origin ? (
               <div className="cl-origin">
                 <span>Reported</span>
                 <b>{origin.body || detail.task.source.title}</b>
@@ -491,7 +501,7 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
                 setAtLatest(distance < 80);
               }}
             >
-              {visiblePhases.map((phase) => (
+              {sessionMode === "log" ? visiblePhases.map((phase) => (
                 <section className={`cl-chapter ${phase.state}`} key={phase.id}>
                   <header>
                     <span className="cl-phase-dot" aria-hidden="true" />
@@ -505,7 +515,18 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
                       : <p className="cl-phase-empty">No events in this chapter.</p>}
                   </div>
                 </section>
-              ))}
+              )) : (
+                <>
+                  {chatMessages.length ? chatMessages.map((message) => renderBlock({ key: message.seq, message })) : (
+                    <div className="cl-welcome">
+                      <img src="/mira.svg" alt="" width="40" height="40" />
+                      <h3>Ask Mira about this run</h3>
+                      <p>I can explain the verdict, what changed, which checks passed, or what is still missing. I cannot release or change a gate.</p>
+                    </div>
+                  )}
+                  {reviewItems.length ? <ReviewGroup items={reviewItems} /> : null}
+                </>
+              )}
               {streamed || pendingQuestion ? (
                 <>
                   {pendingQuestion ? <div className="cl-user-turn"><p>{pendingQuestion}</p></div> : null}

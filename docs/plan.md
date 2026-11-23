@@ -700,10 +700,10 @@ Internal only: nothing is published to the upstream fork until M2 is green.
     measure and a 340px context pane. The pane owns the title/tabs; Plan / Build / Check / Release
     chapters collapse past work and open the current one; Full log expands; Review collapses agent
     discussion; one decision card.
-  - 2026-11-23: one content frame for every view and a 2026 near-white surface system. The session
-    pane has a vertical chapter outline, only the current chapter is open, the conversation measure
-    is 900px, technical noise moves to Activity/Technical, and one decision card is the only primary
-    action.
+  - 2026-11-23: one content frame for every view and a near-white surface system. Session is
+    chat-first: human turns and labelled Mira answers, a welcome and suggested questions, one
+    decision card, and a Run log switch for the chapter outline. Technical noise moves to
+    Activity/Technical; the conversation measure is 900px.
   - 2026-11-23: the GUI moved to React/Vite (`web/`) with SSE `/api/events` for the queue and the
     open task; `Ask Mira` keeps its token stream. Thread is now a session pane with right-aligned
     user turns, left-aligned labelled AI answers, a docked composer and auto-follow. Story keeps the

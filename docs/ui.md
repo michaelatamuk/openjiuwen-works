@@ -47,17 +47,17 @@ The same evidence page serves two audiences without a second data source:
   tracker comment), confirmation (pass/fail, target, output SHA), team verdict, verifier isolation,
   LAIX shadow and run history with a two-run comparison. In `--write`, the same view can release,
   deliver, confirm and verify.
-- **Session** (the Thread worklog, deep link `/thread`): a full-height pane inside the shared
-  content frame. The task title, status and tabs are global and aligned with the pane. The pane
-  starts with source + Live and one decision card, then a vertical **Chapters** outline
-  (Plan / Build / Check / Release) with state and summary. Only the selected chapter opens; past
-  work is a one-line summary in the outline, and **Full log** shows every chapter. Agent
-  commentary and discussion collapse into one **Review** block. The conversation measure is 900px,
-  while the pane uses the rest of the width for the outline and context rail. The composer is one
-  row — `Ask`/`Note`, input, filled send — and suggested questions fill an empty conversation.
-  The rail is a separate pane: Decision, human Activity, Run, People, and Technical. Old chapters
-  and technical noise never compete with the current decision. In `--write`, `Add context` appends
-  a `thread.note`; `Ask Mira` asks a real `openjiuwen` model and streams the answer into
+- **Session** (the Thread worklog, deep link `/thread`): the default is a **Chat** view — only
+  human notes and Ask Mira turns, with user questions on the right and labelled Mira answers on the
+  left. If there is no conversation yet, Mira introduces what she can explain and offers suggested
+  questions. A single decision card at the top surfaces the next human gate (approve plan, approve
+  release or open evidence). **Run log** switches the same pane to a vertical chapter outline
+  (Plan / Build / Check / Release): past chapters are one-line summaries, the current chapter opens,
+  and **Full log** expands everything. Agent commentary and discussion stay in one collapsed
+  **Review** block; technical hashes, agents and deliveries live under **Technical**. The rail is a
+  separate pane: Decision, human Activity, Run, People. The conversation measure is 900px while the
+  pane uses the rest of the width for the outline and context. In `--write`, `Add context` appends a
+  `thread.note`; `Ask Mira` asks a real `openjiuwen` model and streams the answer into
   `thread.agent`. Follow-up questions carry the last three recorded answers. Every model answer is
   labelled and advisory: it cannot approve, release, retry or change a gate. `Review` adds a
   labelled Inspector / Challenger / Reporter discussion; `Commentary` adds Builder / Inspector /
@@ -111,9 +111,10 @@ without a failure or a finished run. The runs are local fixtures, not upstream f
 ## Design and interaction
 
 Dark and light themes, comfortable and compact density, a near-white surface system, a 52px app
-bar, a 280px queue, one shared content frame, a 220px vertical chapter outline, a 900px conversation
-measure and a 340px context pane. One coral accent, subtle depth instead of stacked borders, visible
-focus, text labels for every status, `prefers-reduced-motion`, and Mira in the empty state. Below 720 px the route becomes
+bar, a 280px queue, one shared content frame, a chat-first Session with a 900px conversation measure,
+a Run log with a 220px chapter outline, and a 340px context pane. One coral accent, subtle depth
+instead of stacked borders, visible focus, text labels for every status, `prefers-reduced-motion`,
+and Mira in the empty state. Below 720 px the route becomes
 a vertical list with the same states and per-milestone screen-reader names; the queue moves below
 the Story so the task is visible first. Replay updates the route and receipt in place.
 `Ctrl K` opens a command palette; `/` focuses search; `j`/`k` move through the queue; `t` toggles
