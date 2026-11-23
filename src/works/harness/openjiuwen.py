@@ -87,6 +87,9 @@ class LiveHarness:
         model: str | None = None,
         base_url: str | None = None,
         api_key: str | None = None,
+        verifier_model: str | None = None,
+        verifier_base_url: str | None = None,
+        verifier_api_key: str | None = None,
         cli_path: str | None = None,
         max_turns: int = 16,
         timeout_s: int = 600,
@@ -97,6 +100,15 @@ class LiveHarness:
         self._model = model or default_model()
         self._base = base_url or default_base()
         self._key = api_key or default_key()
+        self._verifier_model = (
+            verifier_model or os.environ.get("WORKS_VERIFIER_MODEL") or self._model
+        )
+        self._verifier_base = (
+            verifier_base_url or os.environ.get("WORKS_VERIFIER_BASE") or self._base
+        )
+        self._verifier_key = (
+            verifier_api_key or os.environ.get("WORKS_VERIFIER_API_KEY") or self._key
+        )
         self._cli = cli_path if cli_path is not None else default_cli()
         self._max_turns = max_turns
         self._timeout_s = timeout_s
@@ -112,7 +124,25 @@ class LiveHarness:
     def provider(self) -> str:
         return "deepseek" if "deepseek" in self._base else "anthropic"
 
-    def _make_harness(self, worktree: Path, *, permission_mode: str = "bypassPermissions") -> Any:
+    @property
+    def verifier_provider(self) -> str:
+        return "deepseek" if "deepseek" in self._verifier_base else "anthropic"
+
+    @property
+    def provider_split(self) -> bool:
+        return self.verifier_provider != self.provider
+
+    @property
+    def verifier_model(self) -> str:
+        return self._verifier_model
+
+    def _make_harness(
+        self,
+        worktree: Path,
+        *,
+        permission_mode: str = "bypassPermissions",
+        verifier: bool = False,
+    ) -> Any:
         try:
             from openjiuwen.harness_providers.claudecode import (
                 ClaudeCodeHarness,
@@ -123,11 +153,14 @@ class LiveHarness:
             raise ConfigError(
                 "the live harness needs openjiuwen with the claude extra and claude-agent-sdk"
             ) from exc
+        model = self._verifier_model if verifier else self._model
+        base = self._verifier_base if verifier else self._base
+        key = self._verifier_key if verifier else self._key
         config = ClaudeCodeHarnessConfig(
             cwd=str(worktree),
             add_dirs=(str(worktree),),
             cli_path=self._cli,
-            model=ClaudeModelConfig(model=self._model, api_base=self._base, api_key=self._key),
+            model=ClaudeModelConfig(model=model, api_base=base, api_key=key),
             permission_mode=permission_mode,
             max_turns=self._max_turns,
         )
@@ -229,7 +262,9 @@ class LiveHarness:
                 ),
             )
             harness = (
-                self._factory(target) if self._factory is not None else self._make_harness(target)
+                self._factory(target)
+                if self._factory is not None
+                else self._make_harness(target, verifier=True)
             )
             await harness.start(context)
             prompt = self._challenge_prompt.render(
@@ -250,8 +285,8 @@ class LiveHarness:
             return Challenge(
                 allow=False,
                 reason=f"challenger could not run: {exc}",
-                model=self._model,
-                provider=self.provider,
+                model=self._verifier_model,
+                provider=self.verifier_provider,
                 prompt_sha256=self._challenge_prompt.sha256,
             )
         finally:
@@ -277,8 +312,8 @@ class LiveHarness:
             return Challenge(
                 allow=False,
                 reason="challenger did not finish",
-                model=self._model,
-                provider=self.provider,
+                model=self._verifier_model,
+                provider=self.verifier_provider,
                 tokens=tokens,
                 usd=usd,
                 prompt_sha256=self._challenge_prompt.sha256,
@@ -296,8 +331,8 @@ class LiveHarness:
                 allow=allow,
                 reason=str(payload.get("reason") or ""),
                 concerns=[str(item) for item in concerns],
-                model=self._model,
-                provider=self.provider,
+                model=self._verifier_model,
+                provider=self.verifier_provider,
                 tokens=tokens,
                 usd=usd,
                 prompt_sha256=self._challenge_prompt.sha256,
@@ -307,8 +342,8 @@ class LiveHarness:
                 allow=False,
                 reason="challenger did not return a valid JSON verdict",
                 concerns=[text[:300]] if text else [],
-                model=self._model,
-                provider=self.provider,
+                model=self._verifier_model,
+                provider=self.verifier_provider,
                 tokens=tokens,
                 usd=usd,
                 prompt_sha256=self._challenge_prompt.sha256,

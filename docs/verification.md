@@ -3,9 +3,9 @@
 The gate is the product. This note is the implementation reference for plan §6.8–§6.9 and
 ADR-012/013.
 
-**Status: v4.14.** Trusted-base checks, risk rating, observe mode, flake enforcement, the decision
-port and an opt-in Docker verifier are in. Agent readiness, feature map, architecture guardrails and
-the verification cost split are next (T2.18–T2.19, T1.25).
+**Status: v4.15.** Trusted-base checks, risk rating, observe mode, flake enforcement, the decision
+port, an opt-in Docker verifier and per-role verification cost are in. Agent readiness, the feature
+map and architecture guardrails are next (T2.18-T2.19).
 
 ## Principles
 
@@ -76,12 +76,13 @@ command inside a container with:
 
 The adapter fails closed: if Docker is installed but its daemon is unreachable, the run stops with a
 configuration error instead of quietly using the host. `works doctor` reports the same status.
-Tests drive the Docker argument builder through a recorded runner; a live container run needs a
-running daemon.
+Tests drive the Docker argument builder through a recorded runner; `tests/test_docker_live.py` runs
+the real container in CI, and locally when `WORKS_TEST_DOCKER=1` and Docker is running.
 
 The process verifier drops every name that looks like a credential, including `WORKS_MODEL_KEY` and
 `WORKS_VERIFIER_API_KEY`; only an explicit command env reaches a check. `works doctor` warns when the
-builder and verifier share one key, and Evidence records the verifier name and isolation.
+builder and verifier share one key. Evidence records the verifier name and isolation, the verifier
+model/provider, whether the provider split held, and builder vs verifier tokens/USD.
 
 ## Trusted base
 

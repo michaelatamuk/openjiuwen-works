@@ -69,8 +69,12 @@ def _diff(cwd: Path) -> tuple[str, list[str]]:
     return "\n".join(part for part in parts if part).strip(), deduped
 
 
-def _final_content(stdout: str) -> str:
-    for line in reversed(stdout.splitlines()):
+def _parse_stream(stdout: str) -> tuple[str, int, float, str, str]:
+    content = ""
+    usage: dict[str, dict[str, Any]] = {}
+    model = "jiuwenswarm"
+    provider = "jiuwenswarm"
+    for line in stdout.splitlines():
         line = line.strip()
         if not line:
             continue
@@ -78,14 +82,44 @@ def _final_content(stdout: str) -> str:
             payload = json.loads(line)
         except json.JSONDecodeError:
             continue
-        if isinstance(payload, dict) and "content" in payload:
-            if payload.get("ok") is False:
-                raise RuntimeError(str(payload.get("error") or "JiuwenSwarm reported an error"))
-            return str(payload.get("content") or "")
-    return stdout.strip()
+        if not isinstance(payload, dict):
+            continue
+        if payload.get("type") == "event":
+            event = str(payload.get("event") or "")
+            body = payload.get("payload")
+        else:
+            event = ""
+            body = payload
+        if not isinstance(body, dict):
+            continue
+        if event == "context.usage":
+            provider = str(body.get("provider") or provider)
+            model = str(body.get("model") or model)
+        if event == "chat.usage_metadata":
+            metadata = body.get("metadata")
+            meta = metadata.get("usage_metadata") if isinstance(metadata, dict) else None
+            if isinstance(meta, dict):
+                model = str(meta.get("model_name") or model)
+                key = str(body.get("execution_id") or json.dumps(meta, sort_keys=True))
+                usage[key] = meta
+        if event in ("chat.final", ""):
+            event_type = str(body.get("event_type") or "")
+            if event_type in ("", "chat.final") and isinstance(body.get("content"), str):
+                if body.get("ok") is False:
+                    raise RuntimeError(str(body.get("error") or "JiuwenSwarm reported an error"))
+                content = str(body.get("content") or content)
+    tokens = 0
+    usd = 0.0
+    for meta in usage.values():
+        total = meta.get("total_tokens")
+        if not isinstance(total, (int, float)):
+            total = int(meta.get("input_tokens") or 0) + int(meta.get("output_tokens") or 0)
+        tokens += int(total or 0)
+        usd += float(meta.get("total_cost") or 0.0)
+    return content or stdout.strip(), tokens, round(usd, 6), model, provider
 
 
-def _run(prompt: str, cwd: Path, timeout_s: int) -> str:
+def _run(prompt: str, cwd: Path, timeout_s: int) -> tuple[str, int, float, str, str]:
     argv = [
         *_cli(),
         "chat",
@@ -96,7 +130,7 @@ def _run(prompt: str, cwd: Path, timeout_s: int) -> str:
         str(cwd),
         "--trusted-dir",
         str(cwd),
-        "--json",
+        "--jsonl",
         "--timeout",
         str(timeout_s),
     ]
@@ -115,7 +149,7 @@ def _run(prompt: str, cwd: Path, timeout_s: int) -> str:
     if result.returncode != 0:
         tail = "\n".join((result.stderr or result.stdout).strip().splitlines()[-6:])
         raise RuntimeError(f"JiuwenSwarm exited {result.returncode}: {tail}")
-    return _final_content(result.stdout)
+    return _parse_stream(result.stdout)
 
 
 def _extract_json(text: str) -> dict[str, Any] | None:
@@ -146,17 +180,19 @@ def _propose(request: dict[str, Any]) -> dict[str, Any]:
         "history, do not touch .git or .works, and do not edit or delete hidden scenarios. "
         "When you are done, reply with a short summary."
     )
-    _run(prompt, worktree, int(os.environ.get("WORKS_SWARM_TIMEOUT", DEFAULT_TIMEOUT_S)))
+    _, tokens, usd, model, provider = _run(
+        prompt, worktree, int(os.environ.get("WORKS_SWARM_TIMEOUT", DEFAULT_TIMEOUT_S))
+    )
     patch, touched = _diff(worktree)
     if not touched:
         return {
             "patch": "",
             "applied": False,
             "touched_paths": [],
-            "model": "jiuwenswarm",
-            "provider": "jiuwenswarm",
-            "tokens": 0,
-            "usd": 0.0,
+            "model": model,
+            "provider": provider,
+            "tokens": tokens,
+            "usd": usd,
             "notes": ["JiuwenSwarm changed no files"],
             "stop": "JiuwenSwarm produced no change in the worktree",
         }
@@ -164,10 +200,10 @@ def _propose(request: dict[str, Any]) -> dict[str, Any]:
         "patch": patch,
         "applied": True,
         "touched_paths": touched,
-        "model": "jiuwenswarm",
-        "provider": "jiuwenswarm",
-        "tokens": 0,
-        "usd": 0.0,
+        "model": model,
+        "provider": provider,
+        "tokens": tokens,
+        "usd": usd,
         "notes": [f"JiuwenSwarm edited {len(touched)} path(s)"],
         "stop": None,
     }
@@ -187,7 +223,9 @@ def _challenge(request: dict[str, Any]) -> dict[str, Any]:
     )
     before = _status(worktree)
     try:
-        content = _run(prompt, worktree, int(os.environ.get("WORKS_SWARM_TIMEOUT", DEFAULT_TIMEOUT_S)))
+        content, tokens, usd, model, provider = _run(
+            prompt, worktree, int(os.environ.get("WORKS_SWARM_TIMEOUT", DEFAULT_TIMEOUT_S))
+        )
     except RuntimeError as exc:
         return {"allow": False, "reason": str(exc), "concerns": ["harness"]}
     if _status(worktree) != before:
@@ -195,6 +233,10 @@ def _challenge(request: dict[str, Any]) -> dict[str, Any]:
             "allow": False,
             "reason": "the review modified the worktree; its verdict is not trusted",
             "concerns": ["review-mutated-worktree"],
+            "model": model,
+            "provider": provider,
+            "tokens": tokens,
+            "usd": usd,
         }
     payload = _extract_json(content)
     if payload is None or not isinstance(payload.get("allow"), bool):
@@ -202,12 +244,20 @@ def _challenge(request: dict[str, Any]) -> dict[str, Any]:
             "allow": False,
             "reason": "JiuwenSwarm returned no machine-readable verdict",
             "concerns": ["format"],
+            "model": model,
+            "provider": provider,
+            "tokens": tokens,
+            "usd": usd,
         }
     concerns = payload.get("concerns")
     return {
         "allow": payload["allow"],
         "reason": str(payload.get("reason") or "no reason recorded"),
         "concerns": [str(item) for item in concerns] if isinstance(concerns, list) else [],
+        "model": model,
+        "provider": provider,
+        "tokens": tokens,
+        "usd": usd,
     }
 
 

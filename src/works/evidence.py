@@ -58,10 +58,18 @@ class Evidence(BaseModel):
     provider: str | None = None
     verifier: str = "local"
     verifier_isolation: str = "process"
+    verifier_model: str | None = None
+    verifier_provider: str | None = None
+    provider_split: bool = False
     prompt_name: str | None = None
     prompt_sha256: str | None = None
     tokens: int = 0
     usd: float = 0.0
+    builder_tokens: int = 0
+    builder_usd: float = 0.0
+    verifier_tokens: int = 0
+    verifier_usd: float = 0.0
+    verification_share: float = 0.0
     duration_ms: int = 0
     files_changed: list[str] = Field(default_factory=list)
     diff_stat: list[DiffStatRow] = Field(default_factory=list)
@@ -296,6 +304,26 @@ def render_markdown(evidence: Evidence) -> str:
         f"- prompt: `{evidence.prompt_name or '—'}` · sha256: `{evidence.prompt_sha256 or '—'}`",
         "",
     ]
+    if evidence.builder_tokens or evidence.verifier_tokens:
+        lines.extend(
+            [
+                (
+                    f"- builder tokens: `{evidence.builder_tokens}` / "
+                    f"usd `{evidence.builder_usd:.4f}`"
+                ),
+                (
+                    f"- verifier tokens: `{evidence.verifier_tokens}` / "
+                    f"usd `{evidence.verifier_usd:.4f}`"
+                ),
+                f"- verification share: `{evidence.verification_share:.1%}`",
+                (
+                    f"- verifier model: `{evidence.verifier_model or '-'}` | "
+                    f"provider: `{evidence.verifier_provider or '-'}` | "
+                    f"provider split: `{'yes' if evidence.provider_split else 'no'}`"
+                ),
+                "",
+            ]
+        )
     if evidence.diff.strip():
         diff = evidence.diff
         truncated = len(diff) > MAX_DIFF_CHARS

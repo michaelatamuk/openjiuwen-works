@@ -714,6 +714,9 @@ Internal only: nothing is published to the upstream fork until M2 is green.
     wave route; `j`/`k`, `t`, `?`, `c` and `?at=` deep links are ported.
 - [ ] **T1.25** Verification cost split: builder, challenger and verifier tokens/USD in `run.json`
   and the proof; verification share is reported next to the total. **S**
+  - 2026-11-23: `builder_tokens`, `builder_usd`, `verifier_tokens`, `verifier_usd` and
+    `verification_share` are recorded and rendered in the proof. The JiuwenSwarm adapter now reads
+    provider usage metadata as well.
 - [x] **T1.26** PPMA memory backfill: `works memory backfill` reports already-finished runs from
   `runs/*/run.json` and `evidence.json` without re-running the factory; newest first, `--dry-run`,
   per-run failures, idempotent ULIDs. **S**
@@ -821,7 +824,7 @@ Internal only: nothing is published to the upstream fork until M2 is green.
   - 2026-11-22: Docker argument builder, path/env rewriting and `works doctor` daemon status are in,
     tested through a recorded runner. The process verifier drops builder credentials, `works doctor`
     warns on a shared key, and Evidence records the verifier name and isolation. A live container
-    run is blocked until the Docker daemon is running.
+    test now runs in CI (`tests/test_docker_live.py`); local runs need a running daemon.
 - [ ] **T2.26** JiuwenSwarm boundary: `works.swarm.v1` request/result contract, an isolated
   `SwarmHarness`, `works swarm doctor` and `works run --swarm`; no fake fallback. **M**
   - 2026-11-22: adapter and preflight are in and tested. The local checkout now starts; the

@@ -46,6 +46,21 @@ jobs:
           find /tmp/pytest-of-runner -name commands.jsonl -print -exec cat {} \; || true
           find /tmp/pytest-of-runner -name evidence.md -print -exec sed -n '1,100p' {} \; || true
 
+  docker-verifier:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.4.0
+        with:
+          enable-cache: true
+      - run: uv python install 3.12
+      - run: uv sync --frozen --extra dev
+      - name: Live Docker verifier
+        env:
+          WORKS_TEST_DOCKER: "1"
+        run: uv run pytest tests/test_docker_live.py -q
+
   benchmark:
     runs-on: ubuntu-latest
     timeout-minutes: 10

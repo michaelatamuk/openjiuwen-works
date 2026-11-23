@@ -50,6 +50,21 @@ def test_the_provider_label_follows_the_endpoint() -> None:
     assert LiveHarness(api_key="x", base_url="https://api.anthropic.com").provider == "anthropic"
 
 
+def test_the_verifier_can_use_a_separate_provider() -> None:
+    live = LiveHarness(
+        api_key="builder",
+        base_url="https://api.deepseek.com/anthropic",
+        verifier_api_key="verifier",
+        verifier_base_url="https://api.anthropic.com",
+        verifier_model="claude-verifier",
+    )
+
+    assert live.provider == "deepseek"
+    assert live.verifier_provider == "anthropic"
+    assert live.provider_split is True
+    assert live.verifier_model == "claude-verifier"
+
+
 def test_artifacts_are_not_edits() -> None:
     assert is_artifact("tests/__pycache__/test_core.pyc")
     assert is_artifact("calc/__pycache__/core.cpython-314.pyc")

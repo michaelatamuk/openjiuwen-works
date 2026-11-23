@@ -167,6 +167,28 @@ def test_no_change_is_stated_not_implied() -> None:
     assert "No change was produced." in page
 
 
+def test_cost_and_provider_split_are_rendered_when_recorded() -> None:
+    evidence = fixed_evidence().model_copy(
+        update={
+            "builder_tokens": 900,
+            "verifier_tokens": 300,
+            "builder_usd": 0.009,
+            "verifier_usd": 0.003,
+            "verification_share": 0.25,
+            "verifier_model": "verifier-1",
+            "verifier_provider": "anthropic",
+            "provider_split": True,
+        }
+    )
+
+    page = render_markdown(evidence.bind())
+
+    assert "builder tokens: `900`" in page
+    assert "verifier tokens: `300`" in page
+    assert "verification share: `25.0%`" in page
+    assert "provider split: `yes`" in page
+
+
 def test_the_page_answers_the_four_questions() -> None:
     page = render_markdown(fixed_evidence().bind())
     for heading in (

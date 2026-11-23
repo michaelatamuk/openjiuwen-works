@@ -39,7 +39,32 @@ else:
     calc = cwd / "calc.py"
     text = calc.read_text(encoding="utf-8").replace("return a - b", "return a + b")
     calc.write_text(text, encoding="utf-8")
-    print(json.dumps({"ok": True, "content": "fixed"}))
+    if os.environ.get("FAKE_USAGE"):
+        usage = {
+            "type": "event",
+            "event": "chat.usage_metadata",
+            "payload": {
+                "execution_id": "exec-1",
+                "metadata": {
+                    "usage_metadata": {
+                        "model_name": "fake-model",
+                        "input_tokens": 10,
+                        "output_tokens": 5,
+                        "total_tokens": 15,
+                        "total_cost": 0.01,
+                    }
+                },
+            },
+        }
+        print(json.dumps(usage))
+        final = {
+            "type": "event",
+            "event": "chat.final",
+            "payload": {"event_type": "chat.final", "content": "fixed"},
+        }
+        print(json.dumps(final))
+    else:
+        print(json.dumps({"ok": True, "content": "fixed"}))
 """
 
 
@@ -104,6 +129,17 @@ def test_the_adapter_proposes_a_real_diff_end_to_end(tmp_path) -> None:
     assert proposal.touched_paths == ["calc.py"]
     assert "return a + b" in proposal.patch
     assert proposal.model == "jiuwenswarm"
+
+
+def test_the_adapter_reads_usage_metadata(tmp_path) -> None:
+    worktree = _repo(tmp_path)
+    harness = _harness(tmp_path, _fake(tmp_path), {"FAKE_USAGE": "1"})
+
+    proposal = asyncio.run(harness.propose(_request(worktree)))
+
+    assert proposal.tokens == 15
+    assert proposal.usd == 0.01
+    assert proposal.model == "fake-model"
 
 
 def test_the_adapter_challenges_the_same_worktree(tmp_path) -> None:

@@ -783,10 +783,18 @@ class Supervisor:
             except WorksError as exc:
                 LOG.warning("could not collect the diff: %s", exc)
         proposal = ctx.proposal
-        tokens = (proposal.tokens if proposal else 0) + (
-            ctx.challenge.tokens if ctx.challenge else 0
+        builder_tokens = proposal.tokens if proposal else 0
+        builder_usd = proposal.usd if proposal else 0.0
+        verifier_tokens = ctx.challenge.tokens if ctx.challenge else 0
+        verifier_usd = ctx.challenge.usd if ctx.challenge else 0.0
+        tokens = builder_tokens + verifier_tokens
+        usd = builder_usd + verifier_usd
+        verification_share = round(verifier_tokens / tokens, 4) if tokens else 0.0
+        provider_split = bool(
+            proposal is not None
+            and ctx.challenge is not None
+            and ctx.challenge.provider != proposal.provider
         )
-        usd = (proposal.usd if proposal else 0.0) + (ctx.challenge.usd if ctx.challenge else 0.0)
         findings: list[Finding] = []
         for event in self._queue.events(ctx.task.id):
             if event.type != "finding":
@@ -810,10 +818,18 @@ class Supervisor:
             provider=proposal.provider if proposal else None,
             verifier=str(getattr(self._verifier, "name", "local")),
             verifier_isolation=str(getattr(self._verifier, "isolation", "process")),
+            verifier_model=ctx.challenge.model if ctx.challenge else None,
+            verifier_provider=ctx.challenge.provider if ctx.challenge else None,
+            provider_split=provider_split,
             prompt_name=proposal.prompt_name if proposal else None,
             prompt_sha256=proposal.prompt_sha256 if proposal else None,
             tokens=tokens,
             usd=usd,
+            builder_tokens=builder_tokens,
+            builder_usd=builder_usd,
+            verifier_tokens=verifier_tokens,
+            verifier_usd=verifier_usd,
+            verification_share=verification_share,
             duration_ms=duration_ms,
             files_changed=files_changed,
             diff_stat=stats,
@@ -854,9 +870,17 @@ class Supervisor:
             provider=proposal.provider if proposal else None,
             verifier=str(getattr(self._verifier, "name", "local")),
             verifier_isolation=str(getattr(self._verifier, "isolation", "process")),
+            verifier_model=ctx.challenge.model if ctx.challenge else None,
+            verifier_provider=ctx.challenge.provider if ctx.challenge else None,
+            provider_split=provider_split,
             attempts=self._queue.load(ctx.task.id).attempts,
             tokens=tokens,
             usd=usd,
+            builder_tokens=builder_tokens,
+            builder_usd=builder_usd,
+            verifier_tokens=verifier_tokens,
+            verifier_usd=verifier_usd,
+            verification_share=verification_share,
             started_at=ctx.started_at,
             finished_at=finished,
             duration_ms=duration_ms,

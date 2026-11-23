@@ -195,9 +195,17 @@ class RunRecord(BaseModel):
     provider: str | None = None
     verifier: str = "local"
     verifier_isolation: str = "process"
+    verifier_model: str | None = None
+    verifier_provider: str | None = None
+    provider_split: bool = False
     attempts: int = 0
     tokens: int = 0
     usd: float = 0.0
+    builder_tokens: int = 0
+    builder_usd: float = 0.0
+    verifier_tokens: int = 0
+    verifier_usd: float = 0.0
+    verification_share: float = 0.0
     started_at: datetime
     finished_at: datetime
     duration_ms: int = 0

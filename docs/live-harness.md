@@ -57,11 +57,13 @@ The proof records the challenge, its concerns and the prompt hash.
 Builder proof: `74a2f1b3d729cbfdc01b291e10769af8eb2a1cb96213993b74302b805d0f19d9`.
 
 The challenger runs in a **disposable git worktree** with the builder's diff applied. It cannot
-touch the builder's worktree; its edits, if any, are discarded with the worktree. It runs with the
-same provider today (DeepSeek); the provider split is T2.3.
+touch the builder's worktree; its edits, if any, are discarded with the worktree. It can use a separate verifier provider through
+`WORKS_VERIFIER_MODEL`, `WORKS_VERIFIER_BASE` and `WORKS_VERIFIER_API_KEY`; `run.json` and the
+proof record the verifier provider and whether the split held.
 
 ## What it is not
 
 - Not a patch generator: the agent works in place; evidence carries the git diff.
 - Not isolated: a live agent runs as your OS user (ADR-004). Use trusted repositories until M2.
-- Not the verifier: scenarios still judge the change; the independent provider/container is M2.
+- Not the verifier: scenarios still judge the change; the challenger can use a separate provider and
+  the container verifier is a separate boundary.

@@ -145,7 +145,7 @@ uv run works memory recall --ppma http://127.0.0.1:8766
 | **Ask Mira** | The Thread view can ask a real `openjiuwen` model about the recorded run; answers stream into the worklog and are advisory, never a gate. |
 | **Intake** | GitHub Issues, Jira and firing detector alerts become queued tasks with `(kind, ref)` deduplication; `.works/products.yaml` maps a product to its checkout. |
 | **Verifier container** | `--verifier docker` runs checks with no network, dropped capabilities and only the worktree mounted; a missing daemon is an error, never a silent host fallback. |
-| **Provider split** | The verifier environment drops builder credentials, `works doctor` warns when both roles share one key, and the proof records the verifier and its isolation. |
+| **Provider split** | The live challenger can use `WORKS_VERIFIER_MODEL`, `WORKS_VERIFIER_BASE` and `WORKS_VERIFIER_API_KEY`; run and proof record the verifier model/provider and whether the split held, plus builder vs verifier tokens/USD. `works doctor` warns when one key is shared. |
 | **JiuwenSwarm boundary** | `works run --swarm` speaks `works.swarm.v1` through `scripts/swarm_adapter.py`; `works swarm doctor` probes it, and the protocol is tested on a fixture. A live model run still needs the gateway and an isolated venv. |
 | **Release gate** | `works approve --gate release` binds gate 2 to the base commit and proof, moves the task to `released`, and records `release.json`; a repeat is idempotent. |
 | **Delivery** | `works deliver` commits the approved diff with `Works-Run:` trailers, pushes `works/<task-id>`, opens one GitHub PR or GitLab MR, and returns one comment to GitHub, GitLab or Jira. |
