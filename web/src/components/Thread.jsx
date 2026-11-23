@@ -1,7 +1,9 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { postAction, streamAsk } from "../lib/api.js";
-import { roleLabel, roleLetter, stateLabel, stateTone } from "../lib/format.js";
+import { roleLabel, roleLetter, shortSha, stateLabel } from "../lib/format.js";
 import { AiText } from "./ui.jsx";
+
+const REVIEW_TYPES = new Set(["thread.commentary", "thread.discussion"]);
 
 function sourceUrl(task) {
   const ref = String(task?.source?.ref || "");
@@ -11,37 +13,68 @@ function sourceUrl(task) {
   return "";
 }
 
-function Message({ message, onThreadAction }) {
-  const role = message.role || "system";
-  const card = message.type === "thread.agent" ? null : message.card;
-  const badge = message.generated ? (
-    <span className="cl-ai-badge">{message.generated_label || "AI"}</span>
-  ) : null;
-  const stance = message.stance ? (
-    <span className={`cl-stance ${message.stance}`}>{message.stance}</span>
-  ) : null;
+function decisionFor(detail) {
+  const state = detail.task.state;
+  const release = detail.release || {};
+  if (state === "planning") {
+    return {
+      tone: "amber",
+      label: "Plan gate",
+      text: "A person needs to approve the plan before the build starts.",
+      action: "approve-plan",
+      button: "Approve plan",
+    };
+  }
+  if (state === "proved" && !release.released) {
+    return {
+      tone: "amber",
+      label: "Release gate",
+      text: "The proof is ready. A person needs to release it back to the product.",
+      action: "release",
+      button: "Approve release",
+    };
+  }
+  if (state === "blocked") {
+    return {
+      tone: "red",
+      label: "Blocked",
+      text: detail.pipeline?.blocked?.why || "The run stopped and needs a person.",
+      action: null,
+      view: "evidence",
+      button: "Open evidence",
+    };
+  }
+  return null;
+}
+
+function ReviewGroup({ items }) {
+  const stances = items.map((item) => item.stance).filter(Boolean);
+  const concern = stances.includes("concern") || stances.includes("block");
   return (
-    <article className={`cl-msg ${role} ${message.generated ? "generated" : ""} ${message.tone || ""}`}>
-      <div className="cl-avatar" aria-hidden="true">{roleLetter[role] || "·"}</div>
-      <div className="cl-body">
-        <div className="cl-meta">
-          <span className="cl-name">{roleLabel[role] || role}</span>
-          {badge}
-          {stance}
-          <time>{new Date(message.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time>
-        </div>
-        <h3>{message.title}</h3>
-        {message.body ? (
-          <p>{message.generated ? <AiText text={message.body} /> : message.body}</p>
-        ) : null}
-        {message.facts?.length ? (
-          <div className="cl-facts">
-            {message.facts.map((fact) => <span key={fact}>{fact}</span>)}
+    <details className="cl-review">
+      <summary>
+        <span className="cl-review-title">Review</span>
+        <span className="cl-review-meta">
+          {items.length} agent{items.length === 1 ? "" : "s"} · {concern ? "has a concern" : "all support"}
+        </span>
+        <span className="cl-ai-tag">AI</span>
+      </summary>
+      <div className="cl-review-body">
+        {items.map((item) => (
+          <div className="cl-review-row" key={item.seq}>
+            <div className="cl-review-head">
+              <b>{roleLabel[item.role] || item.role}</b>
+              {item.stance ? <span className={`cl-stance ${item.stance}`}>{item.stance}</span> : null}
+            </div>
+            <p>{item.body}</p>
+            <details className="cl-tech">
+              <summary>Details</summary>
+              <span>{item.facts?.join(" · ")}</span>
+            </details>
           </div>
-        ) : null}
-        {card ? <ThreadCard card={card} onAction={onThreadAction} /> : null}
+        ))}
       </div>
-    </article>
+    </details>
   );
 }
 
@@ -78,46 +111,91 @@ function ThreadCard({ card, onAction }) {
   );
 }
 
-function Rail({ rail }) {
-  if (!rail) return null;
-  const usable = (value) => {
-    const text = String(value ?? "").trim();
-    return text && !["—", "-", "not run", "None"].includes(text);
-  };
-  const topSections = [
-    ["Task", [["State", rail.task?.state ? stateLabel(rail.task.state) : ""], ["Product", rail.task?.product], ["Source", rail.task?.source]]],
-    ["Run", [["Flow", rail.factory?.flow], ["Run", rail.factory?.run], ["Commit", rail.factory?.base_commit], ["Checks", rail.factory?.checks_sha]]],
-    ["People", (rail.people || []).map((person) => ["Approver", person])],
-  ];
-  const moreSections = [
-    ["Agents", (rail.agents || []).filter((agent) => usable(agent.name)).map((agent) => [agent.role, [agent.name, agent.detail].filter(usable).join(" · ")])],
-    ["Deliverables", (rail.deliverables || []).filter((item) => usable(item.value)).map((item) => [item.label, item.value])],
-    ["Checks", (rail.checks || []).filter((item) => usable(item.value)).map((item) => [item.label, item.value])],
-    ["Cost", rail.cost?.tokens || rail.cost?.usd ? [["Tokens", rail.cost?.tokens], ["USD", rail.cost?.usd != null ? `$${Number(rail.cost.usd).toFixed(4)}` : ""]] : []],
-  ];
-  const renderSection = ([title, rows]) => {
-    const visible = rows.filter((row) => usable(row[1]));
-    if (!visible.length) return null;
-    return (
-      <section key={title}>
-        <h3>{title}</h3>
-        {visible.map(([label, value]) => (
-          <div className="cl-rail-row" key={`${title}-${label}-${value}`}>
-            <span>{label}</span>
-            <b>{String(value)}</b>
+function Message({ message, onThreadAction }) {
+  const role = message.role || "system";
+  const card = message.type === "thread.agent" ? null : message.card;
+  const hideTitle = message.generated || message.type === "thread.agent" || message.type === "thread.note";
+  const details = message.generated ? (message.facts || []) : [];
+  return (
+    <article className={`cl-msg ${role} ${message.generated ? "generated" : ""} ${message.tone || ""}`}>
+      <div className="cl-avatar" aria-hidden="true">{roleLetter[role] || "·"}</div>
+      <div className="cl-body">
+        <div className="cl-meta">
+          <span className="cl-name">{roleLabel[role] || role}</span>
+          {message.generated ? <span className="cl-ai-tag">AI</span> : null}
+          {message.stance ? <span className={`cl-stance ${message.stance}`}>{message.stance}</span> : null}
+          <time>{new Date(message.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time>
+        </div>
+        {!hideTitle && message.title ? <h3>{message.title}</h3> : null}
+        {message.body ? (
+          <p>{message.generated ? <AiText text={message.body} /> : message.body}</p>
+        ) : null}
+        {!message.generated && message.facts?.length ? (
+          <div className="cl-facts">
+            {message.facts.map((fact) => <span key={fact}>{fact}</span>)}
           </div>
-        ))}
-      </section>
-    );
-  };
-  const hasMore = moreSections.some(([, rows]) => rows.some((row) => usable(row[1])));
+        ) : null}
+        {details.length ? (
+          <details className="cl-tech">
+            <summary>Details</summary>
+            <span>{details.join(" · ")}</span>
+          </details>
+        ) : null}
+        {card ? <ThreadCard card={card} onAction={onThreadAction} /> : null}
+      </div>
+    </article>
+  );
+}
+
+function Rail({ detail, onAction, onView }) {
+  const rail = detail.rail || {};
+  const release = detail.release || {};
+  const decision = decisionFor(detail);
+  const approvers = (rail.people || []).filter(Boolean);
+  const blocker = release.blockers?.[0] || decision?.text;
+  const checks = rail.checks?.find((item) => item.label === "Verdict")?.value || "—";
+  const technical = [
+    ["Commit", rail.factory?.base_commit],
+    ["Checks", rail.factory?.checks_sha],
+    ["Proof", rail.deliverables?.find((item) => item.label === "Proof")?.value],
+  ].filter(([, value]) => value);
   return (
     <aside className="cl-rail" aria-label="Task context">
-      {topSections.map(renderSection)}
-      {hasMore ? (
-        <details className="cl-rail-more">
-          <summary>Agents, deliverables & cost</summary>
-          {moreSections.map(renderSection)}
+      <section>
+        <h3>Decision</h3>
+        <div className="cl-rail-state">{stateLabel(detail.task.state)}</div>
+        {blocker ? <p className="cl-rail-note">{blocker}</p> : null}
+      </section>
+      <section>
+        <h3>Next</h3>
+        <div className="cl-rail-next">
+          {decision ? decision.button : detail.task.state === "released" ? "Delivered" : "No action needed"}
+        </div>
+      </section>
+      <section>
+        <h3>Run</h3>
+        <div className="cl-rail-row"><span>Flow</span><b>{rail.factory?.flow || "—"}</b></div>
+        <div className="cl-rail-row"><span>Run</span><b className="mono">{shortSha(rail.factory?.run)}</b></div>
+        <div className="cl-rail-row"><span>Checks</span><b>{checks}</b></div>
+        <div className="cl-rail-row"><span>Cost</span><b>{rail.cost?.usd != null ? `$${Number(rail.cost.usd).toFixed(4)}` : "—"}</b></div>
+      </section>
+      <section>
+        <h3>People</h3>
+        {approvers.length ? approvers.map((person) => (
+          <div className="cl-person" key={person}><span className="cl-person-dot" />{person}</div>
+        )) : <p className="cl-rail-note">No person has acted yet.</p>}
+      </section>
+      {technical.length || rail.agents?.length ? (
+        <details className="cl-rail-tech">
+          <summary>Technical</summary>
+          {technical.map(([label, value]) => (
+            <div className="cl-rail-row" key={label}><span>{label}</span><b className="mono">{value}</b></div>
+          ))}
+          {(rail.agents || []).filter((agent) => agent.name).map((agent) => (
+            <div className="cl-rail-row" key={agent.role}>
+              <span>{agent.role}</span><b>{agent.name}{agent.detail ? ` · ${agent.detail}` : ""}</b>
+            </div>
+          ))}
         </details>
       ) : null}
     </aside>
@@ -129,16 +207,30 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
   const [text, setText] = useState("");
   const [streamed, setStreamed] = useState("");
   const [pendingQuestion, setPendingQuestion] = useState("");
+  const [focused, setFocused] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [atLatest, setAtLatest] = useState(true);
   const formRef = useRef(null);
   const lineRef = useRef(null);
   const stickRef = useRef(true);
-  const [atLatest, setAtLatest] = useState(true);
   const messages = detail.thread || [];
   const canAsk = Boolean(ai?.available);
   const activeMode = canAsk ? mode : "note";
   const source = sourceUrl(detail.task);
-  const rail = useMemo(() => detail.rail || {}, [detail]);
+  const decision = decisionFor(detail);
+  const blocks = useMemo(() => {
+    const out = [];
+    for (const message of messages) {
+      if (REVIEW_TYPES.has(message.type)) {
+        const last = out[out.length - 1];
+        if (last?.review) last.review.push(message);
+        else out.push({ key: `review-${message.seq}`, review: [message] });
+      } else {
+        out.push({ key: message.seq, message });
+      }
+    }
+    return out;
+  }, [messages]);
 
   useEffect(() => {
     stickRef.current = true;
@@ -202,16 +294,32 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
       <div className="cl-main">
         <header className="cl-head">
           <div className="cl-eyebrow">
-            <span className={`cl-state ${stateTone(detail.task.state)}`}>{stateLabel(detail.task.state)}</span>
             {source
               ? <a href={source} target="_blank" rel="noopener noreferrer">{detail.task.source.ref}</a>
               : <span>{detail.task.source.ref}</span>}
             <span>{detail.task.product}</span>
+            <span className="cl-live-text"><i /> Live</span>
+            <span className="cl-head-actions">
+              {writable && canAsk ? (
+                <>
+                  <button type="button" className="cl-text-btn" onClick={() => onAction("discussion")}>Review</button>
+                  <button type="button" className="cl-text-btn" onClick={() => onAction("commentary")}>Commentary</button>
+                </>
+              ) : null}
+            </span>
           </div>
-          {writable && canAsk ? (
-            <div className="cl-head-actions">
-              <button type="button" className="cl-text-btn" onClick={() => onAction("discussion")}>Team discussion</button>
-              <button type="button" className="cl-text-btn" onClick={() => onAction("commentary")}>Generate commentary</button>
+          {decision ? (
+            <div className={`cl-decision ${decision.tone}`}>
+              <div>
+                <span>{decision.label}</span>
+                <b>{decision.text}</b>
+              </div>
+              <button
+                type="button"
+                onClick={() => (decision.action ? onAction(decision.action) : onView(decision.view))}
+              >
+                {decision.button}
+              </button>
             </div>
           ) : null}
         </header>
@@ -226,12 +334,14 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
             setAtLatest(distance < 80);
           }}
         >
-          {messages.length ? messages.map((message) => {
+          {blocks.length ? blocks.map((block) => {
+            if (block.review) return <ReviewGroup key={block.key} items={block.review} />;
+            const message = block.message;
             const question = message.type === "thread.agent"
               ? (message.card?.rows || []).find(([label]) => String(label).toLowerCase() === "question")?.[1]
               : null;
             return (
-              <Fragment key={message.seq}>
+              <Fragment key={block.key}>
                 {question ? (
                   <div className="cl-user-turn">
                     <p>{question}</p>
@@ -244,14 +354,12 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
           }) : <p className="muted small">No events yet.</p>}
           {streamed || pendingQuestion ? (
             <>
-              {pendingQuestion ? (
-                <div className="cl-user-turn"><p>{pendingQuestion}</p></div>
-              ) : null}
+              {pendingQuestion ? <div className="cl-user-turn"><p>{pendingQuestion}</p></div> : null}
               {streamed ? (
                 <article className="cl-msg mira generated streaming">
                   <div className="cl-avatar" aria-hidden="true">M</div>
                   <div className="cl-body">
-                    <div className="cl-meta"><span className="cl-name">Mira</span><span className="cl-ai-badge">AI answer</span></div>
+                    <div className="cl-meta"><span className="cl-name">Mira</span><span className="cl-ai-tag">AI</span></div>
                     <p>{streamed}<span className="cl-cursor" /></p>
                   </div>
                 </article>
@@ -264,42 +372,46 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
         </div>
 
         {!atLatest ? (
-          <button type="button" className="cl-latest" onClick={jumpToLatest}>Latest ?</button>
+          <button type="button" className="cl-latest" onClick={jumpToLatest}>Jump to latest</button>
         ) : null}
 
         {writable ? (
-          <form className="cl-composer" ref={formRef} onSubmit={submit}>
-            <div className="cl-modes" role="group" aria-label="Message mode">
+          <form className={`cl-composer ${focused ? "focused" : ""}`} ref={formRef} onSubmit={submit}>
+            <div className="cl-composer-row">
               {canAsk ? (
-                <button type="button" className={activeMode === "ask" ? "active" : ""} onClick={() => setMode("ask")}>Ask Mira</button>
-              ) : null}
-              <button type="button" className={activeMode === "note" ? "active" : ""} onClick={() => setMode("note")}>Add context</button>
-            </div>
-            <textarea
-              rows={1}
-              value={text}
-              placeholder={activeMode === "ask" ? "Tell Mira more…" : "Add context to this run…"}
-              onChange={(event) => setText(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) formRef.current?.requestSubmit();
-              }}
-            />
-            <div className="cl-composer-actions">
-              <span>
-                {activeMode === "ask"
-                  ? "Advisory only · Mira remembers earlier answers and cannot open a gate."
-                  : "A note, not a command · never opens a gate or starts a run."}
-              </span>
+                <button
+                  type="button"
+                  className="cl-mode"
+                  onClick={() => setMode(activeMode === "ask" ? "note" : "ask")}
+                  title={activeMode === "ask" ? "Switch to Add context" : "Switch to Ask Mira"}
+                >
+                  {activeMode === "ask" ? "Ask" : "Note"}
+                </button>
+              ) : <span className="cl-mode">Note</span>}
+              <textarea
+                rows={1}
+                value={text}
+                placeholder={activeMode === "ask" ? "Ask Mira…" : "Add context…"}
+                onChange={(event) => setText(event.target.value)}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setFocused(false)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) formRef.current?.requestSubmit();
+                }}
+              />
               <button type="submit" className="cl-send" disabled={busy || !text.trim()} aria-label={activeMode === "ask" ? "Ask Mira" : "Add context"}>
                 ↑
               </button>
             </div>
+            {focused || text ? (
+              <div className="cl-helper">Ctrl Enter to send · advisory only, never opens a gate</div>
+            ) : null}
           </form>
         ) : (
           <p className="cl-readonly">Start <span className="mono">works ui --write</span> to ask Mira or add context.</p>
         )}
       </div>
-      <Rail rail={rail} />
+      <Rail detail={detail} onAction={onAction} onView={onView} />
     </div>
   );
 }

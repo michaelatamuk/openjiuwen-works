@@ -227,7 +227,9 @@ export default function App() {
 
   const title = detail?.task?.source?.title || "A signal in, a released fix out";
   const subtitle = detail
-    ? `${stateLabel(detail.task.state)} · reported ${timeAgo(detail.task.created_at)}`
+    ? view === "thread"
+      ? `reported ${timeAgo(detail.task.created_at)} · ${detail.task.product}`
+      : `${stateLabel(detail.task.state)} · reported ${timeAgo(detail.task.created_at)}`
     : "Select a report to read its story, proof and decision.";
   const crumb = detail ? (view === "evidence" ? "Evidence" : view === "release" ? "Release" : view === "thread" ? "Thread" : "Story") : "Queue";
 
@@ -267,7 +269,7 @@ export default function App() {
           </header>
           {detail ? (
             <div className="view-tabs" role="tablist" aria-label="Detail view">
-              {[["story", "Story"], ["evidence", "Evidence", "for engineers"], ["release", "Release", "deliver & confirm"], ["thread", "Thread", "worklog"]].map(([id, label, note]) => (
+              {[["story", "Story"], ["evidence", "Evidence"], ["release", "Release"], ["thread", "Session"]].map(([id, label]) => (
                 <button
                   key={id}
                   type="button"
@@ -276,7 +278,7 @@ export default function App() {
                   className={`view-tab ${view === id ? "active" : ""}`}
                   onClick={() => changeView(id)}
                 >
-                  {label}{note ? <span className="faint"> {note}</span> : null}
+                  {label}
                 </button>
               ))}
               <span className={`cl-live ${connected ? "on" : ""}`} title={connected ? "Live updates connected" : "Reconnecting"} />

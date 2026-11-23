@@ -692,6 +692,10 @@ Internal only: nothing is published to the upstream fork until M2 is green.
   - 2026-11-23: New task opened as a Claude-style prompt with exact fields under Details. The local
     draft reads a reference, product, repository and title from the text; the person still presses
     Create task, and no run or gate starts.
+  - 2026-11-23: P0 session pass from the design critique: centered 264 / 760 / 288 workspace,
+    one identity row per turn, 15.5px body, collapsed Review block, a top decision bar with the
+    human gate, a one-row composer, and a Decision / Next / Run / People rail. Session replaces the
+    Thread tab label; `/thread` stays the deep link.
   - 2026-11-23: the GUI moved to React/Vite (`web/`) with SSE `/api/events` for the queue and the
     open task; `Ask Mira` keeps its token stream. Thread is now a session pane with right-aligned
     user turns, left-aligned labelled AI answers, a docked composer and auto-follow. Story keeps the

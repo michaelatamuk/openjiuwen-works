@@ -47,21 +47,20 @@ The same evidence page serves two audiences without a second data source:
   tracker comment), confirmation (pass/fail, target, output SHA), team verdict, verifier isolation,
   LAIX shadow and run history with a two-run comparison. In `--write`, the same view can release,
   deliver, confirm and verify.
-- **Thread**: the session pane. Real events become role-labelled turns (Person, Builder, Verifier,
-  Challenger, Team, Delivery, Confirmation, Mira). User questions sit on the right; Mira answers
-  on the left with an `AI answer` badge. The transcript auto-follows the newest event until the
-  person scrolls up, and the composer is docked inside the pane, not floating over the log. In
-  `--write` it has two inputs: **Add context** appends a `thread.note`; **Ask Mira** asks a real
-  `openjiuwen` model about the recorded run. The answer streams token-by-token, is stored as
-  `thread.agent`, and is advisory: it cannot approve, release, retry or change anything. Follow-up
-  questions carry the last three recorded answers as history. Every model answer carries an
-  `AI answer` badge; commentary and discussion carry their own labels. Inline plan/release
-  questions become flat rows with recommended actions and `Open run`; `Generate commentary` adds
-  labelled Builder / Inspector / Reporter messages, and `Team discussion` adds labelled Inspector /
-  Challenger / Reporter messages with a stance. Both are model output: advisory and unable to open
-  a gate. The context rail shows Task, Run and People; agents, deliverables, checks and cost stay
-  behind one disclosure. The transcript hides the native scrollbar, follows new events and shows a
-  `Latest ?` pill after the person scrolls up; the page itself uses a thin overlay scrollbar.
+- **Session** (the Thread worklog, deep link `/thread`): the session pane. The workspace is
+  centered at 1400px: a 264px queue, a 760px session and a 288px rail. Real events become turns;
+  user questions sit on the right, Mira answers on the left with a small `AI` tag. The transcript
+  auto-follows the newest event until the person scrolls up, then shows **Jump to latest**. A
+  decision bar at the top surfaces the next human gate: approve the plan, approve the release or
+  open the evidence for a blocked run. Agent commentary and discussion collapse into one
+  **Review** block instead of six turns. The composer is one row — `Ask`/`Note`, the input and a
+  filled send button; the advisory helper appears only on focus. The rail is Decision / Next / Run
+  / People, with hashes and agents behind **Technical**. In `--write`, `Add context` appends a
+  `thread.note`; `Ask Mira` asks a real `openjiuwen` model and streams the answer into
+  `thread.agent`. Follow-up questions carry the last three recorded answers. Every model answer is
+  labelled and advisory: it cannot approve, release, retry or change a gate. `Review` adds a
+  labelled Inspector / Challenger / Reporter discussion; `Commentary` adds Builder / Inspector /
+  Reporter notes. Both are model output and cannot open a gate.
 - **Factory**: a header action opens metrics and the ledger. The Release view carries the run history
   and a two-run comparison; Evidence offers proof/run/release/delivery/confirmation downloads.
   Artifacts open in a lightbox; a before/after pair has a drag slider; timeline rows open their raw
@@ -76,8 +75,8 @@ and who decides next. “See what failed” scrolls to that rail. The same rule 
 green badge and no “fixed” claim without a passing proof.
 
 `C` toggles Present mode; `Esc` leaves it. `/` focuses search, `Ctrl K` opens the palette and `j`/`k` move through the queue. The preview opens with **no task selected**: the queue is
-visible and Mira waits in the main empty state. Selecting a report opens its Story; the breadcrumb
-returns to the queue.
+visible and Mira waits in the main empty state. Selecting a report opens its Story; the queue stays
+visible on the left.
 
 ## Demo data
 
@@ -111,8 +110,8 @@ without a failure or a finished run. The runs are local fixtures, not upstream f
 ## Design and interaction
 
 Dark and light themes, comfortable and compact density, a warm neutral canvas with a flat session
-column, a 280px tinted sidebar, a 1180px fluid chat and a 300px rail, one coral accent, subtle depth
-instead of stacked borders, visible focus, text labels for
+column, a 264px queue, a 760px chat, a 288px rail and a centered 1400px workspace, one coral
+accent, subtle depth instead of stacked borders, visible focus, text labels for
 every status, `prefers-reduced-motion`, and Mira in the empty state. Below 720 px the route becomes
 a vertical list with the same states and per-milestone screen-reader names; the queue moves below
 the Story so the task is visible first. Replay updates the route and receipt in place.
@@ -139,9 +138,9 @@ the Evidence readiness panel run `works readiness` through a local POST.
 ## Limits
 
 - Readiness commands run only in `--write`; the default preview shows static checks.
-- Polling every 15 s, not SSE.
-- No auth; local-only preview.
-- Vanilla HTML/CSS/JS for the preview; the final window is React 19 + TypeScript + Vite + Tailwind +
-  shadcn/ui, with Playwright and axe, per plan §6.5.
+- Live updates use `GET /api/events` (SSE); the Settings fallback refresh is configurable.
+- No auth; local-only writes. The LAN preview stays read-only.
+- React 19 + Vite, built into `src/works/ui/static/dist`; no Tailwind or shadcn yet, and Playwright
+  is not wired into CI.
 
 Tests: `pytest tests/test_ui.py tests/test_ui_pipeline.py`.
