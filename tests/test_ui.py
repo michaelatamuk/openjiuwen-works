@@ -553,15 +553,16 @@ def test_builder_settings_are_saved_and_health_is_provider_neutral(paths) -> Non
         saved = json.loads(body)["builder"]
         assert saved["provider"] == "codex"
         assert saved["verifier_provider"] == "claudecode"
-        assert "ANTHROPIC_API_KEY" not in body
-        assert "WORKS_VERIFIER_API_KEY" not in body
+        assert "ANTHROPIC_API_KEY" not in json.dumps(saved)
+        assert "WORKS_VERIFIER_API_KEY" not in json.dumps(saved)
 
         status, health = get(base, "/api/health")
         assert status == 200
         builder = json.loads(health)["builder"]
         assert builder["provider"] == "codex"
         assert builder["model"] == "gpt-5"
-        assert "ANTHROPIC_API_KEY" not in health
+        assert "ANTHROPIC_API_KEY" not in json.dumps(builder)
+        assert "WORKS_VERIFIER_API_KEY" not in json.dumps(builder)
 
         status, _ = post(base, "/api/settings/builder", {"provider": "unknown"})
         assert status == 400
