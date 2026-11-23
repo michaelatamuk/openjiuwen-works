@@ -44,7 +44,7 @@ function milestoneCopy(stage, display, detail) {
 const ROUTE_X0 = 160;
 const ROUTE_X1 = 1040;
 // A calm route: a small rise, a dip, then a gradual climb that ends higher than it started.
-const ROUTE_KNOTS = [270, 242, 275, 212, 195, 135];
+const ROUTE_KNOTS = [270, 242, 275, 212, 166, 175];
 
 function routeYAt(index, count) {
   if (count === ROUTE_KNOTS.length) return ROUTE_KNOTS[index];
