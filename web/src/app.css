@@ -333,6 +333,7 @@ h1 { margin: 0; font-size: 25px; line-height: 1.2; letter-spacing: -0.03em; }
 .route-legend span { display: inline-flex; align-items: center; gap: 5px; }
 .legend-dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--line-strong); display: inline-block; }
 .legend-dot.active { border-color: var(--violet); background: var(--violet); }
+.legend-dot.origin { border-color: var(--muted); background: var(--muted); }
 .legend-dot.waiting { border-color: var(--amber); background: var(--amber); }
 .legend-dot.done { border-color: var(--green); background: var(--green); }
 .legend-dot.blocked { border-color: var(--red); background: var(--red); }
@@ -367,9 +368,9 @@ h1 { margin: 0; font-size: 25px; line-height: 1.2; letter-spacing: -0.03em; }
 .milestone.below .m-copy { top: 24px; }
 .m-copy strong { display: block; color: var(--muted); font-size: 12.5px; line-height: 1.25; }
 .m-copy em { display: block; margin-top: 3px; color: var(--faint); font-size: 10.5px; font-style: normal; font-variant-numeric: tabular-nums; }
-.milestone.source .m-node { width: 20px; height: 20px; border-color: var(--line-strong); background: var(--panel-3); color: transparent; }
-.milestone.source .m-copy strong { color: var(--faint); font-weight: 600; }
-.milestone.source .m-copy em { color: var(--faint); }
+.milestone.source .m-node { width: 14px; height: 14px; border: 2px solid var(--muted); background: var(--muted); color: transparent; box-shadow: 0 0 0 4px var(--panel-2); }
+.milestone.source .m-copy strong { color: var(--muted); font-weight: 600; }
+.milestone.source .m-copy em { color: var(--faint); font-size: 9.5px; overflow-wrap: anywhere; }
 .milestone.done .m-node { border-color: var(--green); color: var(--green); background: var(--green-soft); }
 .milestone.done .m-copy strong { color: var(--text); }
 .milestone.active .m-node { border-color: var(--violet); color: var(--violet-text); background: var(--violet-soft); box-shadow: 0 0 0 5px color-mix(in srgb, var(--violet) 16%, transparent); transform: translate(-50%, -50%) scale(1.08); }
@@ -381,8 +382,9 @@ h1 { margin: 0; font-size: 25px; line-height: 1.2; letter-spacing: -0.03em; }
 .milestone.gate .m-node { border-radius: 7px; border-color: var(--amber); color: var(--amber); background: var(--amber-soft); }
 .milestone.gate.done .m-node { border-color: var(--green); color: var(--green); background: var(--green-soft); }
 .milestone.gate.pending .m-node { border-color: var(--line-strong); color: var(--faint); background: var(--panel-2); }
-.route-mira { position: absolute; transform: translate(-50%, calc(-100% - 68px)); display: flex; flex-direction: column; align-items: center; gap: 0; pointer-events: none; z-index: 3; }
-.route-mira.above-node { transform: translate(-50%, calc(-100% - 12px)); }
+.route-mira { position: absolute; transform: translate(-50%, calc(-100% - 76px)); display: flex; flex-direction: column; align-items: center; gap: 0; pointer-events: none; z-index: 3; }
+.route-mira.above-node { transform: translate(-50%, calc(-100% - 30px)); }
+.route-mira.finish { transform: translate(38px, calc(-100% - 22px)); }
 .route-mira[hidden] { display: none; }
 .route-mira img { filter: drop-shadow(0 5px 8px rgb(0 0 0 / 0.18)); }
 .receipt { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 16px; background: var(--panel); overflow: hidden; box-shadow: var(--shadow); }
@@ -2456,3 +2458,4 @@ body { background: var(--bg); background-image: none; }
   user-select: none;
 }
 .cl-chapter-all input { width: 13px; height: 13px; margin: 0; accent-color: var(--violet); }
+.route-intake { fill: none; stroke: var(--violet); stroke-width: 2; stroke-dasharray: 6 8; }

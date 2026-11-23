@@ -41,6 +41,50 @@ function milestoneCopy(stage, display, detail) {
   return stops[stage.id]?.[display] || stage.label;
 }
 
+const ROUTE_X0 = 160;
+const ROUTE_X1 = 1040;
+// A calm route: a small rise, a dip, then a gradual climb that ends higher than it started.
+const ROUTE_KNOTS = [270, 235, 272, 222, 190, 150];
+
+function routeYAt(index, count) {
+  if (count === ROUTE_KNOTS.length) return ROUTE_KNOTS[index];
+  if (count <= 1) return ROUTE_KNOTS[0];
+  const position = (index / (count - 1)) * (ROUTE_KNOTS.length - 1);
+  const low = Math.floor(position);
+  const high = Math.min(ROUTE_KNOTS.length - 1, low + 1);
+  const fraction = position - low;
+  return ROUTE_KNOTS[low] + (ROUTE_KNOTS[high] - ROUTE_KNOTS[low]) * fraction;
+}
+
+function smoothPath(points) {
+  if (!points.length) return "";
+  if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+  const parts = [`M ${points[0].x} ${points[0].y}`];
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const p0 = points[index - 1] || points[index];
+    const p1 = points[index];
+    const p2 = points[index + 1];
+    const p3 = points[index + 2] || p2;
+    const c1x = p1.x + (p2.x - p0.x) / 6;
+    const c1y = p1.y + (p2.y - p0.y) / 6;
+    const c2x = p2.x - (p3.x - p1.x) / 6;
+    const c2y = p2.y - (p3.y - p1.y) / 6;
+    parts.push(`C ${c1x.toFixed(2)} ${c1y.toFixed(2)} ${c2x.toFixed(2)} ${c2y.toFixed(2)} ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`);
+  }
+  return parts.join(" ");
+}
+
+function lengthAtX(path, x) {
+  let low = 0;
+  let high = path.getTotalLength();
+  for (let step = 0; step < 24; step += 1) {
+    const middle = (low + high) / 2;
+    if (path.getPointAtLength(middle).x < x) low = middle;
+    else high = middle;
+  }
+  return (low + high) / 2;
+}
+
 function Route({ stages, selected, onSelect, taskState, detail }) {
   const pathRef = useRef(null);
   const progressRef = useRef(null);
@@ -51,23 +95,32 @@ function Route({ stages, selected, onSelect, taskState, detail }) {
   const effectiveIndex = stages.some((stage) => ["active", "blocked"].includes(stage.state))
     ? activeIndex
     : Math.max(0, stages.map((stage) => stage.state).lastIndexOf("done"));
+  const routePoints = stages.map((_, index) => ({
+    x: ROUTE_X0 + (ROUTE_X1 - ROUTE_X0) * (index / Math.max(1, stages.length - 1)),
+    y: routeYAt(index, stages.length),
+  }));
+  const routeD = smoothPath(routePoints);
+  const intakeD = smoothPath(routePoints.slice(0, 2));
 
   useLayoutEffect(() => {
     const path = pathRef.current;
     if (!path || !stages.length) return;
     const length = path.getTotalLength();
-    const next = stages.map((stage, index) => ({
-      stage,
-      display: index === 0 ? "source" : stage.state || "pending",
-      side: index % 2 === 0 ? "above" : "below",
-      point: path.getPointAtLength((length * index) / Math.max(1, stages.length - 1)),
-    }));
+    const next = stages.map((stage, index) => {
+      const point = routePoints[index];
+      return {
+        stage,
+        display: index === 0 ? "source" : stage.state || "pending",
+        side: index % 2 === 0 ? "above" : "below",
+        point,
+      };
+    });
     setPoints(next);
     const progress = progressRef.current;
     if (progress) {
-      const segments = Math.max(1, stages.length - 1);
-      const start = length / segments;
-      const end = (length * effectiveIndex) / segments;
+      const stageLengths = next.map(({ point }) => lengthAtX(path, point.x));
+      const start = stageLengths[1] ?? 0;
+      const end = stageLengths[effectiveIndex] ?? start;
       progress.style.strokeDasharray = `${Math.max(0, end - start)} ${length}`;
       progress.style.strokeDashoffset = `${-start}`;
       progress.classList.toggle("blocked", stages[effectiveIndex]?.state === "blocked");
@@ -84,6 +137,7 @@ function Route({ stages, selected, onSelect, taskState, detail }) {
       <div className="route-head">
         <span className="route-title">The fix route</span>
         <span className="route-legend">
+          <span><i className="legend-dot origin" />Origin</span>
           <span><i className="legend-dot pending" />Not started</span>
           <span><i className="legend-dot active" />Mira is here</span>
           <span><i className="legend-dot waiting" />Waits for you</span>
@@ -94,8 +148,9 @@ function Route({ stages, selected, onSelect, taskState, detail }) {
       <div className="route-scroll">
         <div className="route-wrap">
           <svg className="route-svg" viewBox="0 0 1200 380" preserveAspectRatio="none" aria-hidden="true">
-            <path ref={pathRef} className="route-base" d="M 160 260 C 320 150 460 320 600 250 S 880 150 1040 260" />
-            <path ref={progressRef} className="route-progress" d="M 160 260 C 320 150 460 320 600 250 S 880 150 1040 260" />
+            <path ref={pathRef} className="route-base" d={routeD} />
+            <path className="route-intake" d={intakeD} />
+            <path ref={progressRef} className="route-progress" d={routeD} />
           </svg>
           <div className="route-points" role="list" aria-label="Fix milestones">
             {points.map(({ stage, display, side, point }, index) => {
@@ -106,21 +161,27 @@ function Route({ stages, selected, onSelect, taskState, detail }) {
                   className={`milestone ${display} ${side}${stage.kind === "gate" ? " gate" : ""}${stage.id === selected ? " selected" : ""}`}
                   style={{ left: `${(point.x / 1200) * 100}%`, top: `${(point.y / 380) * 100}%` }}
                   role="listitem"
-                  aria-label={`${copy}, ${display}${stage.at ? `, ${timeAgo(stage.at)}` : ""}`}
+                  aria-label={`${copy}, ${display === "source" ? "origin" : display}${stage.at ? `, ${timeAgo(stage.at)}` : ""}`}
                   aria-current={display === "active" ? "step" : undefined}
                   onClick={() => onSelect(stage.id)}
                 >
                   <span className="m-node" aria-hidden="true">{node(display, stage.kind)}</span>
                   <span className="m-copy">
                     <strong>{copy}</strong>
-                    {stage.at && display !== "pending" ? <em>{timeAgo(stage.at)}</em> : null}
+                    {stage.at && display !== "pending" ? (
+                      <em>
+                        {display === "source"
+                          ? `from ${detail.task.source.ref} · ${timeAgo(stage.at)}`
+                          : timeAgo(stage.at)}
+                      </em>
+                    ) : null}
                   </span>
                 </div>
               );
             })}
           </div>
           <div
-            className={`route-mira${effectiveIndex % 2 === 1 ? " above-node" : ""}`}
+            className={`route-mira${effectiveIndex % 2 === 1 ? " above-node" : ""}${effectiveIndex === stages.length - 1 ? " finish" : ""}`}
             style={activePoint ? { left: `${(activePoint.x / 1200) * 100}%`, top: `${(activePoint.y / 380) * 100}%` } : { display: "none" }}
             hidden={!showMira}
             aria-hidden="true"
