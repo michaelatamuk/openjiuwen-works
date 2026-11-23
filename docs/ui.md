@@ -47,16 +47,17 @@ The same evidence page serves two audiences without a second data source:
   tracker comment), confirmation (pass/fail, target, output SHA), team verdict, verifier isolation,
   LAIX shadow and run history with a two-run comparison. In `--write`, the same view can release,
   deliver, confirm and verify.
-- **Session** (the Thread worklog, deep link `/thread`): the default is a **Chat** view — only
-  human notes and Ask Mira turns, with user questions on the right and labelled Mira answers on the
-  left. If there is no conversation yet, Mira introduces what she can explain and offers suggested
-  questions. A single decision card at the top surfaces the next human gate (approve plan, approve
-  release or open evidence). **Run log** switches the same pane to a vertical chapter outline
-  (Plan / Build / Check / Release): past chapters are one-line summaries, the current chapter opens,
-  and **Full log** expands everything. Agent commentary and discussion stay in one collapsed
-  **Review** block; technical hashes, agents and deliveries live under **Technical**. The rail is a
-  separate pane: Decision, human Activity, Run, People. The conversation measure is 900px while the
-  pane uses the rest of the width for the outline and context. In `--write`, `Add context` appends a
+- **Session** (the Thread worklog, deep link `/thread`): the whole run reads as one
+  **conversation**. It opens with the person's report on the right, then the pipeline continues on
+  the left — reproduction, plan, build, check and release — with a quiet phase divider before each
+  stage. Question cards appear inline (plan and release) and carry their own human actions; a plan
+  gate or a blocked run adds one decision card above the thread, while a release card stays inline.
+  Agent commentary and discussion collapse into one **Review** block; gate, challenge and hash rows
+  sit behind **Details**. The rail stays at the right edge of the session: Decision, human Activity,
+  Run, People and Technical. The conversation measure is 900px inside the full pane; the app bar,
+  title and tabs stay on the shared content frame. **Run log** switches the same pane to a vertical
+  chapter outline (Plan / Build / Check / Release): past chapters are one-line summaries, the current
+  chapter opens, and **Full log** expands everything. In `--write`, `Add context` appends a
   `thread.note`; `Ask Mira` asks a real `openjiuwen` model and streams the answer into
   `thread.agent`. Follow-up questions carry the last three recorded answers. Every model answer is
   labelled and advisory: it cannot approve, release, retry or change a gate. `Review` adds a
@@ -111,8 +112,9 @@ without a failure or a finished run. The runs are local fixtures, not upstream f
 ## Design and interaction
 
 Dark and light themes, comfortable and compact density, a near-white surface system, a 52px app
-bar, a 280px queue, one shared content frame, a chat-first Session with a 900px conversation measure,
-a Run log with a 220px chapter outline, and a 340px context pane. One coral accent, subtle depth
+bar, a 280px queue, one shared content frame (app bar, title, status and tabs), a pipeline
+conversation with a 900px measure and a right-edge context rail, a Run log with a 220px chapter
+outline, and inline human gates. One coral accent, subtle depth
 instead of stacked borders, visible focus, text labels for every status, `prefers-reduced-motion`,
 and Mira in the empty state. Below 720 px the route becomes
 a vertical list with the same states and per-milestone screen-reader names; the queue moves below

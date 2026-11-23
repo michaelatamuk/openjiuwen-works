@@ -158,20 +158,26 @@ function ReviewGroup({ items }) {
 }
 
 function ThreadCard({ card, onAction }) {
+  const rows = (card.rows || []).map(([label, value]) => {
+    const text = String(value ?? "");
+    return (
+      <div className="cl-row" key={`${label}-${text}`}>
+        <span>{label}</span>
+        {/^https?:\/\//.test(text)
+          ? <a href={text} target="_blank" rel="noopener noreferrer">{text}</a>
+          : <span className="mono">{text}</span>}
+      </div>
+    );
+  });
   return (
     <div className="cl-question">
       {card.prompt ? <p className="cl-prompt">{card.prompt}</p> : null}
-      {(card.rows || []).map(([label, value]) => {
-        const text = String(value ?? "");
-        return (
-          <div className="cl-row" key={`${label}-${text}`}>
-            <span>{label}</span>
-            {/^https?:\/\//.test(text)
-              ? <a href={text} target="_blank" rel="noopener noreferrer">{text}</a>
-              : <span className="mono">{text}</span>}
-          </div>
-        );
-      })}
+      {card.kind === "question" ? rows : (
+        <details className="cl-tech">
+          <summary>Details</summary>
+          {rows}
+        </details>
+      )}
       {card.options?.length ? (
         <div className="cl-options">
           {card.options.map((option) => (
@@ -192,8 +198,7 @@ function ThreadCard({ card, onAction }) {
 
 function Message({ message, onThreadAction }) {
   const role = message.role || "system";
-  const inlineRelease = message.type === "note" && /release this commit/i.test(message.card?.prompt || "");
-  const card = message.type === "thread.agent" || inlineRelease ? null : message.card;
+  const card = message.type === "thread.agent" ? null : message.card;
   const hideTitle = message.generated || message.type === "thread.agent" || message.type === "thread.note";
   const details = message.generated ? (message.facts || []) : [];
   return (
@@ -243,6 +248,7 @@ function Rail({ detail, onAction, onView }) {
     <aside className="cl-rail" aria-label="Task context">
       <section>
         <h3>Decision</h3>
+        <p className="cl-rail-state">{stateLabel(detail.task.state)}</p>
         <p className="cl-rail-note">{blocker || "No blocker recorded."}</p>
       </section>
       <section>
@@ -299,7 +305,7 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
   const [atLatest, setAtLatest] = useState(true);
   const [showAll, setShowAll] = useState(false);
   const [selectedPhase, setSelectedPhase] = useState(null);
-  const [sessionMode, setSessionMode] = useState("chat");
+  const [sessionMode, setSessionMode] = useState("pipeline");
   const formRef = useRef(null);
   const lineRef = useRef(null);
   const stickRef = useRef(true);
@@ -324,17 +330,28 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
       blocks: groupItems(groups[phase.id]),
     }));
   }, [messages, currentId, detail]);
-  const outcomes = detail.evidence?.verdict?.outcomes || [];
-  const passed = outcomes.filter((item) => item.passed).length;
-  const files = detail.evidence?.files_changed || [];
-  const decisionStats = [
-    outcomes.length ? `${passed}/${outcomes.length} checks` : null,
-    files.length ? `${files.length} file${files.length === 1 ? "" : "s"}` : null,
-    detail.summary?.risk ? `${detail.summary.risk} risk` : null,
-  ].filter(Boolean);
   const visiblePhases = showAll ? phases : phases.filter((phase) => phase.id === (selectedPhase || currentId));
-  const chatMessages = messages.filter((message) => ["thread.agent", "thread.note"].includes(message.type));
-  const reviewItems = messages.filter((message) => REVIEW_TYPES.has(message.type));
+  const pipelineBlocks = useMemo(() => {
+    let lastPhase = null;
+    const out = [];
+    for (const message of messages) {
+      if (message.type.startsWith("memory.")) continue;
+      if (message.type === "team.verified" || message.type === "decision.made") continue;
+      const phase = message.type === "task.created" ? "reported" : phaseFor(message);
+      if (phase && phase !== lastPhase) {
+        out.push({ key: `divider-${message.seq}`, divider: phase });
+        lastPhase = phase;
+      }
+      if (REVIEW_TYPES.has(message.type)) {
+        const last = out[out.length - 1];
+        if (last?.review) last.review.push(message);
+        else out.push({ key: `review-${message.seq}`, review: [message] });
+      } else {
+        out.push({ key: message.seq, message });
+      }
+    }
+    return out;
+  }, [messages]);
 
   useEffect(() => {
     stickRef.current = true;
@@ -413,7 +430,7 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
   }
 
   return (
-    <div className="cl-thread">
+    <div className={`cl-thread ${sessionMode === "pipeline" ? "conversation" : "log"}`}>
       <div className="cl-main">
         <div className="cl-head">
           <div className="cl-eyebrow">
@@ -423,8 +440,8 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
             <span>{detail.task.product}</span>
             <span className="cl-live-text"><i /> Live</span>
             <span className="cl-head-actions">
-              <button type="button" className="cl-text-btn" onClick={() => setSessionMode((value) => value === "chat" ? "log" : "chat")}>
-                {sessionMode === "chat" ? "Run log" : "Chat"}
+              <button type="button" className="cl-text-btn" onClick={() => setSessionMode((value) => value === "log" ? "pipeline" : "log")}>
+                {sessionMode === "pipeline" ? "Run log" : "Conversation"}
               </button>
               {sessionMode === "log" ? (
                 <button type="button" className="cl-text-btn" onClick={() => { setShowAll((value) => !value); setSelectedPhase(null); }}>
@@ -439,21 +456,23 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
               ) : null}
             </span>
           </div>
-          {decision ? (
+          {sessionMode === "pipeline" && decision && (decision.action === "approve-plan" || decision.tone === "red") ? (
             <div className={`cl-decision ${decision.tone}`}>
               <div>
                 <span>{decision.label}</span>
                 <b>{decision.text}</b>
-                {decisionStats.length ? <em>{decisionStats.join(" / ")}</em> : null}
               </div>
-              <button type="button" onClick={() => (decision.action ? onAction(decision.action) : onView(decision.view))}>
+              <button
+                type="button"
+                onClick={() => (decision.action ? threadAction(decision.action) : onView(decision.view))}
+              >
                 {decision.button}
               </button>
             </div>
           ) : null}
         </div>
 
-        <div className={`cl-work ${sessionMode === "chat" ? "chat-only" : ""}`}>
+        <div className={`cl-work ${sessionMode === "pipeline" ? "chat-only" : ""}`}>
           {sessionMode === "log" ? (
           <aside className="cl-outline" aria-label="Session chapters">
             <div className="cl-outline-head">
@@ -515,18 +534,28 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
                       : <p className="cl-phase-empty">No events in this chapter.</p>}
                   </div>
                 </section>
-              )) : (
-                <>
-                  {chatMessages.length ? chatMessages.map((message) => renderBlock({ key: message.seq, message })) : (
-                    <div className="cl-welcome">
-                      <img src="/mira.svg" alt="" width="40" height="40" />
-                      <h3>Ask Mira about this run</h3>
-                      <p>I can explain the verdict, what changed, which checks passed, or what is still missing. I cannot release or change a gate.</p>
+              )) : pipelineBlocks.map((block) => {
+                if (block.divider) {
+                  return (
+                    <div className="cl-divider" key={block.key}>
+                      <span>{{ reported: "Reported", plan: "Plan", build: "Build", check: "Check", release: "Release" }[block.divider] || block.divider}</span>
                     </div>
-                  )}
-                  {reviewItems.length ? <ReviewGroup items={reviewItems} /> : null}
-                </>
-              )}
+                  );
+                }
+                if (block.review) return <ReviewGroup key={block.key} items={block.review} />;
+                const message = block.message;
+                if (message.role === "person") {
+                  const body = message.type === "gate.decided" ? "Approved by a person." : message.body;
+                  return (
+                    <div className="cl-user-turn" key={block.key}>
+                      <div className="cl-user-meta"><b>{roleLabel.person}</b><time>{new Date(message.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time></div>
+                      {message.title && message.title !== "Reported" ? <b className="cl-user-title">{message.title}</b> : null}
+                      <p>{body}</p>
+                    </div>
+                  );
+                }
+                return renderBlock({ key: block.key, message });
+              })}
               {streamed || pendingQuestion ? (
                 <>
                   {pendingQuestion ? <div className="cl-user-turn"><p>{pendingQuestion}</p></div> : null}
@@ -543,24 +572,6 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
               ) : null}
               {busy && !streamed ? (
                 <div className="cl-working"><span /> Mira is reading the proof.</div>
-              ) : null}
-              {writable && canAsk ? (
-                <div className="cl-suggest">
-                  <span>Ask about this run</span>
-                  {["What changed?", "Is it released?", "What was not tested?"].map((prompt) => (
-                    <button
-                      key={prompt}
-                      type="button"
-                      onClick={() => {
-                        setMode("ask");
-                        setText(prompt);
-                        formRef.current?.querySelector("textarea")?.focus();
-                      }}
-                    >
-                      {prompt}
-                    </button>
-                  ))}
-                </div>
               ) : null}
             </div>
         {!atLatest ? (
@@ -583,7 +594,7 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
               <textarea
                 rows={1}
                 value={text}
-                placeholder={activeMode === "ask" ? "Ask Mira…" : "Add context…"}
+                placeholder={activeMode === "ask" ? "Ask about this run..." : "Add context to this run..."}
                 onChange={(event) => setText(event.target.value)}
                 onFocus={() => setFocused(true)}
                 onBlur={() => setFocused(false)}
