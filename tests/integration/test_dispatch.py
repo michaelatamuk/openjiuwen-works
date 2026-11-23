@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from tests.test_cli import invoke, payload
-
+from tests.unit.interfaces.cli.test_cli import invoke, payload
 from works.adapters.queue.store import Queue
 from works.domain.records import Source, SourceKind, TaskState
 

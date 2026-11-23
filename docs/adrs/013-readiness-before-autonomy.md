@@ -4,7 +4,7 @@
 
 ## Context
 
-Lauren Tan's SpaceX SI talk (`docs/review-5-slop.md`) describes a trust pyramid: deterministic code
+Lauren Tan's SpaceX SI talk (`docs/archive/reviews/review-5-slop.md`) describes a trust pyramid: deterministic code
 — APIs, architecture, lint rules, types, compilers, tests — is the strongest control; verification
 (runtime, property, formal) is the next layer; prose (rules, skills, `AGENTS.md`, comments) is the
 weakest. The team ships thousands of pull requests with a low revert rate because the repository

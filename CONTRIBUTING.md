@@ -1,7 +1,7 @@
 # Contributing
 
 Small, typed, tested changes. The plan is the source of truth for scope; the engineering standard
-in `docs/plan.md` §6.4 is the bar.
+in `docs/design/plan.md` §6.4 is the bar.
 
 ## Setup
 

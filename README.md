@@ -99,7 +99,7 @@ Readiness is a gate, not a warning. Add `.works/readiness.yaml` and a feature ma
 
 ```bash
 uv sync --extra live
-# openjiuwen must be installed or on PYTHONPATH; see docs/live-harness.md
+# openjiuwen must be installed or on PYTHONPATH; see docs/guides/live-harness.md
 uv run works readiness --repo /path/to/repo
 uv run works source github owner/name --product MyProduct --label bug
 uv run works source detector --file alerts.json --product MyProduct
@@ -119,7 +119,7 @@ uv run works swarm doctor
 
 A product can point at its checkout once in `.works/products.yaml`, so `--product MyProduct` is
 enough; add `deploy: [python, scripts/deploy.py]` to the same entry for `works deploy` without
-`--command`. See [`docs/intake.md`](docs/intake.md).
+`--command`. See [`docs/guides/intake.md`](docs/guides/intake.md).
 
 The live builder needs `ANTHROPIC_API_KEY` (or `WORKS_MODEL_KEY`). PPMA memory is optional:
 
@@ -176,25 +176,25 @@ make integration    # the whole loop, no model
 make bench          # CLI, status and evidence budgets
 ```
 
-CI runs lint, tests, bandit and gitleaks; mutation and `pip-audit` run weekly. Decisions are recorded as ADRs in [`docs/adrs/`](docs/adrs/), and known failures are in [`docs/runbook.md`](docs/runbook.md).
+CI runs lint, tests, bandit and gitleaks; mutation and `pip-audit` run weekly. Decisions are recorded as ADRs in [`docs/adrs/`](docs/adrs/), and known failures are in [`docs/guides/runbook.md`](docs/guides/runbook.md).
 
 ## Documentation
 
 | Document | What it answers |
 |---|---|
-| [`docs/plan.md`](docs/plan.md) | Milestones, checkboxes, standards and refactoring gates |
-| [`docs/ui.md`](docs/ui.md) | Story, Evidence, report intake and the read-only/write boundary |
-| [`docs/release.md`](docs/release.md) | Release packet, gate 2, delivery and confirmation |
-| [`docs/readiness.md`](docs/readiness.md) | `.works/readiness.yaml` and the autonomy gate |
-| [`docs/features.md`](docs/features.md) | Feature map format and proof coverage |
-| [`docs/live-harness.md`](docs/live-harness.md) | Real `openjiuwen` builder setup |
-| [`docs/agent-core.md`](docs/agent-core.md) | agent-core harness, verification team and Ask Mira |
-| [`docs/intake.md`](docs/intake.md) | GitHub/Jira/detector intake and product-to-repository map |
-| [`docs/swarm.md`](docs/swarm.md) | Isolated JiuwenSwarm builder contract |
-| [`docs/ppma.md`](docs/ppma.md) | PPMA north contract, backfill and recall |
-| [`docs/laix.md`](docs/laix.md) | Decision-layer boundary and rollout |
-| [`docs/verification.md`](docs/verification.md) | Verification and approval boundaries |
-| [`docs/waiting-and-dispatch.md`](docs/waiting-and-dispatch.md) | Waits, wake events and dispatch |
+| [`docs/design/plan.md`](docs/design/plan.md) | Milestones, checkboxes, standards and refactoring gates |
+| [`docs/guides/ui.md`](docs/guides/ui.md) | Story, Evidence, report intake and the read-only/write boundary |
+| [`docs/guides/release.md`](docs/guides/release.md) | Release packet, gate 2, delivery and confirmation |
+| [`docs/guides/readiness.md`](docs/guides/readiness.md) | `.works/readiness.yaml` and the autonomy gate |
+| [`docs/reference/features.md`](docs/reference/features.md) | Feature map format and proof coverage |
+| [`docs/guides/live-harness.md`](docs/guides/live-harness.md) | Real `openjiuwen` builder setup |
+| [`docs/reference/agent-core.md`](docs/reference/agent-core.md) | agent-core harness, verification team and Ask Mira |
+| [`docs/guides/intake.md`](docs/guides/intake.md) | GitHub/Jira/detector intake and product-to-repository map |
+| [`docs/guides/swarm.md`](docs/guides/swarm.md) | Isolated JiuwenSwarm builder contract |
+| [`docs/guides/ppma.md`](docs/guides/ppma.md) | PPMA north contract, backfill and recall |
+| [`docs/guides/laix.md`](docs/guides/laix.md) | Decision-layer boundary and rollout |
+| [`docs/guides/verification.md`](docs/guides/verification.md) | Verification and approval boundaries |
+| [`docs/guides/waiting-and-dispatch.md`](docs/guides/waiting-and-dispatch.md) | Waits, wake events and dispatch |
 | [`docs/adrs/`](docs/adrs/) | Fifteen architecture decisions |
 
 ## Repository map
@@ -204,11 +204,20 @@ src/works/domain/       task, event, run, plan, evidence, policy, flow
 src/works/application/  supervisor, planning, execution, delivery, approvals
 src/works/adapters/     queue, git, harness, processes
 src/works/interfaces/   CLI, HTTP API, local Story/Evidence preview assets
-flows/              the fix-issue flow as a node graph
-fixtures/           planted-bug repo, scenarios, traces and decision cases
-tests/              unit, property, CLI, integration and golden proof tests
-docs/               plan, ADRs, UI, readiness, memory and brand
-scripts/            demo, benchmark, checks, deck and film
+web/src/app/            entry point and App shell
+web/src/features/       queue, session, story, evidence, release, dialogs
+web/src/ui/             small UI primitives
+web/src/styles/         CSS split into foundation, session and shell passes
+flows/                  the fix-issue flow as a node graph
+fixtures/               planted-bug repo, scenarios, traces and decision cases
+tests/unit/             domain, application, adapters and interfaces tests
+tests/integration/      live, Docker, Swarm, team and performance tests
+docs/guides/            operator and integration guides
+docs/design/            product plan and planner design
+docs/reference/         feature map and agent-core reference
+docs/adrs/              architecture decision records
+docs/archive/           historical demos, proposals and reviews
+scripts/                demo, benchmark, checks, deck and film
 ```
 
 ## License
