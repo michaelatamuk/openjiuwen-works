@@ -64,6 +64,14 @@ class Evidence(BaseModel):
     credential_split: bool = False
     prompt_name: str | None = None
     prompt_sha256: str | None = None
+    plan_id: str | None = None
+    plan_hash: str | None = None
+    plan_summary: str | None = None
+    planner_mode: str | None = None
+    planner_provider: str | None = None
+    planner_model: str | None = None
+    planner_tokens: int = 0
+    planner_usd: float = 0.0
     tokens: int = 0
     usd: float = 0.0
     builder_tokens: int = 0
@@ -96,7 +104,31 @@ class Evidence(BaseModel):
         """Bind the page to its own content and to the diff."""
         diff_hash = hashlib.sha256(self.diff.encode("utf-8")).hexdigest()
         payload = self.model_copy(update={"diff_sha256": diff_hash, "proof_sha256": ""})
-        canonical = payload.model_dump_json(exclude={"proof_sha256"})
+        exclude = {"proof_sha256"}
+        if not any(
+            (
+                self.plan_id,
+                self.plan_hash,
+                self.plan_summary,
+                self.planner_mode,
+                self.planner_provider,
+                self.planner_model,
+                self.planner_tokens,
+                self.planner_usd,
+            )
+        ):
+            # Preserve the historical proof hash for evidence that predates plans.
+            exclude |= {
+                "plan_id",
+                "plan_hash",
+                "plan_summary",
+                "planner_mode",
+                "planner_provider",
+                "planner_model",
+                "planner_tokens",
+                "planner_usd",
+            }
+        canonical = payload.model_dump_json(exclude=exclude)
         proof_hash = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
         return self.model_copy(update={"diff_sha256": diff_hash, "proof_sha256": proof_hash})
 
@@ -146,6 +178,20 @@ def render_markdown(evidence: Evidence) -> str:
                 f"{_result(outcome.passed)} | {outcome.exit_code} | {outcome.duration_ms} |"
             )
         lines.append("")
+    if evidence.plan_id:
+        lines += [
+            "## Plan",
+            "",
+            f"**{_cell(evidence.plan_id)}** · hash `{_cell(evidence.plan_hash or '—')}`",
+            "",
+            _cell(evidence.plan_summary or "No plan summary recorded."),
+            "",
+            f"Planner `{_cell(evidence.planner_mode or 'deterministic')}` · "
+            f"provider `{_cell(evidence.planner_provider or '—')}` · "
+            f"model `{_cell(evidence.planner_model or '—')}` · "
+            f"{evidence.planner_tokens} tokens / ${evidence.planner_usd:.4f}",
+            "",
+        ]
     if evidence.decision is not None:
         gate_decision = evidence.decision
         approval = "required" if gate_decision.requires_approval else "not required"

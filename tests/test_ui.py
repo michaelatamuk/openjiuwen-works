@@ -478,6 +478,51 @@ def test_source_endpoint_imports_github_and_jira(paths, repo, monkeypatch) -> No
         assert json.loads(body)["created"] == 1
 
 
+def test_plan_event_becomes_a_reviewable_thread_card(paths, submit) -> None:
+    from works.queue import Queue
+
+    task = submit()
+    Queue(paths).append(
+        task.id,
+        "plan.drafted",
+        {
+            "plan_id": "p-test-v1",
+            "version": 1,
+            "hash": "a" * 64,
+            "base_commit": "abc1234",
+            "checks_sha": "checks",
+            "scenario_set": "scenarios.yaml",
+            "scenario_ids": ["add-positive", "add-negative"],
+            "p0": ["add-positive", "add-negative"],
+            "p1": [],
+            "nodes": ["reproduce", "build", "test", "challenge"],
+            "summary": "Change add to return the sum.",
+            "validation": {"ok": True, "errors": [], "warnings": []},
+            "provenance": {
+                "mode": "assisted",
+                "planner": "native",
+                "provider": "native",
+                "model": "deepseek-chat",
+                "tokens": 1200,
+                "usd": 0.001,
+            },
+        },
+    )
+
+    with running(paths) as base:
+        status, body = get(base, f"/api/tasks/{task.id}")
+        assert status == 200
+        plan = next(
+            message for message in json.loads(body)["thread"] if message["type"] == "plan.drafted"
+        )
+        assert plan["body"].startswith("Change add to return the sum.")
+        rows = dict(plan["card"]["rows"])
+        assert rows["Plan"] == "p-test-v1"
+        assert "reproduce -> build" in rows["Steps"]
+        assert "native" in rows["Planner"]
+        assert rows["Lint"] == "ok"
+
+
 def test_task_detail_exposes_a_thread_and_a_rail(paths, submit) -> None:
     from works.queue import Queue
 
@@ -570,6 +615,37 @@ def test_builder_settings_are_saved_and_health_is_provider_neutral(paths) -> Non
 
         status, _ = post(base, "/api/settings/builder", {"provider": "unknown"})
         assert status == 400
+
+
+def test_planner_settings_are_saved_and_exposed(paths) -> None:
+    with running(paths, write=True) as base:
+        status, body = post(
+            base,
+            "/api/settings/builder",
+            {
+                "runtime": "openjiuwen",
+                "provider": "claudecode",
+                "planner_mode": "assisted",
+                "planner_provider": "native",
+                "planner_model": "deepseek-chat",
+                "planner_critic_provider": "claudecode",
+                "planner_critic_model": "sonnet",
+            },
+        )
+        assert status == 200, body
+        saved = json.loads(body)["builder"]
+        assert saved["planner"]["mode"] == "assisted"
+        assert saved["planner"]["provider"] == "native"
+        assert saved["planner"]["model"] == "deepseek-chat"
+        assert saved["planner"]["critic_provider"] == "claudecode"
+        assert "ANTHROPIC_API_KEY" not in json.dumps(saved)
+
+        status, health = get(base, "/api/health")
+        assert status == 200
+        planner = json.loads(health)["builder"]["planner"]
+        assert planner["mode"] == "assisted"
+        assert planner["provider"] == "native"
+        assert "WORKS_VERIFIER_API_KEY" not in json.dumps(planner)
 
 
 def test_health_reports_agent_availability(paths, monkeypatch) -> None:

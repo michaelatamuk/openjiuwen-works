@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import secrets
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -15,7 +16,15 @@ from pydantic import ValidationError
 from .artifacts import collect_artifacts
 from .config import WorksPaths
 from .decision import DecisionPort, GateContext, GateVerdict, ShadowGate, build_decision_port
-from .errors import ConfigError, ConflictError, HarnessError, StateError, WorksError
+from .errors import (
+    ConfigError,
+    ConflictError,
+    HarnessError,
+    NotFoundError,
+    PolicyError,
+    StateError,
+    WorksError,
+)
 from .evidence import Artifact, DiffStatRow, Evidence, write_evidence
 from .flakes import active_flakes
 from .flow import FlowSpec, GateMode, Node, PathsSpec
@@ -24,6 +33,16 @@ from .harness.base import Harness, Proposal, ProposalRequest
 from .ledger import Ledger
 from .logs import get_logger
 from .memory import Memory, NullMemory
+from .planner import (
+    Critic,
+    PlanMode,
+    Planner,
+    PlannerContext,
+    PlanStore,
+    collect_repository_context,
+    draft_plan,
+    plan_brief,
+)
 from .policy import PolicyReport, Violation, check_patch, check_paths, paths_from_patch
 from .quarantine import ensure_outside
 from .quarantine import load as load_quarantine
@@ -110,6 +129,9 @@ class Supervisor:
         decision_mode: str | None = None,
         decision_port: DecisionPort | None = None,
         verifier: Verifier | None = None,
+        planner_mode: str | None = None,
+        planner: Planner | None = None,
+        critic: Critic | None = None,
     ) -> None:
         self._paths = paths
         self._queue = queue
@@ -123,6 +145,13 @@ class Supervisor:
         self._decision_mode = decision_mode
         self._decision: DecisionPort = decision_port or build_decision_port(decision_mode)
         self._verifier: Verifier = verifier or LocalVerifier(runner)
+        try:
+            self._planner_mode = PlanMode(planner_mode or PlanMode.DETERMINISTIC.value)
+        except ValueError as exc:
+            raise ConfigError(str(exc)) from exc
+        self._planner = planner
+        self._critic = critic
+        self._plans = PlanStore(paths)
 
     @property
     def python(self) -> str:
@@ -164,6 +193,30 @@ class Supervisor:
             ensure_outside(resolved.parent / scenarios.directory, repo.path, label="scenario set")
             payload["scenario_ids"] = [s.id for s in scenarios.scenarios]
         return payload
+
+    async def draft_task_plan(self, task_id: str, *, scenario_set: Path) -> Any:
+        """Draft and store a plan without starting a run.
+
+        This is the safe preview used by `works plan`: it does not claim the task, move it to
+        planning, or authorize a build. The run drafts its own official version later.
+        """
+        task = self._queue.load(task_id)
+        repo = self._repo(task)
+        base = repo.head()
+        trusted = load_trusted_flow(repo, base, task.flow, self._flows_dir)
+        ctx = RunContext(
+            task=task,
+            flow=trusted.flow,
+            run_id="plan-preview",
+            run_dir=self._paths.runs / "plan-preview",
+            worktree=None,
+            base_commit=base,
+            checks_sha=trusted.checks_sha,
+            checks_source=trusted.source,
+            plan={},
+        )
+        await self._draft_plan(ctx, repo, scenario_set)
+        return self._plans.load(task_id)
 
     async def run(
         self,
@@ -250,7 +303,7 @@ class Supervisor:
                 return
             self._move(ctx, TaskState.REPRODUCED)
             self._recall_memory(ctx)
-            self._draft_plan(ctx, repo, scenario_set)
+            await self._draft_plan(ctx, repo, scenario_set)
             self._move(ctx, TaskState.PLANNING)
             self._queue.append(task.id, "plan.drafted", ctx.plan)
         else:
@@ -280,13 +333,22 @@ class Supervisor:
             return
         if current is TaskState.PLANNING:
             self._move(ctx, TaskState.PLAN_APPROVED)
+            approver = "cli" if approve_plan else "flow"
+            if ctx.plan.get("plan_id") and ctx.plan.get("hash"):
+                with contextlib.suppress(NotFoundError):
+                    self._plans.approve(
+                        ctx.task.id,
+                        plan_id=str(ctx.plan["plan_id"]),
+                        plan_hash=str(ctx.plan["hash"]),
+                        by=approver,
+                    )
             self._queue.append(
                 ctx.task.id,
                 "gate.decided",
                 {
                     "gate": "plan",
                     "decision": "approved",
-                    "by": "cli" if approve_plan else "flow",
+                    "by": approver,
                     "commit": ctx.base_commit,
                     "checks_sha": ctx.checks_sha,
                     "risk": ctx.risk.level.value if ctx.risk is not None else None,
@@ -294,6 +356,8 @@ class Supervisor:
                     "required_reviewers": (
                         ctx.risk.required_reviewers if ctx.risk is not None else 1
                     ),
+                    "plan_id": ctx.plan.get("plan_id"),
+                    "plan_hash": ctx.plan.get("hash"),
                 },
             )
 
@@ -475,7 +539,7 @@ class Supervisor:
             {"view": "about_me", "statements": statements},
         )
 
-    def _draft_plan(self, ctx: RunContext, repo: GitRepo, scenario_set: Path | None) -> None:
+    async def _draft_plan(self, ctx: RunContext, repo: GitRepo, scenario_set: Path | None) -> None:
         if scenario_set is None:
             raise ConfigError(
                 "a scenario set is required: pass --scenarios (at least one P0, written first)"
@@ -487,16 +551,64 @@ class Supervisor:
         )
         ctx.scenario_set = scenarios
         ctx.scenario_dir = directory
+        repository = collect_repository_context(repo.path)
+        findings = tuple(
+            str(event.data.get("summary", ""))
+            for event in self._queue.events(ctx.task.id)
+            if event.type == "finding" and str(event.data.get("summary", "")).strip()
+        )[-5:]
+        context = PlannerContext(
+            task_id=ctx.task.id,
+            product=ctx.task.product,
+            task_kind=ctx.task.kind.value,
+            source_ref=ctx.task.source.ref,
+            source_title=ctx.task.source.title,
+            flow=ctx.flow,
+            base_commit=repo.head(),
+            checks_sha=ctx.checks_sha or "",
+            checks_source=ctx.checks_source or "",
+            scenario_set=resolved,
+            scenarios=scenarios,
+            repo=repo.path,
+            budget_tokens=ctx.task.budget.tokens,
+            budget_usd=ctx.task.budget.usd,
+            memory=tuple(ctx.memory_recall),
+            findings=findings,
+            file_tree=repository.file_tree,
+            manifests=repository.manifests,
+            readme=repository.readme,
+        )
+        plan = await draft_plan(
+            context,
+            store=self._plans,
+            mode=self._planner_mode,
+            planner=self._planner,
+            critic=self._critic,
+        )
         ctx.plan = {
-            "base_commit": repo.head(),
-            "checks_sha": ctx.checks_sha,
-            "checks_source": ctx.checks_source,
-            "scenario_set": str(resolved),
-            "scenario_ids": [s.id for s in scenarios.scenarios],
-            "p0": scenarios.p0_ids,
-            "p1": scenarios.p1_ids,
+            "plan_id": plan.plan_id,
+            "version": plan.version,
+            "hash": plan.hash,
+            "status": plan.status.value,
+            "base_commit": plan.base_commit,
+            "checks_sha": plan.checks_sha,
+            "checks_source": plan.checks_source,
+            "scenario_set": plan.scenario_set,
+            "scenario_ids": plan.scenario_ids,
+            "p0": context.p0_ids,
+            "p1": context.p1_ids,
             "nodes": [node.id for node in ctx.flow.nodes],
+            "summary": plan.summary,
+            "validation": (
+                plan.validation.model_dump(mode="json") if plan.validation is not None else None
+            ),
+            "provenance": plan.provenance.model_dump(mode="json"),
+            "brief": plan_brief(plan),
         }
+        if plan.validation is not None and not plan.validation.ok:
+            raise PolicyError(
+                "the plan failed its deterministic lint: " + "; ".join(plan.validation.errors[:4])
+            )
 
     def _load_plan_scenarios(self, ctx: RunContext, repo: GitRepo) -> None:
         if ctx.scenario_set is not None:
@@ -547,6 +659,7 @@ class Supervisor:
             title=ctx.task.source.title,
             worktree=worktree,
             base_commit=base_commit,
+            plan=ctx.plan,
         )
         try:
             proposal = await self._harness.propose(request)
@@ -585,6 +698,7 @@ class Supervisor:
             title=ctx.task.source.title,
             worktree=worktree,
             base_commit=base_commit,
+            plan=ctx.plan,
         )
         challenge = await self._harness.challenge(request, proposal)
         (ctx.run_dir / "challenge.json").write_text(
@@ -721,6 +835,10 @@ class Supervisor:
             )
         if last.get("checks_sha") not in (None, ctx.checks_sha):
             raise ConflictError(f"the checks changed since the {gate} approval; approve again")
+        approved_plan = last.get("plan_hash")
+        current_plan = ctx.plan.get("hash")
+        if approved_plan and current_plan and approved_plan != current_plan:
+            raise ConflictError("the plan changed since approval; approve the current version")
 
     def _over_wall(self, ctx: RunContext) -> bool:
         elapsed_minutes = (self._clock() - ctx.started_at).total_seconds() / 60
@@ -765,6 +883,8 @@ class Supervisor:
             return StopReason.CONFLICT
         if isinstance(exc, ConfigError):
             return StopReason.CONFIG_ERROR
+        if isinstance(exc, PolicyError):
+            return StopReason.POLICY_VIOLATION
         return StopReason.INTERNAL_ERROR
 
     def _finish(self, ctx: RunContext, repo: GitRepo) -> RunRecord:
@@ -825,6 +945,14 @@ class Supervisor:
             credential_split=credential_split,
             prompt_name=proposal.prompt_name if proposal else None,
             prompt_sha256=proposal.prompt_sha256 if proposal else None,
+            plan_id=ctx.plan.get("plan_id"),
+            plan_hash=ctx.plan.get("hash"),
+            plan_summary=ctx.plan.get("summary"),
+            planner_mode=(ctx.plan.get("provenance") or {}).get("mode"),
+            planner_provider=(ctx.plan.get("provenance") or {}).get("provider"),
+            planner_model=(ctx.plan.get("provenance") or {}).get("model"),
+            planner_tokens=int((ctx.plan.get("provenance") or {}).get("tokens") or 0),
+            planner_usd=float((ctx.plan.get("provenance") or {}).get("usd") or 0.0),
             tokens=tokens,
             usd=usd,
             builder_tokens=builder_tokens,
@@ -870,6 +998,13 @@ class Supervisor:
             decision_id=last_decision.decision_id if last_decision is not None else None,
             model=proposal.model if proposal else None,
             provider=proposal.provider if proposal else None,
+            plan_id=ctx.plan.get("plan_id"),
+            plan_hash=ctx.plan.get("hash"),
+            planner_mode=(ctx.plan.get("provenance") or {}).get("mode"),
+            planner_provider=(ctx.plan.get("provenance") or {}).get("provider"),
+            planner_model=(ctx.plan.get("provenance") or {}).get("model"),
+            planner_tokens=int((ctx.plan.get("provenance") or {}).get("tokens") or 0),
+            planner_usd=float((ctx.plan.get("provenance") or {}).get("usd") or 0.0),
             verifier=str(getattr(self._verifier, "name", "local")),
             verifier_isolation=str(getattr(self._verifier, "isolation", "process")),
             verifier_model=ctx.challenge.model if ctx.challenge else None,

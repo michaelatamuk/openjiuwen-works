@@ -78,7 +78,9 @@ The same evidence page serves two audiences without a second data source:
   shown in provider terms, never as environment variable names. Keys stay in the local environment.
   The same panel selects a separate verifier provider for OpenJiuwen, optional models, theme,
   density, polling and the default repository. JiuwenSwarm is shown as a separate team with its own
-  adapter and challenger, not as a provider card.
+  adapter and challenger, not as a provider card. **Settings → Planner** selects the plan mode
+  (deterministic, shadow, assisted or deep), the read-only planner provider/model and the deep-mode
+  critic; the plan is versioned, linted and approved by hash on the plan gate.
 
 There is no separate Summary tab: the human answer lives in the Story hero and the receipt strip.
 Both views are computed from the same proof, so they cannot disagree. Deep links carry the view:

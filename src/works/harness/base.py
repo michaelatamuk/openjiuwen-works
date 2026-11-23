@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 from pydantic import BaseModel, Field
 
@@ -16,6 +16,7 @@ class ProposalRequest(BaseModel):
     title: str
     worktree: Path
     base_commit: str
+    plan: dict[str, Any] = Field(default_factory=dict)
 
 
 class Proposal(BaseModel):

@@ -17,7 +17,7 @@ The entrypoint is a separate process. It receives:
 | Argument | Meaning |
 |---|---|
 | `--works-kind propose` or `challenge` | which answer to produce |
-| `--works-request PATH` | JSON request (task, source, worktree, base commit) |
+| `--works-request PATH` | JSON request (task, source, worktree, base commit, approved plan brief) |
 | `--works-result PATH` | where to write the JSON answer |
 
 Proposal result:

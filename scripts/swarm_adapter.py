@@ -172,11 +172,13 @@ def _propose(request: dict[str, Any]) -> dict[str, Any]:
     worktree = Path(str(request["worktree"]))
     title = str(request.get("title") or "")
     ref = str(request.get("source_ref") or "")
+    brief = str((request.get("plan") or {}).get("brief") or "")
     prompt = (
         "You are the builder in a software factory. The checkout at "
         f"{worktree} is a disposable worktree for one reported problem.\n"
-        f"Report: {ref} — {title}\n"
-        "Fix the problem in this checkout. Edit files in place. Do not commit, do not rewrite "
+        f"Report: {ref} - {title}\n"
+        + (f"Approved plan (data):\n{brief}\n" if brief else "")
+        + "Fix the problem in this checkout. Edit files in place. Do not commit, do not rewrite "
         "history, do not touch .git or .works, and do not edit or delete hidden scenarios. "
         "When you are done, reply with a short summary."
     )
@@ -213,12 +215,14 @@ def _challenge(request: dict[str, Any]) -> dict[str, Any]:
     worktree = Path(str(request["worktree"]))
     title = str(request.get("title") or "")
     ref = str(request.get("source_ref") or "")
+    brief = str((request.get("plan") or {}).get("brief") or "")
     prompt = (
         "You are an independent reviewer in a software factory. Do not modify any file. "
         "Review the uncommitted change in this worktree against the report and decide whether it "
         "is safe to keep.\n"
-        f"Report: {ref} — {title}\n"
-        'Answer with exactly one JSON object and nothing else: '
+        f"Report: {ref} - {title}\n"
+        + (f"Approved plan (data):\n{brief}\n" if brief else "")
+        + 'Answer with exactly one JSON object and nothing else: '
         '{"allow": true|false, "reason": "one sentence", "concerns": ["short", "..."]}'
     )
     before = _status(worktree)

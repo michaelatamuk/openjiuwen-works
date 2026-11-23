@@ -2614,6 +2614,33 @@ body { background: var(--bg); background-image: none; }
   color: var(--violet-text);
   font: 600 10px/1.4 var(--mono);
 }
+.planner-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 10px 0 12px;
+}
+.planner-mode-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 64px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--panel-2);
+  padding: 10px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .16s ease, background .16s ease, transform .16s ease;
+}
+.planner-mode-card:hover { border-color: var(--line-strong); background: var(--panel); transform: translateY(-1px); }
+.planner-mode-card.active {
+  border-color: color-mix(in srgb, var(--violet) 55%, var(--line));
+  background: var(--violet-soft);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--violet) 22%, transparent);
+}
+.planner-mode-card b { color: var(--text); font-size: 11.5px; font-weight: 650; line-height: 1.25; }
+.planner-mode-card em { color: var(--faint); font-size: 9.5px; font-style: normal; line-height: 1.35; }
 .provider-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -2699,7 +2726,7 @@ body { background: var(--bg); background-image: none; }
 .settings-dialog .dialog-actions { margin: 0; padding: 16px 24px 20px; border-top: 1px solid var(--line); }
 .settings-dialog .form-row { margin-bottom: 12px; }
 @media (max-width: 700px) {
-  .provider-grid, .runtime-grid { grid-template-columns: 1fr; }
+  .provider-grid, .runtime-grid, .planner-mode-grid { grid-template-columns: 1fr; }
   .settings-head, .settings-section { padding-left: 18px; padding-right: 18px; }
   .settings-dialog .dialog-actions { padding-left: 18px; padding-right: 18px; }
 }

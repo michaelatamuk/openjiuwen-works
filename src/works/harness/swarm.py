@@ -41,6 +41,7 @@ class SwarmRequest(BaseModel):
     title: str
     worktree: str
     base_commit: str
+    plan: dict[str, Any] = Field(default_factory=dict)
 
 
 class SwarmProposal(BaseModel):
@@ -248,6 +249,7 @@ class SwarmHarness:
             title=request.title,
             worktree=str(request.worktree),
             base_commit=request.base_commit,
+            plan=request.plan,
         ).model_dump(mode="json")
         with tempfile.TemporaryDirectory(prefix="works-swarm-") as directory:
             root = Path(directory)

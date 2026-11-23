@@ -47,6 +47,32 @@ sandbox, `core.sys_operation` registers the file and shell tools, and the verifi
 rail read-only. It is not the same product as JiuwenSwarm: native is one DeepAgent in the Works
 process, Swarm is an external multi-agent platform.
 
+## Planner
+
+The Works plan is a versioned artefact, not a chat message. Settings chooses one of four modes:
+
+| Mode | Behaviour |
+|---|---|
+| `deterministic` | flow + scenario skeleton only; no model |
+| `shadow` | the deterministic plan runs; a model proposal is stored beside it for comparison |
+| `assisted` | the model proposal is merged inside the flow contract and linted; a person approves |
+| `deep` | assisted plus an independent critic; both results are in the plan |
+
+The planner harness is read-only: it can explore the repository, but it cannot edit files, approve
+itself, push, deploy or install packages. `claudecode` uses `permission_mode="plan"`; `native` uses
+a read-only `core.sys_operation` rail. The plan is stored as `queue/<task>/plans/vN.json` and
+`vN.md`, and approval names the plan hash, base commit and checks SHA.
+
+```bash
+works plan <task> --scenarios fixtures/scenarios/fix-add.yaml
+works plan <task> --action show --json
+works plan <task> --action lint
+works approve <task> --plan-hash <sha>
+```
+
+A planner failure in `assisted`/`deep` mode blocks the task; it never falls back to a silent fake
+plan. `shadow` failures are recorded but never change the deterministic run.
+
 `ANTHROPIC_BASE_URL` in the shell may point elsewhere; the harness injects the explicit
 `--model-base` through the CLI settings layer, so the run is reproducible. The variable name is a
 Claude Code compatibility name: the endpoint and model decide the actual provider.

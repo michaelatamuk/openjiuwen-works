@@ -356,6 +356,15 @@ const RUNTIME_FALLBACK = {
 
 const RUNTIME_ORDER = ["openjiuwen", "swarm"];
 
+const PLANNER_MODES_FALLBACK = [
+  { id: "deterministic", label: "Deterministic", kind: "Flow + scenarios only; no model" },
+  { id: "shadow", label: "Shadow", kind: "Model proposal stored beside the plan" },
+  { id: "assisted", label: "Assisted", kind: "Model proposal merged and linted" },
+  { id: "deep", label: "Deep", kind: "Assisted plus an independent critic" },
+];
+
+const PLANNER_PROVIDER_ORDER = ["claudecode", "native"];
+
 function credentialLabel(provider, state, providers) {
   const meta = providers[provider];
   if (!meta?.available) return meta?.missing || "Needs setup";
@@ -390,6 +399,21 @@ function ProviderCard({ id, meta, active, disabled, onSelect }) {
       <span className={`provider-state ${meta.available ? "ready" : "missing"}`}>
         {meta.available ? "Ready" : (meta.missing || "Needs setup")}
       </span>
+    </button>
+  );
+}
+
+function PlannerModeCard({ id, meta, active, onSelect }) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={active}
+      className={`planner-mode-card ${active ? "active" : ""}`}
+      onClick={() => onSelect(id)}
+    >
+      <b>{meta.label}</b>
+      <em>{meta.kind}</em>
     </button>
   );
 }
@@ -442,10 +466,30 @@ export function SettingsDialog({
   const [verifier, setVerifier] = useState(builder?.verifier_provider || builder?.provider || "claudecode");
   const [model, setModel] = useState(builder?.model || "");
   const [verifierModel, setVerifierModel] = useState(builder?.verifier_model || "");
+  const [plannerMode, setPlannerMode] = useState(builder?.planner?.mode || "deterministic");
+  const [plannerProvider, setPlannerProvider] = useState(
+    PLANNER_PROVIDER_ORDER.includes(builder?.planner?.provider)
+      ? builder.planner.provider
+      : "claudecode"
+  );
+  const [plannerModel, setPlannerModel] = useState(builder?.planner?.model || "");
+  const [plannerCriticProvider, setPlannerCriticProvider] = useState(
+    PLANNER_PROVIDER_ORDER.includes(builder?.planner?.critic_provider)
+      ? builder.planner.critic_provider
+      : "claudecode"
+  );
+  const [plannerCriticModel, setPlannerCriticModel] = useState(
+    builder?.planner?.critic_model || ""
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   const openjiuwen = runtime === "openjiuwen";
+  const plannerModes = builder?.planner?.modes || PLANNER_MODES_FALLBACK;
+  const plannerMeta = plannerModes.find((mode) => mode.id === plannerMode) || PLANNER_MODES_FALLBACK[0];
+  const plannerOpen = plannerMode !== "deterministic";
+  const plannerProviderMeta = providers[plannerProvider] || PROVIDER_FALLBACK.claudecode;
+  const plannerCriticMeta = providers[plannerCriticProvider] || PROVIDER_FALLBACK.claudecode;
   const builderMeta = providers[provider] || PROVIDER_FALLBACK.claudecode;
   const verifierMeta = providers[separateVerifier ? verifier : provider] || provider;
   const swarm = builder?.swarm || {};
@@ -478,6 +522,12 @@ export function SettingsDialog({
           verifier_provider: separateVerifier && verifier !== provider ? verifier : null,
           model: model.trim() || null,
           verifier_model: separateVerifier ? (verifierModel.trim() || null) : null,
+          planner_mode: plannerMode,
+          planner_provider: plannerMode === "deterministic" ? null : plannerProvider,
+          planner_model: plannerOpen ? (plannerModel.trim() || null) : null,
+          planner_critic_provider: plannerMode === "deep" ? plannerCriticProvider : null,
+          planner_critic_model:
+            plannerMode === "deep" ? (plannerCriticModel.trim() || null) : null,
         },
       });
     } catch (err) {
@@ -566,6 +616,85 @@ export function SettingsDialog({
               </p>
               <p className="settings-note">{swarm.detail || "A run probes the adapter before it starts."}</p>
             </div>
+          )}
+        </section>
+
+        <section className="settings-section">
+          <div className="settings-section-head">
+            <div>
+              <h3>Planner</h3>
+              <p>How Works turns the flow and scenarios into an approvable plan.</p>
+            </div>
+            <span className="settings-credential">{plannerOpen ? "Model-assisted" : "Deterministic"}</span>
+          </div>
+          <div className="planner-mode-grid" role="radiogroup" aria-label="Planner mode">
+            {plannerModes.map((mode) => (
+              <PlannerModeCard
+                key={mode.id}
+                id={mode.id}
+                meta={mode}
+                active={plannerMode === mode.id}
+                onSelect={setPlannerMode}
+              />
+            ))}
+          </div>
+          {plannerOpen ? (
+            <>
+              <div className="provider-grid compact" role="radiogroup" aria-label="Planner provider">
+                {PLANNER_PROVIDER_ORDER.map((id) => (
+                  <ProviderCard
+                    key={id}
+                    id={id}
+                    meta={providers[id] || PROVIDER_FALLBACK[id]}
+                    active={plannerProvider === id}
+                    disabled={!writable || !(providers[id] || PROVIDER_FALLBACK[id]).available}
+                    onSelect={setPlannerProvider}
+                  />
+                ))}
+              </div>
+              <label className="settings-field">
+                <span>Planner model <em>{plannerProviderMeta.label} default</em></span>
+                <input
+                  value={plannerModel}
+                  disabled={!writable}
+                  onChange={(event) => setPlannerModel(event.target.value)}
+                  placeholder="Provider default"
+                />
+              </label>
+              {plannerMode === "deep" ? (
+                <>
+                  <div className="provider-grid compact" role="radiogroup" aria-label="Planner critic provider">
+                    {PLANNER_PROVIDER_ORDER.map((id) => (
+                      <ProviderCard
+                        key={id}
+                        id={id}
+                        meta={providers[id] || PROVIDER_FALLBACK[id]}
+                        active={plannerCriticProvider === id}
+                        disabled={!writable || !(providers[id] || PROVIDER_FALLBACK[id]).available}
+                        onSelect={setPlannerCriticProvider}
+                      />
+                    ))}
+                  </div>
+                  <label className="settings-field">
+                    <span>Critic model <em>{plannerCriticMeta.label} default</em></span>
+                    <input
+                      value={plannerCriticModel}
+                      disabled={!writable}
+                      onChange={(event) => setPlannerCriticModel(event.target.value)}
+                      placeholder="Provider default"
+                    />
+                  </label>
+                </>
+              ) : null}
+              <p className="settings-note">
+                The planner reads the repository and never edits it. It proposes steps inside the flow
+                contract; a person still approves the plan. {plannerMeta.kind}.
+              </p>
+            </>
+          ) : (
+            <p className="settings-note">
+              Deterministic mode uses only the flow and scenario set. No model, no planner cost.
+            </p>
           )}
         </section>
 
@@ -663,8 +792,10 @@ export function RunDialog({ detail, onClose }) {
   const verdict = evidence.verdict || {};
   const lines = [
     ["Run", run.run_id || "—"], ["Flow", run.flow || "—"], ["Base commit", run.base_commit || "—"],
-    ["Checks SHA", run.checks_sha || "—"], ["Proof SHA", evidence.proof_sha256 || "—"],
-    ["Verdict", verdict.allow ? "allow" : evidence.verdict ? "block" : "—"],
+    ["Checks SHA", run.checks_sha || "-"], ["Proof SHA", evidence.proof_sha256 || "-"],
+    ["Plan", run.plan_id || "-"], ["Plan hash", run.plan_hash ? shortSha(run.plan_hash) : "-"],
+    ["Planner", run.planner_mode || "-"],
+    ["Verdict", verdict.allow ? "allow" : evidence.verdict ? "block" : "-"],
     ["Risk", evidence.risk?.level || "—"], ["Files", (evidence.files_changed || []).join(", ") || "—"],
     ["Not tested", (evidence.not_tested || []).join(", ") || "none recorded"],
     ["Tokens", evidence.tokens ?? 0], ["USD", fmtUsd(evidence.usd ?? 0)],

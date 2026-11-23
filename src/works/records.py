@@ -194,6 +194,13 @@ class RunRecord(BaseModel):
     decision_id: str | None = None
     model: str | None = None
     provider: str | None = None
+    plan_id: str | None = None
+    plan_hash: str | None = None
+    planner_mode: str | None = None
+    planner_provider: str | None = None
+    planner_model: str | None = None
+    planner_tokens: int = 0
+    planner_usd: float = 0.0
     verifier: str = "local"
     verifier_isolation: str = "process"
     verifier_model: str | None = None

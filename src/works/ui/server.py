@@ -730,15 +730,48 @@ def _thread_message(event: Event, task: Task) -> dict[str, Any] | None:
     elif kind == "plan.drafted":
         role = "builder"
         title = "Plan drafted"
-        body = "A plan with named must-pass scenarios."
+        summary = str(data.get("summary") or "A plan for the flow and its must-pass scenarios.")
+        body = summary if len(summary) <= 280 else summary[:277].rstrip() + "..."
         ids = data.get("scenario_ids") or []
         p0 = data.get("p0") or []
         p1 = data.get("p1") or []
-        facts = [f"{len(ids)} scenario(s)", f"{len(p0)} P0", f"{len(p1)} P1"]
+        provenance = data.get("provenance") or {}
+        validation = data.get("validation") or {}
+        nodes = data.get("nodes") or []
+        plan_id = str(data.get("plan_id") or "unversioned")
+        plan_hash = str(data.get("hash") or "")
+        facts = [
+            plan_id,
+            f"{len(nodes)} step(s)",
+            f"{len(ids)} scenario(s)",
+            f"{len(p0)} P0",
+            f"{len(p1)} P1",
+        ]
+        planner = str(provenance.get("planner") or "deterministic")
+        model = provenance.get("model")
+        rows = [
+            ["Plan", plan_id],
+            ["Steps", " -> ".join(nodes)],
+            ["Scenarios", f"{len(ids)} ({len(p0)} P0 / {len(p1)} P1)"],
+            ["Planner", f"{planner}" + (f" / {model}" if model else "")],
+            ["Lint", "ok" if validation.get("ok") else "failed"],
+        ]
+        if plan_hash:
+            rows.append(["Hash", plan_hash[:12]])
+        tokens = int(provenance.get("tokens") or 0)
+        usd = float(provenance.get("usd") or 0.0)
+        rows.append(
+            [
+                "Planner cost",
+                f"{tokens} tokens / ${usd:.4f}" if tokens else "not reported",
+            ]
+        )
+        for warning in (validation.get("warnings") or [])[:3]:
+            rows.append(["Warning", str(warning)])
         card = {
             "kind": "question",
-            "prompt": "Are these the right must-pass scenarios?",
-            "rows": [["Scenarios", str(len(ids))], ["P0", str(len(p0))], ["P1", str(len(p1))]],
+            "prompt": "Review the plan, then approve it or open the run.",
+            "rows": rows,
             "options": (
                 [
                     {

@@ -50,7 +50,7 @@ def _emit(payload: dict[str, Any]) -> None:
     print(
         json.dumps(
             {"ok": True, **payload},
-            ensure_ascii=False,
+            ensure_ascii=True,
             default=str,
             separators=(",", ":"),
         )
@@ -237,7 +237,13 @@ def cmd_approve(args: argparse.Namespace) -> int:
         raise ConfigError(f"unknown gate {args.gate!r}; expected plan or release")
     from .approvals import approve_plan
 
-    updated, _ = approve_plan(_paths(args), args.task_id, by="cli")
+    updated, _ = approve_plan(
+        _paths(args),
+        args.task_id,
+        by="cli",
+        plan_id=getattr(args, "plan", None),
+        plan_hash=getattr(args, "plan_hash", None),
+    )
     if args.json:
         _emit({"task": updated.model_dump(mode="json")})
     else:
@@ -453,6 +459,115 @@ def cmd_swarm_doctor(args: argparse.Namespace) -> int:
     return 0 if diagnostic.ok else EXIT_BLOCKED
 
 
+def cmd_plan(args: argparse.Namespace) -> int:
+    from .planner import PlanStore, plan_markdown
+
+    paths = _paths(args)
+    store = PlanStore(paths)
+    action = getattr(args, "action", "draft")
+
+    if action == "show":
+        plan = store.load(args.task_id, getattr(args, "version", None))
+        if args.json:
+            _emit(plan.model_dump(mode="json"))
+        else:
+            print(plan_markdown(plan))
+        return 0
+
+    if action == "lint":
+        plan = store.load(args.task_id, getattr(args, "version", None))
+        validation = plan.validation
+        if args.json:
+            _emit(
+                {
+                    "task_id": plan.task_id,
+                    "plan_id": plan.plan_id,
+                    "version": plan.version,
+                    "hash": plan.hash,
+                    "validation": validation.model_dump(mode="json")
+                    if validation is not None
+                    else None,
+                }
+            )
+        elif validation is None:
+            print(f"{plan.plan_id}: no lint result recorded")
+        else:
+            print(f"{plan.plan_id}: {'ok' if validation.ok else 'failed'}")
+            for error in validation.errors:
+                print(f"  error: {error}")
+            for warning in validation.warnings:
+                print(f"  warning: {warning}")
+        return 0 if validation is not None and validation.ok else EXIT_POLICY
+
+    if action == "diff":
+        before = store.load(
+            args.task_id, getattr(args, "from_version", None) or store.versions(args.task_id)[0]
+        )
+        after = store.load(
+            args.task_id,
+            getattr(args, "to_version", None) or store.versions(args.task_id)[-1],
+        )
+        before_steps = {step.id: step for step in before.steps}
+        after_steps = {step.id: step for step in after.steps}
+        added = sorted(set(after_steps) - set(before_steps))
+        removed = sorted(set(before_steps) - set(after_steps))
+        changed = sorted(
+            step_id
+            for step_id in set(before_steps) & set(after_steps)
+            if before_steps[step_id].model_dump() != after_steps[step_id].model_dump()
+        )
+        payload = {
+            "task_id": args.task_id,
+            "from": before.plan_id,
+            "to": after.plan_id,
+            "added": added,
+            "removed": removed,
+            "changed": changed,
+        }
+        if args.json:
+            _emit(payload)
+        else:
+            print(f"{before.plan_id} -> {after.plan_id}")
+            print(f"  added:   {', '.join(added) or 'none'}")
+            print(f"  removed: {', '.join(removed) or 'none'}")
+            print(f"  changed: {', '.join(changed) or 'none'}")
+        return 0
+
+    if not args.scenarios:
+        raise ConfigError("`works plan` needs --scenarios PATH")
+    from .ledger import Ledger
+    from .queue import Queue
+    from .runner import SubprocessRunner
+    from .settings import BuilderSettings, load_builder_settings, settings_path
+    from .supervisor import Supervisor
+
+    queue = Queue(paths)
+    settings = load_builder_settings(paths) if settings_path(paths).exists() else BuilderSettings()
+    task = queue.load(args.task_id)
+    mode, planner, critic = _planner_for(
+        paths, settings, args, task.flow, mode=getattr(args, "mode", None)
+    )
+    supervisor = Supervisor(
+        paths=paths,
+        queue=queue,
+        ledger=Ledger(paths.ledger),
+        harness=None,
+        runner=SubprocessRunner(),
+        planner_mode=mode,
+        planner=planner,
+        critic=critic,
+    )
+    import asyncio
+
+    plan = asyncio.run(supervisor.draft_task_plan(args.task_id, scenario_set=Path(args.scenarios)))
+    if args.json:
+        _emit(plan.model_dump(mode="json"))
+    else:
+        print(plan_markdown(plan))
+        print(f"plan file: {store.directory(plan.task_id) / f'v{plan.version}.json'}")
+    return 0
+
+
 def cmd_release(args: argparse.Namespace) -> int:
     from .release import release_packet
 
@@ -472,6 +587,49 @@ def cmd_release(args: argparse.Namespace) -> int:
         else:
             print("  released: no; a person opens gate 2 (`works approve --gate release`)")
     return EXIT_OK if packet.ready else EXIT_BLOCKED
+
+
+def _planner_for(
+    paths: Any,
+    settings: Any,
+    args: argparse.Namespace,
+    flow_name: str,
+    *,
+    mode: str | None = None,
+) -> tuple[str, Any, Any]:
+    """Build the planner and deep-mode critic selected by Settings."""
+    selected = (mode or settings.planner_mode).lower()
+    if selected == "deterministic":
+        return selected, None, None
+    from .harness.openjiuwen import default_base, default_cli, default_key, default_model
+    from .harness.planner import HarnessCritic, HarnessPlanner
+
+    base_url = getattr(args, "model_base", None) or default_base()
+    prompt_dir = paths.flows / flow_name / "prompts"
+    try:
+        planner = HarnessPlanner(
+            provider=settings.resolved_planner_provider,
+            model=settings.planner_model or getattr(args, "model", None) or default_model(),
+            base_url=base_url,
+            api_key=default_key(),
+            prompt_path=prompt_dir / "plan.md",
+            cli_path=default_cli(),
+        )
+    except ConfigError:
+        if selected != "shadow":
+            raise
+        return selected, None, None
+    critic = None
+    if selected == "deep":
+        critic = HarnessCritic(
+            provider=settings.resolved_planner_critic_provider,
+            model=settings.planner_critic_model or default_model(),
+            base_url=base_url,
+            api_key=default_key(),
+            prompt_path=prompt_dir / "plan-critique.md",
+            cli_path=default_cli(),
+        )
+    return selected, planner, critic
 
 
 def _supervisor(args: argparse.Namespace) -> Supervisor:
@@ -544,6 +702,19 @@ def _supervisor(args: argparse.Namespace) -> Supervisor:
         memory = PpmaMemory(ppma_url, space=args.ppma_space)
     from .verifier import DockerVerifier, Mount, verifier_from_name
 
+    planner = None
+    critic = None
+    planner_mode = (
+        builder_settings.planner_mode if builder_settings is not None else "deterministic"
+    )
+    if args.trace is not None:
+        # A recorded run must stay reproducible; it never calls a planner model.
+        planner_mode = "deterministic"
+    elif builder_settings is not None:
+        task_id = getattr(args, "task_id", None)
+        flow_name = _queue(args).load(task_id).flow if task_id else "fix-issue"
+        planner_mode, planner, critic = _planner_for(paths, builder_settings, args, flow_name)
+
     runner = SubprocessRunner()
     verifier_name = getattr(args, "verifier", "local") or "local"
     mounts = (
@@ -570,6 +741,9 @@ def _supervisor(args: argparse.Namespace) -> Supervisor:
         memory=memory,
         decision_mode=getattr(args, "decision", None),
         verifier=verifier,
+        planner_mode=planner_mode,
+        planner=planner,
+        critic=critic,
     )
 
 
@@ -1338,9 +1512,26 @@ def build_parser() -> argparse.ArgumentParser:
     trace.add_argument("--json", action="store_true")
     trace.set_defaults(func=cmd_trace)
 
+    plan = sub.add_parser("plan", help="Draft, show, lint or diff versioned plans")
+    plan.add_argument("task_id")
+    plan.add_argument("--action", choices=("draft", "show", "lint", "diff"), default="draft")
+    plan.add_argument("--scenarios", default=None)
+    plan.add_argument("--version", type=int, default=None)
+    plan.add_argument("--from", dest="from_version", type=int, default=None)
+    plan.add_argument("--to", dest="to_version", type=int, default=None)
+    plan.add_argument(
+        "--mode", choices=("deterministic", "shadow", "assisted", "deep"), default=None
+    )
+    plan.add_argument("--model", default=None)
+    plan.add_argument("--model-base", default=None)
+    plan.add_argument("--json", action="store_true")
+    plan.set_defaults(func=cmd_plan)
+
     approve = sub.add_parser("approve", help="Approve the plan gate")
     approve.add_argument("task_id")
     approve.add_argument("--gate", default="plan", help="plan or release")
+    approve.add_argument("--plan", default=None, help="Plan id to approve (default: latest)")
+    approve.add_argument("--plan-hash", default=None, help="Exact plan hash to approve")
     approve.add_argument("--json", action="store_true")
     approve.set_defaults(func=cmd_approve)
 
@@ -1599,6 +1790,10 @@ def main_entry() -> None:
 
     harden_sys_path()
     configure(os.environ.get("WORKS_LOG_LEVEL", "INFO"))
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
     try:
         raise SystemExit(main())
     except WorksError as exc:

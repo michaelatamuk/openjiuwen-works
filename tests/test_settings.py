@@ -86,5 +86,39 @@ def test_builder_health_exposes_labels_not_secret_names(paths) -> None:
     assert set(health["runtimes"]) == {"openjiuwen", "swarm"}
     assert health["providers"]["native"]["label"] == "Jiuwen native"
     assert health["swarm"]["contract"] == "works.swarm.v1"
+    assert health["planner"]["mode"] == "deterministic"
+    assert health["planner"]["provider"] == "claudecode"
+    assert {item["id"] for item in health["planner"]["modes"]} == {
+        "deterministic",
+        "shadow",
+        "assisted",
+        "deep",
+    }
+
+
+def test_planner_settings_are_validated_and_provider_neutral(paths) -> None:
+    saved = save_builder_settings(
+        paths,
+        {
+            "runtime": "openjiuwen",
+            "provider": "dsh",
+            "planner_mode": "assisted",
+            "planner_provider": "native",
+            "planner_model": "deepseek-chat",
+            "planner_critic_provider": "claudecode",
+            "planner_critic_model": "sonnet",
+        },
+    )
+
+    assert saved.planner_mode == "assisted"
+    assert saved.resolved_planner_provider == "native"
+    assert saved.resolved_planner_critic_provider == "claudecode"
+    health = builder_health(paths, saved)
+    assert health["planner"]["mode"] == "assisted"
+    assert health["planner"]["provider"] == "native"
+    assert "ANTHROPIC_API_KEY" not in json.dumps(health)
+
+    with pytest.raises(ConfigError, match="planner_mode"):
+        save_builder_settings(paths, {"planner_mode": "magic"})
     assert "ANTHROPIC_API_KEY" not in json.dumps(health)
     assert "WORKS_VERIFIER_API_KEY" not in json.dumps(health)

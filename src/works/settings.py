@@ -12,11 +12,14 @@ from pydantic import BaseModel, field_validator
 from .config import WorksPaths
 from .errors import ConfigError
 from .harness.providers import DEFAULT_PROVIDER, availability, validate_provider
+from .planner import PLAN_MODES, PlanMode
 
 SETTINGS_PATH = Path(".works") / "settings.json"
 RuntimeName = Literal["openjiuwen", "swarm"]
 RUNTIME_NAMES: tuple[RuntimeName, ...] = ("openjiuwen", "swarm")
 DEFAULT_RUNTIME: RuntimeName = "openjiuwen"
+PLANNER_MODES = tuple(mode.value for mode in PLAN_MODES)
+DEFAULT_PLANNER_MODE = PlanMode.DETERMINISTIC.value
 
 
 class BuilderSettings(BaseModel):
@@ -35,6 +38,11 @@ class BuilderSettings(BaseModel):
     verifier_provider: str | None = None
     model: str | None = None
     verifier_model: str | None = None
+    planner_mode: str = DEFAULT_PLANNER_MODE
+    planner_provider: str | None = None
+    planner_model: str | None = None
+    planner_critic_provider: str | None = None
+    planner_critic_model: str | None = None
 
     @field_validator("runtime")
     @classmethod
@@ -44,19 +52,27 @@ class BuilderSettings(BaseModel):
             raise ValueError(f"runtime must be one of {', '.join(RUNTIME_NAMES)}, got {raw!r}")
         return raw
 
+    @field_validator("planner_mode")
+    @classmethod
+    def _planner_mode(cls, value: str) -> str:
+        raw = str(value or DEFAULT_PLANNER_MODE).strip().lower()
+        if raw not in PLANNER_MODES:
+            raise ValueError(f"planner_mode must be one of {', '.join(PLANNER_MODES)}, got {raw!r}")
+        return raw
+
     @field_validator("provider")
     @classmethod
     def _provider(cls, value: str) -> str:
         return validate_provider(value, env_name="settings.json")
 
-    @field_validator("verifier_provider")
+    @field_validator("verifier_provider", "planner_provider", "planner_critic_provider")
     @classmethod
-    def _verifier_provider(cls, value: str | None) -> str | None:
+    def _optional_provider(cls, value: str | None) -> str | None:
         if value is None or not str(value).strip():
             return None
         return validate_provider(str(value), env_name="settings.json")
 
-    @field_validator("model", "verifier_model")
+    @field_validator("model", "verifier_model", "planner_model", "planner_critic_model")
     @classmethod
     def _model(cls, value: str | None) -> str | None:
         if value is None:
@@ -67,6 +83,18 @@ class BuilderSettings(BaseModel):
     @property
     def resolved_verifier_provider(self) -> str:
         return self.verifier_provider or self.provider
+
+    @property
+    def resolved_planner_provider(self) -> str:
+        if self.planner_provider:
+            return self.planner_provider
+        # The planner only supports read-only providers; a dsh/codex builder still plans with a
+        # provider that can inspect the repository without editing it.
+        return self.provider if self.provider in ("claudecode", "native") else "claudecode"
+
+    @property
+    def resolved_planner_critic_provider(self) -> str:
+        return self.planner_critic_provider or self.resolved_planner_provider
 
 
 def settings_path(paths: WorksPaths) -> Path:
@@ -132,6 +160,35 @@ def builder_health(paths: WorksPaths, settings: BuilderSettings | None = None) -
         "verifier_provider": current.resolved_verifier_provider,
         "model": current.model,
         "verifier_model": current.verifier_model,
+        "planner": {
+            "mode": current.planner_mode,
+            "provider": current.resolved_planner_provider,
+            "model": current.planner_model,
+            "critic_provider": current.resolved_planner_critic_provider,
+            "critic_model": current.planner_critic_model,
+            "modes": [
+                {
+                    "id": "deterministic",
+                    "label": "Deterministic",
+                    "kind": "Flow + scenarios only; no model",
+                },
+                {
+                    "id": "shadow",
+                    "label": "Shadow",
+                    "kind": "Model proposal stored beside the deterministic plan",
+                },
+                {
+                    "id": "assisted",
+                    "label": "Assisted",
+                    "kind": "Model proposal merged and linted; a person approves",
+                },
+                {
+                    "id": "deep",
+                    "label": "Deep",
+                    "kind": "Assisted plus an independent critic",
+                },
+            ],
+        },
         "runtimes": {
             "openjiuwen": {
                 "available": True,

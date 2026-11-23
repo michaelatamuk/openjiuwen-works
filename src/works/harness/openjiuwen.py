@@ -74,6 +74,7 @@ def builder_prompt(request: ProposalRequest, prompt: Prompt | None = None) -> st
         worktree=str(request.worktree),
         ref=request.source_ref,
         title=request.title.strip() or request.source_ref,
+        plan=str(request.plan.get("brief") or "No plan brief was recorded."),
     )
 
 

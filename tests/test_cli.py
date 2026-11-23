@@ -164,6 +164,29 @@ def test_a_saved_openjiuwen_runtime_is_the_default_builder(
     ]
 
 
+def test_plan_drafts_shows_and_lints(paths, repo, scenario_set: Path) -> None:
+    submitted = submit_cli(paths, repo)
+    task_id = submitted["task"]["id"]
+    drafted = invoke(paths, "plan", task_id, "--scenarios", str(scenario_set), "--json")
+    assert drafted.exit_code == 0, drafted.stdout + drafted.stderr
+    plan = payload(drafted)
+    assert plan["status"] == "validated"
+    assert [step["node"] for step in plan["steps"]] == [
+        "reproduce",
+        "build",
+        "test",
+        "challenge",
+    ]
+
+    shown = invoke(paths, "plan", task_id, "--action", "show", "--json")
+    assert shown.exit_code == 0
+    assert payload(shown)["plan_id"] == plan["plan_id"]
+
+    linted = invoke(paths, "plan", task_id, "--action", "lint", "--json")
+    assert linted.exit_code == 0
+    assert payload(linted)["validation"]["ok"] is True
+
+
 def test_dry_run_shows_nodes_and_changes_nothing(paths, repo, scenario_set: Path) -> None:
     submitted = submit_cli(paths, repo)
     task_id = submitted["task"]["id"]
