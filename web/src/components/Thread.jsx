@@ -247,13 +247,17 @@ function Rail({ detail, onAction, onView }) {
       </section>
       <section>
         <h3>Activity</h3>
-        {(detail.timeline || []).slice(-4).reverse().map((item) => (
+        {(detail.timeline || [])
+          .filter((item) => !item.type.startsWith("thread.") && !item.type.startsWith("memory."))
+          .slice(-5)
+          .reverse()
+          .map((item) => (
           <div className="cl-activity" key={item.seq}>
             <time>{new Date(item.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time>
             <span>{timelineLabel(item.type)}</span>
             <b>{eventSummary(item).slice(0, 70)}</b>
           </div>
-        ))}
+          ))}
       </section>
       <section>
         <h3>Run</h3>
@@ -294,11 +298,10 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
   const [busy, setBusy] = useState(false);
   const [atLatest, setAtLatest] = useState(true);
   const [showAll, setShowAll] = useState(false);
-  const [openPhase, setOpenPhase] = useState(null);
+  const [selectedPhase, setSelectedPhase] = useState(null);
   const formRef = useRef(null);
   const lineRef = useRef(null);
   const stickRef = useRef(true);
-  const phaseRefs = useRef({});
   const messages = detail.thread || [];
   const canAsk = Boolean(ai?.available);
   const activeMode = canAsk ? mode : "note";
@@ -328,6 +331,7 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
     files.length ? `${files.length} file${files.length === 1 ? "" : "s"}` : null,
     detail.summary?.risk ? `${detail.summary.risk} risk` : null,
   ].filter(Boolean);
+  const visiblePhases = showAll ? phases : phases.filter((phase) => phase.id === (selectedPhase || currentId));
 
   useEffect(() => {
     stickRef.current = true;
@@ -386,14 +390,6 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
     }
   }
 
-  function jumpToPhase(id) {
-    setShowAll(false);
-    setOpenPhase(id);
-    window.requestAnimationFrame(() => {
-      phaseRefs.current[id]?.scrollIntoView({ block: "start", behavior: "smooth" });
-    });
-  }
-
   function renderBlock(block) {
     if (block.review) return <ReviewGroup key={block.key} items={block.review} />;
     const message = block.message;
@@ -424,7 +420,7 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
             <span>{detail.task.product}</span>
             <span className="cl-live-text"><i /> Live</span>
             <span className="cl-head-actions">
-              <button type="button" className="cl-text-btn" onClick={() => { setShowAll((value) => !value); setOpenPhase(null); }}>
+              <button type="button" className="cl-text-btn" onClick={() => { setShowAll((value) => !value); setSelectedPhase(null); }}>
                 {showAll ? "Digest" : "Full log"}
               </button>
               {writable && canAsk ? (
@@ -449,106 +445,103 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
           ) : null}
         </div>
 
-        {origin ? (
-          <div className="cl-origin">
-            <span>Reported</span>
-            <b>{origin.body || detail.task.source.title}</b>
-            <time>{new Date(origin.at).toLocaleDateString([], { month: "short", day: "numeric" })}</time>
-          </div>
-        ) : null}
-
-        <div className="cl-phases" role="tablist" aria-label="Session phases">
-          {phases.map((phase) => (
-            <button
-              key={phase.id}
-              type="button"
-              role="tab"
-              aria-selected={phase.id === currentId}
-              className={`cl-phase ${phase.state}`}
-              onClick={() => jumpToPhase(phase.id)}
-            >
-              <i aria-hidden="true" />
-              <span>{phase.label}</span>
-            </button>
-          ))}
-        </div>
-
-        <div
-          className="cl-line"
-          ref={lineRef}
-          onScroll={(event) => {
-            const node = event.currentTarget;
-            const distance = node.scrollHeight - node.scrollTop - node.clientHeight;
-            stickRef.current = distance < 80;
-            setAtLatest(distance < 80);
-          }}
-        >
-          {phases.map((phase) => {
-            const isOpen = showAll || openPhase === phase.id || (openPhase === null && phase.id === currentId);
-            return (
-              <details
+        <div className="cl-work">
+          <aside className="cl-outline" aria-label="Session chapters">
+            <div className="cl-outline-head">
+              <span>Chapters</span>
+              {selectedPhase ? (
+                <button type="button" onClick={() => setSelectedPhase(null)}>Current</button>
+              ) : null}
+            </div>
+            {phases.map((phase) => (
+              <button
                 key={phase.id}
-                id={`phase-${phase.id}`}
-                ref={(node) => { phaseRefs.current[phase.id] = node; }}
-                className={`cl-phase-block ${phase.state}`}
-                open={isOpen}
-                onToggle={(event) => {
-                  if (showAll) return;
-                  if (event.currentTarget.open) setOpenPhase(phase.id);
-                  else setOpenPhase(phase.id === currentId ? "none" : currentId);
+                type="button"
+                className={`cl-outline-row ${phase.state} ${(selectedPhase || currentId) === phase.id ? "active" : ""}`}
+                onClick={() => {
+                  setShowAll(false);
+                  setSelectedPhase(phase.id === currentId ? null : phase.id);
+                  if (lineRef.current) lineRef.current.scrollTop = 0;
                 }}
               >
-                <summary>
-                  <span className="cl-phase-dot" aria-hidden="true" />
-                  <span className="cl-phase-title">{phase.label}</span>
-                  <span className="cl-phase-summary">{phase.summary}</span>
-                  <span className="cl-phase-count">{phase.items.length}</span>
-                </summary>
-                <div className="cl-phase-body">
-                  {phase.items.length
-                    ? phase.blocks.map(renderBlock)
-                    : <p className="cl-phase-empty">Not reached yet.</p>}
-                </div>
-              </details>
-            );
-          })}
-          {streamed || pendingQuestion ? (
-            <>
-              {pendingQuestion ? <div className="cl-user-turn"><p>{pendingQuestion}</p></div> : null}
-              {streamed ? (
-                <article className="cl-msg mira generated streaming">
-                  <div className="cl-avatar" aria-hidden="true">M</div>
-                  <div className="cl-body">
-                    <div className="cl-meta"><span className="cl-name">Mira</span><span className="cl-ai-tag">AI</span></div>
-                    <p>{streamed}<span className="cl-cursor" /></p>
-                  </div>
-                </article>
-              ) : null}
-            </>
-          ) : null}
-          {busy && !streamed ? (
-            <div className="cl-working"><span /> Mira is reading the proof…</div>
-          ) : null}
-          {writable && canAsk ? (
-            <div className="cl-suggest">
-              <span>Ask about this run</span>
-              {["What changed?", "Is it released?", "What was not tested?"].map((prompt) => (
-                <button
-                  key={prompt}
-                  type="button"
-                  onClick={() => {
-                    setMode("ask");
-                    setText(prompt);
-                    formRef.current?.querySelector("textarea")?.focus();
-                  }}
-                >
-                  {prompt}
-                </button>
-              ))}
-            </div>
-          ) : null}
-        </div>
+                <span className="cl-phase-dot" aria-hidden="true" />
+                <span className="cl-outline-label">{phase.label}</span>
+                <span className="cl-outline-summary">{phase.summary}</span>
+                <span className="cl-outline-count">{phase.items.length}</span>
+              </button>
+            ))}
+          </aside>
 
+          <div className="cl-chat">
+            {origin ? (
+              <div className="cl-origin">
+                <span>Reported</span>
+                <b>{origin.body || detail.task.source.title}</b>
+                <time>{new Date(origin.at).toLocaleDateString([], { month: "short", day: "numeric" })}</time>
+              </div>
+            ) : null}
+
+            <div
+              className="cl-line"
+              ref={lineRef}
+              onScroll={(event) => {
+                const node = event.currentTarget;
+                const distance = node.scrollHeight - node.scrollTop - node.clientHeight;
+                stickRef.current = distance < 80;
+                setAtLatest(distance < 80);
+              }}
+            >
+              {visiblePhases.map((phase) => (
+                <section className={`cl-chapter ${phase.state}`} key={phase.id}>
+                  <header>
+                    <span className="cl-phase-dot" aria-hidden="true" />
+                    <h3>{phase.label}</h3>
+                    <span className="cl-chapter-summary">{phase.summary}</span>
+                    <span className="cl-chapter-count">{phase.items.length}</span>
+                  </header>
+                  <div className="cl-chapter-body">
+                    {phase.items.length
+                      ? phase.blocks.map(renderBlock)
+                      : <p className="cl-phase-empty">No events in this chapter.</p>}
+                  </div>
+                </section>
+              ))}
+              {streamed || pendingQuestion ? (
+                <>
+                  {pendingQuestion ? <div className="cl-user-turn"><p>{pendingQuestion}</p></div> : null}
+                  {streamed ? (
+                    <article className="cl-msg mira generated streaming">
+                      <div className="cl-avatar" aria-hidden="true">M</div>
+                      <div className="cl-body">
+                        <div className="cl-meta"><span className="cl-name">Mira</span><span className="cl-ai-tag">AI</span></div>
+                        <p>{streamed}<span className="cl-cursor" /></p>
+                      </div>
+                    </article>
+                  ) : null}
+                </>
+              ) : null}
+              {busy && !streamed ? (
+                <div className="cl-working"><span /> Mira is reading the proof.</div>
+              ) : null}
+              {writable && canAsk ? (
+                <div className="cl-suggest">
+                  <span>Ask about this run</span>
+                  {["What changed?", "Is it released?", "What was not tested?"].map((prompt) => (
+                    <button
+                      key={prompt}
+                      type="button"
+                      onClick={() => {
+                        setMode("ask");
+                        setText(prompt);
+                        formRef.current?.querySelector("textarea")?.focus();
+                      }}
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
         {!atLatest ? (
           <button type="button" className="cl-latest" onClick={jumpToLatest}>Jump to latest</button>
         ) : null}
@@ -588,6 +581,8 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
         ) : (
           <p className="cl-readonly">Start <span className="mono">works ui --write</span> to ask Mira or add context.</p>
         )}
+          </div>
+        </div>
       </div>
       <Rail detail={detail} onAction={onAction} onView={onView} />
     </div>
