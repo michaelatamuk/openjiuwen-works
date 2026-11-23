@@ -53,16 +53,19 @@ The same evidence page serves two audiences without a second data source:
   stage. Question cards appear inline (plan and release) and carry their own human actions; a plan
   gate or a blocked run adds one decision card above the thread, while a release card stays inline.
   Agent commentary and discussion collapse into one **Review** block; gate, challenge and hash rows
-  sit behind **Details**. The rail stays at the right edge of the session: Decision, human Activity,
-  Run, People and Technical. The conversation measure is 900px inside the full pane; the app bar,
-  title and tabs stay on the shared content frame. **Run log** switches the same pane to a vertical
-  chapter outline (Plan / Build / Check / Release): past chapters are one-line summaries, the current
-  chapter opens, and **Full log** expands everything. In `--write`, `Add context` appends a
-  `thread.note`; `Ask Mira` asks a real `openjiuwen` model and streams the answer into
-  `thread.agent`. Follow-up questions carry the last three recorded answers. Every model answer is
-  labelled and advisory: it cannot approve, release, retry or change a gate. `Review` adds a
-  labelled Inspector / Challenger / Reporter discussion; `Commentary` adds Builder / Inspector /
-  Reporter notes. Both are model output and cannot open a gate.
+  sit behind **Details**. The header carries two views — **Conversation** and **Run log** — and a
+  separate **Ask AI** group; **Review** and **Commentary** add labelled model output (with a busy
+  state and a toast) and return to Conversation, so they never look like extra views. The rail stays
+  at the right edge of the session: Decision, human Activity, Run, People and Technical. The
+  conversation measure is 900px inside the full pane; the app bar, title and tabs stay on the shared
+  content frame. **Run log** keeps the same column and header, and adds a compact chapter bar
+  (Plan / Build / Check / Release) with event counts; the current chapter opens, **All chapters**
+  expands everything, and **Back to current** returns. In `--write`, `Add context` appends a
+  `thread.note`; `Ask Mira` asks a real `openjiuwen` model and streams the answer into `thread.agent`. Follow-up questions
+  carry the last three recorded answers. Every model answer is labelled and advisory: it cannot
+  approve, release, retry or change a gate. `Review` adds a labelled Inspector / Challenger /
+  Reporter discussion; `Commentary` adds Builder / Inspector / Reporter notes. Both are model output
+  and cannot open a gate.
 - **Factory**: a header action opens metrics and the ledger. The Release view carries the run history
   and a two-run comparison; Evidence offers proof/run/release/delivery/confirmation downloads.
   Artifacts open in a lightbox; a before/after pair has a drag slider; timeline rows open their raw
@@ -113,8 +116,8 @@ without a failure or a finished run. The runs are local fixtures, not upstream f
 
 Dark and light themes, comfortable and compact density, a near-white surface system, a 52px app
 bar, a 280px queue, one shared content frame (app bar, title, status and tabs), a pipeline
-conversation with a 900px measure and a right-edge context rail, a Run log with a 220px chapter
-outline, and inline human gates. One coral accent, subtle depth
+conversation with a 900px measure and a right-edge context rail, a Run log chapter bar in the same
+column, and inline human gates. One coral accent, subtle depth
 instead of stacked borders, visible focus, text labels for every status, `prefers-reduced-motion`,
 and Mira in the empty state. Below 720 px the route becomes
 a vertical list with the same states and per-milestone screen-reader names; the queue moves below

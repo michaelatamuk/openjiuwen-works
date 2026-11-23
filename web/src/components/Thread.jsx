@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { postAction, streamAsk } from "../lib/api.js";
-import { eventSummary, roleLabel, roleLetter, shortSha, stateLabel, stateTone, timelineLabel } from "../lib/format.js";
+import { roleLabel, roleLetter, shortSha, stateLabel, timelineLabel } from "../lib/format.js";
 import { AiText } from "./ui.jsx";
 
 const REVIEW_TYPES = new Set(["thread.commentary", "thread.discussion"]);
@@ -129,12 +129,13 @@ function decisionFor(detail) {
 function ReviewGroup({ items }) {
   const stances = items.map((item) => item.stance).filter(Boolean);
   const concern = stances.includes("concern") || stances.includes("block");
+  const agents = new Set(items.map((item) => item.role)).size;
   return (
     <details className="cl-review">
       <summary>
         <span className="cl-review-title">Review</span>
         <span className="cl-review-meta">
-          {items.length} agent{items.length === 1 ? "" : "s"} · {concern ? "has a concern" : "all support"}
+          {agents} agent{agents === 1 ? "" : "s"} · {concern ? "has a concern" : "all support"}
         </span>
         <span className="cl-ai-tag">AI</span>
       </summary>
@@ -253,15 +254,15 @@ function Rail({ detail, onAction, onView }) {
       </section>
       <section>
         <h3>Activity</h3>
-        {(detail.timeline || [])
+        {(detail.thread || [])
           .filter((item) => !item.type.startsWith("thread.") && !item.type.startsWith("memory."))
           .slice(-5)
           .reverse()
           .map((item) => (
           <div className="cl-activity" key={item.seq}>
-            <time>{new Date(item.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time>
+            <time>{new Date(item.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time>
             <span>{timelineLabel(item.type)}</span>
-            <b>{eventSummary(item).slice(0, 70)}</b>
+            <b>{String(item.title || item.body || "").slice(0, 70)}</b>
           </div>
           ))}
       </section>
@@ -306,6 +307,7 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
   const [showAll, setShowAll] = useState(false);
   const [selectedPhase, setSelectedPhase] = useState(null);
   const [sessionMode, setSessionMode] = useState("pipeline");
+  const [aiBusy, setAiBusy] = useState(null);
   const formRef = useRef(null);
   const lineRef = useRef(null);
   const stickRef = useRef(true);
@@ -383,6 +385,24 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
     return onAction(action);
   }
 
+  async function runAi(action) {
+    if (aiBusy) return;
+    setAiBusy(action);
+    try {
+      await onAction(action);
+      setSessionMode("pipeline");
+      setShowAll(false);
+      stickRef.current = true;
+      window.requestAnimationFrame(() => {
+        if (lineRef.current) lineRef.current.scrollTop = lineRef.current.scrollHeight;
+      });
+    } catch {
+      /* App already surfaces the failure as a toast. */
+    } finally {
+      setAiBusy(null);
+    }
+  }
+
   async function submit(event) {
     event.preventDefault();
     const message = text.trim();
@@ -440,19 +460,48 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
             <span>{detail.task.product}</span>
             <span className="cl-live-text"><i /> Live</span>
             <span className="cl-head-actions">
-              <button type="button" className="cl-text-btn" onClick={() => setSessionMode((value) => value === "log" ? "pipeline" : "log")}>
-                {sessionMode === "pipeline" ? "Run log" : "Conversation"}
-              </button>
-              {sessionMode === "log" ? (
-                <button type="button" className="cl-text-btn" onClick={() => { setShowAll((value) => !value); setSelectedPhase(null); }}>
-                  {showAll ? "Digest" : "Full log"}
+              <span className="cl-mode-switch" role="tablist" aria-label="Session mode">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={sessionMode === "pipeline"}
+                  className={sessionMode === "pipeline" ? "active" : ""}
+                  onClick={() => setSessionMode("pipeline")}
+                >
+                  Conversation
                 </button>
-              ) : null}
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={sessionMode === "log"}
+                  className={sessionMode === "log" ? "active" : ""}
+                  onClick={() => setSessionMode("log")}
+                >
+                  Run log
+                </button>
+              </span>
               {writable && canAsk ? (
-                <>
-                  <button type="button" className="cl-text-btn" onClick={() => onAction("discussion")}>Review</button>
-                  <button type="button" className="cl-text-btn" onClick={() => onAction("commentary")}>Commentary</button>
-                </>
+                <span className="cl-ai-actions">
+                  <span className="cl-ai-label">Ask AI</span>
+                  <button
+                    type="button"
+                    className="cl-text-btn"
+                    disabled={Boolean(aiBusy)}
+                    title="Ask the team for a review of this run"
+                    onClick={() => runAi("discussion")}
+                  >
+                    {aiBusy === "discussion" ? "Reviewing…" : "Review"}
+                  </button>
+                  <button
+                    type="button"
+                    className="cl-text-btn"
+                    disabled={Boolean(aiBusy)}
+                    title="Ask the agents for commentary on this run"
+                    onClick={() => runAi("commentary")}
+                  >
+                    {aiBusy === "commentary" ? "Writing…" : "Commentary"}
+                  </button>
+                </span>
               ) : null}
             </span>
           </div>
@@ -472,36 +521,41 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
           ) : null}
         </div>
 
-        <div className={`cl-work ${sessionMode === "pipeline" ? "chat-only" : ""}`}>
-          {sessionMode === "log" ? (
-          <aside className="cl-outline" aria-label="Session chapters">
-            <div className="cl-outline-head">
-              <span>Chapters</span>
-              {selectedPhase ? (
-                <button type="button" onClick={() => setSelectedPhase(null)}>Current</button>
-              ) : null}
-            </div>
-            {phases.map((phase) => (
-              <button
-                key={phase.id}
-                type="button"
-                className={`cl-outline-row ${phase.state} ${(selectedPhase || currentId) === phase.id ? "active" : ""}`}
-                onClick={() => {
-                  setShowAll(false);
-                  setSelectedPhase(phase.id === currentId ? null : phase.id);
-                  if (lineRef.current) lineRef.current.scrollTop = 0;
-                }}
-              >
-                <span className="cl-phase-dot" aria-hidden="true" />
-                <span className="cl-outline-label">{phase.label}</span>
-                <span className="cl-outline-summary">{phase.summary}</span>
-                <span className="cl-outline-count">{phase.items.length}</span>
-              </button>
-            ))}
-          </aside>
-          ) : null}
-
+        <div className="cl-work">
           <div className="cl-chat">
+            {sessionMode === "log" ? (
+              <nav className="cl-chapter-bar" aria-label="Run chapters">
+                {phases.map((phase) => (
+                  <button
+                    key={phase.id}
+                    type="button"
+                    className={`cl-chapter-chip ${phase.state} ${!showAll && (selectedPhase || currentId) === phase.id ? "active" : ""}`}
+                    onClick={() => {
+                      setShowAll(false);
+                      setSelectedPhase(phase.id === currentId ? null : phase.id);
+                      if (lineRef.current) lineRef.current.scrollTop = 0;
+                    }}
+                  >
+                    <span className="cl-phase-dot" aria-hidden="true" />
+                    {phase.label}
+                    <span className="cl-chapter-chip-count">{phase.items.length}</span>
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  className={`cl-chapter-chip all ${showAll ? "active" : ""}`}
+                  aria-pressed={showAll}
+                  onClick={() => { setShowAll((value) => !value); setSelectedPhase(null); }}
+                >
+                  All chapters
+                </button>
+                {selectedPhase ? (
+                  <button type="button" className="cl-chapter-reset" onClick={() => setSelectedPhase(null)}>
+                    Back to current
+                  </button>
+                ) : null}
+              </nav>
+            ) : null}
             {sessionMode === "log" && origin ? (
               <div className="cl-origin">
                 <span>Reported</span>

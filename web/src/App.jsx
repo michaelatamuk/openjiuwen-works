@@ -113,7 +113,9 @@ export default function App() {
         body: { action, task_id: selectedRef.current, ...body },
       });
       const count = (result.messages || []).length;
-      if (count) notify(`${count} ${action} message(s) added.`);
+      if (action === "discussion") notify("Team review added to the conversation.");
+      else if (action === "commentary") notify("Agent commentary added to the conversation.");
+      else if (count) notify(`${count} ${action} message(s) added.`);
       else if (result.event?.type === "thread.note") notify("Context added to the worklog.");
       else notify(`${action} recorded.`);
       await refresh();

@@ -2334,3 +2334,114 @@ body { background: var(--bg); background-image: none; }
 }
 .cl-activity { grid-template-columns: 48px minmax(0, 1fr); }
 .cl-activity time { white-space: nowrap; }
+
+/* Session has two views (Conversation, Run log); Review/Commentary are AI actions */
+.cl-mode-switch {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-2);
+}
+.cl-mode-switch button {
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  padding: 3px 10px;
+  font: 600 10.5px/1.4 var(--sans);
+  cursor: pointer;
+}
+.cl-mode-switch button:hover { color: var(--text); }
+.cl-mode-switch button.active {
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgb(35 30 24 / .08);
+}
+.cl-toggle.on { color: var(--text); border-bottom-color: var(--line-strong); }
+.cl-toggle.on::before { content: "\2713  "; color: var(--green); }
+.cl-ai-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 12px;
+  border-left: 1px solid var(--line);
+}
+.cl-ai-label {
+  color: var(--faint);
+  font: 700 8.5px/1 var(--mono);
+  letter-spacing: .14em;
+}
+.cl-head-actions .cl-text-btn:disabled { color: var(--faint); cursor: default; border-bottom-color: transparent; }
+.cl-mode-switch + .cl-toggle { margin-left: 2px; }
+.cl-mode-switch button, .cl-ai-actions button, .cl-toggle { white-space: nowrap; }
+
+/* One session frame: Conversation and Run log share the same column and header */
+.cl-thread .cl-head {
+  width: 100%;
+  max-width: 952px;
+  margin: 0 auto;
+  padding: 16px 26px 2px;
+  border: 0;
+}
+.cl-thread .cl-work {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: none;
+  padding: 0 26px;
+  flex: 1;
+  min-height: 0;
+}
+.cl-thread .cl-chat {
+  width: 100%;
+  max-width: 900px;
+  height: 100%;
+  min-height: 0;
+  margin: 0 auto;
+}
+
+/* Compact chapter switch inside the same conversation column */
+.cl-chapter-bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 2px 0 9px;
+  border-bottom: 1px solid var(--line);
+}
+.cl-chapter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  padding: 3px 9px;
+  font: 600 10.5px/1.5 var(--sans);
+  cursor: pointer;
+}
+.cl-chapter-chip:hover { background: var(--panel-2); color: var(--text); }
+.cl-chapter-chip.active { background: var(--panel-2); border-color: var(--line); color: var(--text); }
+.cl-chapter-chip.done .cl-phase-dot { background: var(--green); }
+.cl-chapter-chip.current .cl-phase-dot { background: var(--violet); }
+.cl-chapter-chip.blocked .cl-phase-dot { background: var(--red); }
+.cl-chapter-chip-count { color: var(--faint); font: 500 9.5px/1 var(--mono); }
+.cl-chapter-chip.all { margin-left: auto; }
+.cl-chapter-reset {
+  border: 0;
+  background: transparent;
+  color: var(--violet-text);
+  padding: 3px 4px;
+  font: 600 10.5px/1.5 var(--sans);
+  cursor: pointer;
+}
+
+@media (max-width: 1500px) {
+  .cl-thread { grid-template-columns: minmax(0, 1fr); }
+  .cl-thread .cl-rail { display: none; }
+}
+.cl-thread .cl-main { background: transparent; border: 0; border-radius: 0; box-shadow: none; }
