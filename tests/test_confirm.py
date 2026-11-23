@@ -8,12 +8,12 @@ from contextlib import redirect_stderr, redirect_stdout
 import pytest
 
 from tests.test_deliver import _released, _remote
-from works.cli import main
-from works.confirm import confirm
-from works.deliver import deliver
-from works.errors import ConfigError
-from works.queue import Queue
-from works.records import Source, SourceKind, TaskState
+from works.adapters.queue.store import Queue
+from works.application.delivery.confirm import confirm
+from works.application.delivery.deliver import deliver
+from works.domain.errors import ConfigError
+from works.domain.records import Source, SourceKind, TaskState
+from works.interfaces.cli.main import main
 
 
 def _delivered(paths, repo, tmp_path):
@@ -61,7 +61,9 @@ def test_a_failing_command_records_a_failed_confirmation(paths, repo, tmp_path) 
 
 def test_the_http_target_is_used_when_given(monkeypatch, paths, repo, tmp_path) -> None:
     task, _, _ = _delivered(paths, repo, tmp_path)
-    monkeypatch.setattr("works.confirm._http_check", lambda url: (True, 204, ""))
+    monkeypatch.setattr(
+        "works.application.delivery.confirm._http_check", lambda url: (True, 204, "")
+    )
 
     result = confirm(paths, task.id, url="https://example.test/health")
 

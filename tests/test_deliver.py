@@ -6,14 +6,20 @@ from pathlib import Path
 import pytest
 
 from tests.test_evidence import fixed_evidence
-from works.deliver import Delivery, GitHubForge, branch_name, deliver, repository_slug
-from works.errors import ConfigError
-from works.evidence import write_evidence
-from works.gitops import GitRepo
-from works.queue import Queue
-from works.records import RunRecord, Source, SourceKind, StopReason, TaskState
-from works.release import approve_release
-from works.runner import SubprocessRunner
+from works.adapters.git.repo import GitRepo
+from works.adapters.processes.runner import SubprocessRunner
+from works.adapters.queue.store import Queue
+from works.application.delivery.deliver import (
+    Delivery,
+    GitHubForge,
+    branch_name,
+    deliver,
+    repository_slug,
+)
+from works.application.delivery.release import approve_release
+from works.domain.errors import ConfigError
+from works.domain.evidence import write_evidence
+from works.domain.records import RunRecord, Source, SourceKind, StopReason, TaskState
 
 
 def _released(paths, repo: GitRepo, *, run_id: str = "r-deliver", ref: str = "GH-DELIVER"):

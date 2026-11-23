@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
-from works.records import Event, Source, SourceKind, Task, TaskState
-from works.ui.server import _pipeline
+from works.domain.records import Event, Source, SourceKind, Task, TaskState
+from works.interfaces.api.server import _pipeline
 
 START = datetime(2026, 11, 21, 9, 0, tzinfo=UTC)
 

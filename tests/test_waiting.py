@@ -4,10 +4,10 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
+from works.adapters.queue.store import Queue
 from works.config import WorksPaths
-from works.errors import StateError
-from works.queue import Queue
-from works.records import Source, SourceKind, TaskState
+from works.domain.errors import StateError
+from works.domain.records import Source, SourceKind, TaskState
 
 
 def to_proved(queue: Queue, task_id: str) -> None:

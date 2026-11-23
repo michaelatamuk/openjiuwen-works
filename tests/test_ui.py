@@ -10,7 +10,7 @@ from urllib.request import Request, urlopen
 
 import pytest
 
-from works.ui.server import serve
+from works.interfaces.api.server import serve
 
 
 @contextmanager
@@ -395,13 +395,13 @@ def test_task_detail_exposes_release_ops_and_verifier(paths, submit) -> None:
 
 
 def test_actions_dispatch_release_deliver_confirm_and_team(paths, submit, monkeypatch) -> None:
-    from works.confirm import Confirmation
-    from works.deliver import Delivery
-    from works.release import ReleasePacket
+    from works.application.delivery.confirm import Confirmation
+    from works.application.delivery.deliver import Delivery
+    from works.application.delivery.release import ReleasePacket
 
     task = submit()
     monkeypatch.setattr(
-        "works.release.approve_release",
+        "works.application.delivery.release.approve_release",
         lambda p, t: (
             task,
             ReleasePacket(task_id=t, commit="abc1234", proof_sha256="a" * 64, run_id="r-1"),
@@ -409,19 +409,19 @@ def test_actions_dispatch_release_deliver_confirm_and_team(paths, submit, monkey
         ),
     )
     monkeypatch.setattr(
-        "works.deliver.deliver",
+        "works.application.delivery.deliver.deliver",
         lambda p, t, **k: Delivery(
             task_id=t, run_id="r-1", commit="abc1234", branch="works/t", pr_url="https://x/pr"
         ),
     )
     monkeypatch.setattr(
-        "works.confirm.confirm",
+        "works.application.delivery.confirm.confirm",
         lambda p, t, **k: Confirmation(
             task_id=t, run_id="r-1", commit="abc1234", ok=True, target="http x"
         ),
     )
     monkeypatch.setattr(
-        "works.team_task.run_team_verify",
+        "works.application.team.launcher.run_team_verify",
         lambda p, t, **k: {"verdict": "allow", "blockers": []},
     )
     with running(paths, write=True) as base:
@@ -442,13 +442,15 @@ def test_actions_dispatch_release_deliver_confirm_and_team(paths, submit, monkey
 
 
 def test_source_endpoint_imports_github_and_jira(paths, repo, monkeypatch) -> None:
-    from works.sources import Issue
+    from works.application.intake.sources import Issue
 
     monkeypatch.setattr(
-        "works.sources.github_issues", lambda *a, **k: [Issue(ref="o/r#1", title="One")]
+        "works.application.intake.sources.github_issues",
+        lambda *a, **k: [Issue(ref="o/r#1", title="One")],
     )
     monkeypatch.setattr(
-        "works.sources.jira_issues", lambda *a, **k: [Issue(ref="FIRE-1", title="Two")]
+        "works.application.intake.sources.jira_issues",
+        lambda *a, **k: [Issue(ref="FIRE-1", title="Two")],
     )
     with running(paths, write=True) as base:
         status, body = post(
@@ -479,7 +481,7 @@ def test_source_endpoint_imports_github_and_jira(paths, repo, monkeypatch) -> No
 
 
 def test_plan_event_becomes_a_reviewable_thread_card(paths, submit) -> None:
-    from works.queue import Queue
+    from works.adapters.queue.store import Queue
 
     task = submit()
     Queue(paths).append(
@@ -524,7 +526,7 @@ def test_plan_event_becomes_a_reviewable_thread_card(paths, submit) -> None:
 
 
 def test_task_detail_exposes_a_thread_and_a_rail(paths, submit) -> None:
-    from works.queue import Queue
+    from works.adapters.queue.store import Queue
 
     task = submit()
     queue = Queue(paths)
@@ -557,7 +559,7 @@ def test_task_detail_exposes_a_thread_and_a_rail(paths, submit) -> None:
 
 
 def test_add_context_appends_a_thread_note(paths, submit) -> None:
-    from works.queue import Queue
+    from works.adapters.queue.store import Queue
 
     task = submit()
     with running(paths, write=True) as base:
@@ -650,7 +652,7 @@ def test_planner_settings_are_saved_and_exposed(paths) -> None:
 
 def test_health_reports_agent_availability(paths, monkeypatch) -> None:
     monkeypatch.setattr(
-        "works.agent_chat.availability",
+        "works.application.assistant.chat.availability",
         lambda: {"available": True, "reason": "", "model": "deepseek-chat", "base": "https://x"},
     )
     with running(paths) as base:
@@ -662,11 +664,11 @@ def test_health_reports_agent_availability(paths, monkeypatch) -> None:
 def test_ask_action_and_stream(paths, submit, monkeypatch) -> None:
     task = submit()
     monkeypatch.setattr(
-        "works.agent_chat.ask_mira",
+        "works.application.assistant.chat.ask_mira",
         lambda p, t, q: {"text": "Not released.", "model": "m", "tokens": 4, "usd": 0.0},
     )
     monkeypatch.setattr(
-        "works.agent_chat.ask_mira_stream",
+        "works.application.assistant.chat.ask_mira_stream",
         lambda p, t, q: iter(
             [
                 {"type": "delta", "text": "Not "},
@@ -694,7 +696,7 @@ def test_ask_action_and_stream(paths, submit, monkeypatch) -> None:
 
 
 def test_detail_exposes_a_mira_answer(paths, submit) -> None:
-    from works.queue import Queue
+    from works.adapters.queue.store import Queue
 
     task = submit()
     Queue(paths).append(
@@ -724,8 +726,8 @@ def test_detail_exposes_a_mira_answer(paths, submit) -> None:
 
 
 def test_approve_plan_action_opens_gate_one(paths, submit) -> None:
-    from works.queue import Queue
-    from works.records import TaskState
+    from works.adapters.queue.store import Queue
+    from works.domain.records import TaskState
 
     task = submit()
     queue = Queue(paths)
@@ -778,7 +780,7 @@ def test_run_history_and_export(paths, submit) -> None:
 
 
 def test_discussion_action_records_advisory_messages(paths, submit, monkeypatch) -> None:
-    from works.queue import Queue
+    from works.adapters.queue.store import Queue
 
     class FakeRun:
         def __init__(self, stdout: str) -> None:
@@ -787,10 +789,12 @@ def test_discussion_action_records_advisory_messages(paths, submit, monkeypatch)
             self.returncode = 0
 
     task = submit()
-    monkeypatch.setattr("works.agent_chat._command", lambda: ["python", "worker.py"])
-    monkeypatch.setattr("works.agent_chat._environment", lambda: {})
     monkeypatch.setattr(
-        "works.agent_chat.subprocess.run",
+        "works.application.assistant.chat._command", lambda: ["python", "worker.py"]
+    )
+    monkeypatch.setattr("works.application.assistant.chat._environment", lambda: {})
+    monkeypatch.setattr(
+        "works.application.assistant.chat.subprocess.run",
         lambda *a, **k: FakeRun(
             json.dumps(
                 {

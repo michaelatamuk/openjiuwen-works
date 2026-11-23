@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from works.errors import ConfigError
-from works.records import Priority, ScenarioOutcome
-from works.scenarios import judge, load_scenario_set
+from works.application.execution.scenarios import judge, load_scenario_set
+from works.domain.errors import ConfigError
+from works.domain.records import Priority, ScenarioOutcome
 
 
 def outcome(

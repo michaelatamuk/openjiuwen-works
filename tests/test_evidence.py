@@ -4,9 +4,10 @@ import os
 from datetime import UTC, datetime
 from pathlib import Path
 
-from works.evidence import DiffStatRow, Evidence, render_markdown
-from works.policy import PolicyReport, Violation
-from works.records import (
+from works.application.execution.scenarios import judge
+from works.domain.evidence import DiffStatRow, Evidence, render_markdown
+from works.domain.policy import PolicyReport, Violation
+from works.domain.records import (
     Challenge,
     CommandRecord,
     Finding,
@@ -15,7 +16,6 @@ from works.records import (
     StopReason,
     TaskState,
 )
-from works.scenarios import judge
 
 
 def command(step: str, exit_code: int, digest: str) -> CommandRecord:

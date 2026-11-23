@@ -4,9 +4,7 @@ import json
 
 import pytest
 
-from works.config import WorksPaths
-from works.errors import ConflictError, NotFoundError, StateError
-from works.queue import (
+from works.adapters.queue.store import (
     EVENTS_FILE,
     Queue,
     dump_event,
@@ -14,7 +12,9 @@ from works.queue import (
     make_task_id,
     project,
 )
-from works.records import Budget, Source, SourceKind, TaskState
+from works.config import WorksPaths
+from works.domain.errors import ConflictError, NotFoundError, StateError
+from works.domain.records import Budget, Source, SourceKind, TaskState
 
 
 def new_queue(paths: WorksPaths) -> Queue:

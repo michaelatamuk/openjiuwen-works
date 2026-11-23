@@ -5,7 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from works.detectors import (
+from works.adapters.queue.store import Queue
+from works.application.intake.detectors import (
     Alert,
     alerts_for,
     fetch_alerts,
@@ -15,8 +16,7 @@ from works.detectors import (
     parse_alerts,
     read_alert_file,
 )
-from works.errors import ConfigError
-from works.queue import Queue
+from works.domain.errors import ConfigError
 
 
 def test_alertmanager_payload_keeps_only_firing_alerts() -> None:

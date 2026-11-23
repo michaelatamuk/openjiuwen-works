@@ -4,8 +4,8 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from works.flow import PathsSpec
-from works.policy import (
+from works.domain.flow import PathsSpec
+from works.domain.policy import (
     check_patch,
     check_paths,
     is_unsafe,

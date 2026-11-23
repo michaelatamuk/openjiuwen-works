@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from works.flow import find_flow, load_flow
-from works.gitops import DiffStat
-from works.risk import RiskLevel, rate_risk
+from works.adapters.git.repo import DiffStat
+from works.domain.flow import find_flow, load_flow
+from works.domain.risk import RiskLevel, rate_risk
 
 
 def flow(paths):

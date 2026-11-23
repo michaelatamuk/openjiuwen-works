@@ -4,8 +4,7 @@ import json
 
 import pytest
 
-from works.errors import ConfigError
-from works.settings import (
+from works.application.settings import (
     BuilderSettings,
     builder_health,
     credential_status,
@@ -13,6 +12,7 @@ from works.settings import (
     save_builder_settings,
     settings_path,
 )
+from works.domain.errors import ConfigError
 
 
 def test_defaults_are_the_openjiuwen_claude_code_runtime(paths) -> None:

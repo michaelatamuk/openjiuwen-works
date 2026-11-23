@@ -5,8 +5,8 @@ from datetime import UTC, datetime
 from typing import Any
 
 from tests.test_evidence import fixed_evidence
-from works.memory import EVENT_TYPE, PpmaMemory, ulid_for
-from works.records import RunRecord, Source, SourceKind, StopReason, Task, TaskState
+from works.application.memory.ppma import EVENT_TYPE, PpmaMemory, ulid_for
+from works.domain.records import RunRecord, Source, SourceKind, StopReason, Task, TaskState
 
 ULID = re.compile(r"^[0-7][0-9A-HJKMNP-TV-Z]{25}$")
 

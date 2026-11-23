@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 
-from works.artifacts import collect_artifacts
+from works.application.execution.artifacts import collect_artifacts
 
 
 def test_preview_artifacts_are_copied_and_classified(tmp_path) -> None:

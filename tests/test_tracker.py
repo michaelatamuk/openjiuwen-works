@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import pytest
 
-from works.errors import ConfigError
-from works.tracker import (
+from works.application.delivery.tracker import (
     GitHubTracker,
     GitLabTracker,
     JiraTracker,
     build_tracker,
     tracker_accepts,
 )
+from works.domain.errors import ConfigError
 
 
 class Router:

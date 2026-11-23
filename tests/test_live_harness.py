@@ -2,21 +2,21 @@ from __future__ import annotations
 
 import pytest
 
-from works.errors import ConfigError
-from works.harness.base import ProposalRequest
-from works.harness.openjiuwen import (
+from works.adapters.harness.base import ProposalRequest
+from works.adapters.harness.openjiuwen.builder import (
     LiveHarness,
     builder_prompt,
     default_cli,
     default_key,
     is_artifact,
 )
-from works.harness.providers import (
+from works.adapters.harness.openjiuwen.providers import (
     _native_model_kind,
     availability,
     create_harness,
     validate_provider,
 )
+from works.domain.errors import ConfigError
 
 
 def request(title: str = "add subtracts") -> ProposalRequest:
@@ -107,7 +107,7 @@ def test_an_unknown_provider_is_refused(monkeypatch: pytest.MonkeyPatch) -> None
 
 def test_optional_providers_fail_closed_without_their_sdk(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "works.harness.providers.availability",
+        "works.adapters.harness.openjiuwen.providers.availability",
         lambda: {"claudecode": True, "dsh": False, "native": False, "codex": False},
     )
 

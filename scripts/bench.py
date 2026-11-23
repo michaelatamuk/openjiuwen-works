@@ -25,8 +25,8 @@ def timed_subprocess(argv: list[str], env: dict[str, str], repeats: int = 3) -> 
 
 
 def status_10k(root: Path) -> float:
-    from works.cli import main
-    from works.index import TaskIndex
+    from works.interfaces.cli.main import main
+    from works.adapters.queue.index import TaskIndex
 
     queue = root / "queue"
     queue.mkdir(parents=True)
@@ -59,7 +59,7 @@ def status_10k(root: Path) -> float:
 def evidence_render() -> float:
     sys.path.insert(0, str(ROOT))
     from tests.test_evidence import fixed_evidence
-    from works.evidence import render_markdown
+    from works.domain.evidence import render_markdown
 
     evidence = fixed_evidence().bind()
     started = time.perf_counter()

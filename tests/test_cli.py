@@ -6,11 +6,11 @@ from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import dataclass
 from pathlib import Path
 
-from works.cli import main
-from works.gitops import GitRepo
-from works.queue import Queue
-from works.records import TaskState
-from works.risk import RiskLevel, RiskRating
+from works.adapters.git.repo import GitRepo
+from works.adapters.queue.store import Queue
+from works.domain.records import TaskState
+from works.domain.risk import RiskLevel, RiskRating
+from works.interfaces.cli.main import main
 
 
 @dataclass(frozen=True)
@@ -107,13 +107,13 @@ def test_policy_refuses_a_test_edit(paths) -> None:
 def test_a_saved_swarm_runtime_is_the_default_builder(
     paths, repo, scenario_set: Path, monkeypatch
 ) -> None:
-    from works.harness.swarm import SwarmDiagnostic
-    from works.settings import save_builder_settings
+    from works.adapters.harness.swarm.harness import SwarmDiagnostic
+    from works.application.settings import save_builder_settings
 
     submitted = submit_cli(paths, repo)
     save_builder_settings(paths, {"runtime": "swarm"})
     monkeypatch.setattr(
-        "works.harness.swarm.SwarmHarness.diagnostic",
+        "works.adapters.harness.swarm.harness.SwarmHarness.diagnostic",
         lambda self: SwarmDiagnostic(ok=True, detail="stub swarm"),
     )
 
@@ -139,7 +139,7 @@ def test_a_saved_swarm_runtime_is_the_default_builder(
 def test_a_saved_openjiuwen_runtime_is_the_default_builder(
     paths, repo, scenario_set: Path, monkeypatch
 ) -> None:
-    from works.settings import save_builder_settings
+    from works.application.settings import save_builder_settings
 
     submitted = submit_cli(paths, repo)
     save_builder_settings(paths, {"runtime": "openjiuwen"})
@@ -382,7 +382,7 @@ def test_import_hardening_drops_the_working_directory() -> None:
     import os
     import sys
 
-    from works.bootstrap import harden_sys_path
+    from works.config.bootstrap import harden_sys_path
 
     saved = list(sys.path)
     try:

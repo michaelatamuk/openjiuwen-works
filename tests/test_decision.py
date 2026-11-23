@@ -5,15 +5,15 @@ import types
 
 import pytest
 
-from works.decision import (
+from works.application.approvals.decisions import (
     DeterministicGate,
     GateContext,
     LaixGate,
     ShadowGate,
     build_decision_port,
 )
-from works.errors import ConfigError
-from works.risk import RiskLevel
+from works.domain.errors import ConfigError
+from works.domain.risk import RiskLevel
 
 
 def context(**overrides) -> GateContext:
@@ -71,7 +71,7 @@ def test_shadow_keeps_the_deterministic_answer_when_laix_is_absent(monkeypatch) 
         def __init__(self) -> None:
             raise ConfigError("absent")
 
-    monkeypatch.setattr("works.decision.LaixGate", BrokenLaix)
+    monkeypatch.setattr("works.application.approvals.decisions.LaixGate", BrokenLaix)
     gate = ShadowGate()
     verdict = gate.decide(context(gate="release"))
     assert verdict.source == "deterministic"

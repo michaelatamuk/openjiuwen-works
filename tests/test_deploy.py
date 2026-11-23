@@ -8,11 +8,11 @@ from contextlib import redirect_stderr, redirect_stdout
 import pytest
 
 from tests.test_deliver import _released, _remote
-from works.cli import main
-from works.deliver import deliver
-from works.deploy import Deployment, deploy
-from works.errors import ConfigError
-from works.queue import Queue
+from works.adapters.queue.store import Queue
+from works.application.delivery.deliver import deliver
+from works.application.delivery.deploy import Deployment, deploy
+from works.domain.errors import ConfigError
+from works.interfaces.cli.main import main
 
 
 def _delivered(paths, repo, tmp_path):

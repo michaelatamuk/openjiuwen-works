@@ -4,14 +4,14 @@ from pathlib import Path
 
 import pytest
 
-from works.errors import ConfigError
-from works.runner import CommandResult
-from works.verifier import (
+from works.adapters.processes.runner import CommandResult
+from works.application.execution.verifier import (
     DockerVerifier,
     LocalVerifier,
     Mount,
     verifier_from_name,
 )
+from works.domain.errors import ConfigError
 
 
 class RecordingRunner:

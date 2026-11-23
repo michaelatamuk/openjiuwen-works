@@ -8,13 +8,13 @@ from datetime import UTC, datetime
 import pytest
 
 from tests.test_evidence import fixed_evidence
-from works.cli import main
+from works.adapters.queue.store import Queue
+from works.application.delivery.release import approve_release, release_packet
 from works.config import WorksPaths
-from works.errors import ConfigError
-from works.evidence import write_evidence
-from works.queue import Queue
-from works.records import RunRecord, Source, SourceKind, StopReason, Task, TaskState
-from works.release import approve_release, release_packet
+from works.domain.errors import ConfigError
+from works.domain.evidence import write_evidence
+from works.domain.records import RunRecord, Source, SourceKind, StopReason, Task, TaskState
+from works.interfaces.cli.main import main
 
 
 def _proved(paths: WorksPaths) -> Task:

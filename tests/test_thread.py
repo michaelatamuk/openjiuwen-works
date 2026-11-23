@@ -5,9 +5,9 @@ from datetime import UTC, datetime
 import pytest
 
 from tests.test_release import _proved
-from works.queue import Queue
-from works.records import Event
-from works.ui.server import _thread_message, _thread_rail
+from works.adapters.queue.store import Queue
+from works.domain.records import Event
+from works.interfaces.api.server import _thread_message, _thread_rail
 
 
 def event(kind: str, data: dict | None = None, seq: int = 1) -> Event:

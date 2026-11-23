@@ -6,14 +6,14 @@ from pathlib import Path
 
 import pytest
 
-from works.errors import StateError
-from works.flakes import add_flake
-from works.ledger import Ledger
-from works.quarantine import QuarantineError
-from works.queue import Queue
-from works.records import Budget, LedgerRow, StopReason, TaskKind, TaskState
-from works.scenarios import judge
-from works.supervisor import Supervisor
+from works.adapters.queue.ledger import Ledger
+from works.adapters.queue.store import Queue
+from works.application.execution.flakes import add_flake
+from works.application.execution.quarantine import QuarantineError
+from works.application.execution.scenarios import judge
+from works.application.supervisor import Supervisor
+from works.domain.errors import StateError
+from works.domain.records import Budget, LedgerRow, StopReason, TaskKind, TaskState
 
 pytestmark = pytest.mark.integration
 
@@ -83,7 +83,7 @@ def test_the_plan_gate_stops_and_then_resumes(paths, submit, scenario_set, make_
 def test_a_preapproved_plan_runs_without_the_flag(
     paths, submit, scenario_set, make_supervisor
 ) -> None:
-    from works.records import TaskState
+    from works.domain.records import TaskState
 
     task = submit()
     first = run(make_supervisor("fix-add"), task.id, scenario_set, approve_plan=False)
@@ -294,7 +294,7 @@ def test_escape_window_and_revert(paths, submit) -> None:
 
 
 def test_judge_uses_the_same_rule_as_the_supervisor() -> None:
-    from works.records import Priority, ScenarioOutcome
+    from works.domain.records import Priority, ScenarioOutcome
 
     outcomes = [
         ScenarioOutcome(

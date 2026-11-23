@@ -4,9 +4,9 @@ import shutil
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-from works.flakes import FlakeStatus, active_flakes, add_flake, load_flakes
-from works.gitops import init_repo
-from works.trusted import load_trusted_flow
+from works.adapters.git.repo import init_repo
+from works.application.execution.flakes import FlakeStatus, active_flakes, add_flake, load_flakes
+from works.domain.trusted import load_trusted_flow
 
 
 def test_flow_and_checks_come_from_the_base_commit(tmp_path: Path, paths) -> None:

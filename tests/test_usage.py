@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from works.harness.usage import UsageTotals
+from works.adapters.harness.usage import UsageTotals
 
 
 def test_provider_usage_events_are_summed() -> None:

@@ -9,10 +9,15 @@ from pathlib import Path
 import pytest
 
 from tests.test_confirm import _delivered
-from works.cli import main
-from works.confirm import confirm
-from works.errors import ConfigError
-from works.preview import PlaywrightPreview, PreviewResult, PreviewScript, PreviewStep
+from works.application.delivery.confirm import confirm
+from works.application.execution.preview import (
+    PlaywrightPreview,
+    PreviewResult,
+    PreviewScript,
+    PreviewStep,
+)
+from works.domain.errors import ConfigError
+from works.interfaces.cli.main import main
 
 
 class FakePage:
@@ -263,7 +268,9 @@ def test_the_cli_confirm_preview_uses_the_driver(monkeypatch, paths, repo, tmp_p
         "start_url: http://app.test\nsteps:\n  - action: expect_visible\n    selector: '#done'\n",
         encoding="utf-8",
     )
-    monkeypatch.setattr("works.confirm.PlaywrightPreview", lambda: FakePreview())
+    monkeypatch.setattr(
+        "works.application.delivery.confirm.PlaywrightPreview", lambda: FakePreview()
+    )
     out, err = io.StringIO(), io.StringIO()
 
     with redirect_stdout(out), redirect_stderr(err):

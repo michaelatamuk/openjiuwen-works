@@ -5,10 +5,10 @@ from pathlib import Path
 
 import pytest
 
-from works.errors import StateError
-from works.migrations import migrate_task
-from works.records import TaskState
-from works.schema import all_schemas
+from works.adapters.queue.migrations import migrate_task
+from works.application.schema import all_schemas
+from works.domain.errors import StateError
+from works.domain.records import TaskState
 
 
 def test_a_v0_task_loads_through_the_migration() -> None:

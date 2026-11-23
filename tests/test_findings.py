@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from works.adapters.queue.store import Queue
 from works.config import WorksPaths
-from works.queue import Queue
-from works.records import Finding, Source, SourceKind
+from works.domain.records import Finding, Source, SourceKind
 
 
 def test_a_finding_is_an_event_and_survives_replay(paths: WorksPaths) -> None:

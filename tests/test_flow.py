@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from works.errors import ConfigError
-from works.flow import find_flow, load_flow
+from works.domain.errors import ConfigError
+from works.domain.flow import find_flow, load_flow
 
 
 def write(path: Path, text: str) -> Path:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from works.render import table
+from works.interfaces.cli.render import table
 
 
 def test_a_table_has_headers_a_rule_and_aligned_rows() -> None:

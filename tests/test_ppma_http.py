@@ -8,8 +8,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import ClassVar
 
 from tests.test_evidence import fixed_evidence
-from works.memory import PpmaMemory
-from works.records import RunRecord, Source, SourceKind, StopReason, Task, TaskState
+from works.application.memory.ppma import PpmaMemory
+from works.domain.records import RunRecord, Source, SourceKind, StopReason, Task, TaskState
 
 
 class _PpmaStub(BaseHTTPRequestHandler):

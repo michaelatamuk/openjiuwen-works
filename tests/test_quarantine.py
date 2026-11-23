@@ -5,7 +5,13 @@ from pathlib import Path
 
 import pytest
 
-from works.quarantine import QuarantineError, ensure_outside, is_inside, load, write
+from works.application.execution.quarantine import (
+    QuarantineError,
+    ensure_outside,
+    is_inside,
+    load,
+    write,
+)
 
 
 def test_is_inside_handles_prefixes(tmp_path: Path) -> None:

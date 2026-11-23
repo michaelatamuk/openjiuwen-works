@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from works.application.doctor import failed, run_checks
 from works.config import WorksPaths
-from works.doctor import failed, run_checks
 
 
 def test_required_checks_pass(paths: WorksPaths, repo) -> None:

@@ -78,7 +78,7 @@ uv run works --home /path/printed/by/demo ui --write
 The `+ New task` prompt creates a queued task; exact fields sit under Details. It never starts a
 run and never approves a gate.
 
-The GUI is a React/Vite app in [`web/`](web/). The built assets in `src/works/ui/static/dist` are
+The GUI is a React/Vite app in [`web/`](web/). The built assets in `src/works/interfaces/ui/static/dist` are
 committed, so `works ui` needs no Node at runtime. After changing the UI:
 
 ```bash
@@ -200,8 +200,10 @@ CI runs lint, tests, bandit and gitleaks; mutation and `pip-audit` run weekly. D
 ## Repository map
 
 ```text
-src/works/          engine: queue, state, policy, flow, supervisor, evidence
-src/works/ui/       local Story/Evidence preview
+src/works/domain/       task, event, run, plan, evidence, policy, flow
+src/works/application/  supervisor, planning, execution, delivery, approvals
+src/works/adapters/     queue, git, harness, processes
+src/works/interfaces/   CLI, HTTP API, local Story/Evidence preview assets
 flows/              the fix-issue flow as a node graph
 fixtures/           planted-bug repo, scenarios, traces and decision cases
 tests/              unit, property, CLI, integration and golden proof tests

@@ -15,7 +15,7 @@ Global `--home` comes before the subcommand. Use `--no-open` to avoid launching 
 ## React/Vite and live updates
 
 The interface is a React/Vite app in `web/`; `works ui` serves its built assets from
-`src/works/ui/static/dist`. The queue and open task subscribe to `GET /api/events` (SSE), so a
+`src/works/interfaces/ui/static/dist`. The queue and open task subscribe to `GET /api/events` (SSE), so a
 new run, event, gate, note or answer appears without a reload; the Settings fallback refresh is
 used only if the stream drops. `Ask Mira` keeps its own `POST /api/ask/stream` token stream.
 
@@ -158,7 +158,7 @@ the Evidence readiness panel run `works readiness` through a local POST.
 - Readiness commands run only in `--write`; the default preview shows static checks.
 - Live updates use `GET /api/events` (SSE); the Settings fallback refresh is configurable.
 - No auth; local-only writes. The LAN preview stays read-only.
-- React 19 + Vite, built into `src/works/ui/static/dist`; no Tailwind or shadcn yet, and Playwright
+- React 19 + Vite, built into `src/works/interfaces/ui/static/dist`; no Tailwind or shadcn yet, and Playwright
   is not wired into CI.
 
 Tests: `pytest tests/test_ui.py tests/test_ui_pipeline.py`.

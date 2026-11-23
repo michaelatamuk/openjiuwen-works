@@ -7,9 +7,15 @@ from pathlib import Path
 
 import pytest
 
-from works.cli import main
-from works.errors import PolicyError
-from works.readiness import BoundaryRule, assess, ensure_ready, import_graph, import_violations
+from works.application.execution.readiness import (
+    BoundaryRule,
+    assess,
+    ensure_ready,
+    import_graph,
+    import_violations,
+)
+from works.domain.errors import PolicyError
+from works.interfaces.cli.main import main
 
 
 def _repo(tmp_path: Path, *, command: str | None = None, allow: list[str] | None = None) -> Path:

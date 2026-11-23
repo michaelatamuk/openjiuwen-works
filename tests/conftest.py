@@ -6,15 +6,15 @@ from pathlib import Path
 
 import pytest
 
+from works.adapters.git.repo import GitRepo, init_repo
+from works.adapters.harness.base import Harness
+from works.adapters.harness.fake import FakeHarness
+from works.adapters.processes.runner import SubprocessRunner
+from works.adapters.queue.ledger import Ledger
+from works.adapters.queue.store import Queue
+from works.application.supervisor import Supervisor
 from works.config import WorksPaths
-from works.gitops import GitRepo, init_repo
-from works.harness.base import Harness
-from works.harness.fake import FakeHarness
-from works.ledger import Ledger
-from works.queue import Queue
-from works.records import Budget, Source, SourceKind, Task, TaskKind
-from works.runner import SubprocessRunner
-from works.supervisor import Supervisor
+from works.domain.records import Budget, Source, SourceKind, Task, TaskKind
 
 FACTORY_ROOT = Path(__file__).resolve().parents[1]
 

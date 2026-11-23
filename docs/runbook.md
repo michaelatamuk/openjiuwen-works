@@ -96,7 +96,7 @@ exist.
 
 **Why:** the index is a cache, not the source of truth.
 
-**Do:** `python -c "from works.queue import Queue; from works.config import load_paths; Queue(load_paths()).rebuild_index()"`.
+**Do:** `python -c "from works.adapters.queue.store import Queue; from works.config import load_paths; Queue(load_paths()).rebuild_index()"`.
 Deleting `queue/index.sqlite3` is also safe; it is rebuilt on the next write.
 
 ## Windows briefly denies replacing a projection

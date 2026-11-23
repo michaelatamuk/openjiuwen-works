@@ -20,14 +20,14 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from works.config import WorksPaths
-from works.evidence import Evidence, write_evidence
-from works.gitops import init_repo
-from works.harness.fake import FakeHarness
-from works.ledger import Ledger
-from works.queue import Queue
-from works.records import Source, SourceKind, Task, TaskState
-from works.runner import SubprocessRunner
-from works.supervisor import Supervisor
+from works.domain.evidence import Evidence, write_evidence
+from works.adapters.git.repo import init_repo
+from works.adapters.harness.fake import FakeHarness
+from works.adapters.queue.ledger import Ledger
+from works.adapters.queue.store import Queue
+from works.domain.records import Source, SourceKind, Task, TaskState
+from works.adapters.processes.runner import SubprocessRunner
+from works.application.supervisor import Supervisor
 
 FACTORY = Path(__file__).resolve().parents[1]
 

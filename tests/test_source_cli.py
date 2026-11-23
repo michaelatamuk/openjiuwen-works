@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pytest
 
-from works.cli import main
-from works.queue import Queue
-from works.sources import Issue
+from works.adapters.queue.store import Queue
+from works.application.intake.sources import Issue
+from works.interfaces.cli.main import main
 
 
 def invoke(paths, *args: str) -> tuple[int, str, str]:
@@ -34,7 +34,7 @@ def test_source_github_queues_issues_for_the_mapped_repo(paths, tmp_path, monkey
     repo.mkdir()
     write_map(paths, repo)
     monkeypatch.setattr(
-        "works.sources.github_issues",
+        "works.application.intake.sources.github_issues",
         lambda *a, **k: [Issue(ref="owner/name#1", title="Crash on start")],
     )
 
@@ -56,7 +56,7 @@ def test_source_github_is_idempotent(paths, tmp_path, monkeypatch) -> None:
     repo.mkdir()
     write_map(paths, repo)
     monkeypatch.setattr(
-        "works.sources.github_issues",
+        "works.application.intake.sources.github_issues",
         lambda *a, **k: [Issue(ref="owner/name#1", title="Crash on start")],
     )
 
@@ -73,7 +73,7 @@ def test_source_refuses_an_unmapped_product(paths, monkeypatch) -> None:
     (paths.root / ".works" / "products.yaml").write_text(
         "products:\n  blender:\n    repo: apps/blender\n", encoding="utf-8"
     )
-    monkeypatch.setattr("works.sources.github_issues", lambda *a, **k: [])
+    monkeypatch.setattr("works.application.intake.sources.github_issues", lambda *a, **k: [])
 
     code, _, err = invoke(paths, "source", "github", "owner/name", "--product", "firefox")
 
@@ -137,10 +137,10 @@ def test_source_jira_requires_credentials(paths, monkeypatch) -> None:
 
 
 def test_swarm_doctor_reports_a_blocked_checkout(paths, monkeypatch) -> None:
-    from works.harness.swarm import SwarmDiagnostic
+    from works.adapters.harness.swarm.harness import SwarmDiagnostic
 
     monkeypatch.setattr(
-        "works.harness.swarm.preflight",
+        "works.adapters.harness.swarm.harness.preflight",
         lambda *a, **k: SwarmDiagnostic(False, "missing agent_gateway", ("python",), 1, "boom"),
     )
 
@@ -155,8 +155,8 @@ def test_swarm_doctor_reports_a_blocked_checkout(paths, monkeypatch) -> None:
 
 @pytest.mark.parametrize("value", ["not json", '["ok", 1]'])
 def test_the_swarm_entrypoint_must_be_a_json_string_array(monkeypatch, value: str) -> None:
-    from works.errors import ConfigError
-    from works.harness.swarm import default_entrypoint
+    from works.adapters.harness.swarm.harness import default_entrypoint
+    from works.domain.errors import ConfigError
 
     monkeypatch.setenv("WORKS_SWARM_ENTRYPOINT", value)
 

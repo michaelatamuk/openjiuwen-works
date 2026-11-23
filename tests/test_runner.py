@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from works.runner import SubprocessRunner, sanitize_env
+from works.adapters.processes.runner import SubprocessRunner, sanitize_env
 
 
 def test_env_drops_credentials() -> None:

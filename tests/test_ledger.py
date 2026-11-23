@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from works.errors import StateError
-from works.ledger import Ledger
-from works.records import LedgerRow, TaskState
+from works.adapters.queue.ledger import Ledger
+from works.domain.errors import StateError
+from works.domain.records import LedgerRow, TaskState
 
 
 def test_append_and_read(tmp_path: Path) -> None:

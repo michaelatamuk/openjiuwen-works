@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+from works.adapters.queue.ledger import Ledger
+from works.adapters.queue.store import Queue
+from works.application.observability.metrics import collect
 from works.config import WorksPaths
-from works.ledger import Ledger
-from works.metrics import collect
-from works.queue import Queue
-from works.records import LedgerRow, Source, SourceKind, TaskState
+from works.domain.records import LedgerRow, Source, SourceKind, TaskState
 
 
 def make_task(queue: Queue) -> str:

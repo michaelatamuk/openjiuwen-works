@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from works.decision import DeterministicGate, GateContext, GateVerdict
-from works.decision_eval import load_cases, replay, summary
+from works.application.approvals.decisions import DeterministicGate, GateContext, GateVerdict
+from works.application.approvals.eval import load_cases, replay, summary
 
 
 class AllowAllGate:

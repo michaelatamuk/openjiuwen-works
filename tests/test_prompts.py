@@ -5,10 +5,10 @@ from pathlib import Path
 
 import pytest
 
-from works.errors import ConfigError
-from works.harness.base import ProposalRequest
-from works.harness.openjiuwen import builder_prompt
-from works.prompts import load_prompt
+from works.adapters.harness.base import ProposalRequest
+from works.adapters.harness.openjiuwen.builder import builder_prompt
+from works.application.prompts import load_prompt
+from works.domain.errors import ConfigError
 
 
 def request(title: str = "add subtracts") -> ProposalRequest:

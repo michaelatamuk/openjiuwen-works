@@ -5,11 +5,11 @@ import json
 from contextlib import redirect_stderr, redirect_stdout
 from datetime import UTC, datetime, timedelta
 
-from works.cli import main
-from works.escapes import append_events, read_report, scan, write_report
-from works.gitops import GitRepo, init_repo
-from works.queue import Queue
-from works.records import LedgerRow, Source, SourceKind, TaskState
+from works.adapters.git.repo import GitRepo, init_repo
+from works.adapters.queue.store import Queue
+from works.application.observability.escapes import append_events, read_report, scan, write_report
+from works.domain.records import LedgerRow, Source, SourceKind, TaskState
+from works.interfaces.cli.main import main
 
 
 def _escaped_repo(tmp_path):
@@ -30,7 +30,7 @@ def _escaped_repo(tmp_path):
 
 
 def _row(paths, task_id: str, run_id: str, *, released_at: datetime) -> None:
-    from works.ledger import Ledger
+    from works.adapters.queue.ledger import Ledger
 
     Ledger(paths.ledger).append(
         LedgerRow(
@@ -133,8 +133,8 @@ def test_scan_without_findings_is_empty(tmp_path, paths) -> None:
 
 
 def test_metrics_include_escape_and_rework_counts(tmp_path, paths) -> None:
-    from works.ledger import Ledger
-    from works.metrics import collect
+    from works.adapters.queue.ledger import Ledger
+    from works.application.observability.metrics import collect
 
     repo, _task_id, _released_at, _revert, _hotfix = _setup(tmp_path, paths)
     _task(paths, "GH-1", repo.path, kind=SourceKind.DETECTOR)

@@ -8,9 +8,9 @@ from pathlib import Path
 import pytest
 
 from tests.test_release import _proved, _run
-from works.errors import ConfigError
-from works.queue import Queue
-from works.team_task import run_team_verify
+from works.adapters.queue.store import Queue
+from works.application.team.launcher import run_team_verify
+from works.domain.errors import ConfigError
 
 
 def _fake_run(payload: dict, *, code: int = 0, stderr: str = ""):
@@ -31,7 +31,7 @@ def test_the_team_result_is_recorded_and_returned(paths, monkeypatch) -> None:
         "inspector": {"role": "inspector", "allow": True, "checks": {"policy_ok": True}},
         "challenger": {"role": "challenger", "allow": True, "gaps": []},
     }
-    monkeypatch.setattr("works.team_task.subprocess.run", _fake_run(payload))
+    monkeypatch.setattr("works.application.team.launcher.subprocess.run", _fake_run(payload))
 
     result = run_team_verify(
         paths, task.id, agent_python=Path(sys.executable), agent_core=Path(sys.executable).parent
@@ -47,7 +47,7 @@ def test_a_failed_team_process_is_a_configuration_error(paths, monkeypatch) -> N
     task = _proved(paths)
     _run(paths, task)
     monkeypatch.setattr(
-        "works.team_task.subprocess.run",
+        "works.application.team.launcher.subprocess.run",
         _fake_run({}, code=1, stderr="ModuleNotFoundError: agent_gateway"),
     )
 

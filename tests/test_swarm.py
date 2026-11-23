@@ -8,14 +8,10 @@ from typing import Any
 
 import pytest
 
-from works.errors import ConfigError, HarnessError
-from works.harness.base import Proposal, ProposalRequest
-from works.harness.swarm import (
-    SwarmHarness,
-    default_entrypoint,
-    preflight,
-)
-from works.runner import CommandResult
+from works.adapters.harness.base import Proposal, ProposalRequest
+from works.adapters.harness.swarm.harness import SwarmHarness, default_entrypoint, preflight
+from works.adapters.processes.runner import CommandResult
+from works.domain.errors import ConfigError, HarnessError
 
 
 def result(argv, cwd, *, exit_code=0, stdout="", stderr=""):
@@ -195,7 +191,7 @@ def test_a_custom_entrypoint_is_probed_on_the_first_run(tmp_path: Path) -> None:
 def test_default_locations_can_come_from_the_environment(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    from works.harness.swarm import default_swarm_home, default_swarm_python
+    from works.adapters.harness.swarm.harness import default_swarm_home, default_swarm_python
 
     monkeypatch.setenv("WORKS_SWARM_PYTHON", str(tmp_path / "py.exe"))
     monkeypatch.setenv("WORKS_SWARM_HOME", str(tmp_path / "swarm"))

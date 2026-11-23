@@ -4,9 +4,9 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from works.errors import StateError
-from works.records import TaskState
-from works.state import ALLOWED, TERMINAL, can_transition, require_transition
+from works.domain.errors import StateError
+from works.domain.records import TaskState
+from works.domain.state import ALLOWED, TERMINAL, can_transition, require_transition
 
 S = TaskState
 ALL_STATES = list(TaskState)

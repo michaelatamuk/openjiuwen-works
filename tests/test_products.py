@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from works.errors import ConfigError
-from works.products import load_products, resolve_repo
+from works.application.intake.products import load_products, resolve_repo
+from works.domain.errors import ConfigError
 
 
 def test_product_mapping_resolves_a_repo(paths, tmp_path: Path) -> None:

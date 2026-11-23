@@ -5,9 +5,9 @@ import json
 import sys
 from pathlib import Path
 
-from works.gitops import init_repo
-from works.harness.base import ProposalRequest
-from works.harness.swarm import SwarmHarness, default_entrypoint, preflight
+from works.adapters.git.repo import init_repo
+from works.adapters.harness.base import ProposalRequest
+from works.adapters.harness.swarm.harness import SwarmHarness, default_entrypoint, preflight
 
 ROOT = Path(__file__).resolve().parents[1]
 ADAPTER = ROOT / "scripts" / "swarm_adapter.py"

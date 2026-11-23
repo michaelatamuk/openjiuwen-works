@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from works.features import feature_summary, load_feature_maps
+from works.application.observability.features import feature_summary, load_feature_maps
 
 
 def _repo(tmp_path: Path, body: str) -> Path:

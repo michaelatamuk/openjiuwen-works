@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import logging
 
-from works.logs import JsonFormatter
+from works.config.logging import JsonFormatter
 
 
 def test_a_log_line_is_json_with_context() -> None:

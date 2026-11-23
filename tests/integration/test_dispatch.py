@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from tests.test_cli import invoke, payload
 
-from works.queue import Queue
-from works.records import Source, SourceKind, TaskState
+from works.adapters.queue.store import Queue
+from works.domain.records import Source, SourceKind, TaskState
 
 
 def submit(paths, repo, ref: str) -> str:

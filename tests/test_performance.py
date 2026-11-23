@@ -8,10 +8,10 @@ from pathlib import Path
 
 import pytest
 
-from works.cli import main
-from works.evidence import Evidence
-from works.index import TaskIndex
-from works.records import StopReason, TaskState
+from works.adapters.queue.index import TaskIndex
+from works.domain.evidence import Evidence
+from works.domain.records import StopReason, TaskState
+from works.interfaces.cli.main import main
 
 TASKS = 10_000
 
@@ -69,8 +69,8 @@ def test_evidence_rendering_is_under_a_second() -> None:
 
 
 def test_the_state_machine_is_cheap() -> None:
-    from works.records import TaskState as S
-    from works.state import can_transition
+    from works.domain.records import TaskState as S
+    from works.domain.state import can_transition
 
     started = time.perf_counter()
     for _ in range(100_000):

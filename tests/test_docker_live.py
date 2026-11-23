@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from works.runner import SubprocessRunner
-from works.verifier import DockerVerifier, Mount
+from works.adapters.processes.runner import SubprocessRunner
+from works.application.execution.verifier import DockerVerifier, Mount
 
 pytestmark = pytest.mark.skipif(
     os.environ.get("WORKS_TEST_DOCKER") != "1",

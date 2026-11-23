@@ -11,7 +11,7 @@ import json
 import sys
 from pathlib import Path
 
-from works.team_verify import VerificationTeam
+from works.application.team.verify import VerificationTeam
 
 
 def main() -> None:

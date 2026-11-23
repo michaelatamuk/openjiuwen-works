@@ -604,7 +604,7 @@ Internal only: nothing is published to the upstream fork until M2 is green.
 - [x] **T1.14** Prompt registry: every step prompt is a versioned file under
   `flows/<flow>/prompts/`, rendered with safe substitution, hashed, and written to the run/proof.
   A prompt change without a benchmark run is refused by review. **S**
-  - Done 2026-11-21: `flows/fix-issue/prompts/build.md`, `works.prompts`, hash in `harness.json`
+  - Done 2026-11-21: `flows/fix-issue/prompts/build.md`, `works.application.prompts`, hash in `harness.json`
     and the proof; `$` in issue text is not re-interpreted.
 - [x] **T1.15** Structured findings: a `finding` event (`summary`, `evidence_refs`, `confidence`,
   `uncertainty`) that survives outside the agent context; the proof has “What we know / What

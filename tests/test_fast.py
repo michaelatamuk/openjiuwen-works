@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from works import fast
+from works.adapters.queue import fast_read as fast
+from works.adapters.queue.index import TaskIndex
+from works.adapters.queue.store import INDEX_FILE, TASK_JSON, Queue
 from works.config import WorksPaths
-from works.index import TaskIndex
-from works.queue import INDEX_FILE, TASK_JSON, Queue
-from works.records import Source, SourceKind, TaskState
+from works.domain.records import Source, SourceKind, TaskState
 
 
 def submit(queue: Queue, ref: str = "GH-1") -> str:

@@ -5,7 +5,8 @@ import json
 import pytest
 
 from tests.test_release import _proved, _run
-from works.agent_chat import (
+from works.adapters.queue.store import Queue
+from works.application.assistant.chat import (
     ask_mira,
     ask_mira_stream,
     availability,
@@ -13,7 +14,6 @@ from works.agent_chat import (
     generate_commentary,
     generate_discussion,
 )
-from works.queue import Queue
 
 
 def test_context_includes_proof_and_release_blockers(paths, monkeypatch) -> None:
@@ -54,10 +54,12 @@ class FakeRun:
 def test_ask_mira_parses_the_worker_and_records_an_event(paths, monkeypatch) -> None:
     task = _proved(paths)
     _run(paths, task)
-    monkeypatch.setattr("works.agent_chat._command", lambda: ["python", "worker.py"])
-    monkeypatch.setattr("works.agent_chat._environment", lambda: {})
     monkeypatch.setattr(
-        "works.agent_chat.subprocess.run",
+        "works.application.assistant.chat._command", lambda: ["python", "worker.py"]
+    )
+    monkeypatch.setattr("works.application.assistant.chat._environment", lambda: {})
+    monkeypatch.setattr(
+        "works.application.assistant.chat.subprocess.run",
         lambda *a, **k: FakeRun(
             json.dumps(
                 {
@@ -122,9 +124,13 @@ def test_streaming_yields_deltas_and_records_the_answer(paths, monkeypatch) -> N
             {"type": "done", "text": "Not released.", "model": "m", "tokens": 9, "usd": 0.0}
         ),
     ]
-    monkeypatch.setattr("works.agent_chat._command", lambda: ["python", "worker.py"])
-    monkeypatch.setattr("works.agent_chat._environment", lambda: {})
-    monkeypatch.setattr("works.agent_chat.subprocess.Popen", lambda *a, **k: FakeProcess(lines))
+    monkeypatch.setattr(
+        "works.application.assistant.chat._command", lambda: ["python", "worker.py"]
+    )
+    monkeypatch.setattr("works.application.assistant.chat._environment", lambda: {})
+    monkeypatch.setattr(
+        "works.application.assistant.chat.subprocess.Popen", lambda *a, **k: FakeProcess(lines)
+    )
 
     events = list(ask_mira_stream(paths, task.id, "Is it released?"))
 
@@ -145,10 +151,12 @@ def test_ask_refuses_an_empty_question(paths, monkeypatch) -> None:
 def test_generate_commentary_records_generated_messages(paths, monkeypatch) -> None:
     task = _proved(paths)
     _run(paths, task)
-    monkeypatch.setattr("works.agent_chat._command", lambda: ["python", "worker.py"])
-    monkeypatch.setattr("works.agent_chat._environment", lambda: {})
     monkeypatch.setattr(
-        "works.agent_chat.subprocess.run",
+        "works.application.assistant.chat._command", lambda: ["python", "worker.py"]
+    )
+    monkeypatch.setattr("works.application.assistant.chat._environment", lambda: {})
+    monkeypatch.setattr(
+        "works.application.assistant.chat.subprocess.run",
         lambda *a, **k: FakeRun(
             json.dumps(
                 {
@@ -179,10 +187,12 @@ def test_generate_commentary_records_generated_messages(paths, monkeypatch) -> N
 def test_generate_discussion_records_stances_as_advisory_events(paths, monkeypatch) -> None:
     task = _proved(paths)
     _run(paths, task)
-    monkeypatch.setattr("works.agent_chat._command", lambda: ["python", "worker.py"])
-    monkeypatch.setattr("works.agent_chat._environment", lambda: {})
     monkeypatch.setattr(
-        "works.agent_chat.subprocess.run",
+        "works.application.assistant.chat._command", lambda: ["python", "worker.py"]
+    )
+    monkeypatch.setattr("works.application.assistant.chat._environment", lambda: {})
+    monkeypatch.setattr(
+        "works.application.assistant.chat.subprocess.run",
         lambda *a, **k: FakeRun(
             json.dumps(
                 {
@@ -237,9 +247,11 @@ def test_ask_carries_recent_worklog_turns_as_history(paths, monkeypatch) -> None
         captured.update(json.loads(kwargs["input"]))
         return CapturingRun()
 
-    monkeypatch.setattr("works.agent_chat._command", lambda: ["python", "worker.py"])
-    monkeypatch.setattr("works.agent_chat._environment", lambda: {})
-    monkeypatch.setattr("works.agent_chat.subprocess.run", fake_run)
+    monkeypatch.setattr(
+        "works.application.assistant.chat._command", lambda: ["python", "worker.py"]
+    )
+    monkeypatch.setattr("works.application.assistant.chat._environment", lambda: {})
+    monkeypatch.setattr("works.application.assistant.chat.subprocess.run", fake_run)
 
     ask_mira(paths, task.id, "And now?")
 

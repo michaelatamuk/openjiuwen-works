@@ -8,9 +8,9 @@ from typing import Any
 
 import pytest
 
-from works.errors import ConfigError
-from works.queue import Queue
-from works.sources import _urllib_get, github_issues, ingest_issues, jira_issues
+from works.adapters.queue.store import Queue
+from works.application.intake.sources import _urllib_get, github_issues, ingest_issues, jira_issues
+from works.domain.errors import ConfigError
 
 
 def fake_transport(status: int, payload: Any):

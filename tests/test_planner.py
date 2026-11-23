@@ -5,13 +5,14 @@ from pathlib import Path
 
 import pytest
 
-from works.approvals import approve_plan
-from works.errors import ConfigError
-from works.flow import load_flow
-from works.harness.planner import HarnessPlanner, parse_plan_json
-from works.ledger import Ledger
-from works.plan_memory import PlanMemory
-from works.planner import (
+from works.adapters.harness.openjiuwen.planner import HarnessPlanner, parse_plan_json
+from works.adapters.processes.runner import SubprocessRunner
+from works.adapters.queue.ledger import Ledger
+from works.adapters.queue.store import Queue
+from works.application.approvals.gates import approve_plan
+from works.application.execution.scenarios import load_scenario_set
+from works.application.planning.memory import PlanMemory
+from works.application.planning.service import (
     DeterministicPlanner,
     PlanCritique,
     PlanMode,
@@ -32,11 +33,10 @@ from works.planner import (
     plan_hash,
     validate_plan,
 )
-from works.queue import Queue
-from works.records import Source, SourceKind, TaskState
-from works.runner import SubprocessRunner
-from works.scenarios import load_scenario_set
-from works.supervisor import Supervisor
+from works.application.supervisor import Supervisor
+from works.domain.errors import ConfigError
+from works.domain.flow import load_flow
+from works.domain.records import Source, SourceKind, TaskState
 
 
 def context(paths, repo, scenario_set: Path, *, task_id: str = "t-plan") -> PlannerContext:
@@ -517,7 +517,7 @@ def test_replan_keeps_the_task_in_planning_and_supersedes_the_previous_version(
 
 
 def test_plan_eval_summarizes_stored_plans(paths, repo, scenario_set) -> None:
-    from works.plan_eval import evaluate
+    from works.application.planning.eval import evaluate
 
     queue = Queue(paths)
     queue.submit(

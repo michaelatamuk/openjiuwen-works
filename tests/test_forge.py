@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import pytest
 
-from works.errors import ConfigError
-from works.forge import (
+from works.application.delivery.forge import (
     GitHubForge,
     GitLabForge,
     build_forge,
     gitlab_project,
     repository_slug,
 )
+from works.domain.errors import ConfigError
 
 
 class FakeForgeTransport:

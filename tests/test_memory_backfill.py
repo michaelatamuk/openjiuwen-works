@@ -4,12 +4,12 @@ from datetime import UTC, datetime
 
 from tests.test_evidence import fixed_evidence
 from tests.test_memory import FakeTransport
+from works.adapters.queue.store import Queue
+from works.application.memory.backfill import backfill_runs
+from works.application.memory.ppma import PpmaMemory
 from works.config import WorksPaths
-from works.evidence import write_evidence
-from works.memory import PpmaMemory
-from works.memory_ops import backfill_runs
-from works.queue import Queue
-from works.records import RunRecord, Source, SourceKind, StopReason, TaskState
+from works.domain.evidence import write_evidence
+from works.domain.records import RunRecord, Source, SourceKind, StopReason, TaskState
 
 
 def _task(paths: WorksPaths):
