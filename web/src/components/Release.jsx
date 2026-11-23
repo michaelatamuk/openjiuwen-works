@@ -109,12 +109,14 @@ export function Release({ detail, onAction, onShowRuns, onShowRun, onToast }) {
             </dl>
           ) : (
             <>
-              <label>URL
-                <input value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://app.example/health" />
-              </label>
-              <label>Command
-                <input value={command} onChange={(event) => setCommand(event.target.value)} placeholder="pytest -q" />
-              </label>
+              <div className="form-row">
+                <label>URL
+                  <input value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://app.example/health" />
+                </label>
+                <label>Command
+                  <input value={command} onChange={(event) => setCommand(event.target.value)} placeholder="pytest -q" />
+                </label>
+              </div>
               <button type="button" className="btn" disabled={!detail.delivery} onClick={confirm}>Confirm</button>
             </>
           )}
