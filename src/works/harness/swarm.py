@@ -179,30 +179,58 @@ def status(
     if not interpreter.exists():
         return {
             "available": False,
-            "detail": "JiuwenSwarm interpreter not found; point WORKS_SWARM_PYTHON at its venv",
+            "detail": "JiuwenSwarm interpreter not found.",
             "contract": CONTRACT,
+            "docs": "docs/swarm.md",
+            "steps": [
+                "Install JiuwenSwarm and create its virtualenv.",
+                "Point Works at that interpreter (see docs/swarm.md).",
+                "Run `works swarm doctor` to re-check.",
+            ],
         }
     if not checkout.exists():
         return {
             "available": False,
-            "detail": "JiuwenSwarm checkout not found; point WORKS_SWARM_HOME at it",
+            "detail": "JiuwenSwarm checkout not found.",
             "contract": CONTRACT,
+            "docs": "docs/swarm.md",
+            "steps": [
+                "Check out the JiuwenSwarm repository.",
+                "Point Works at the checkout (see docs/swarm.md).",
+                "Run `works swarm doctor` to re-check.",
+            ],
         }
     try:
         entrypoint = default_entrypoint()
     except ConfigError as exc:
-        return {"available": False, "detail": str(exc), "contract": CONTRACT}
+        return {
+            "available": False,
+            "detail": str(exc),
+            "contract": CONTRACT,
+            "docs": "docs/swarm.md",
+            "steps": ["Fix the works.swarm.v1 entrypoint.", "Run `works swarm doctor`."],
+        }
     first = entrypoint[0] if entrypoint else ""
     if first.lower().endswith(".py") and not Path(first).is_file():
         return {
             "available": False,
-            "detail": "the works.swarm.v1 adapter is missing",
+            "detail": "The works.swarm.v1 adapter is missing.",
             "contract": CONTRACT,
+            "docs": "docs/swarm.md",
+            "steps": [
+                "Restore scripts/swarm_adapter.py from the repository.",
+                "Run `works swarm doctor` to re-check.",
+            ],
         }
     return {
         "available": True,
-        "detail": "JiuwenSwarm checkout and adapter found; a run probes the entrypoint",
+        "detail": "JiuwenSwarm checkout and adapter found; a run probes the entrypoint.",
         "contract": CONTRACT,
+        "docs": "docs/swarm.md",
+        "steps": [
+            "Ready. A run probes the adapter before it starts.",
+            "Models, gateway and credentials are configured inside JiuwenSwarm.",
+        ],
     }
 
 

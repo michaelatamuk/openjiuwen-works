@@ -466,6 +466,9 @@ def cmd_plan(args: argparse.Namespace) -> int:
     store = PlanStore(paths)
     action = getattr(args, "action", "draft")
 
+    if action in ("show", "lint", "diff", "replan", "alternatives") and not args.task_id:
+        raise ConfigError(f"`works plan --action {action}` needs a task id")
+
     if action == "show":
         plan = store.load(args.task_id, getattr(args, "version", None))
         if args.json:
@@ -498,6 +501,30 @@ def cmd_plan(args: argparse.Namespace) -> int:
             for warning in validation.warnings:
                 print(f"  warning: {warning}")
         return 0 if validation is not None and validation.ok else EXIT_POLICY
+
+    if action == "eval":
+        from .plan_eval import evaluate
+
+        payload = evaluate(paths, args.task_id)
+        if args.json:
+            _emit(payload)
+        else:
+            print(
+                f"{payload['tasks']} task(s), {payload['plans']} plan(s), "
+                f"{payload['validated']} validated, {payload['approved']} approved"
+            )
+            for mode, values in sorted(payload["by_mode"].items()):
+                print(
+                    f"  {mode:12} plans {values['plans']:3} ? validated {values['validated']:3} ? "
+                    f"approved {values['approved']:3} ? proved {values['proved']:3}"
+                )
+            if payload["avg_critic_score"] is not None:
+                print(f"  avg critic score: {payload['avg_critic_score']:.2f}")
+            print(
+                f"  planner cost: {payload['planner_tokens']} tokens / "
+                f"${payload['planner_usd']:.4f}"
+            )
+        return 0
 
     if action == "diff":
         before = store.load(
@@ -533,7 +560,7 @@ def cmd_plan(args: argparse.Namespace) -> int:
             print(f"  changed: {', '.join(changed) or 'none'}")
         return 0
 
-    if not args.scenarios:
+    if action not in ("replan",) and not args.scenarios:
         raise ConfigError("`works plan` needs --scenarios PATH")
     from .ledger import Ledger
     from .queue import Queue
@@ -596,6 +623,7 @@ def _planner_for(
     flow_name: str,
     *,
     mode: str | None = None,
+    prompt_name: str | None = None,
 ) -> tuple[str, Any, Any]:
     """Build the planner and deep-mode critic selected by Settings."""
     selected = (mode or settings.planner_mode).lower()
@@ -606,29 +634,35 @@ def _planner_for(
 
     base_url = getattr(args, "model_base", None) or default_base()
     prompt_dir = paths.flows / flow_name / "prompts"
+    resolved_prompt = prompt_name or ("plan-spec.md" if selected == "spec" else "plan.md")
     try:
         planner = HarnessPlanner(
             provider=settings.resolved_planner_provider,
             model=settings.planner_model or getattr(args, "model", None) or default_model(),
             base_url=base_url,
             api_key=default_key(),
-            prompt_path=prompt_dir / "plan.md",
+            prompt_path=prompt_dir / resolved_prompt,
             cli_path=default_cli(),
         )
     except ConfigError:
-        if selected != "shadow":
+        if selected not in ("shadow", "auto"):
             raise
         return selected, None, None
     critic = None
-    if selected == "deep":
-        critic = HarnessCritic(
-            provider=settings.resolved_planner_critic_provider,
-            model=settings.planner_critic_model or default_model(),
-            base_url=base_url,
-            api_key=default_key(),
-            prompt_path=prompt_dir / "plan-critique.md",
-            cli_path=default_cli(),
-        )
+    if selected in ("deep", "auto"):
+        try:
+            critic = HarnessCritic(
+                provider=settings.resolved_planner_critic_provider,
+                model=settings.planner_critic_model or default_model(),
+                base_url=base_url,
+                api_key=default_key(),
+                prompt_path=prompt_dir / "plan-critique.md",
+                cli_path=default_cli(),
+            )
+        except ConfigError:
+            if selected == "deep":
+                raise
+            critic = None
     return selected, planner, critic
 
 
@@ -1520,7 +1554,9 @@ def build_parser() -> argparse.ArgumentParser:
     plan.add_argument("--from", dest="from_version", type=int, default=None)
     plan.add_argument("--to", dest="to_version", type=int, default=None)
     plan.add_argument(
-        "--mode", choices=("deterministic", "shadow", "assisted", "deep"), default=None
+        "--mode",
+        choices=("deterministic", "shadow", "assisted", "deep", "spec", "auto"),
+        default=None,
     )
     plan.add_argument("--model", default=None)
     plan.add_argument("--model-base", default=None)

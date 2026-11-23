@@ -24,6 +24,7 @@ from .flow import FlowSpec, Node, NodeKind
 from .policy import check_paths
 from .queue import atomic_write
 from .records import utcnow
+from .risk import rate_risk
 from .scenarios import ScenarioSet
 from .trusted import is_check_path
 
@@ -35,6 +36,8 @@ class PlanMode(StrEnum):
     SHADOW = "shadow"
     ASSISTED = "assisted"
     DEEP = "deep"
+    SPEC = "spec"
+    AUTO = "auto"
 
 
 PLAN_MODES: tuple[PlanMode, ...] = (
@@ -42,6 +45,8 @@ PLAN_MODES: tuple[PlanMode, ...] = (
     PlanMode.SHADOW,
     PlanMode.ASSISTED,
     PlanMode.DEEP,
+    PlanMode.SPEC,
+    PlanMode.AUTO,
 )
 
 
@@ -52,6 +57,7 @@ class PlanStatus(StrEnum):
     FROZEN = "frozen"
     SUPERSEDED = "superseded"
     SHADOW = "shadow"
+    ALTERNATIVE = "alternative"
 
 
 class PlanStep(BaseModel):
@@ -84,6 +90,9 @@ class PlanProposal(BaseModel):
     estimated_usd: float = Field(default=0.0, ge=0.0)
     estimated_minutes: int = Field(default=0, ge=0)
     notes: list[str] = Field(default_factory=list)
+    requirements_md: str = ""
+    design_md: str = ""
+    tasks_md: str = ""
 
 
 class PlanProvenance(BaseModel):
@@ -138,6 +147,7 @@ class PlanVersion(BaseModel):
     summary: str = ""
     assumptions: list[str] = Field(default_factory=list)
     open_questions: list[str] = Field(default_factory=list)
+    notes: list[str] = Field(default_factory=list)
     steps: list[PlanStep] = Field(default_factory=list)
     risks: list[str] = Field(default_factory=list)
     verification: list[str] = Field(default_factory=list)
@@ -145,6 +155,9 @@ class PlanVersion(BaseModel):
     estimated_tokens: int = Field(default=0, ge=0)
     estimated_usd: float = Field(default=0.0, ge=0.0)
     estimated_minutes: int = Field(default=0, ge=0)
+    requirements_md: str = ""
+    design_md: str = ""
+    tasks_md: str = ""
     provenance: PlanProvenance = Field(default_factory=PlanProvenance)
     validation: PlanValidation | None = None
     critique: PlanCritique | None = None
@@ -176,6 +189,7 @@ class PlannerContext:
     budget_tokens: int
     budget_usd: float
     memory: tuple[str, ...] = ()
+    prior_plans: tuple[dict[str, Any], ...] = ()
     findings: tuple[str, ...] = ()
     file_tree: tuple[str, ...] = ()
     manifests: tuple[tuple[str, str], ...] = ()
@@ -398,6 +412,9 @@ def merge_proposal(
         estimated_usd=proposal.estimated_usd,
         estimated_minutes=proposal.estimated_minutes,
         notes=_unique(proposal.notes) or base.notes,
+        requirements_md=proposal.requirements_md.strip(),
+        design_md=proposal.design_md.strip(),
+        tasks_md=proposal.tasks_md.strip(),
     )
 
 
@@ -516,6 +533,16 @@ def validate_plan(
     if not proposal.rollback.strip():
         errors.append("the plan needs a rollback statement")
 
+    checks.append("spec")
+    if proposal.requirements_md.strip() or proposal.design_md.strip() or proposal.tasks_md.strip():
+        for name, value in (
+            ("requirements", proposal.requirements_md),
+            ("design", proposal.design_md),
+            ("tasks", proposal.tasks_md),
+        ):
+            if not value.strip():
+                warnings.append(f"spec mode has an empty {name} document")
+
     checks.append("open-questions")
     if proposal.open_questions:
         warnings.append(
@@ -570,6 +597,7 @@ def make_plan_version(
         summary=proposal.summary,
         assumptions=proposal.assumptions,
         open_questions=proposal.open_questions,
+        notes=proposal.notes,
         steps=proposal.steps,
         risks=proposal.risks,
         verification=proposal.verification,
@@ -577,6 +605,9 @@ def make_plan_version(
         estimated_tokens=proposal.estimated_tokens,
         estimated_usd=proposal.estimated_usd,
         estimated_minutes=proposal.estimated_minutes,
+        requirements_md=proposal.requirements_md,
+        design_md=proposal.design_md,
+        tasks_md=proposal.tasks_md,
         provenance=provenance,
         validation=validation,
         critique=critique,
@@ -651,7 +682,40 @@ class PlanStore:
             path.with_suffix(".md"),
             plan_markdown(plan) + "\n",
         )
+        for suffix, text in (
+            ("requirements.md", plan.requirements_md),
+            ("design.md", plan.design_md),
+            ("tasks.md", plan.tasks_md),
+        ):
+            if text.strip():
+                atomic_write(path.with_name(f"{path.stem}.{suffix}"), text + "\n")
         return plan
+
+    def save_alternative(self, plan: PlanVersion, label: str) -> PlanVersion:
+        directory = self.directory(plan.task_id)
+        directory.mkdir(parents=True, exist_ok=True)
+        version = len(list(directory.glob(f"alt-{label}-v*.json"))) + 1
+        alternative = plan.model_copy(
+            update={
+                "plan_id": f"alt-{label}-{plan.task_id}-v{version}",
+                "version": version,
+                "status": PlanStatus.ALTERNATIVE,
+            }
+        )
+        path = directory / f"alt-{label}-v{version}.json"
+        atomic_write(path, alternative.model_dump_json(indent=2) + "\n")
+        atomic_write(path.with_suffix(".md"), plan_markdown(alternative) + "\n")
+        return alternative
+
+    def alternatives(self, task_id: str) -> dict[str, PlanVersion]:
+        directory = self.directory(task_id)
+        found: dict[str, PlanVersion] = {}
+        if not directory.exists():
+            return found
+        for path in sorted(directory.glob("alt-*-v*.json")):
+            plan = PlanVersion.model_validate_json(path.read_text(encoding="utf-8"))
+            found[plan.plan_id] = plan
+        return found
 
     def save_shadow(self, plan: PlanVersion) -> PlanVersion:
         directory = self.directory(plan.task_id)
@@ -680,6 +744,17 @@ class PlanStore:
         atomic_write(path, updated.model_dump_json(indent=2) + "\n")
         atomic_write(path.with_suffix(".md"), plan_markdown(updated) + "\n")
         return updated
+
+    def mark_superseded(self, task_id: str, plan_id: str) -> None:
+        for version in self.versions(task_id):
+            plan = self.load(task_id, version)
+            if plan.plan_id != plan_id:
+                continue
+            updated = plan.model_copy(update={"status": PlanStatus.SUPERSEDED})
+            path = self._path(task_id, plan.version)
+            atomic_write(path, updated.model_dump_json(indent=2) + "\n")
+            atomic_write(path.with_suffix(".md"), plan_markdown(updated) + "\n")
+            return
 
     def load(self, task_id: str, version: int | None = None) -> PlanVersion:
         selected = version or (self.versions(task_id)[-1] if self.versions(task_id) else None)
@@ -760,26 +835,124 @@ async def draft_plan(
                 store.save_shadow(failed)
     else:
         if planner is None:
-            raise ConfigError(f"planner mode {selected.value!r} needs a planner provider")
-        output = await planner.draft(context)
-        if not output.proposal.steps:
-            raise ConfigError("the planner returned no steps")
-        proposal = merge_proposal(base, output.proposal, context)
-        provenance = output.provenance.model_copy(update={"mode": selected.value})
-        validation = validate_plan(proposal, context)
-        if selected is PlanMode.DEEP:
-            if critic is None:
-                raise ConfigError("deep planner mode needs an independent critic")
-            preliminary = make_plan_version(
-                context,
-                proposal,
-                version=store.next_version(context.task_id),
-                mode=selected,
-                provenance=provenance,
-                validation=validation,
+            if selected is not PlanMode.AUTO:
+                raise ConfigError(f"planner mode {selected.value!r} needs a planner provider")
+            proposal = base.model_copy(
+                update={
+                    "notes": [
+                        *base.notes,
+                        "Auto selected deterministic: no planner provider is available.",
+                    ]
+                }
             )
-            critique = await critic.review(context, preliminary)
-            validation = apply_critique(validation, critique)
+            validation = validate_plan(proposal, context)
+            provenance = PlanProvenance(mode=PlanMode.AUTO.value)
+        else:
+            try:
+                output = await planner.draft(context)
+                if not output.proposal.steps:
+                    raise ConfigError("the planner returned no steps")
+            except ConfigError as exc:
+                if selected is not PlanMode.AUTO:
+                    raise
+                proposal = base.model_copy(
+                    update={
+                        "notes": [
+                            *base.notes,
+                            f"Auto fell back to deterministic: {exc}",
+                        ]
+                    }
+                )
+                validation = validate_plan(proposal, context)
+                provenance = PlanProvenance(mode=PlanMode.AUTO.value, error=str(exc))
+            else:
+                proposal = merge_proposal(base, output.proposal, context)
+                provenance = output.provenance.model_copy(update={"mode": selected.value})
+                validation = validate_plan(proposal, context)
+                if not validation.ok and selected in (
+                    PlanMode.ASSISTED,
+                    PlanMode.DEEP,
+                    PlanMode.SPEC,
+                    PlanMode.AUTO,
+                ):
+                    repair = getattr(planner, "draft_with_feedback", None)
+                    if callable(repair):
+                        try:
+                            repaired = await repair(context, proposal, validation.errors)
+                        except Exception as exc:
+                            provenance = provenance.model_copy(
+                                update={"error": f"repair failed: {exc}"}
+                            )
+                        else:
+                            proposal = merge_proposal(base, repaired.proposal, context)
+                            provenance = repaired.provenance.model_copy(
+                                update={
+                                    "mode": selected.value,
+                                    "tokens": provenance.tokens + repaired.provenance.tokens,
+                                    "usd": provenance.usd + repaired.provenance.usd,
+                                }
+                            )
+                            validation = validate_plan(proposal, context)
+                            proposal = proposal.model_copy(
+                                update={
+                                    "notes": [
+                                        *proposal.notes,
+                                        "Repaired after deterministic lint.",
+                                    ]
+                                }
+                            )
+                if selected is PlanMode.SPEC:
+                    missing_spec = [
+                        name
+                        for name, value in (
+                            ("requirements_md", proposal.requirements_md),
+                            ("design_md", proposal.design_md),
+                            ("tasks_md", proposal.tasks_md),
+                        )
+                        if not value.strip()
+                    ]
+                    if missing_spec:
+                        validation = validation.model_copy(
+                            update={
+                                "ok": False,
+                                "errors": [
+                                    *validation.errors,
+                                    "spec mode needs requirements, design and tasks documents "
+                                    f"(missing: {', '.join(missing_spec)})",
+                                ],
+                            }
+                        )
+                if selected in (PlanMode.DEEP, PlanMode.AUTO):
+                    planned_files = [path for step in proposal.steps for path in step.files]
+                    risk = rate_risk(paths=planned_files, diff_stat=[], flow=context.flow)
+                    needs_critic = selected is PlanMode.DEEP or (
+                        selected is PlanMode.AUTO
+                        and risk.level.value == "high"
+                        and critic is not None
+                    )
+                    if needs_critic:
+                        if critic is None:
+                            raise ConfigError("deep planner mode needs an independent critic")
+                        preliminary = make_plan_version(
+                            context,
+                            proposal,
+                            version=store.next_version(context.task_id),
+                            mode=selected,
+                            provenance=provenance,
+                            validation=validation,
+                        )
+                        critique = await critic.review(context, preliminary)
+                        validation = apply_critique(validation, critique)
+                    if selected is PlanMode.AUTO:
+                        effective = "deep" if critique is not None else "assisted"
+                        proposal = proposal.model_copy(
+                            update={
+                                "notes": [
+                                    *proposal.notes,
+                                    f"Auto selected {effective} for {risk.level.value} risk.",
+                                ]
+                            }
+                        )
 
     version = store.next_version(context.task_id)
     plan = make_plan_version(
@@ -792,6 +965,18 @@ async def draft_plan(
         critique=critique,
     )
     return store.save(plan)
+
+
+def plan_deviations(plan: PlanVersion, touched: list[str]) -> list[str]:
+    """Files changed outside the plan's named write scope.
+
+    A deterministic plan names no files, so it cannot drift. An assisted plan with a concrete file
+    list can; the supervisor records the difference instead of hiding it.
+    """
+    planned = {path for step in plan.steps for path in step.files}
+    if not planned:
+        return []
+    return sorted(set(touched) - planned)
 
 
 def plan_brief(plan: PlanVersion) -> str:
@@ -819,6 +1004,53 @@ def plan_brief(plan: PlanVersion) -> str:
     return "\n".join(lines)
 
 
+async def draft_alternatives(
+    context: PlannerContext,
+    *,
+    store: PlanStore,
+    mode: PlanMode | str,
+    planners: dict[str, Planner],
+    critic: Critic | None = None,
+) -> dict[str, PlanVersion]:
+    """Draft labelled alternatives with different planner prompts, without touching the run."""
+    selected = PlanMode(mode)
+    base = deterministic_proposal(context)
+    results: dict[str, PlanVersion] = {}
+    for label, planner in planners.items():
+        output = await planner.draft(context)
+        if not output.proposal.steps:
+            raise ConfigError(f"alternative {label!r} returned no steps")
+        proposal = merge_proposal(base, output.proposal, context)
+        validation = validate_plan(proposal, context)
+        provenance = output.provenance.model_copy(update={"mode": selected.value})
+        critique = None
+        if selected is PlanMode.DEEP:
+            if critic is None:
+                raise ConfigError("deep alternatives need an independent critic")
+            preliminary = make_plan_version(
+                context,
+                proposal,
+                version=1,
+                mode=selected,
+                provenance=provenance,
+                validation=validation,
+            )
+            critique = await critic.review(context, preliminary)
+            validation = apply_critique(validation, critique)
+        plan = make_plan_version(
+            context,
+            proposal,
+            version=1,
+            mode=selected,
+            provenance=provenance,
+            validation=validation,
+            critique=critique,
+            status=PlanStatus.ALTERNATIVE,
+        )
+        results[label] = store.save_alternative(plan, label)
+    return results
+
+
 def plan_markdown(plan: PlanVersion) -> str:
     lines = [
         f"# Plan {plan.plan_id}",
@@ -843,6 +1075,14 @@ def plan_markdown(plan: PlanVersion) -> str:
         lines += ["## Assumptions", "", *[f"- {item}" for item in plan.assumptions], ""]
     if plan.open_questions:
         lines += ["## Open questions", "", *[f"- {item}" for item in plan.open_questions], ""]
+    if plan.notes:
+        lines += ["## Notes", "", *[f"- {item}" for item in plan.notes], ""]
+    if plan.requirements_md:
+        lines += ["## Requirements", "", plan.requirements_md, ""]
+    if plan.design_md:
+        lines += ["## Design", "", plan.design_md, ""]
+    if plan.tasks_md:
+        lines += ["## Tasks", "", plan.tasks_md, ""]
     lines += ["## Steps", ""]
     for step in plan.steps:
         lines += [
@@ -924,6 +1164,7 @@ def context_payload(context: PlannerContext) -> dict[str, Any]:
         "manifests": [{"path": path, "content": text} for path, text in context.manifests],
         "readme": context.readme,
         "memory": list(context.memory),
+        "prior_plans": list(context.prior_plans),
         "findings": list(context.findings),
         "budget": {"tokens": context.budget_tokens, "usd": context.budget_usd},
     }

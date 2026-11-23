@@ -201,6 +201,7 @@ class RunRecord(BaseModel):
     planner_model: str | None = None
     planner_tokens: int = 0
     planner_usd: float = 0.0
+    plan_deviations: list[str] = Field(default_factory=list)
     verifier: str = "local"
     verifier_isolation: str = "process"
     verifier_model: str | None = None

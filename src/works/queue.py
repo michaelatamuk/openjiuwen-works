@@ -148,6 +148,7 @@ def _apply(task: Task | None, event: Event) -> Task:
     if event.type in (
         "note",
         "plan.drafted",
+        "plan.deviation",
         "gate.decided",
         "step.started",
         "step.finished",

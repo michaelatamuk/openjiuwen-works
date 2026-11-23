@@ -19,7 +19,7 @@ function phaseFor(message) {
   if (type === "plan.drafted") return "plan";
   if (type === "gate.decided") return /plan/i.test(message.title || "") ? "plan" : "release";
   if (type === "attempt.started") return "build";
-  if (type === "risk.rated") return "build";
+  if (type === "risk.rated" || type === "plan.deviation") return "build";
   if (type === "note") return /proposal/i.test(`${message.title} ${message.body}`) ? "build" : "release";
   if (type === "step.started" || type === "step.finished") {
     const text = `${message.title} ${message.body} ${(message.facts || []).join(" ")}`;

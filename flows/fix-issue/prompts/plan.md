@@ -68,3 +68,7 @@ $deterministic
 - Prefer the smallest change that makes the reproduction and scenarios pass.
 - The plan is advisory: a person approves it and the harness executes flow nodes, not free-form
   steps.
+
+## Repair
+
+$feedback

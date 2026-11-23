@@ -29,6 +29,7 @@ from ..planner import (
 )
 from ..prompts import Prompt, load_prompt
 from .providers import ProviderName, create_harness, validate_provider
+from .usage import UsageTotals
 
 _PLAN_PROVIDERS = frozenset({"claudecode", "native"})
 _JSON_OBJECT = re.compile(r"\{.*\}", re.DOTALL)
@@ -133,12 +134,14 @@ async def _run_turn(
         cwd=str(cwd),
     )
     terminal: Any = None
+    usage_totals = UsageTotals()
     await harness.start(harness_context)
     try:
         receipt = await harness.send(HarnessInput(content=prompt))
         async with asyncio.timeout(timeout_s):
             async for event in harness.turn_events(receipt.turn_id):
                 payload = event.event
+                usage_totals.add_event(payload)
                 if (
                     isinstance(payload, TurnLifecycleEvent)
                     and payload.kind is not TurnEventKind.STARTED
@@ -155,15 +158,12 @@ async def _run_turn(
     if terminal.kind is not TurnEventKind.FINISHED:
         detail = terminal.result.error if terminal.result is not None else None
         raise ConfigError(f"the planner turn ended as {terminal.kind}: {detail}")
-    usage = getattr(terminal.result, "usage", None)
-    tokens = 0
-    if usage is not None:
-        tokens = usage.total_tokens or ((usage.input_tokens or 0) + (usage.output_tokens or 0))
-    usd = 0.0
-    cost = getattr(terminal.result, "cost", None)
-    if cost is not None:
-        usd = cost.micros / 1_000_000
-    return TurnOutput(text=_final_text(terminal.result), tokens=tokens, usd=usd)
+    usage_totals.add_result(terminal.result)
+    return TurnOutput(
+        text=_final_text(terminal.result),
+        tokens=usage_totals.tokens,
+        usd=usage_totals.usd,
+    )
 
 
 class HarnessPlanner:
@@ -193,7 +193,7 @@ class HarnessPlanner:
         self._timeout_s = timeout_s
         self.name = self._provider
 
-    def _prompt(self, context: PlannerContext) -> Prompt:
+    def _prompt(self, context: PlannerContext, feedback: str = "") -> Prompt:
         prompt = load_prompt(self._prompt_path, name="plan")
         deterministic = deterministic_proposal(context).model_dump_json(indent=2)
         payload = json.dumps(context_payload(context), indent=2, ensure_ascii=False)
@@ -207,12 +207,30 @@ class HarnessPlanner:
                 flow=context.flow.flow,
                 context=payload,
                 deterministic=deterministic,
+                feedback=feedback,
             ),
             sha256=prompt.sha256,
         )
 
     async def draft(self, context: PlannerContext) -> PlannerOutput:
-        prompt = self._prompt(context)
+        return await self._draft(context, "")
+
+    async def draft_with_feedback(
+        self,
+        context: PlannerContext,
+        previous: PlanProposal,
+        errors: list[str],
+    ) -> PlannerOutput:
+        feedback = (
+            "The previous plan failed the deterministic lint. Correct these errors and return a "
+            "complete replacement JSON object.\n"
+            + "\n".join(f"- {error}" for error in errors)
+            + f"\n\nPrevious summary: {previous.summary}\n"
+        )
+        return await self._draft(context, feedback)
+
+    async def _draft(self, context: PlannerContext, feedback: str) -> PlannerOutput:
+        prompt = self._prompt(context, feedback)
         started = time.monotonic()
         turn = await _run_turn(
             provider=self._provider,

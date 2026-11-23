@@ -93,6 +93,8 @@ def test_builder_health_exposes_labels_not_secret_names(paths) -> None:
         "shadow",
         "assisted",
         "deep",
+        "spec",
+        "auto",
     }
 
 

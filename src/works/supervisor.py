@@ -33,6 +33,7 @@ from .harness.base import Harness, Proposal, ProposalRequest
 from .ledger import Ledger
 from .logs import get_logger
 from .memory import Memory, NullMemory
+from .plan_memory import PlanMemory
 from .planner import (
     Critic,
     PlanMode,
@@ -42,6 +43,7 @@ from .planner import (
     collect_repository_context,
     draft_plan,
     plan_brief,
+    plan_deviations,
 )
 from .policy import PolicyReport, Violation, check_patch, check_paths, paths_from_patch
 from .quarantine import ensure_outside
@@ -106,6 +108,7 @@ class RunContext:
     decisions: list[GateVerdict] = field(default_factory=list)
     would_block: list[str] = field(default_factory=list)
     plan: dict[str, Any] = field(default_factory=dict)
+    plan_deviations: list[str] = field(default_factory=list)
     scenario_set: ScenarioSet | None = None
     scenario_dir: Path | None = None
     state: TaskState = TaskState.QUEUED
@@ -218,6 +221,77 @@ class Supervisor:
         await self._draft_plan(ctx, repo, scenario_set)
         return self._plans.load(task_id)
 
+    async def replan(self, task_id: str, *, scenario_set: Path | None = None) -> Any:
+        """Draft a new plan version without changing the task state.
+
+        Used by `works plan --action replan` and when a planning-state task's base or checks
+        changed. The previous version is marked superseded; a person still approves the new one.
+        """
+        task = self._queue.load(task_id)
+        if task.state not in (TaskState.QUEUED, TaskState.PLANNING):
+            raise ConfigError(f"task {task_id} is {task.state.value}; replan from planning")
+        repo = self._repo(task)
+        base = repo.head()
+        trusted = load_trusted_flow(repo, base, task.flow, self._flows_dir)
+        previous = self._latest_plan(task_id)
+        scenario = scenario_set or (
+            Path(previous["scenario_set"]) if previous and previous.get("scenario_set") else None
+        )
+        if scenario is None:
+            raise ConfigError("replan needs a scenario set; pass --scenarios")
+        ctx = RunContext(
+            task=task,
+            flow=trusted.flow,
+            run_id="replan",
+            run_dir=self._paths.runs / "replan",
+            worktree=None,
+            base_commit=base,
+            checks_sha=trusted.checks_sha,
+            checks_source=trusted.source,
+            plan={},
+        )
+        await self._draft_plan(ctx, repo, scenario)
+        if task.state is TaskState.PLANNING:
+            self._queue.append(task_id, "plan.drafted", ctx.plan)
+        if previous and previous.get("plan_id"):
+            with contextlib.suppress(NotFoundError):
+                self._plans.mark_superseded(task_id, str(previous["plan_id"]))
+        return self._plans.load(task_id)
+
+    async def draft_alternative_plans(
+        self,
+        task_id: str,
+        *,
+        scenario_set: Path,
+        planners: dict[str, Planner],
+        mode: str,
+    ) -> dict[str, Any]:
+        """Draft labelled alternatives without claiming the task or opening a gate."""
+        from .planner import draft_alternatives
+
+        task = self._queue.load(task_id)
+        repo = self._repo(task)
+        trusted = load_trusted_flow(repo, repo.head(), task.flow, self._flows_dir)
+        ctx = RunContext(
+            task=task,
+            flow=trusted.flow,
+            run_id="alternatives",
+            run_dir=self._paths.runs / "alternatives",
+            worktree=None,
+            base_commit=repo.head(),
+            checks_sha=trusted.checks_sha,
+            checks_source=trusted.source,
+            plan={},
+        )
+        context = self._planner_context(ctx, repo, scenario_set)
+        return await draft_alternatives(
+            context,
+            store=self._plans,
+            mode=mode,
+            planners=planners,
+            critic=self._critic,
+        )
+
     async def run(
         self,
         task_id: str,
@@ -239,15 +313,28 @@ class Supervisor:
         plan = self._latest_plan(task.id) if task.state is not TaskState.QUEUED else None
         if task.state is not TaskState.QUEUED and plan is None:
             raise StateError(f"cannot resume {task.state.value} without a plan")
-        base = str(plan["base_commit"]) if plan is not None else repo.head()
+        current_base = repo.head()
+        base = str(plan["base_commit"]) if plan is not None else current_base
         trusted = load_trusted_flow(repo, base, task.flow, self._flows_dir)
         flow = trusted.flow
         if plan is not None:
             planned_sha = plan.get("checks_sha")
-            if planned_sha and planned_sha != trusted.checks_sha:
-                raise ConflictError(
-                    "the checks changed since the plan was drafted; re-plan before building"
+            stale = plan.get("base_commit") != current_base or (
+                planned_sha and planned_sha != trusted.checks_sha
+            )
+            if stale:
+                if task.state is not TaskState.PLANNING:
+                    raise ConflictError(
+                        "the plan is stale; draft a new plan and approve it before building"
+                    )
+                replan_scenarios = scenario_set or (
+                    Path(plan["scenario_set"]) if plan.get("scenario_set") else None
                 )
+                await self.replan(task_id, scenario_set=replan_scenarios)
+                plan = self._latest_plan(task_id)
+                base = str(plan["base_commit"]) if plan else current_base
+                trusted = load_trusted_flow(repo, base, task.flow, self._flows_dir)
+                flow = trusted.flow
         if quarantine is not None:
             flow = self._apply_quarantine(flow, quarantine, repo)
         run_id = new_run_id()
@@ -336,12 +423,13 @@ class Supervisor:
             approver = "cli" if approve_plan else "flow"
             if ctx.plan.get("plan_id") and ctx.plan.get("hash"):
                 with contextlib.suppress(NotFoundError):
-                    self._plans.approve(
+                    approved_plan = self._plans.approve(
                         ctx.task.id,
                         plan_id=str(ctx.plan["plan_id"]),
                         plan_hash=str(ctx.plan["hash"]),
                         by=approver,
                     )
+                    PlanMemory(self._paths).remember(approved_plan, by=approver)
             self._queue.append(
                 ctx.task.id,
                 "gate.decided",
@@ -391,6 +479,24 @@ class Supervisor:
             "risk.rated",
             ctx.risk.model_dump(mode="json"),
         )
+        if ctx.plan.get("plan_id") and ctx.plan.get("version"):
+            with contextlib.suppress(NotFoundError):
+                plan_version = self._plans.load(ctx.task.id, int(ctx.plan["version"]))
+                deviations = plan_deviations(plan_version, touched)
+                if deviations:
+                    ctx.plan_deviations = deviations
+                    self._queue.append(
+                        ctx.task.id,
+                        "plan.deviation",
+                        {
+                            "plan_id": plan_version.plan_id,
+                            "planned": sorted(
+                                {path for step in plan_version.steps for path in step.files}
+                            ),
+                            "touched": touched,
+                            "deviations": deviations,
+                        },
+                    )
         if flow.risk.mode is GateMode.OBSERVE and ctx.risk.required_reviewers > 1:
             self._observe(
                 ctx,
@@ -539,7 +645,9 @@ class Supervisor:
             {"view": "about_me", "statements": statements},
         )
 
-    async def _draft_plan(self, ctx: RunContext, repo: GitRepo, scenario_set: Path | None) -> None:
+    def _planner_context(
+        self, ctx: RunContext, repo: GitRepo, scenario_set: Path | None
+    ) -> PlannerContext:
         if scenario_set is None:
             raise ConfigError(
                 "a scenario set is required: pass --scenarios (at least one P0, written first)"
@@ -557,7 +665,7 @@ class Supervisor:
             for event in self._queue.events(ctx.task.id)
             if event.type == "finding" and str(event.data.get("summary", "")).strip()
         )[-5:]
-        context = PlannerContext(
+        return PlannerContext(
             task_id=ctx.task.id,
             product=ctx.task.product,
             task_kind=ctx.task.kind.value,
@@ -573,11 +681,17 @@ class Supervisor:
             budget_tokens=ctx.task.budget.tokens,
             budget_usd=ctx.task.budget.usd,
             memory=tuple(ctx.memory_recall),
+            prior_plans=tuple(
+                PlanMemory(self._paths).recall(product=ctx.task.product, flow=ctx.flow.flow)
+            ),
             findings=findings,
             file_tree=repository.file_tree,
             manifests=repository.manifests,
             readme=repository.readme,
         )
+
+    async def _draft_plan(self, ctx: RunContext, repo: GitRepo, scenario_set: Path | None) -> None:
+        context = self._planner_context(ctx, repo, scenario_set)
         plan = await draft_plan(
             context,
             store=self._plans,
@@ -953,6 +1067,7 @@ class Supervisor:
             planner_model=(ctx.plan.get("provenance") or {}).get("model"),
             planner_tokens=int((ctx.plan.get("provenance") or {}).get("tokens") or 0),
             planner_usd=float((ctx.plan.get("provenance") or {}).get("usd") or 0.0),
+            plan_deviations=ctx.plan_deviations,
             tokens=tokens,
             usd=usd,
             builder_tokens=builder_tokens,
@@ -1005,6 +1120,7 @@ class Supervisor:
             planner_model=(ctx.plan.get("provenance") or {}).get("model"),
             planner_tokens=int((ctx.plan.get("provenance") or {}).get("tokens") or 0),
             planner_usd=float((ctx.plan.get("provenance") or {}).get("usd") or 0.0),
+            plan_deviations=ctx.plan_deviations,
             verifier=str(getattr(self._verifier, "name", "local")),
             verifier_isolation=str(getattr(self._verifier, "isolation", "process")),
             verifier_model=ctx.challenge.model if ctx.challenge else None,

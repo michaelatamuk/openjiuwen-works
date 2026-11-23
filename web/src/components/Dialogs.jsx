@@ -361,9 +361,18 @@ const PLANNER_MODES_FALLBACK = [
   { id: "shadow", label: "Shadow", kind: "Model proposal stored beside the plan" },
   { id: "assisted", label: "Assisted", kind: "Model proposal merged and linted" },
   { id: "deep", label: "Deep", kind: "Assisted plus an independent critic" },
+  { id: "spec", label: "Spec", kind: "Requirements, design and tasks artefacts plus the plan" },
+  { id: "auto", label: "Auto", kind: "Pick assisted or deep from planned risk; you still approve" },
 ];
 
 const PLANNER_PROVIDER_ORDER = ["claudecode", "native"];
+
+const MODEL_SUGGESTIONS = {
+  claudecode: ["deepseek-chat", "deepseek-reasoner", "claude-sonnet-4-5", "claude-opus-4-1", "claude-haiku-4-5"],
+  dsh: ["deepseek-chat", "deepseek-reasoner"],
+  native: ["deepseek-chat", "deepseek-reasoner", "gpt-5", "gpt-5-mini"],
+  codex: ["gpt-5", "gpt-5-codex", "o4-mini"],
+};
 
 function credentialLabel(provider, state, providers) {
   const meta = providers[provider];
@@ -400,6 +409,48 @@ function ProviderCard({ id, meta, active, disabled, onSelect }) {
         {meta.available ? "Ready" : (meta.missing || "Needs setup")}
       </span>
     </button>
+  );
+}
+
+function ModelInput({ id, value, onChange, disabled, provider, placeholder = "Provider default" }) {
+  const listId = `model-options-${id}`;
+  return (
+    <>
+      <input
+        list={listId}
+        value={value}
+        disabled={disabled}
+        onChange={onChange}
+        placeholder={placeholder}
+      />
+      <datalist id={listId}>
+        {(MODEL_SUGGESTIONS[provider] || []).map((model) => (
+          <option key={model} value={model} />
+        ))}
+      </datalist>
+    </>
+  );
+}
+
+function ProviderSetup({ ids, providers }) {
+  const missing = ids.filter((id) => !(providers[id] || PROVIDER_FALLBACK[id])?.available);
+  if (!missing.length) return null;
+  return (
+    <details className="provider-setup" open>
+      <summary>Setup for unavailable providers</summary>
+      {missing.map((id) => {
+        const meta = providers[id] || PROVIDER_FALLBACK[id];
+        return (
+          <div className="provider-setup-row" key={id}>
+            <b>{meta.label || id}</b>
+            <p>{meta.reason || "This provider is not ready in Works' Python environment."}</p>
+            {(meta.install || []).map((command) => (
+              <code key={command}>{command}</code>
+            ))}
+          </div>
+        );
+      })}
+    </details>
   );
 }
 
@@ -575,6 +626,7 @@ export function SettingsDialog({
           </p>
           {openjiuwen ? (
             <>
+              <div className="settings-subhead">Provider inside Works</div>
               <div className="provider-grid" role="radiogroup" aria-label="Builder provider">
                 {PROVIDER_ORDER.map((id) => (
                   <ProviderCard
@@ -587,13 +639,15 @@ export function SettingsDialog({
                   />
                 ))}
               </div>
+              <ProviderSetup ids={PROVIDER_ORDER} providers={providers} />
               <label className="settings-field">
                 <span>Model <em>{builderMeta.label} default</em></span>
-                <input
+                <ModelInput
+                  id="builder-model"
                   value={model}
                   disabled={!writable}
                   onChange={(event) => setModel(event.target.value)}
-                  placeholder="Provider default"
+                  provider={provider}
                 />
               </label>
               <p className="settings-note">
@@ -615,6 +669,20 @@ export function SettingsDialog({
                 patch, challenge and usage as evidence.
               </p>
               <p className="settings-note">{swarm.detail || "A run probes the adapter before it starts."}</p>
+              {swarm.steps?.length ? (
+                <details className="provider-setup" open={!swarm.available}>
+                  <summary>{swarm.available ? "How this runtime works" : "Setup steps"}</summary>
+                  <ul className="settings-steps">
+                    {swarm.steps.map((step) => (
+                      <li key={step}>{step}</li>
+                    ))}
+                  </ul>
+                </details>
+              ) : null}
+              <p className="settings-note">
+                JiuwenSwarm selects its own models through its gateway configuration. Works does not
+                expose a model picker here because it does not run those models itself.
+              </p>
             </div>
           )}
         </section>
@@ -638,8 +706,23 @@ export function SettingsDialog({
               />
             ))}
           </div>
+          <p className="planner-mode-summary">
+            <b>{plannerMeta.label}</b> - {plannerMeta.kind}.
+            {plannerMode === "shadow"
+              ? " The deterministic plan still runs; this proposal is stored for comparison."
+              : plannerMode === "assisted"
+                ? " You still approve the plan before the build."
+                : plannerMode === "deep"
+                  ? " An independent critic reviews it before you approve."
+                  : plannerMode === "spec"
+                    ? " Requirements, design and tasks are saved beside the plan."
+                    : plannerMode === "auto"
+                      ? " Works picks assisted or deep from planned risk; you still approve."
+                      : " No model is called."}
+          </p>
           {plannerOpen ? (
             <>
+              <div className="settings-subhead">Planner provider</div>
               <div className="provider-grid compact" role="radiogroup" aria-label="Planner provider">
                 {PLANNER_PROVIDER_ORDER.map((id) => (
                   <ProviderCard
@@ -652,17 +735,20 @@ export function SettingsDialog({
                   />
                 ))}
               </div>
+              <ProviderSetup ids={PLANNER_PROVIDER_ORDER} providers={providers} />
               <label className="settings-field">
                 <span>Planner model <em>{plannerProviderMeta.label} default</em></span>
-                <input
+                <ModelInput
+                  id="planner-model"
                   value={plannerModel}
                   disabled={!writable}
                   onChange={(event) => setPlannerModel(event.target.value)}
-                  placeholder="Provider default"
+                  provider={plannerProvider}
                 />
               </label>
               {plannerMode === "deep" ? (
                 <>
+                  <div className="settings-subhead">Critic provider (deep mode)</div>
                   <div className="provider-grid compact" role="radiogroup" aria-label="Planner critic provider">
                     {PLANNER_PROVIDER_ORDER.map((id) => (
                       <ProviderCard
@@ -675,13 +761,15 @@ export function SettingsDialog({
                       />
                     ))}
                   </div>
+                  <ProviderSetup ids={PLANNER_PROVIDER_ORDER} providers={providers} />
                   <label className="settings-field">
                     <span>Critic model <em>{plannerCriticMeta.label} default</em></span>
-                    <input
+                    <ModelInput
+                      id="critic-model"
                       value={plannerCriticModel}
                       disabled={!writable}
                       onChange={(event) => setPlannerCriticModel(event.target.value)}
-                      placeholder="Provider default"
+                      provider={plannerCriticProvider}
                     />
                   </label>
                 </>
@@ -720,7 +808,8 @@ export function SettingsDialog({
             </label>
             {separateVerifier ? (
               <>
-                <div className="provider-grid compact" role="radiogroup" aria-label="Verifier provider">
+                <div className="settings-subhead">Verifier provider</div>
+              <div className="provider-grid compact" role="radiogroup" aria-label="Verifier provider">
                   {PROVIDER_ORDER.map((id) => (
                     <ProviderCard
                       key={id}
@@ -732,13 +821,15 @@ export function SettingsDialog({
                     />
                   ))}
                 </div>
+                <ProviderSetup ids={PROVIDER_ORDER} providers={providers} />
                 <label className="settings-field">
                   <span>Verifier model <em>{verifierMeta.label} default</em></span>
-                  <input
+                  <ModelInput
+                    id="verifier-model"
                     value={verifierModel}
                     disabled={!writable}
                     onChange={(event) => setVerifierModel(event.target.value)}
-                    placeholder="Provider default"
+                    provider={verifier}
                   />
                 </label>
               </>

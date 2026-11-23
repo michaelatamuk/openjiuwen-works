@@ -9,15 +9,22 @@ implementation; each phase lands with tests and evidence.
 This change lands the first two phases:
 
 - versioned plan artefacts (`queue/<task>/plans/vN.json` and `.md`), hashes and approval binding;
-- deterministic, shadow, assisted and deep modes;
+- deterministic, shadow, assisted, deep, spec and auto modes;
 - a read-only OpenJiuwen planner and independent critic with versioned prompts;
-- plan linting, planner settings/health, `works plan` draft/show/lint/diff;
+- plan linting with one automatic repair turn, planner settings/health, `works plan`
+  draft/replan/alternatives/show/lint/diff/eval;
+- spec mode writes `vN.requirements.md`, `vN.design.md` and `vN.tasks.md` beside the plan;
+- approved-plan memory recalls similar plans into the next planner context;
+- auto mode picks assisted or deep from planned risk, but never bypasses the human gate;
 - the approved plan brief is injected into the builder and the Swarm adapter;
+- plan drift records paths touched outside the plan's named write scope;
 - the plan id/hash/planner cost is part of the run record and proof;
-- the Session view shows the plan card with steps, planner, lint and hash.
+- the Session view shows the plan card with steps, planner, lint and hash;
+- native planner/builder token usage is read from provider `usage_metadata` events.
 
-Still open: `works plan eval`, replanning, approved-plan memory, auto mode, spec-driven artefacts,
-alternative plans and preview/simulation.
+Still open: alternative plans are backend/CLI only until the plan compare UI lands; blocked tasks
+still need a new plan/task rather than an in-place replan; preview/simulation and plan-quality
+dashboards remain future work. `auto` never auto-approves.
 
 ## Why
 

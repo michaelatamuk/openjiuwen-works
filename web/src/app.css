@@ -2641,6 +2641,49 @@ body { background: var(--bg); background-image: none; }
 }
 .planner-mode-card b { color: var(--text); font-size: 11.5px; font-weight: 650; line-height: 1.25; }
 .planner-mode-card em { color: var(--faint); font-size: 9.5px; font-style: normal; line-height: 1.35; }
+.planner-mode-summary {
+  margin: -2px 0 12px;
+  border-left: 2px solid color-mix(in srgb, var(--violet) 40%, var(--line));
+  padding-left: 9px;
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+.planner-mode-summary b { color: var(--text); font-weight: 650; }
+.settings-subhead {
+  margin: 10px 0 4px;
+  color: var(--faint);
+  font: 700 9px/1.4 var(--mono);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.provider-setup {
+  margin: 2px 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--panel-2);
+  padding: 9px 11px;
+}
+.provider-setup summary {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.provider-setup-row { margin-top: 9px; }
+.provider-setup-row b { display: block; color: var(--text); font-size: 11.5px; font-weight: 650; }
+.provider-setup-row p { margin: 3px 0 5px; color: var(--faint); font-size: 10.5px; line-height: 1.45; }
+.provider-setup-row code {
+  display: block;
+  margin-top: 4px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--violet-text);
+  padding: 4px 7px;
+  font: 600 10px/1.45 var(--mono);
+  overflow-wrap: anywhere;
+}
 .provider-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -2712,6 +2755,8 @@ body { background: var(--bg); background-image: none; }
 .settings-field em { color: var(--faint); font-style: normal; font-weight: 500; }
 .settings-field input { height: 36px; margin-top: 5px; border-radius: 9px; }
 .settings-note { margin: 8px 0 0; color: var(--faint); font-size: 11px; line-height: 1.55; }
+.settings-steps { margin: 7px 0 0; padding-left: 16px; color: var(--muted); font-size: 10.5px; line-height: 1.55; }
+.settings-steps li + li { margin-top: 3px; }
 .settings-switch {
   display: inline-flex;
   align-items: center;

@@ -9,6 +9,8 @@ from works.approvals import approve_plan
 from works.errors import ConfigError
 from works.flow import load_flow
 from works.harness.planner import HarnessPlanner, parse_plan_json
+from works.ledger import Ledger
+from works.plan_memory import PlanMemory
 from works.planner import (
     DeterministicPlanner,
     PlanCritique,
@@ -20,16 +22,21 @@ from works.planner import (
     PlanStatus,
     PlanStep,
     PlanStore,
+    PlanVersion,
     collect_repository_context,
     deterministic_proposal,
+    draft_alternatives,
     draft_plan,
     merge_proposal,
+    plan_deviations,
     plan_hash,
     validate_plan,
 )
 from works.queue import Queue
 from works.records import Source, SourceKind, TaskState
+from works.runner import SubprocessRunner
 from works.scenarios import load_scenario_set
+from works.supervisor import Supervisor
 
 
 def context(paths, repo, scenario_set: Path, *, task_id: str = "t-plan") -> PlannerContext:
@@ -69,6 +76,34 @@ class FakePlanner:
             provenance=PlanProvenance(
                 planner=self.name, provider="fake", model="fake-model", tokens=12, usd=0.001
             ),
+        )
+
+
+class FakeRepairPlanner:
+    name = "fake-repair"
+
+    def __init__(self) -> None:
+        self.calls = 0
+
+    async def draft(self, ctx: PlannerContext) -> PlannerOutput:
+        return PlannerOutput(
+            proposal=PlanProposal(
+                summary="Bad plan",
+                steps=[PlanStep(id="s1", node="build", title="Bad", files=["tests/test_core.py"])],
+            ),
+            provenance=PlanProvenance(planner=self.name, provider="fake", model="fake"),
+        )
+
+    async def draft_with_feedback(
+        self, ctx: PlannerContext, previous: PlanProposal, errors: list[str]
+    ) -> PlannerOutput:
+        self.calls += 1
+        return PlannerOutput(
+            proposal=PlanProposal(
+                summary="Repaired plan",
+                steps=[PlanStep(id="s1", node="build", title="Good", files=["calc/core.py"])],
+            ),
+            provenance=PlanProvenance(planner=self.name, provider="fake", model="fake"),
         )
 
 
@@ -193,6 +228,41 @@ def test_merge_keeps_required_nodes_and_adds_model_detail(paths, repo, scenario_
     assert "calc/core.py" in " ".join(file for step in merged.steps for file in step.files)
 
 
+def test_approved_plan_memory_recalls_similar_plans(paths, repo, scenario_set) -> None:
+    ctx = context(paths, repo, scenario_set)
+    store = PlanStore(paths)
+    plan = asyncio.run(draft_plan(ctx, store=store, mode=PlanMode.DETERMINISTIC))
+    approved = plan.model_copy(update={"status": PlanStatus.APPROVED, "approved_by": "cli"})
+
+    memory = PlanMemory(paths)
+    memory.remember(approved, by="cli")
+    memory.remember(approved, by="cli")
+
+    recalled = memory.recall(product="openjiuwen", flow="fix-issue")
+    assert len(recalled) == 1
+    assert recalled[0]["plan_id"] == plan.plan_id
+    assert recalled[0]["steps"]
+
+
+def test_plan_drift_is_the_difference_between_named_and_touched_files() -> None:
+    plan = PlanVersion(
+        plan_id="p-1",
+        task_id="t-1",
+        version=1,
+        flow="fix-issue",
+        product="openjiuwen",
+        base_commit="a",
+        checks_sha="b",
+        checks_source="c",
+        scenario_set="d",
+        steps=[PlanStep(id="s1", node="build", files=["calc/core.py"])],
+    )
+
+    assert plan_deviations(plan, ["calc/core.py"]) == []
+    assert plan_deviations(plan, ["calc/core.py", "tests/test_core.py"]) == ["tests/test_core.py"]
+    assert plan_deviations(plan.model_copy(update={"steps": []}), ["anything.py"]) == []
+
+
 def test_plan_store_versions_and_hashes(paths, repo, scenario_set) -> None:
     ctx = context(paths, repo, scenario_set)
     store = PlanStore(paths)
@@ -260,6 +330,141 @@ def test_deep_mode_blocks_on_a_critic_rejection(paths, repo, scenario_set) -> No
     assert any("critic rejected" in item for item in plan.validation.errors)
 
 
+def test_lint_failure_is_repaired_once_before_storage(paths, repo, scenario_set) -> None:
+    ctx = context(paths, repo, scenario_set)
+    store = PlanStore(paths)
+    planner = FakeRepairPlanner()
+
+    plan = asyncio.run(draft_plan(ctx, store=store, mode=PlanMode.ASSISTED, planner=planner))
+
+    assert planner.calls == 1
+    assert plan.status is PlanStatus.VALIDATED
+    assert plan.summary == "Repaired plan"
+    assert any("Repaired after" in note for note in plan.notes)
+
+
+def test_alternatives_are_labelled_and_stored_without_touching_the_plan(
+    paths, repo, scenario_set
+) -> None:
+    ctx = context(paths, repo, scenario_set)
+    store = PlanStore(paths)
+    planners = {
+        "minimal": FakePlanner(
+            PlanProposal(
+                summary="Minimal",
+                steps=[PlanStep(id="s1", node="build", title="Minimal", files=["calc/core.py"])],
+            )
+        ),
+        "spec": FakePlanner(
+            PlanProposal(
+                summary="Spec",
+                steps=[PlanStep(id="s1", node="build", title="Spec", files=["calc/core.py"])],
+            )
+        ),
+    }
+
+    result = asyncio.run(
+        draft_alternatives(ctx, store=store, mode=PlanMode.ASSISTED, planners=planners)
+    )
+
+    assert set(result) == {"minimal", "spec"}
+    assert result["minimal"].status is PlanStatus.ALTERNATIVE
+    assert store.alternatives(ctx.task_id)
+    assert store.versions(ctx.task_id) == []
+
+
+def test_spec_mode_writes_requirements_design_and_tasks(paths, repo, scenario_set) -> None:
+    ctx = context(paths, repo, scenario_set)
+    store = PlanStore(paths)
+    planner = FakePlanner(
+        PlanProposal(
+            summary="Spec plan",
+            requirements_md="# Requirements\n\nadd must sum.",
+            design_md="# Design\n\nChange one operator.",
+            tasks_md="# Tasks\n\n- change add",
+            steps=[PlanStep(id="s1", node="build", title="Change add", files=["calc/core.py"])],
+        )
+    )
+
+    plan = asyncio.run(draft_plan(ctx, store=store, mode=PlanMode.SPEC, planner=planner))
+
+    assert plan.status is PlanStatus.VALIDATED
+    directory = store.directory(ctx.task_id)
+    assert (directory / "v1.requirements.md").is_file()
+    assert (directory / "v1.design.md").is_file()
+    assert (directory / "v1.tasks.md").is_file()
+    assert plan.requirements_md.startswith("# Requirements")
+
+
+def test_spec_mode_blocks_without_the_three_documents(paths, repo, scenario_set) -> None:
+    ctx = context(paths, repo, scenario_set)
+    store = PlanStore(paths)
+    planner = FakePlanner(
+        PlanProposal(
+            summary="Incomplete spec",
+            steps=[PlanStep(id="s1", node="build", title="Change add", files=["calc/core.py"])],
+        )
+    )
+
+    plan = asyncio.run(draft_plan(ctx, store=store, mode=PlanMode.SPEC, planner=planner))
+
+    assert plan.status is PlanStatus.DRAFT
+    assert plan.validation is not None and not plan.validation.ok
+    assert any("spec mode needs" in item for item in plan.validation.errors)
+
+
+def test_auto_mode_chooses_deep_for_a_high_risk_plan(paths, repo, scenario_set) -> None:
+    ctx = context(paths, repo, scenario_set)
+    store = PlanStore(paths)
+    planner = FakePlanner(
+        PlanProposal(
+            summary="Change auth",
+            steps=(
+                [PlanStep(id="s1", node="build", title="Change auth", files=["auth/session.py"])]
+            ),
+        )
+    )
+
+    plan = asyncio.run(
+        draft_plan(
+            ctx,
+            store=store,
+            mode=PlanMode.AUTO,
+            planner=planner,
+            critic=FakeCritic(allow=True),
+        )
+    )
+
+    assert plan.provenance.mode == "auto"
+    assert plan.critique is not None
+    assert any("Auto selected deep" in note for note in plan.notes)
+
+
+def test_auto_mode_chooses_assisted_for_a_low_risk_plan(paths, repo, scenario_set) -> None:
+    ctx = context(paths, repo, scenario_set)
+    store = PlanStore(paths)
+    planner = FakePlanner(
+        PlanProposal(
+            summary="Change add",
+            steps=[PlanStep(id="s1", node="build", title="Change add", files=["calc/core.py"])],
+        )
+    )
+
+    plan = asyncio.run(
+        draft_plan(
+            ctx,
+            store=store,
+            mode=PlanMode.AUTO,
+            planner=planner,
+            critic=FakeCritic(allow=False),
+        )
+    )
+
+    assert plan.provenance.mode == "auto"
+    assert plan.critique is None
+    assert any("Auto selected assisted" in note for note in plan.notes)
+
+
 def test_shadow_mode_never_changes_the_executed_plan(paths, repo, scenario_set) -> None:
     ctx = context(paths, repo, scenario_set)
     store = PlanStore(paths)
@@ -277,6 +482,62 @@ def test_shadow_mode_never_changes_the_executed_plan(paths, repo, scenario_set) 
     assert shadow is not None
     assert shadow.status is PlanStatus.SHADOW
     assert shadow.summary == "Shadow proposal"
+
+
+def test_replan_keeps_the_task_in_planning_and_supersedes_the_previous_version(
+    paths, repo, scenario_set
+) -> None:
+    queue = Queue(paths)
+    queue.submit(
+        source=Source(kind=SourceKind.MANUAL, ref="GH-REPLAN", title="add subtracts"),
+        flow="fix-issue",
+        product="openjiuwen",
+        repo=str(repo.path),
+    )
+    task = queue.list_tasks()[-1]
+    queue.transition(task.id, TaskState.REPRODUCING)
+    queue.transition(task.id, TaskState.REPRODUCED)
+    queue.transition(task.id, TaskState.PLANNING)
+    supervisor = Supervisor(
+        paths=paths,
+        queue=queue,
+        ledger=Ledger(paths.ledger),
+        harness=None,
+        runner=SubprocessRunner(),
+        planner_mode="deterministic",
+    )
+
+    first = asyncio.run(supervisor.replan(task.id, scenario_set=scenario_set))
+    second = asyncio.run(supervisor.replan(task.id))
+
+    assert first.version == 1 and second.version == 2
+    assert queue.load(task.id).state is TaskState.PLANNING
+    assert PlanStore(paths).load(task.id, 1).status is PlanStatus.SUPERSEDED
+    assert len([e for e in queue.events(task.id) if e.type == "plan.drafted"]) == 2
+
+
+def test_plan_eval_summarizes_stored_plans(paths, repo, scenario_set) -> None:
+    from works.plan_eval import evaluate
+
+    queue = Queue(paths)
+    queue.submit(
+        source=Source(kind=SourceKind.MANUAL, ref="GH-EVAL", title="add subtracts"),
+        flow="fix-issue",
+        product="openjiuwen",
+        repo=str(repo.path),
+    )
+    task = queue.list_tasks()[-1]
+    ctx = context(paths, repo, scenario_set, task_id=task.id)
+    store = PlanStore(paths)
+    plan = asyncio.run(draft_plan(ctx, store=store, mode=PlanMode.DETERMINISTIC))
+
+    payload = evaluate(paths)
+
+    assert payload["tasks"] == 1
+    assert payload["plans"] == 1
+    assert payload["validated"] == 1
+    assert payload["by_mode"]["deterministic"]["plans"] == 1
+    assert payload["rows"][0]["plan_id"] == plan.plan_id
 
 
 def test_approval_is_bound_to_the_plan_hash(paths, repo, scenario_set) -> None:

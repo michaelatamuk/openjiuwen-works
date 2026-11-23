@@ -9,6 +9,7 @@ import contextlib
 
 from .config import WorksPaths
 from .errors import ConfigError, NotFoundError
+from .plan_memory import PlanMemory
 from .planner import PlanStore
 from .queue import Queue
 from .records import Event, Task, TaskState
@@ -41,7 +42,10 @@ def approve_plan(
     if current_id and current_hash:
         # Legacy tasks predate versioned plan artefacts; the event remains the record.
         with contextlib.suppress(NotFoundError):
-            PlanStore(paths).approve(task_id, plan_id=current_id, plan_hash=current_hash, by=by)
+            approved_plan = PlanStore(paths).approve(
+                task_id, plan_id=current_id, plan_hash=current_hash, by=by
+            )
+            PlanMemory(paths).remember(approved_plan, by=by)
     queue.transition(task_id, TaskState.PLAN_APPROVED)
     event = queue.append(
         task_id,

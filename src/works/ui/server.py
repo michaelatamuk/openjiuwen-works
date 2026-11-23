@@ -786,6 +786,18 @@ def _thread_message(event: Event, task: Task) -> dict[str, Any] | None:
                 else [{"label": "Open run", "action": "open-run"}]
             ),
         }
+    elif kind == "plan.deviation":
+        role = "system"
+        title = "Plan drift"
+        deviations = data.get("deviations") or []
+        body = "The builder touched paths outside the plan's named write scope."
+        facts = [f"plan {data.get('plan_id', '?')}", *[str(item) for item in deviations]]
+        card = {
+            "kind": "question",
+            "prompt": "Visible drift is not a failure, but the proof now records it.",
+            "rows": [["Unplanned", ", ".join(str(item) for item in deviations)]],
+            "options": [{"label": "Open evidence", "action": "open-evidence"}],
+        }
     elif kind == "gate.decided":
         role = "person"
         gate = str(data.get("gate") or "gate")

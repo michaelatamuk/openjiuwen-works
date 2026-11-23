@@ -25,6 +25,7 @@ from ..prompts import DEFAULT_PROMPT, Prompt, load_prompt
 from ..records import Challenge
 from .base import Proposal, ProposalRequest
 from .providers import create_harness, selected_provider, validate_provider
+from .usage import UsageTotals
 
 DEFAULT_MODEL = "deepseek-chat"
 DEFAULT_BASE = "https://api.deepseek.com/anthropic"
@@ -192,6 +193,7 @@ class LiveHarness:
         context, input_type, kind_type, lifecycle_type = self._protocol_types(request)
         terminal: Any = None
         trace: list[str] = []
+        usage_totals = UsageTotals()
         await harness.start(context)
         try:
             receipt = await harness.send(input_type(content=builder_prompt(request, self._prompt)))
@@ -199,6 +201,7 @@ class LiveHarness:
                 async for event in harness.turn_events(receipt.turn_id):
                     payload = event.event
                     trace.append(f"{event.sequence}:{type(payload).__name__}")
+                    usage_totals.add_event(payload)
                     if (
                         isinstance(payload, lifecycle_type)
                         and payload.kind is not kind_type.STARTED
@@ -226,13 +229,9 @@ class LiveHarness:
             )
 
         result = terminal.result
-        tokens = 0
-        usd = 0.0
-        if result is not None and result.usage is not None:
-            usage = result.usage
-            tokens = usage.total_tokens or ((usage.input_tokens or 0) + (usage.output_tokens or 0))
-        if result is not None and result.cost is not None:
-            usd = result.cost.micros / 1_000_000
+        usage_totals.add_result(result)
+        tokens = usage_totals.tokens
+        usd = usage_totals.usd
         touched = [
             path
             for path in GitRepo(request.worktree).all_changed_files(request.worktree)
@@ -262,6 +261,7 @@ class LiveHarness:
         target = root / "repo"
         harness: Any = None
         terminal: Any = None
+        usage_totals = UsageTotals()
         tokens = 0
         usd = 0.0
         text = ""
@@ -294,6 +294,7 @@ class LiveHarness:
             async with asyncio.timeout(self._timeout_s):
                 async for event in harness.turn_events(receipt.turn_id):
                     payload = event.event
+                    usage_totals.add_event(payload)
                     if (
                         isinstance(payload, lifecycle_type)
                         and payload.kind is not kind_type.STARTED
@@ -318,13 +319,9 @@ class LiveHarness:
 
         if terminal is not None and terminal.result is not None:
             result = terminal.result
-            if result.usage is not None:
-                usage = result.usage
-                tokens = usage.total_tokens or (
-                    (usage.input_tokens or 0) + (usage.output_tokens or 0)
-                )
-            if result.cost is not None:
-                usd = result.cost.micros / 1_000_000
+            usage_totals.add_result(result)
+            tokens = usage_totals.tokens
+            usd = usage_totals.usd
             if isinstance(result.final_output, str):
                 text = result.final_output
         if terminal is None or terminal.kind is not kind_type.FINISHED:

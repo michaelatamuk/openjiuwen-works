@@ -57,6 +57,8 @@ The Works plan is a versioned artefact, not a chat message. Settings chooses one
 | `shadow` | the deterministic plan runs; a model proposal is stored beside it for comparison |
 | `assisted` | the model proposal is merged inside the flow contract and linted; a person approves |
 | `deep` | assisted plus an independent critic; both results are in the plan |
+| `spec` | requirements, design and tasks Markdown artefacts plus the plan |
+| `auto` | picks assisted or deep from planned risk; a person still approves |
 
 The planner harness is read-only: it can explore the repository, but it cannot edit files, approve
 itself, push, deploy or install packages. `claudecode` uses `permission_mode="plan"`; `native` uses
@@ -65,13 +67,23 @@ a read-only `core.sys_operation` rail. The plan is stored as `queue/<task>/plans
 
 ```bash
 works plan <task> --scenarios fixtures/scenarios/fix-add.yaml
+works plan <task> --action replan --scenarios fixtures/scenarios/fix-add.yaml
+works plan <task> --action alternatives --scenarios fixtures/scenarios/fix-add.yaml
 works plan <task> --action show --json
 works plan <task> --action lint
+works plan <task> --action diff
+works plan --action eval
 works approve <task> --plan-hash <sha>
 ```
 
 A planner failure in `assisted`/`deep` mode blocks the task; it never falls back to a silent fake
-plan. `shadow` failures are recorded but never change the deterministic run.
+plan. A lint failure gets one repair turn with the lint errors; if that still fails, the plan is
+blocked. `shadow` failures are recorded but never change the deterministic run. `auto` may fall
+back to deterministic when no planner is available, but it never auto-approves the human gate.
+
+Provider setup is actionable in Settings: an unavailable provider shows the reason and a command,
+not just `Needs setup`. JiuwenSwarm keeps its models in its own gateway configuration; Works does
+not expose a model picker for it.
 
 `ANTHROPIC_BASE_URL` in the shell may point elsewhere; the harness injects the explicit
 `--model-base` through the CLI settings layer, so the run is reproducible. The variable name is a

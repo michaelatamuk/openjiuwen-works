@@ -11,7 +11,7 @@ from pydantic import BaseModel, field_validator
 
 from .config import WorksPaths
 from .errors import ConfigError
-from .harness.providers import DEFAULT_PROVIDER, availability, validate_provider
+from .harness.providers import DEFAULT_PROVIDER, provider_setup, validate_provider
 from .planner import PLAN_MODES, PlanMode
 
 SETTINGS_PATH = Path(".works") / "settings.json"
@@ -153,7 +153,7 @@ def _swarm_health() -> dict[str, Any]:
 
 def builder_health(paths: WorksPaths, settings: BuilderSettings | None = None) -> dict[str, Any]:
     current = settings or BuilderSettings()
-    providers = availability()
+    providers = provider_setup()
     return {
         "runtime": current.runtime,
         "provider": current.provider,
@@ -187,6 +187,16 @@ def builder_health(paths: WorksPaths, settings: BuilderSettings | None = None) -
                     "label": "Deep",
                     "kind": "Assisted plus an independent critic",
                 },
+                {
+                    "id": "spec",
+                    "label": "Spec",
+                    "kind": "Requirements, design and tasks artefacts plus the plan",
+                },
+                {
+                    "id": "auto",
+                    "label": "Auto",
+                    "kind": "Pick assisted or deep from planned risk; a person still approves",
+                },
             ],
         },
         "runtimes": {
@@ -205,28 +215,40 @@ def builder_health(paths: WorksPaths, settings: BuilderSettings | None = None) -
         },
         "providers": {
             "claudecode": {
-                "available": providers.get("claudecode", False),
+                "available": providers["claudecode"]["available"],
                 "label": "Claude Code",
                 "kind": "General coding harness",
                 "missing": "Needs SDK",
+                "reason": providers["claudecode"]["reason"],
+                "install": providers["claudecode"]["install"],
+                "missing_modules": providers["claudecode"]["missing"],
             },
             "dsh": {
-                "available": providers.get("dsh", False),
+                "available": providers["dsh"]["available"],
                 "label": "DeepSeek Harness",
                 "kind": "DeepSeek native",
                 "missing": "Needs SDK",
+                "reason": providers["dsh"]["reason"],
+                "install": providers["dsh"]["install"],
+                "missing_modules": providers["dsh"]["missing"],
             },
             "native": {
-                "available": providers.get("native", False),
+                "available": providers["native"]["available"],
                 "label": "Jiuwen native",
                 "kind": "One DeepAgent inside Works",
                 "missing": "Needs runtime",
+                "reason": providers["native"]["reason"],
+                "install": providers["native"]["install"],
+                "missing_modules": providers["native"]["missing"],
             },
             "codex": {
-                "available": providers.get("codex", False),
+                "available": providers["codex"]["available"],
                 "label": "Codex",
                 "kind": "OpenAI Codex",
                 "missing": "Needs SDK",
+                "reason": providers["codex"]["reason"],
+                "install": providers["codex"]["install"],
+                "missing_modules": providers["codex"]["missing"],
             },
         },
         "swarm": _swarm_health(),

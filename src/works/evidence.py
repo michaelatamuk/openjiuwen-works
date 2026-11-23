@@ -72,6 +72,7 @@ class Evidence(BaseModel):
     planner_model: str | None = None
     planner_tokens: int = 0
     planner_usd: float = 0.0
+    plan_deviations: list[str] = Field(default_factory=list)
     tokens: int = 0
     usd: float = 0.0
     builder_tokens: int = 0
@@ -115,6 +116,7 @@ class Evidence(BaseModel):
                 self.planner_model,
                 self.planner_tokens,
                 self.planner_usd,
+                self.plan_deviations,
             )
         ):
             # Preserve the historical proof hash for evidence that predates plans.
@@ -127,6 +129,7 @@ class Evidence(BaseModel):
                 "planner_model",
                 "planner_tokens",
                 "planner_usd",
+                "plan_deviations",
             }
         canonical = payload.model_dump_json(exclude=exclude)
         proof_hash = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
@@ -190,6 +193,15 @@ def render_markdown(evidence: Evidence) -> str:
             f"provider `{_cell(evidence.planner_provider or '—')}` · "
             f"model `{_cell(evidence.planner_model or '—')}` · "
             f"{evidence.planner_tokens} tokens / ${evidence.planner_usd:.4f}",
+            "",
+        ]
+    if evidence.plan_deviations:
+        lines += [
+            "## Plan drift",
+            "",
+            "The builder touched paths outside the plan's named write scope:",
+            "",
+            *[f"- `{_cell(path)}`" for path in evidence.plan_deviations],
             "",
         ]
     if evidence.decision is not None:
