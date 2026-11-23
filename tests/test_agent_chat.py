@@ -11,6 +11,7 @@ from works.agent_chat import (
     availability,
     build_context,
     generate_commentary,
+    generate_discussion,
 )
 from works.queue import Queue
 
@@ -27,6 +28,7 @@ def test_context_includes_proof_and_release_blockers(paths, monkeypatch) -> None
     context = build_context(paths, task.id)
 
     assert "Verdict: allow" in context
+    assert "Scenarios: " in context
     assert "Proof SHA-256" in context
     assert "Release: not released" in context
     assert "release gate has no human approval" in context
@@ -172,3 +174,41 @@ def test_generate_commentary_records_generated_messages(paths, monkeypatch) -> N
     assert events[0].data["generated"] is True
     assert events[0].data["tokens"] == 12
     assert events[1].data["tokens"] == 0
+
+
+def test_generate_discussion_records_stances_as_advisory_events(paths, monkeypatch) -> None:
+    task = _proved(paths)
+    _run(paths, task)
+    monkeypatch.setattr("works.agent_chat._command", lambda: ["python", "worker.py"])
+    monkeypatch.setattr("works.agent_chat._environment", lambda: {})
+    monkeypatch.setattr(
+        "works.agent_chat.subprocess.run",
+        lambda *a, **k: FakeRun(
+            json.dumps(
+                {
+                    "type": "done",
+                    "messages": [
+                        {"role": "inspector", "stance": "support", "text": "The tests passed."},
+                        {"role": "challenger", "stance": "block", "text": "Mobile is untested."},
+                        {"role": "reporter", "stance": "maybe", "text": "Not released."},
+                    ],
+                    "model": "m",
+                    "tokens": 9,
+                    "usd": 0.0,
+                }
+            )
+        ),
+    )
+
+    result = generate_discussion(paths, task.id)
+
+    assert [item["role"] for item in result] == ["inspector", "challenger", "reporter"]
+    assert result[0]["stance"] == "support"
+    assert result[1]["stance"] == "block"
+    assert "stance" not in result[2]
+    events = [event for event in Queue(paths).events(task.id) if event.type == "thread.discussion"]
+    assert len(events) == 3
+    assert events[0].data["generated"] is True
+    assert events[0].data["tokens"] == 9
+    assert events[1].data["tokens"] == 0
+    assert events[1].data["stance"] == "block"

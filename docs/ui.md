@@ -39,7 +39,8 @@ The same evidence page serves two audiences without a second data source:
   recorded run. The answer streams token-by-token, is stored as `thread.agent`, and is advisory:
   it cannot approve, release, retry or change anything. Inline plan/release questions carry
   recommended actions and `Open run`; `Generate commentary` adds labelled Builder / Inspector /
-  Reporter messages.
+  Reporter messages, and `Team discussion` adds labelled Inspector / Challenger / Reporter
+  messages with a stance. Both are model output: they are advisory and cannot open a gate.
 - **Factory**: a header action opens metrics and the ledger. The Release view carries the run history
   and a two-run comparison; Evidence offers proof/run/release/delivery/confirmation downloads.
   Artifacts open in a lightbox; a before/after pair has a drag slider; timeline rows open their raw

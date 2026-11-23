@@ -49,6 +49,12 @@ system prompt forbids inventing evidence: if the context does not contain an ans
 "Not recorded in this run." The answer is advisory and cannot approve, release, retry or change a
 task.
 
+Two further model layers work over the same recorded context. `Generate commentary` stores three
+short messages as `thread.commentary` (builder, inspector, reporter). `Team discussion` stores
+three messages as `thread.discussion` (inspector, challenger, reporter), each with an optional
+`support` / `concern` / `block` stance. Both are marked `generated: true`, read only recorded
+evidence, and are advisory text: they are not evidence and cannot change a verdict or a gate.
+
 Environment:
 
 | Variable | Default | Meaning |

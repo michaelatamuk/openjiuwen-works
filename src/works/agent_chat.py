@@ -98,6 +98,21 @@ def build_context(paths: WorksPaths, task_id: str) -> str:
                 f"Policy: {'pass' if evidence.policy.ok else 'fail'}",
             ]
         )
+        if evidence.verdict is not None:
+            outcomes = evidence.verdict.outcomes
+            passed = sum(1 for outcome in outcomes if outcome.passed)
+            lines.append(f"Scenarios: {passed}/{len(outcomes)} passed")
+            failed = [outcome.id for outcome in outcomes if not outcome.passed]
+            if failed:
+                lines.append("Failed scenarios: " + ", ".join(failed))
+            if evidence.verdict.reason:
+                lines.append(f"Verdict reason: {evidence.verdict.reason}")
+        for step in ("reproduce", "test", "preview"):
+            command = getattr(evidence, step)
+            if command is not None:
+                lines.append(
+                    f"Command {step}: exit {command.exit_code} in {command.duration_ms} ms"
+                )
         if evidence.challenge is not None:
             lines.append(
                 f"Challenge: {'allow' if evidence.challenge.allow else 'block'}"
@@ -222,14 +237,24 @@ def ask_mira(paths: WorksPaths, task_id: str, question: str) -> dict[str, Any]:
     return answer
 
 
-def generate_commentary(paths: WorksPaths, task_id: str) -> list[dict[str, Any]]:
-    """Generate three short advisory messages from the recorded run.
+STANCES = {"support", "concern", "block"}
 
-    The model writes commentary, never evidence. Each message is stored as `thread.commentary`
-    with `generated: true`, so the UI can mark it as model output.
+
+def _generate_messages(
+    paths: WorksPaths,
+    task_id: str,
+    *,
+    kind: str,
+    roles: tuple[str, ...],
+    noun: str,
+) -> list[dict[str, Any]]:
+    """Ask the model for role messages and record each as an advisory thread event.
+
+    Model text is stored with `generated: true`; it never becomes evidence and cannot change a
+    verdict, a gate or a task state.
     """
     payload = {
-        "kind": "commentary",
+        "kind": kind,
         "context": build_context(paths, task_id),
         "stream": False,
     }
@@ -257,12 +282,11 @@ def generate_commentary(paths: WorksPaths, task_id: str) -> list[dict[str, Any]]
     if answer is None:
         detail = (completed.stderr or completed.stdout or "").strip().splitlines()
         raise ConfigError(
-            f"Mira returned no commentary: {detail[-1] if detail else completed.returncode}"
+            f"Mira returned no {noun}: {detail[-1] if detail else completed.returncode}"
         )
     raw_messages = answer.get("messages")
     if not isinstance(raw_messages, list) or not raw_messages:
-        raise ConfigError("Mira returned no commentary messages")
-    allowed = {"builder", "inspector", "reporter"}
+        raise ConfigError(f"Mira returned no {noun} messages")
     queue = Queue(paths)
     recorded: list[dict[str, Any]] = []
     for index, item in enumerate(raw_messages[:3]):
@@ -270,7 +294,7 @@ def generate_commentary(paths: WorksPaths, task_id: str) -> list[dict[str, Any]]
             continue
         role = str(item.get("role") or "").strip().lower()
         text = str(item.get("text") or "").strip()
-        if role not in allowed or not text:
+        if role not in roles or not text:
             continue
         data = {
             "role": role,
@@ -281,11 +305,45 @@ def generate_commentary(paths: WorksPaths, task_id: str) -> list[dict[str, Any]]
             "by": "mira",
             "generated": True,
         }
-        queue.append(task_id, "thread.commentary", data)
+        if kind == "discussion":
+            stance = str(item.get("stance") or "").strip().lower()
+            if stance in STANCES:
+                data["stance"] = stance
+        queue.append(task_id, f"thread.{kind}", data)
         recorded.append(data)
     if not recorded:
-        raise ConfigError("Mira returned no usable commentary")
+        raise ConfigError(f"Mira returned no usable {noun}")
     return recorded
+
+
+def generate_commentary(paths: WorksPaths, task_id: str) -> list[dict[str, Any]]:
+    """Generate three short advisory messages from the recorded run.
+
+    The model writes commentary, never evidence. Each message is stored as `thread.commentary`
+    with `generated: true`, so the UI can mark it as model output.
+    """
+    return _generate_messages(
+        paths,
+        task_id,
+        kind="commentary",
+        roles=("builder", "inspector", "reporter"),
+        noun="commentary",
+    )
+
+
+def generate_discussion(paths: WorksPaths, task_id: str) -> list[dict[str, Any]]:
+    """Generate an advisory inspector/challenger/reporter discussion.
+
+    Each message carries an optional stance and is stored as `thread.discussion` with
+    `generated: true`. The discussion is labelled AI text and cannot change the verdict or a gate.
+    """
+    return _generate_messages(
+        paths,
+        task_id,
+        kind="discussion",
+        roles=("inspector", "challenger", "reporter"),
+        noun="discussion",
+    )
 
 
 def ask_mira_stream(paths: WorksPaths, task_id: str, question: str) -> Iterator[dict[str, Any]]:

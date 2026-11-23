@@ -122,7 +122,7 @@ uv run works memory recall --ppma http://127.0.0.1:8766
 | **Loop** | Queue, policy, disposable worktree, reproduce, build, check, proof and ledger work end to end. |
 | **Live builder** | Real `openjiuwen` Claude Code harness on an Anthropic-compatible endpoint; model, tokens, USD and prompt hash are recorded. |
 | **Proof** | Computed evidence page and immutable ledger row; P0/P1 verdict, policy, risk, cost, diff and residual gaps. |
-| **GUI** | Story is the default human reading; Evidence is one click away; a Release view carries the packet, delivery, confirmation, run history and team verdict; a Thread worklog adds inline questions, a real-model `Ask Mira` and labelled AI commentary. Factory shows metrics and the ledger; artifacts open in a lightbox; settings control theme, density and polling. |
+| **GUI** | Story is the default human reading; Evidence is one click away; a Release view carries the packet, delivery, confirmation, run history and team verdict; a Thread worklog adds inline questions, a real-model `Ask Mira`, labelled AI commentary and an advisory team discussion. Factory shows metrics and the ledger; artifacts open in a lightbox; settings control theme, density and polling. |
 | **Readiness** | `works readiness` runs lint, format, types, fast tests, product verify, architecture and import boundaries; the report carries the internal import graph and fails on cycles, and a red gate blocks live runs. |
 | **Feature map** | `features/<product>.yaml`; Evidence shows covered, failed and not-covered features. |
 | **Memory** | When configured, finished runs are reported to PPMA; older runs can be backfilled; `works memory recall` reads statements. |

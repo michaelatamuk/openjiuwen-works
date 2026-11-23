@@ -644,6 +644,8 @@ def _thread_message(event: Event, task: Task) -> dict[str, Any] | None:
     facts: list[str] = []
     tone = ""
     card: dict[str, Any] | None = None
+    generated_label = ""
+    stance = ""
 
     if kind == "task.created":
         role = {
@@ -850,7 +852,20 @@ def _thread_message(event: Event, task: Task) -> dict[str, Any] | None:
             "reporter": "Reporter commentary",
         }.get(role, "Mira commentary")
         body = str(data.get("text") or "")
-        facts = ["AI commentary", f"model {data.get('model') or '—'}"]
+        facts = ["AI commentary", f"model {data.get('model') or '-'}"]
+        generated_label = "AI commentary"
+        card = None
+    elif kind == "thread.discussion":
+        role = str(data.get("role") or "mira")
+        title = {
+            "inspector": "Inspector discusses",
+            "challenger": "Challenger discusses",
+            "reporter": "Reporter discusses",
+        }.get(role, "Team discussion")
+        body = str(data.get("text") or "")
+        stance = str(data.get("stance") or "")
+        facts = ["AI discussion", f"model {data.get('model') or '-'}"]
+        generated_label = "AI discussion"
         card = None
     elif kind == "thread.note":
         role = "person"
@@ -940,6 +955,8 @@ def _thread_message(event: Event, task: Task) -> dict[str, Any] | None:
         "facts": [item for item in facts if item],
         "tone": tone,
         "generated": bool(data.get("generated")),
+        "generated_label": generated_label,
+        "stance": stance,
         "card": card,
     }
 
@@ -1445,6 +1462,15 @@ class Handler(BaseHTTPRequestHandler):
                 from ..agent_chat import generate_commentary
 
                 messages = generate_commentary(self.paths, task_id)
+                self._json(
+                    HTTPStatus.OK,
+                    {"ok": True, "action": action, "messages": messages},
+                )
+                return
+            if action == "discussion":
+                from ..agent_chat import generate_discussion
+
+                messages = generate_discussion(self.paths, task_id)
                 self._json(
                     HTTPStatus.OK,
                     {"ok": True, "action": action, "messages": messages},

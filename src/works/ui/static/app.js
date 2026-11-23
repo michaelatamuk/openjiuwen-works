@@ -1445,13 +1445,19 @@ function renderThreadMessage(message) {
   const facts = (message.facts || [])
     .map((fact) => `<span class="chip">${esc(fact)}</span>`)
     .join(" ");
-  const badge = message.generated ? `<span class="ai-badge">AI commentary</span>` : "";
-  return `<div class="thread-msg ${esc(role)} ${esc(message.tone || "")}${message.generated ? " generated" : ""}">
+  const badge = message.generated
+    ? `<span class="ai-badge">${esc(message.generated_label || "AI text")}</span>`
+    : "";
+  const stance = message.stance
+    ? `<span class="ai-stance ${esc(message.stance)}">${esc(message.stance)}</span>`
+    : "";
+  const mode = message.type === "thread.discussion" ? " discussion" : "";
+  return `<div class="thread-msg ${esc(role)} ${esc(message.tone || "")}${message.generated ? " generated" : ""}${mode}">
     <div class="thread-avatar" aria-hidden="true">${esc(threadRoleLetter[role] || "·")}</div>
     <div class="thread-body">
       <div class="thread-meta">
         <b>${esc(threadRoleLabel[role] || role)}</b>
-        ${badge}
+        ${badge}${stance}
         <time>${esc(new Date(message.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))}</time>
       </div>
       <h3>${esc(message.title)}</h3>
@@ -1564,7 +1570,10 @@ function renderThread(detail) {
     : `<span class="mono">${esc(detail.task.source.ref)}</span>`;
   const commentary =
     state.writable && ai.available
-      ? `<button type="button" class="btn ghost" data-action="commentary">Generate commentary</button>`
+      ? `<div class="thread-head-actions">
+          <button type="button" class="btn ghost" data-action="discussion">Team discussion</button>
+          <button type="button" class="btn ghost" data-action="commentary">Generate commentary</button>
+        </div>`
       : "";
   return `<div class="thread-layout">
     <div class="thread-main">
@@ -2359,6 +2368,16 @@ function bindView() {
         "commentary",
         {},
         (result) => `${(result.messages || []).length} commentary message(s) added.`,
+      ),
+    );
+  });
+  $$("#detail [data-action='discussion']").forEach((button) => {
+    button.addEventListener("click", () =>
+      performAction(
+        button,
+        "discussion",
+        {},
+        (result) => `${(result.messages || []).length} discussion message(s) added.`,
       ),
     );
   });

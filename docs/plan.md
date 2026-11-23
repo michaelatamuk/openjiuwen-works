@@ -682,6 +682,9 @@ Internal only: nothing is published to the upstream fork until M2 is green.
     composer, AI commentary for builder/inspector/reporter, run history and comparison, a Factory
     metrics/ledger dialog, export links, artifact lightbox and before/after slider, settings,
     and an event drawer.
+  - 2026-11-23: added an advisory `Team discussion` layer: the model writes inspector, challenger
+    and reporter messages with a support / concern / block stance, stored as `thread.discussion`
+    and labelled AI text. It cannot change a verdict or open a gate.
 - [ ] **T1.25** Verification cost split: builder, challenger and verifier tokens/USD in `run.json`
   and the proof; verification share is reported next to the total. **S**
 - [x] **T1.26** PPMA memory backfill: `works memory backfill` reports already-finished runs from

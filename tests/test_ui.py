@@ -655,3 +655,40 @@ def test_run_history_and_export(paths, submit) -> None:
             assert response.read().decode("utf-8").replace("\r\n", "\n") == "# Proof\n"
         status, _ = get(base, f"/api/tasks/{task.id}/export/absent")
         assert status == 404
+
+
+def test_discussion_action_records_advisory_messages(paths, submit, monkeypatch) -> None:
+    from works.queue import Queue
+
+    class FakeRun:
+        def __init__(self, stdout: str) -> None:
+            self.stdout = stdout
+            self.stderr = ""
+            self.returncode = 0
+
+    task = submit()
+    monkeypatch.setattr("works.agent_chat._command", lambda: ["python", "worker.py"])
+    monkeypatch.setattr("works.agent_chat._environment", lambda: {})
+    monkeypatch.setattr(
+        "works.agent_chat.subprocess.run",
+        lambda *a, **k: FakeRun(
+            json.dumps(
+                {
+                    "type": "done",
+                    "messages": [
+                        {"role": "inspector", "stance": "support", "text": "Evidence is enough."},
+                        {"role": "challenger", "stance": "concern", "text": "Mobile is untested."},
+                    ],
+                    "model": "m",
+                    "tokens": 5,
+                }
+            )
+        ),
+    )
+    with running(paths, write=True) as base:
+        status, body = post(base, "/api/actions", {"action": "discussion", "task_id": task.id})
+        assert status == 200, body
+        assert json.loads(body)["messages"][1]["stance"] == "concern"
+    events = [event for event in Queue(paths).events(task.id) if event.type == "thread.discussion"]
+    assert len(events) == 2
+    assert events[0].data["generated"] is True

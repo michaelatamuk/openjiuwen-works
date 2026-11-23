@@ -37,6 +37,22 @@ Return JSON only in this shape:
 ]}
 """
 
+DISCUSSION_SYSTEM = """You are Mira's advisory team-discussion layer inside openJiuwen Works.
+Write exactly three short messages about the recorded run: inspector, challenger, reporter.
+The inspector says whether the recorded evidence supports the verdict. The challenger looks for
+the strongest gap or reason to block. The reporter says what a person would be told.
+Use only the run context. Never invent a commit, test, gate, release or delivery. Each message is
+1-2 sentences, plain text, no markdown. Give each message a stance: support, concern or block.
+A stance is an opinion, not a decision: discussion is not evidence and cannot change a verdict,
+open a gate, approve a release or write anything outside this worklog.
+Return JSON only in this shape:
+{"messages": [
+  {"role": "inspector", "stance": "support", "text": "..."},
+  {"role": "challenger", "stance": "concern", "text": "..."},
+  {"role": "reporter", "stance": "support", "text": "..."}
+]}
+"""
+
 # openjiuwen logs to stdout; keep stdout as protocol and send library output to stderr.
 PROTOCOL = sys.stdout
 sys.stdout = sys.stderr
@@ -59,8 +75,9 @@ def _config() -> tuple[str, str, str]:
 def _messages(payload: dict[str, Any]) -> list[dict[str, str]]:
     context = str(payload.get("context") or "")
     kind = str(payload.get("kind") or "ask")
-    if kind == "commentary":
-        messages = [{"role": "system", "content": COMMENTARY_SYSTEM}]
+    if kind in ("commentary", "discussion"):
+        system = DISCUSSION_SYSTEM if kind == "discussion" else COMMENTARY_SYSTEM
+        messages = [{"role": "system", "content": system}]
         messages.append(
             {
                 "role": "user",
@@ -128,7 +145,7 @@ async def _run(payload: dict[str, Any]) -> None:
     kind = str(payload.get("kind") or "ask")
     stream = bool(payload.get("stream"))
     _emit({"type": "start", "model": model_name})
-    if kind == "commentary":
+    if kind in ("commentary", "discussion"):
         result = await model.invoke(messages, max_tokens=900)
         text = str(getattr(result, "content", result) or "")
         usage = getattr(result, "usage_metadata", None)

@@ -874,7 +874,7 @@ dialog dd { margin: 0; }
 .thread-msg.mira .thread-avatar { background: var(--violet); color: #fff; border-color: var(--violet); }
 .thread-ask { border-color: #ddd6fe; background: linear-gradient(180deg, var(--panel), var(--violet-soft)); }
 .thread-ask textarea { min-height: 58px; }
-.ask-live-text:empty::after { content: "…"; color: var(--faint); }
+.ask-live-text:empty::after { content: "ï¿½"; color: var(--faint); }
 
 /* Thread header, inline questions, composer modes, run dialog */
 .thread-head-main { min-width: 0; }
@@ -891,6 +891,12 @@ dialog dd { margin: 0; }
 .composer-modes button.active { background: var(--panel); color: var(--violet-text); box-shadow: 0 1px 3px rgb(17 24 39 / .08); }
 .thread-msg.generated .thread-body { border-style: dashed; border-color: #c4b5fd; background: linear-gradient(180deg, var(--panel), var(--violet-soft)); }
 .ai-badge { display: inline-block; border-radius: 5px; padding: 2px 5px; background: var(--violet-soft); color: var(--violet-text); font: 700 8px/1.2 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+.ai-stance { display: inline-block; border-radius: 5px; padding: 2px 5px; font: 700 8px/1.2 var(--mono); letter-spacing: .08em; text-transform: uppercase; background: var(--panel-3); color: var(--muted); }
+.ai-stance.support { background: var(--green-soft); color: var(--green); }
+.ai-stance.concern { background: var(--amber-soft); color: var(--amber); }
+.ai-stance.block { background: var(--red-soft); color: var(--red); }
+.thread-head-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.thread-msg.discussion .thread-body { border-left: 2px solid #7c3aed; }
 .run-dialog-body { max-height: 55vh; overflow: auto; background: var(--panel-3); border-radius: 10px; padding: 12px; font: 11px/1.6 var(--mono); white-space: pre-wrap; }
 
 /* Factory, compare slider, lightbox, settings and event drawer */

@@ -226,3 +226,27 @@ def test_commentary_is_marked_as_generated(paths) -> None:
     assert message["title"] == "Builder commentary"
     assert message["generated"] is True
     assert "AI commentary" in message["facts"]
+
+
+def test_discussion_is_labelled_distinctly_from_commentary(paths) -> None:
+    task = _proved(paths)
+    message = _thread_message(
+        event(
+            "thread.discussion",
+            {
+                "role": "challenger",
+                "stance": "block",
+                "text": "Mobile is untested.",
+                "model": "m",
+                "generated": True,
+            },
+        ),
+        task,
+    )
+    assert message is not None
+    assert message["role"] == "challenger"
+    assert message["title"] == "Challenger discusses"
+    assert message["generated"] is True
+    assert message["generated_label"] == "AI discussion"
+    assert message["stance"] == "block"
+    assert "AI discussion" in message["facts"]
