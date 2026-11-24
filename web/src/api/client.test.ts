@@ -54,4 +54,21 @@ describe("client", () => {
     const init = calls[0][1];
     expect((init.headers as Record<string, string>)["Idempotency-Key"]).toBeTruthy();
   });
+
+  it("surfaces read-only writes as a 403 API error", async () => {
+    const fetchMock = vi.fn(async () =>
+      reply(
+        { ok: false, error: { code: "read_only", message: "the daemon is read-only" } },
+        403,
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const error = await api.action({ action: "release", task_id: "t-1" }).catch(
+      (caught: unknown) => caught,
+    );
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).status).toBe(403);
+    expect((error as ApiError).code).toBe("read_only");
+  });
 });

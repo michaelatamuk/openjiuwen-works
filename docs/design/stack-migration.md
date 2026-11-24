@@ -358,7 +358,7 @@ performance gate is tracked in Phase 8.
 
 **Gate (met):** `npm run typecheck && npm test && npm run build`.
 
-### Phase 5b — screens (transport done, parity tests pending)
+### Phase 5b - screens (done)
 
 - [x] The shell, Queue, Story, Evidence, Release, Session, Settings and dialogs now read through the
   typed client: tasks/detail/health/maps/metrics/ledger/settings/create/import/action/readiness.
@@ -367,12 +367,12 @@ performance gate is tracked in Phase 8.
 - [x] Session uses the streamed ask call and actions for context/review/commentary; Evidence links
   exports through `/api/v1`.
 - [x] `web/src/lib/api.js` deleted; `mira.svg` moved to `web/public` so the bundle serves it.
-- [ ] Automated per-screen parity tests: the matrix in §18 is still a manual checklist; only the
-  client/hook layers have tests.
-- [ ] Tailwind/shadcn were not adopted; the existing CSS is kept, as decided.
+- [x] Automated parity tests cover the §18 matrix: Queue, New task, Import, Story, Evidence, Release,
+  Session, Settings, Factory, overlays/Palette/Help and read-only writes. Tests live beside the
+  screens and use the canonical contract fixtures.
+- [x] Tailwind/shadcn were not adopted; the existing CSS is kept, as decided.
 
-**Gate (met for transport):** `npm run typecheck && npm test && npm run build`; a manual parity
-pass against the matrix is still required before calling the UI complete.
+**Gate (met):** `npm run typecheck && npm test && npm run build`; every §18 row has a test.
 
 ### Phase 6 - processes, runs, Windows lifecycle (done)
 
@@ -528,17 +528,17 @@ tests/ unit/ contract/ integration/ e2e/
 
 | Screen | Files | API | Actions | Test |
 |---|---|---|---|---|
-| Queue + grouping | `features/queue/*` | `GET /tasks` | — | list/filter/sort |
-| New task | `dialogs/task-composer` | `POST /tasks` | — | create + duplicate |
-| Import | `dialogs/import` | `POST /sources` | job | counts + duplicate |
-| Story | `features/story/*` | `GET /tasks/{id}`, events | — | states, replay, copy link |
-| Evidence | `features/evidence/*` | detail, `/readiness`, exports, artifacts | readiness job | cards + downloads |
-| Release | `features/release/*` | detail, `/actions` release/deliver/confirm/deploy | jobs | each job state |
-| Session | `features/session/*` | detail, `/ask/stream`, `/actions` | ask stream, commentary, discussion, add-context | stream + jobs |
-| Settings | `features/settings/*` | `/settings/builder` | save | validation + apply |
-| Factory | `dialogs/factory` | `/metrics`, `/ledger` | — | payload |
-| Run/Event/Palette/Help | dialogs | detail | — | open/close |
-| Read-only | shell | health | writes 403 | mode |
+| Queue + grouping | `features/queue/*` | `GET /tasks` | - | `Queue.test.jsx`: list/filter/sort/select/read-only |
+| New task | `dialogs/task-composer` | `POST /tasks` | - | `task-composer.test.jsx`: create + duplicate |
+| Import | `dialogs/import` | `POST /sources` | job | `import.test.jsx`: counts + failure |
+| Story | `features/story/*` | `GET /tasks/{id}`, events | - | `Story.test.jsx`: states, replay, copy link, present |
+| Evidence | `features/evidence/*` | detail, `/readiness`, exports, artifacts | readiness job | `Evidence.test.jsx`: cards + v1 exports + downloads |
+| Release | `features/release/*` | detail, `/actions` release/deliver/confirm/deploy | jobs | `Release.test.jsx`: gate + each job |
+| Session | `features/session/*` | detail, `/ask/stream`, `/actions` | ask stream, commentary, discussion, add-context | `Thread.test.jsx`: stream + add-context + note fallback |
+| Settings | `features/settings/*` | `/settings/builder` | save | `SettingsDialog.test.jsx`: payload + validation + read-only |
+| Factory | `dialogs/factory` | `/metrics`, `/ledger` | - | `factory.test.jsx`: payload + error |
+| Run/Event/Palette/Help | dialogs | detail | - | `overlays.test.jsx`: open/close + palette filtering |
+| Read-only | shell | health | writes 403 | `Queue.test.jsx`, `SettingsDialog.test.jsx`, `client.test.ts` |
 
 ## 19. Decisions
 
