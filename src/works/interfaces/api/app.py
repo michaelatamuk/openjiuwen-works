@@ -43,6 +43,7 @@ from works.interfaces.api.routes import (
     jobs,
     maps,
     observability,
+    ops,
     pair,
     readiness,
     runs,
@@ -143,6 +144,7 @@ def create_app(
         jobs.router,
         maps.router,
         observability.router,
+        ops.router,
         downloads.router,
     ):
         app.include_router(router, prefix="/api/v1")

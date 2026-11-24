@@ -5,6 +5,7 @@ import queue as thread_queue
 import time
 from itertools import islice
 
+import pytest
 from fastapi.testclient import TestClient
 
 from works.adapters.queue.store import Queue
@@ -138,3 +139,15 @@ def test_twenty_subscribers_receive_the_same_event(paths) -> None:
     finally:
         for channel in channels:
             hub.unsubscribe(channel)
+
+
+def test_the_event_hub_caps_subscribers(paths) -> None:
+    from works.domain.errors import UnavailableError
+
+    hub = EventHub(paths, max_subscribers=2)
+    first = hub.subscribe()
+    second = hub.subscribe()
+    with pytest.raises(UnavailableError):
+        hub.subscribe()
+    hub.unsubscribe(first)
+    hub.unsubscribe(second)

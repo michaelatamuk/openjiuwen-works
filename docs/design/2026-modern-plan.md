@@ -96,8 +96,8 @@ the primary Windows lifecycle path going untested.
 - [ ] **M1.1** Add `py.typed` and keep `mypy --strict`; add `disallow_any_explicit = true` and
   `warn_return_any = true`. Remove `Any` from public interfaces. **Do not add a second type
   checker** (pyright/ty) just to duplicate mypy.
-- [x] **M1.2a** Queue and Story converted to typed `.tsx`; `tsc`, Vitest and the bundle are green.
-  Evidence/Release/Session/Settings and `app/*` remain.
+- [x] **M1.2a** Queue, Story, Evidence and Release are typed `.tsx`; `tsc`, Vitest and the bundle
+  are green. Session/Settings and `app/*` remain.
 - [ ] **M1.2** Complete the `.tsx` migration for the remaining screens and `app/*`.
 - [ ] **M1.3** Turn on `checkJs`, then `allowJs: false`; include `vite.config.js`/`vitest.setup.js`
   only when they are migrated. Keep the committed `dist` gate green at every step.
@@ -168,13 +168,13 @@ the primary Windows lifecycle path going untested.
 SSE reader wedging the daemon.  
 **Proof:** trace-id log schema, JSON metrics, liveness/readiness tests, slow-consumer test.
 
-- [ ] **M5.1** Add `trace_id` to `Job.as_dict()` and job start/finish logs alongside
+- [x] **M5.1** Add `trace_id` to `Job.as_dict()` and job start/finish logs alongside
   `request_id`/`job_id`; a log-schema test enforces the fields.
-- [ ] **M5.2** Split `/health/live` (cheap) from `/health/ready` (builder/provider diagnostics);
+- [x] **M5.2** Split `/health/live` (cheap) from `/health/ready` (builder/provider diagnostics);
   keep `/health` compatible for now. Remove health from the p95 gate until split.
-- [ ] **M5.3** Extend the existing JSON `/metrics` (or add one if absent) with named counters for job
+- [x] **M5.3** Extend the existing JSON `/metrics` (or add one if absent) with named counters for job
   outcomes, queue depth, SSE clients and p95 buckets; **no Prometheus/OTel dependency**.
-- [ ] **M5.4** Add a max SSE client count and a slow-consumer policy with a test that a non-reading
+- [x] **M5.4** Add a max SSE client count and a slow-consumer policy with a test that a non-reading
   client cannot wedge the event loop or exhaust threads.
 - [ ] **M5.5** `works doctor --trace`/debug bundle: daemon.json, jobs, logs, versions, index health,
   disk state; a redaction test proves no token/cookie/key is included.
@@ -210,7 +210,7 @@ invariants.
   `taskkill /F`, truncated JSON, interrupted `atomic_write`) and Linux (`SIGKILL`). Assert terminal
   state, owner released, exactly-once fake delivery/comment/deploy, no orphan child, readable
   restart explanation.
-- [ ] **M7.3** `works backup`/`works restore`: a home archive (events, runs, ledger, settings) and a
+- [x] **M7.3** `works backup`/`works restore`: a home archive (events, runs, ledger, settings) and a
   restore test that preserves evidence and task state.
 - [ ] **M7.4** Retention: prune terminal jobs while keeping a summary; compact/rotate per-task event
   logs only with an explicit policy; `works doctor` reports disk use; index rebuild has a budget.
@@ -223,7 +223,7 @@ invariants.
 **Proof:** 3.13 CI, Renovate, SBOM, `npm audit`, clean-venv wheel smoke.
 
 - [ ] **M8.1** 3.13 matrix (M0.4); decide 3.14 only after `requires-python` and dependencies allow.
-- [ ] **M8.2** Renovate (better than Dependabot for `uv`) for Python and npm, grouped updates.
+- [x] **M8.2** Renovate (better than Dependabot for `uv`) for Python and npm, grouped updates.
 - [ ] **M8.3** CycloneDX SBOM published with the wheel; checksums; `npm audit --omit=dev`/OSV.
 - [ ] **M8.4** Clean 3.13 venv wheel install with `--require-hashes`, `works doctor`, daemon
   start/status/stop; no signed-wheel theater until a real publish workflow exists.
@@ -236,7 +236,7 @@ invariants.
 **Prevents:** “works on my machine” checks and contradictory docs.  
 **Proof:** Makefile targets, mutation gate, docs link check.
 
-- [ ] **M9.1** Extend the existing `Makefile` (not `just`) with `e2e`, `wheel`, `bench`; keep
+- [x] **M9.1** Extend the existing `Makefile` (not `just`) with `e2e`, `wheel`, `bench`; keep
   `check`/`security`; pre-commit already exists.
 - [ ] **M9.2** Keep the mutation gate ≥70% and include the new index/job modules in `only_mutate`.
 - [ ] **M9.3** Docs: fix contradictions (M0.6), add contributor guide updates, link-check script;

@@ -129,6 +129,16 @@ def test_the_state_directory_exists(paths) -> None:
     assert paths.state.is_dir()
 
 
+def test_a_job_carries_a_trace_id(paths) -> None:
+    runner = JobRunner(paths, Queue(paths))
+    try:
+        job = runner.submit("demo", lambda _ctx: "ok")
+        assert len(job.trace_id) == 16
+        assert job.as_dict()["trace_id"] == job.trace_id
+    finally:
+        runner.shutdown()
+
+
 def test_a_job_timeout_fails_and_ignores_the_late_result(paths) -> None:
     release = threading.Event()
 

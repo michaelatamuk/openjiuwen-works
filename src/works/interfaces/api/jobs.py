@@ -58,6 +58,7 @@ class Job:
     log_tail: str = ""
     cancelable: bool = True
     timeout_s: float | None = None
+    trace_id: str = field(default_factory=lambda: secrets.token_hex(8))
 
     def as_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -191,6 +192,7 @@ class JobRunner:
                     "task_id": job.task_id,
                     "action": job.action,
                     "status": status,
+                    "trace_id": job.trace_id,
                     "duration_ms": int((time.time() - started) * 1000),
                 },
             )
@@ -238,6 +240,15 @@ class JobRunner:
                             self._queue.release(job.task_id, owner)
                     except NotFoundError:
                         pass
+
+    def metrics(self) -> dict[str, int]:
+        with self._guard:
+            counts: dict[str, int] = dict.fromkeys(
+                ("queued", "running", "succeeded", "failed", "cancelled"), 0
+            )
+            for job in self._jobs.values():
+                counts[job.status] = counts.get(job.status, 0) + 1
+            return counts
 
     def shutdown(self) -> None:
         with self._guard:

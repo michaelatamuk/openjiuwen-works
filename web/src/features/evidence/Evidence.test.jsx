@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { Evidence } from "./Evidence.jsx";
+import { Evidence } from "./Evidence";
 import { provedDetail } from "../../test/fixtures";
 
 describe("Evidence", () => {

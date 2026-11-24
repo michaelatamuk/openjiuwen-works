@@ -157,3 +157,23 @@ real-time scanning; the code retries, it does not ignore the failure.
 **Why:** a missing verifier is not a pass. The supervisor does not degrade to "trust the builder".
 
 **Do:** fix the container or provider, then start a new task. Blocked is terminal in v0 by design.
+
+## Back up or move a home
+
+**Do:** `works --home <home> backup --out works-backup.tar.gz`. The archive contains `queue/`,
+`runs/`, `flows/`, `ledger.jsonl` and the workspace settings; it deliberately excludes
+`.works/state` (tokens, device hashes, job journals) and `worktrees/` (disposable).
+
+**Restore:** `works --home <new-home> restore --from works-backup.tar.gz`. A non-empty home needs
+`--force`; the restore replaces queue/runs/flows and keeps the destination's own state directory.
+
+## Start the daemon at logon on Windows
+
+Use Task Scheduler (or a service wrapper) with the venv Python:
+
+```text
+schtasks /Create /SC ONLOGON /TN "openJiuwen Works" /TR ""C:\path	o\.venv\Scripts\python.exe" -m works --home C:\path	o\workspace daemon start --write --port 8765"
+```
+
+Run it once, verify with `works daemon status`, then reboot and verify the same pid/URL. A remote
+bind additionally needs `--allow-remote --trusted-host` and private ACLs on `.works/state`.

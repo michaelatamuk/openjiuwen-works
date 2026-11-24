@@ -1,4 +1,4 @@
-.PHONY: check lint format type test unit integration cov bench security gitleaks demo
+.PHONY: check lint format type test unit integration cov bench wheel security gitleaks demo
 
 check: lint format type cov
 
@@ -25,6 +25,12 @@ cov:
 
 bench:
 	uv run pytest tests/integration/test_performance.py -q -m slow
+	uv run python scripts/bench_api.py
+
+wheel:
+	uv build --wheel
+	uv run python scripts/check_wheel.py dist/*.whl
+	uv run python scripts/smoke_wheel.py --wheel dist/*.whl
 
 security:
 	uv run bandit -q -r src -c pyproject.toml

@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from works.config.paths import WorksPaths
+from works.domain.errors import UnavailableError
 
 Listener = Callable[[list["Change"]], None]
 
@@ -162,13 +163,14 @@ class SseEvent:
 class EventHub:
     """Map changes to named events, keep a replay ring and fan out to SSE clients."""
 
-    def __init__(self, paths: WorksPaths, *, ring: int = 200) -> None:
+    def __init__(self, paths: WorksPaths, *, ring: int = 200, max_subscribers: int = 64) -> None:
         self._state = LiveState(paths)
         self._state.set_listener(self._publish_changes)
         self._lock = threading.Lock()
         self._counter = 0
         self._ring: deque[SseEvent] = deque(maxlen=ring)
         self._subscribers: set[thread_queue.Queue[SseEvent]] = set()
+        self._max_subscribers = max_subscribers
         self.epoch = secrets.token_hex(4)
 
     @property
@@ -198,12 +200,18 @@ class EventHub:
     def subscribe(self) -> thread_queue.Queue[SseEvent]:
         channel: thread_queue.Queue[SseEvent] = thread_queue.Queue(maxsize=128)
         with self._lock:
+            if len(self._subscribers) >= self._max_subscribers:
+                raise UnavailableError(f"too many live subscribers (limit {self._max_subscribers})")
             self._subscribers.add(channel)
         return channel
 
     def unsubscribe(self, channel: thread_queue.Queue[SseEvent]) -> None:
         with self._lock:
             self._subscribers.discard(channel)
+
+    def subscriber_count(self) -> int:
+        with self._lock:
+            return len(self._subscribers)
 
     def events_after(self, last_id: int | None) -> tuple[list[SseEvent], bool]:
         """Return missed events, or a gap flag when the ring no longer covers the client."""

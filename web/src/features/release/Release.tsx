@@ -1,15 +1,140 @@
 import { useState } from "react";
+
 import { fmtMs, fmtUsd, shortSha, timeAgo } from "../../lib/format.js";
 import { Card, Pill, Table } from "../../ui/primitives.jsx";
 
-function gateText(value) {
+export type ReleaseGateDecision = {
+  decision?: string | null;
+  gate?: string | null;
+  by?: string | null;
+};
+
+export type ReleaseGateValue = string | ReleaseGateDecision | null;
+
+export type ReleasePacket = {
+  task_id?: string;
+  run_id?: string | null;
+  commit?: string | null;
+  proof_sha256?: string | null;
+  plan_gate?: ReleaseGateValue;
+  release_gate?: ReleaseGateValue;
+  ready?: boolean;
+  released?: boolean;
+  blockers?: string[];
+};
+
+export type ReleaseDelivery = {
+  commit?: string | null;
+  branch?: string | null;
+  pr_url?: string | null;
+  comment_url?: string | null;
+  dry_run?: boolean;
+  provider?: string;
+  tracker?: string | null;
+};
+
+export type ReleaseDeploymentStatus = "deployed" | "failed" | "dry_run";
+
+export type ReleaseDeployment = {
+  status?: ReleaseDeploymentStatus | null;
+  environment?: string | null;
+  commit?: string | null;
+  output_tail?: string | null;
+};
+
+export type ReleaseConfirmation = {
+  ok?: boolean;
+  target?: string | null;
+  output_sha256?: string | null;
+};
+
+export type ReleaseRunSummary = {
+  run_id?: string;
+  base_commit?: string | null;
+  verdict?: string | null;
+  risk?: string | null;
+  duration_ms?: number;
+  usd?: number;
+};
+
+export type ReleaseRun = {
+  run_id?: string;
+  finished_at?: string | null;
+  state?: string | null;
+  base_commit?: string | null;
+};
+
+export type ReleaseEvidence = {
+  proof_sha256?: string | null;
+};
+
+export type ReleaseTeamReview = {
+  verdict?: string | null;
+  team?: string | null;
+  blockers?: string[];
+};
+
+export type LaixVerdict = string | { verb?: string | null } | null;
+
+export type LaixComparison = {
+  gate?: string;
+  /** The decision.shadow event writes `agree`; the screen reads `agrees`. */
+  agree?: boolean | null;
+  agrees?: boolean | null;
+  error?: string | null;
+  shadow?: unknown;
+  deterministic?: LaixVerdict;
+  candidate?: LaixVerdict;
+  reason_codes?: string[];
+  reasons?: string[];
+};
+
+export type ReleaseDetail = {
+  release?: ReleasePacket | null;
+  runs?: ReleaseRunSummary[] | null;
+  run?: ReleaseRun | null;
+  evidence?: ReleaseEvidence | null;
+  delivery?: ReleaseDelivery | null;
+  deployment?: ReleaseDeployment | null;
+  confirmation?: ReleaseConfirmation | null;
+  team?: { latest?: ReleaseTeamReview | null; history?: unknown[] } | null;
+  verifier?: { name?: string; isolation?: string } | null;
+  laix?: LaixComparison[] | null;
+};
+
+export type ReleaseActionBody = Record<string, unknown>;
+
+export type ReleaseProps = {
+  detail: ReleaseDetail;
+  onAction: (action: string, body?: ReleaseActionBody) => unknown;
+  onShowRuns: () => void;
+  onShowRun: () => void;
+  onToast: (message: string) => void;
+};
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function verdictText(value: LaixVerdict | undefined): string {
+  if (!value) return "—";
+  if (typeof value === "string") return value;
+  return value.verb || "—";
+}
+
+function gateText(value: ReleaseGateValue | undefined): string {
   if (!value) return "NOT YET";
   if (typeof value === "string") return value;
   const decision = String(value.decision || value.gate || "").toUpperCase();
   return value.by ? `${decision} · ${value.by}` : decision || "NOT YET";
 }
 
-function Gate({ label, value }) {
+type GateProps = {
+  label: string;
+  value?: ReleaseGateValue;
+};
+
+function Gate({ label, value }: GateProps) {
   const text = gateText(value);
   const ready = text.toLowerCase().includes("approved");
   return (
@@ -20,7 +145,7 @@ function Gate({ label, value }) {
   );
 }
 
-export function Release({ detail, onAction, onShowRuns, onShowRun, onToast }) {
+export function Release({ detail, onAction, onShowRuns, onShowRun, onToast }: ReleaseProps) {
   const release = detail.release || {};
   const runs = detail.runs || [];
   const [provider, setProvider] = useState("none");
@@ -33,7 +158,7 @@ export function Release({ detail, onAction, onShowRuns, onShowRun, onToast }) {
     try {
       await onAction("deliver", { provider, tracker: tracker || null, dry_run: dryRun });
     } catch (error) {
-      onToast(`Delivery failed: ${error.message}`);
+      onToast(`Delivery failed: ${errorMessage(error)}`);
     }
   }
 
@@ -45,7 +170,7 @@ export function Release({ detail, onAction, onShowRuns, onShowRun, onToast }) {
         close: false,
       });
     } catch (error) {
-      onToast(`Confirmation failed: ${error.message}`);
+      onToast(`Confirmation failed: ${errorMessage(error)}`);
     }
   }
 
@@ -160,7 +285,7 @@ export function Release({ detail, onAction, onShowRuns, onShowRun, onToast }) {
           ) : <p className="muted small">Not run yet.</p>}
           <button type="button" className="btn ghost" onClick={() => onAction("team-verify")}>Verify with team</button>
         </Card>
-        <Card title="Verifier">
+        <Card title="Verifier" actions={null}>
           <dl className="kv">
             <dt>Name</dt><dd>{detail.verifier?.name || "local"}</dd>
             <dt>Isolation</dt><dd>{detail.verifier?.isolation || "process"}</dd>
@@ -175,14 +300,14 @@ export function Release({ detail, onAction, onShowRuns, onShowRun, onToast }) {
             </dl>
           ) : <p className="muted small">No run yet.</p>}
         </Card>
-        <Card title="LAIX shadow">
+        <Card title="LAIX shadow" actions={null}>
           {detail.laix?.length ? (
             <Table
               columns={["Comparison", "Deterministic", "LAIX", "Reasons"]}
               rows={detail.laix.map((event) => [
                 event.agrees == null ? "—" : event.agrees ? "agree" : "disagree",
-                event.deterministic?.verb || event.deterministic || "—",
-                event.candidate?.verb || event.candidate || "—",
+                verdictText(event.deterministic),
+                verdictText(event.candidate),
                 (event.reason_codes || event.reasons || []).join(", ") || "—",
               ])}
             />

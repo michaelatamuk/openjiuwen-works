@@ -16,3 +16,14 @@ def get_health(request: Request) -> Health:
     state: AppState = request.app.state.works
     _, payload = read.health(state.paths, writable=state.writable)
     return Health.model_validate(payload)
+
+
+@router.get("/health/live", include_in_schema=False)
+def liveness() -> dict[str, bool]:
+    """A cheap process probe; it never loads settings, providers or the builder."""
+    return {"ok": True}
+
+
+@router.get("/health/ready", response_model=Health)
+def readiness(request: Request) -> Health:
+    return get_health(request)

@@ -1129,6 +1129,24 @@
         "summary": "Get Health"
       }
     },
+    "/api/v1/health/ready": {
+      "get": {
+        "operationId": "readiness_api_v1_health_ready_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Readiness"
+      }
+    },
     "/api/v1/jobs/{job_id}": {
       "delete": {
         "operationId": "cancel_job_api_v1_jobs__job_id__delete",
@@ -1247,6 +1265,26 @@
           }
         },
         "summary": "Metrics"
+      }
+    },
+    "/api/v1/ops/metrics": {
+      "get": {
+        "operationId": "ops_metrics_api_v1_ops_metrics_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Ops Metrics Api V1 Ops Metrics Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Ops Metrics"
       }
     },
     "/api/v1/pair": {

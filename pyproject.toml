@@ -128,6 +128,8 @@ only_mutate = [
   "src/works/domain/state.py",
   "src/works/domain/policy.py",
   "src/works/adapters/queue/store.py",
+  "src/works/adapters/queue/index.py",
+  "src/works/interfaces/api/jobs.py",
 ]
 pytest_add_cli_args_test_selection = ["tests", "--ignore=tests/integration"]
 also_copy = ["flows", "fixtures"]

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { Release } from "./Release.jsx";
+import { Release } from "./Release";
 import { provedDetail, releasedDetail } from "../../test/fixtures";
 
 function draftDetail(overrides = {}) {

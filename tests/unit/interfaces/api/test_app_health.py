@@ -71,3 +71,24 @@ def test_request_id_is_echoed_or_generated(paths) -> None:
         generated = client.get("/api/v1/health")
     assert echoed.headers["x-request-id"] == "req-123"
     assert generated.headers["x-request-id"]
+
+
+def test_liveness_is_cheap_and_ready_is_full(paths) -> None:
+    app = create_app(paths)
+    with TestClient(app, base_url="http://127.0.0.1") as client:
+        live = client.get("/api/v1/health/live")
+        ready = client.get("/api/v1/health/ready")
+    assert live.status_code == 200
+    assert live.json() == {"ok": True}
+    assert ready.status_code == 200
+    assert ready.json()["root"] == str(paths.root)
+
+
+def test_ops_metrics_are_json(paths) -> None:
+    app = create_app(paths)
+    with TestClient(app, base_url="http://127.0.0.1") as client:
+        body = client.get("/api/v1/ops/metrics").json()
+    assert body["ok"] is True
+    assert set(body["jobs"]) == {"queued", "running", "succeeded", "failed", "cancelled"}
+    assert body["tasks"] == 0
+    assert body["sse_clients"] == 0

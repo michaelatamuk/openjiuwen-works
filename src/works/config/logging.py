@@ -26,6 +26,7 @@ class JsonFormatter(logging.Formatter):
             "task_id",
             "job_id",
             "request_id",
+            "trace_id",
             "step",
             "method",
             "path",

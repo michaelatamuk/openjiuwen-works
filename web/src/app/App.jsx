@@ -4,9 +4,9 @@ import {
   CompareDialog, EventDialog, FactoryDialog, HelpDialog, ImportDialog,
   Lightbox, NewTaskDialog, Palette, RunDialog, SettingsDialog,
 } from "../features/dialogs/Dialogs.jsx";
-import { Evidence } from "../features/evidence/Evidence.jsx";
+import { Evidence } from "../features/evidence/Evidence";
 import { Queue } from "../features/queue/Queue";
-import { Release } from "../features/release/Release.jsx";
+import { Release } from "../features/release/Release";
 import { Story } from "../features/story/Story";
 import { Thread } from "../features/session/Thread.jsx";
 import { Toast } from "../ui/primitives.jsx";

@@ -17,7 +17,14 @@ Message = dict[str, Any]
 Send = Callable[[Message], Awaitable[None]]
 Authorize = Callable[[Request], bool]
 
-OPEN_PATHS = frozenset({"/api/v1/health", "/api/v1/session", "/api/v1/pair"})
+OPEN_PATHS = frozenset(
+    {
+        "/api/v1/health",
+        "/api/v1/health/live",
+        "/api/v1/session",
+        "/api/v1/pair",
+    }
+)
 
 
 class LocalOnlyMiddleware:

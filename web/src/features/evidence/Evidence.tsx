@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+
 import { fmtMs, fmtUsd, shortSha } from "../../lib/format.js";
 import { Card, EmptyProof, Pill } from "../../ui/primitives.jsx";
 import {
@@ -14,18 +15,197 @@ import {
   VerdictCard,
 } from "./sections.jsx";
 
-export function Evidence({ detail, onShowRun, onAction, onLightbox, onOpenEvent, onToast }) {
+export type EvidenceStage = {
+  id: string;
+  label?: string;
+  state?: string;
+  at?: string;
+};
+
+export type EvidenceOutcome = {
+  id?: string;
+  priority?: string;
+  passed?: boolean;
+  exit_code?: number | null;
+  duration_ms?: number;
+};
+
+export type EvidenceVerdict = {
+  allow?: boolean;
+  reason?: string;
+  outcomes?: EvidenceOutcome[];
+};
+
+export type EvidenceFinding = {
+  severity?: string;
+  title?: string;
+  detail?: string;
+};
+
+export type EvidenceChallenge = {
+  allow?: boolean;
+  reason?: string;
+  concerns?: string[];
+};
+
+export type EvidenceCommandResult = {
+  step?: string;
+  argv?: string[];
+  exit_code?: number | null;
+  duration_ms?: number;
+};
+
+export type EvidenceDiffFile = {
+  path: string;
+  added?: number;
+  removed?: number;
+};
+
+export type EvidenceViolation = {
+  path: string;
+  reason?: string;
+};
+
+export type EvidenceDecision = {
+  verb?: string;
+  action?: string;
+  reason_code?: string | null;
+  confidence?: number | null;
+  source?: string | null;
+};
+
+export type EvidencePayload = {
+  model?: string | null;
+  provider?: string | null;
+  proof_sha256?: string | null;
+  policy?: { ok?: boolean; violations?: EvidenceViolation[] } | null;
+  risk?: { level?: string; reasons?: string[] } | null;
+  decision?: EvidenceDecision | null;
+  not_tested?: string[];
+  memory_recall?: unknown[];
+  findings?: EvidenceFinding[];
+  challenge?: EvidenceChallenge | null;
+  verdict?: EvidenceVerdict | null;
+  reproduce?: EvidenceCommandResult | null;
+  test?: EvidenceCommandResult | null;
+  preview?: EvidenceCommandResult | null;
+  diff?: string | null;
+  diff_stat?: EvidenceDiffFile[];
+};
+
+export type EvidenceRun = {
+  run_id?: string;
+  flow?: string;
+  base_commit?: string | null;
+  checks_sha?: string | null;
+  duration_ms?: number;
+  tokens?: number | null;
+  usd?: number | null;
+};
+
+export type EvidenceTimelineEvent = {
+  seq?: number;
+  ts?: string;
+  type: string;
+  data?: Record<string, unknown>;
+};
+
+export type EvidenceArtifact = {
+  kind?: string;
+  name?: string;
+  path?: string;
+  sha256?: string;
+  size?: number;
+  url: string;
+};
+
+export type EvidenceFeatureItem = {
+  id?: string | null;
+  name?: string | null;
+  passed?: boolean;
+  covered?: boolean;
+  scenarios?: string[];
+};
+
+export type EvidenceFeatures = {
+  available?: boolean;
+  covered?: number;
+  total?: number;
+  uncovered?: number;
+  note?: string;
+  files?: string[];
+  features?: EvidenceFeatureItem[];
+};
+
+export type EvidenceReadiness = {
+  available?: boolean;
+  status?: string;
+  passed?: number;
+  total?: number;
+  failed?: number;
+  note?: string;
+  checks?: unknown[];
+  import_edges?: Record<string, string[]>;
+  import_cycles?: string[][];
+  features?: unknown[];
+};
+
+export type EvidenceTeamReview = {
+  verdict?: string | null;
+  team?: string | null;
+  blockers?: string[];
+};
+
+export type EvidenceTask = {
+  id: string;
+  flow?: string;
+  state?: string;
+  product?: string;
+};
+
+export type EvidenceDetail = {
+  task: EvidenceTask;
+  pipeline?: { technical?: EvidenceStage[] } | null;
+  evidence?: EvidencePayload | null;
+  run?: EvidenceRun | null;
+  release?: { released?: boolean; ready?: boolean; blockers?: string[] } | null;
+  delivery?: unknown;
+  confirmation?: unknown;
+  readiness?: EvidenceReadiness | null;
+  features?: EvidenceFeatures | null;
+  artifacts?: EvidenceArtifact[] | null;
+  timeline?: EvidenceTimelineEvent[] | null;
+  summary?: { risk?: string | null } | null;
+  verifier?: { name?: string; isolation?: string } | null;
+  team?: { latest?: EvidenceTeamReview | null; history?: unknown[] } | null;
+};
+
+export type EvidenceProps = {
+  detail: EvidenceDetail;
+  onShowRun: () => void;
+  onAction: (action: string, body?: Record<string, unknown>) => unknown;
+  onLightbox: (url: string, alt?: string) => void;
+  onOpenEvent: (event: EvidenceTimelineEvent) => void;
+  onToast: (message: string) => void;
+};
+
+type ExportLink = [label: string, kind: string];
+
+export function Evidence({ detail, onShowRun, onAction, onLightbox, onOpenEvent }: EvidenceProps) {
   const evidence = detail.evidence;
   const task = detail.task;
   const stages = detail.pipeline?.technical || [];
-  const exports = useMemo(() => [
-    ["proof.md", "evidence.md"],
-    ["evidence.json", "evidence.json"],
-    ["run.json", "run.json"],
-    ...(detail.release?.released ? [["release.json", "release.json"]] : []),
-    ...(detail.delivery ? [["delivery.json", "delivery.json"]] : []),
-    ...(detail.confirmation ? [["confirmation.json", "confirmation.json"]] : []),
-  ], [detail]);
+  const exports = useMemo<ExportLink[]>(() => {
+    const links: ExportLink[] = [
+      ["proof.md", "evidence.md"],
+      ["evidence.json", "evidence.json"],
+      ["run.json", "run.json"],
+    ];
+    if (detail.release?.released) links.push(["release.json", "release.json"]);
+    if (detail.delivery) links.push(["delivery.json", "delivery.json"]);
+    if (detail.confirmation) links.push(["confirmation.json", "confirmation.json"]);
+    return links;
+  }, [detail]);
 
   if (!evidence && !detail.run) return <EmptyProof />;
 
@@ -84,21 +264,21 @@ export function Evidence({ detail, onShowRun, onAction, onLightbox, onOpenEvent,
             </dl>
           ) : <p className="muted small">No decision recorded.</p>}
         </Card>
-        <Card title="Residual risk">
+        <Card title="Residual risk" actions={null}>
           <ul className="bullets">
-            {(evidence?.not_tested || []).length
+            {evidence?.not_tested?.length
               ? evidence.not_tested.map((item) => <li key={item}>Not tested: {item}</li>)
               : <li>No untested area recorded.</li>}
           </ul>
         </Card>
-        <Card title="Cost">
+        <Card title="Cost" actions={null}>
           <dl className="kv">
             <dt>Tokens</dt><dd>{detail.run?.tokens ?? 0}</dd>
             <dt>USD</dt><dd>{fmtUsd(detail.run?.usd)}</dd>
             <dt>Memory</dt><dd>{evidence?.memory_recall?.length ? `${evidence.memory_recall.length} recalled` : "Not recorded"}</dd>
           </dl>
         </Card>
-        <Card title="Verifier">
+        <Card title="Verifier" actions={null}>
           <dl className="kv">
             <dt>Name</dt><dd>{detail.verifier?.name || "local"}</dd>
             <dt>Isolation</dt><dd>{detail.verifier?.isolation || "process"}</dd>
