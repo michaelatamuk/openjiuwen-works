@@ -22,9 +22,8 @@ import time
 import urllib.request
 from pathlib import Path
 
-from works.adapters.queue.store import Queue
+from works.adapters.queue.index import TaskIndex
 from works.config.paths import WorksPaths
-from works.domain.records import Source, SourceKind
 from works.interfaces.api.app import create_app
 
 BASE = "/api/v1"
@@ -63,7 +62,7 @@ def wait_health(port: int, timeout: float = 20.0) -> dict[str, object]:
 def open_streams(port: int, count: int) -> list[tuple[http.client.HTTPConnection, object]]:
     opened: list[tuple[http.client.HTTPConnection, object]] = []
     for _ in range(count):
-        connection = http.client.HTTPConnection("127.0.0.1", port, timeout=30)
+        connection = http.client.HTTPConnection("127.0.0.1", port, timeout=60)
         connection.request("GET", f"{BASE}/events")
         response = connection.getresponse()
         assert response.status == 200
@@ -75,6 +74,7 @@ def open_streams(port: int, count: int) -> list[tuple[http.client.HTTPConnection
                 break
         assert connected, "SSE stream did not send the connected comment"
         opened.append((connection, response))
+        time.sleep(0.02)
     return opened
 
 
@@ -98,10 +98,10 @@ def measure(port: int, path: str, requests: int) -> list[float]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--tasks", type=int, default=50)
+    parser.add_argument("--tasks", type=int, default=10000)
     parser.add_argument("--requests", type=int, default=300)
     parser.add_argument("--streams", type=int, default=20)
-    parser.add_argument("--max-p95-ms", type=float, default=500.0)
+    parser.add_argument("--max-p95-ms", type=float, default=250.0)
     args = parser.parse_args()
 
     try:
@@ -111,14 +111,26 @@ def main() -> int:
 
     root = Path(tempfile.mkdtemp(prefix="works-bench-")) / "home"
     paths = WorksPaths(root).ensure()
-    queue = Queue(paths)
-    for index in range(args.tasks):
-        queue.submit(
-            source=Source(kind=SourceKind.MANUAL, ref=f"BENCH-{index}", title=f"Bench {index}"),
-            flow="fix-issue",
-            product="Bench",
-            repo=".",
-        )
+    payloads = [
+        {
+            "id": f"t-{index:012d}",
+            "state": "queued",
+            "flow": "fix-issue",
+            "product": "Bench",
+            "repo": ".",
+            "source": {
+                "kind": "manual",
+                "ref": f"BENCH-{index}",
+                "title": f"Bench {index}",
+            },
+            "kind": "fix",
+            "attempts": 0,
+            "created_at": "2026-01-01T00:00:00Z",
+            "updated_at": "2026-01-01T00:00:00Z",
+        }
+        for index in range(args.tasks)
+    ]
+    TaskIndex(paths.queue / "index.sqlite3").replace(payloads)
 
     port = free_port()
     server = uvicorn.Server(
@@ -136,6 +148,10 @@ def main() -> int:
     opened: list[tuple[http.client.HTTPConnection, object]] = []
     try:
         wait_health(port)
+        with urllib.request.urlopen(
+            f"http://127.0.0.1:{port}{BASE}/tasks?limit=200", timeout=10
+        ) as response:
+            response.read()
         opened = open_streams(port, args.streams)
         tasks = measure(port, f"{BASE}/tasks?limit=200", args.requests)
         health = measure(port, f"{BASE}/health", args.requests)

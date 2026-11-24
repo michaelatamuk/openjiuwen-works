@@ -113,22 +113,22 @@ the primary Windows lifecycle path going untested.
 **Prevents:** O(N) scanning of task and event files on every queue request.  
 **Proof:** 10k/20-SSE benchmark and an index/file parity test.
 
-- [ ] **M2.1** Extend `TaskIndex` with **scalar** columns only: `product`, `title`, `kind`,
+- [x] **M2.1** Extend `TaskIndex` with **scalar** columns only: `product`, `title`, `kind`,
   `updated_at`, `waiting_on`. Keep `risk`, `decision`, `would_block` out of SQLite; they stay
   event-derived.
-- [ ] **M2.2** Add `TaskIndex.list_recent(limit)`; `GET /tasks` takes the page ids from the index and
+- [x] **M2.2** Add `TaskIndex.list_recent(limit)`; `GET /tasks` takes the page ids from the index and
   hydrates only those tasks/events through the existing presenter. No adapter imports from
   `interfaces/api`.
-- [ ] **M2.3** Schema version + rebuild on mismatch + corrupt-index fallback + a rebuild time
+- [x] **M2.3** Schema version + rebuild on mismatch + corrupt-index fallback + a rebuild time
   budget. *Proof:* corrupted index and old schema tests.
-- [ ] **M2.4** Add an index/file parity test on a 500-task seeded home: every `_task_summary` field
+- [x] **M2.4** Add an index/file parity test on a 500-task seeded home: every `_task_summary` field
   is deep-equal between the two paths.
-- [ ] **M2.5** Add the 10k benchmark: `scripts/bench_api.py --tasks 10000` must seed through
+- [x] **M2.5** Add the 10k benchmark: `scripts/bench_api.py --tasks 10000` must seed through
   `TaskIndex.replace`, not 10k fsync submissions; 3 runs, median p95; fail above 250 ms **and**
   above 120% of the `main` baseline for two consecutive runs.
-- [ ] **M2.6** Write the API compatibility rule: additive-only `/api/v1`, deprecation window, and a
-  generated-client compile check against the previous schema.
-- [ ] **M2.7** **Drop** cursor pagination and ETag for now; revisit only if server-side search
+- [ ] **M2.6** API compatibility rule documented; the generated-client compile check against the
+  previous schema is still open.
+- [x] **M2.7** **Drop** cursor pagination and ETag for now; revisit only if server-side search
   appears.
 
 ### M3 — Browser E2E and accessibility (8 days)

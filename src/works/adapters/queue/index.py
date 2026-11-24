@@ -24,7 +24,9 @@ CREATE TABLE IF NOT EXISTS tasks (
     source_title TEXT NOT NULL DEFAULT '',
     attempts INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
+    updated_at TEXT NOT NULL,
+    kind TEXT NOT NULL DEFAULT 'fix',
+    waiting_on TEXT
 );
 """
 
@@ -32,10 +34,16 @@ SUMMARY_COLUMNS = (
     "id",
     "state",
     "flow",
+    "product",
+    "repo",
     "source_kind",
     "source_ref",
+    "source_title",
     "attempts",
     "created_at",
+    "updated_at",
+    "kind",
+    "waiting_on",
 )
 
 
@@ -53,6 +61,8 @@ def summary_row(payload: dict[str, Any]) -> tuple[Any, ...]:
         int(payload.get("attempts", 0)),
         payload.get("created_at", ""),
         payload.get("updated_at", ""),
+        payload.get("kind", "fix"),
+        payload.get("waiting_on"),
     )
 
 
@@ -67,6 +77,12 @@ def summary_dict(row: sqlite3.Row) -> dict[str, Any]:
         },
         "attempts": row["attempts"],
         "created_at": row["created_at"],
+        "updated_at": row["updated_at"],
+        "kind": row["kind"],
+        "waiting_on": row["waiting_on"],
+        "product": row["product"],
+        "repo": row["repo"],
+        "title": row["source_title"],
     }
 
 
@@ -98,13 +114,14 @@ class TaskIndex:
             connection.execute("PRAGMA journal_mode=WAL")
             connection.execute(SCHEMA)
             connection.execute(
-                "INSERT INTO tasks VALUES (?,?,?,?,?,?,?,?,?,?,?) "
+                "INSERT INTO tasks VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) "
                 "ON CONFLICT(id) DO UPDATE SET "
                 "state=excluded.state, flow=excluded.flow, product=excluded.product, "
                 "repo=excluded.repo, source_kind=excluded.source_kind, "
                 "source_ref=excluded.source_ref, source_title=excluded.source_title, "
                 "attempts=excluded.attempts, created_at=excluded.created_at, "
-                "updated_at=excluded.updated_at",
+                "updated_at=excluded.updated_at, kind=excluded.kind, "
+                "waiting_on=excluded.waiting_on, source_title=excluded.source_title",
                 summary_row(payload),
             )
 
@@ -120,12 +137,34 @@ class TaskIndex:
     def _replace_once(self, payloads: list[dict[str, Any]]) -> None:
         with self._connection() as connection:
             connection.execute("PRAGMA journal_mode=WAL")
+            connection.execute("DROP TABLE IF EXISTS tasks")
             connection.execute(SCHEMA)
-            connection.execute("DELETE FROM tasks")
             connection.executemany(
-                "INSERT INTO tasks VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO tasks VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 [summary_row(payload) for payload in payloads],
             )
+
+    def needs_rebuild(self) -> bool:
+        if not self._path.is_file():
+            return True
+        try:
+            with self._connection() as connection:
+                columns = {
+                    str(row["name"])
+                    for row in connection.execute("PRAGMA table_info(tasks)").fetchall()
+                }
+        except sqlite3.DatabaseError:
+            return True
+        return not {"kind", "waiting_on", "updated_at", "source_title"}.issubset(columns)
+
+    def list_recent(self, limit: int) -> list[dict[str, Any]]:
+        with self._connection() as connection:
+            rows = connection.execute(
+                f"SELECT {', '.join(SUMMARY_COLUMNS)} FROM tasks "  # noqa: S608  # nosec B608
+                "ORDER BY updated_at DESC, id DESC LIMIT ?",
+                (max(1, limit),),
+            ).fetchall()
+        return [summary_dict(row) for row in rows]
 
     def list(self) -> list[dict[str, Any]]:
         with self._connection() as connection:

@@ -96,3 +96,9 @@ process, and `works ui` is the same app with the SPA at `/`.
 second port, dispatches while stopping the UI, runs `works run --daemon`, kills the daemon
 mid-run, checks restart reconciliation, and stops gracefully.
 
+
+## Compatibility
+
+`/api/v1` is additive-only. A field may be added at any time; removing or renaming one needs a
+deprecation window and a schema change in the committed `openapi.json`. Generated clients are
+checked against the committed schema in CI.

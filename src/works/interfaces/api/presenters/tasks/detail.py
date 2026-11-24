@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import sqlite3
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from works.adapters.queue.files import INDEX_FILE
+from works.adapters.queue.index import TaskIndex
 from works.adapters.queue.store import Queue
 from works.config.paths import WorksPaths
 from works.domain.records import Event, Task
@@ -152,7 +156,50 @@ def _task_detail(
     }
 
 
+def _iso_timestamp(value: object) -> str:
+    text = str(value or "")
+    try:
+        return datetime.fromisoformat(text.replace("Z", "+00:00")).isoformat()
+    except ValueError:
+        return text
+
+
+def _index_summary(row: dict[str, Any], events: list[Event]) -> dict[str, Any]:
+    risk = _latest(events, "risk.rated")
+    decision = _latest(events, "decision.made")
+    would = [event for event in events if event.type == "would_block"]
+    source = row.get("source") or {}
+    return {
+        "id": row["id"],
+        "state": row["state"],
+        "flow": row["flow"],
+        "product": row.get("product", ""),
+        "source": f"{source.get('kind', '')}:{source.get('ref', '')}",
+        "title": row.get("title", ""),
+        "kind": row.get("kind", "fix"),
+        "updated_at": _iso_timestamp(row.get("updated_at")),
+        "risk": risk.data.get("level") if risk is not None else None,
+        "decision": decision.data.get("verb") if decision is not None else None,
+        "would_block": len(would),
+        "waiting_on": row.get("waiting_on"),
+    }
+
+
 def _tasks(queue: Queue, limit: int) -> list[dict[str, Any]]:
+    index_path = queue.paths.queue / INDEX_FILE
+    if index_path.is_file():
+        try:
+            rows = TaskIndex(index_path).list_recent(limit)
+        except sqlite3.DatabaseError:
+            rows = []
+        if rows:
+            return [
+                _index_summary(
+                    row,
+                    queue.events(row["id"]) if queue.exists(row["id"]) else [],
+                )
+                for row in rows
+            ]
     tasks = queue.list_tasks()
     items = [_task_summary(task, queue.events(task.id)) for task in tasks]
     items.sort(key=lambda item: str(item["updated_at"]), reverse=True)

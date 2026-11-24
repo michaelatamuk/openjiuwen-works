@@ -11,6 +11,7 @@ from pathlib import Path
 
 REQUIRED = (
     "works/interfaces/ui/static/dist/index.html",
+    "works/py.typed",
     "works/resources/__init__.py",
     "works/resources/flows/fix-issue.yaml",
     "works/resources/flows/fix-issue/prompts/build.md",

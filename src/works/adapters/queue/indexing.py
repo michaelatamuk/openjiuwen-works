@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 def index_task(queue: Queue, payload: dict[str, Any]) -> None:
     index = TaskIndex(queue._paths.queue / INDEX_FILE)
     with queue._index_lock():
-        if not index.path.exists():
+        if index.needs_rebuild():
             index.replace(scan_payloads(queue))
         index.upsert(payload)
 
