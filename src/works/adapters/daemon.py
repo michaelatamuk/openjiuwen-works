@@ -112,7 +112,7 @@ def read_token(info: DaemonInfo) -> str:
 
 def _probe_host(host: str) -> str:
     """A wildcard bind is reachable on loopback; its literal address is not trusted."""
-    if host in ("0.0.0.0", ""):  # noqa: S104 - detecting a wildcard, not binding it
+    if host in ("0.0.0.0", ""):  # noqa: S104  # nosec B104 - detecting, not binding
         return "127.0.0.1"
     if host == "::":
         return "::1"

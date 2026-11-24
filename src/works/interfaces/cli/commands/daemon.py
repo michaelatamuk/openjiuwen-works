@@ -61,7 +61,7 @@ def _primary_ipv4() -> str:
 
 def _display_host(info: daemons.DaemonInfo) -> str:
     """A wildcard bind prints as an address another machine can actually open."""
-    if info.host not in ("0.0.0.0", "::"):  # noqa: S104 - a comparison, not a bind
+    if info.host not in ("0.0.0.0", "::"):  # noqa: S104  # nosec B104 - a comparison
         return info.host
     return _primary_ipv4() or "127.0.0.1"
 
