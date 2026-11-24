@@ -187,6 +187,7 @@ CI runs lint, tests, bandit and gitleaks; mutation and `pip-audit` run weekly. D
 | [`docs/guides/release.md`](docs/guides/release.md) | Release packet, gate 2, delivery and confirmation |
 | [`docs/guides/readiness.md`](docs/guides/readiness.md) | `.works/readiness.yaml` and the autonomy gate |
 | [`docs/reference/features.md`](docs/reference/features.md) | Feature map format and proof coverage |
+| [`docs/reference/layout.md`](docs/reference/layout.md) | Where each kind of code lives and what to touch when adding to it |
 | [`docs/guides/live-harness.md`](docs/guides/live-harness.md) | Real `openjiuwen` builder setup |
 | [`docs/reference/agent-core.md`](docs/reference/agent-core.md) | agent-core harness, verification team and Ask Mira |
 | [`docs/guides/intake.md`](docs/guides/intake.md) | GitHub/Jira/detector intake and product-to-repository map |
