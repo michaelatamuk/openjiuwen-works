@@ -5,9 +5,9 @@ import {
   Lightbox, NewTaskDialog, Palette, RunDialog, SettingsDialog,
 } from "../features/dialogs/Dialogs.jsx";
 import { Evidence } from "../features/evidence/Evidence.jsx";
-import { Queue } from "../features/queue/Queue.jsx";
+import { Queue } from "../features/queue/Queue";
 import { Release } from "../features/release/Release.jsx";
-import { Story } from "../features/story/Story.jsx";
+import { Story } from "../features/story/Story";
 import { Thread } from "../features/session/Thread.jsx";
 import { Toast } from "../ui/primitives.jsx";
 import { AppHeader } from "./AppHeader.jsx";

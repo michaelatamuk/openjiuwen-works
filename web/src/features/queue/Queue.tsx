@@ -1,5 +1,36 @@
+import type { ChangeEvent } from "react";
+
 import { groups, riskLabel, riskTone, stateLabel, timeAgo } from "../../lib/format.js";
 import { Pill } from "../../ui/primitives.jsx";
+
+export type QueueTask = {
+  id: string;
+  state: string;
+  title?: string;
+  product?: string;
+  source?: string;
+  flow?: string;
+  risk?: string;
+  updated_at?: string;
+};
+
+export type QueueProps = {
+  tasks: QueueTask[];
+  selected: string | null;
+  onSelect: (id: string) => void;
+  filter: string;
+  onFilter: (id: string) => void;
+  productFilter: string;
+  onProductFilter: (value: string) => void;
+  sourceFilter: string;
+  onSourceFilter: (value: string) => void;
+  query: string;
+  onQuery: (value: string) => void;
+  writable: boolean;
+  onNew: () => void;
+};
+
+const GROUPS = groups as Array<[string, string, string[]]>;
 
 export function Queue({
   tasks,
@@ -15,9 +46,11 @@ export function Queue({
   onQuery,
   writable,
   onNew,
-}) {
+}: QueueProps) {
   const products = [...new Set(tasks.map((task) => task.product).filter(Boolean))].sort();
-  const states = Object.fromEntries(groups.map(([id, , stateList]) => [id, stateList]));
+  const states: Record<string, string[]> = Object.fromEntries(
+    GROUPS.map(([id, , stateList]) => [id, stateList]),
+  );
   const needle = query.trim().toLowerCase();
   const visible = tasks.filter((task) => {
     if (filter !== "all" && !(states[filter] || []).includes(task.state)) return false;
@@ -39,13 +72,18 @@ export function Queue({
           aria-label="Search tasks"
           autoComplete="off"
           value={query}
-          onChange={(event) => onQuery(event.target.value)}
+          onChange={(event: ChangeEvent<HTMLInputElement>) => onQuery(event.target.value)}
         />
         <kbd>/</kbd>
       </div>
 
       <div className="filters" role="group" aria-label="Filter tasks">
-        {[["all", "All"], ["needs", "Needs you"], ["working", "In progress"], ["done", "Done"]].map(([id, label]) => (
+        {[
+          ["all", "All"],
+          ["needs", "Needs you"],
+          ["working", "In progress"],
+          ["done", "Done"],
+        ].map(([id, label]) => (
           <button
             key={id}
             type="button"
@@ -58,13 +96,23 @@ export function Queue({
       </div>
 
       <div className="filter-selects">
-        <select aria-label="Filter by product" value={productFilter} onChange={(event) => onProductFilter(event.target.value)}>
+        <select
+          aria-label="Filter by product"
+          value={productFilter}
+          onChange={(event: ChangeEvent<HTMLSelectElement>) => onProductFilter(event.target.value)}
+        >
           <option value="">All products</option>
           {products.map((product) => (
-            <option key={product} value={product}>{product}</option>
+            <option key={product} value={product}>
+              {product}
+            </option>
           ))}
         </select>
-        <select aria-label="Filter by source" value={sourceFilter} onChange={(event) => onSourceFilter(event.target.value)}>
+        <select
+          aria-label="Filter by source"
+          value={sourceFilter}
+          onChange={(event: ChangeEvent<HTMLSelectElement>) => onSourceFilter(event.target.value)}
+        >
           <option value="">All sources</option>
           <option value="manual">A person</option>
           <option value="tracker">Tracker</option>
@@ -73,22 +121,32 @@ export function Queue({
       </div>
 
       {writable ? (
-        <button className="btn report-btn" type="button" onClick={onNew}>+ New task</button>
+        <button className="btn report-btn" type="button" onClick={onNew}>
+          + New task
+        </button>
       ) : null}
 
       <div className="task-list" aria-live="polite">
-        {!visible.length ? <p className="muted small" style={{ padding: "16px 12px" }}>No tasks match.</p> : null}
-        {groups.map(([id, label, stateList]) => {
+        {!visible.length ? (
+          <p className="muted small" style={{ padding: "16px 12px" }}>
+            No tasks match.
+          </p>
+        ) : null}
+        {GROUPS.map(([id, label, stateList]) => {
           const rows = visible.filter((task) => stateList.includes(task.state));
           if (!rows.length) return null;
           return (
             <div key={id}>
-              <div className="group-label">{label}<span>{rows.length}</span></div>
+              <div className="group-label">
+                {label}
+                <span>{rows.length}</span>
+              </div>
               {rows.map((task) => {
                 const active = task.id === selected;
-                const risk = task.risk && task.risk !== "low"
-                  ? <Pill tone={riskTone(task.risk)}>{riskLabel(task.risk)}</Pill>
-                  : null;
+                const risk =
+                  task.risk && task.risk !== "low" ? (
+                    <Pill tone={riskTone(task.risk)}>{riskLabel(task.risk)}</Pill>
+                  ) : null;
                 return (
                   <button
                     key={task.id}
@@ -102,7 +160,9 @@ export function Queue({
                     </span>
                     <span className="task-main">
                       <span className="task-title">{task.title || `Task ${task.id}`}</span>
-                      <span className="task-meta">{task.product} · {stateLabel(task.state)}</span>
+                      <span className="task-meta">
+                        {task.product} · {stateLabel(task.state)}
+                      </span>
                     </span>
                     <span className="task-side">
                       {risk}

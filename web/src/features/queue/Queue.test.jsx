@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { Queue } from "./Queue.jsx";
+import { Queue } from "./Queue";
 import { taskRow } from "../../test/fixtures";
 
 function renderQueue(overrides = {}) {

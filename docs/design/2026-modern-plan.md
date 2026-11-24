@@ -96,8 +96,9 @@ the primary Windows lifecycle path going untested.
 - [ ] **M1.1** Add `py.typed` and keep `mypy --strict`; add `disallow_any_explicit = true` and
   `warn_return_any = true`. Remove `Any` from public interfaces. **Do not add a second type
   checker** (pyright/ty) just to duplicate mypy.
-- [ ] **M1.2** Convert `web/src/app/*` and `web/src/features/**` to `.tsx` in reviewed slices;
-  start with Queue and Story, then Evidence/Release/Session/Settings.
+- [x] **M1.2a** Queue and Story converted to typed `.tsx`; `tsc`, Vitest and the bundle are green.
+  Evidence/Release/Session/Settings and `app/*` remain.
+- [ ] **M1.2** Complete the `.tsx` migration for the remaining screens and `app/*`.
 - [ ] **M1.3** Turn on `checkJs`, then `allowJs: false`; include `vite.config.js`/`vitest.setup.js`
   only when they are migrated. Keep the committed `dist` gate green at every step.
 - [ ] **M1.4** Add Zod validation at the HTTP boundary for tasks, detail, health, jobs and settings;
