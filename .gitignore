@@ -50,3 +50,7 @@ web/node_modules/
 
 # local daemon state
 .works/state/
+web/.e2e-state.json
+web/test-results/
+web/playwright-report/
+web/blob-report/

@@ -137,7 +137,7 @@ the primary Windows lifecycle path going untested.
 **Prevents:** UI/daemon integration regressions that jsdom cannot see.  
 **Proof:** Playwright against a real seeded daemon + axe.
 
-- [ ] **M3.1** Playwright fixture starts/stops a real `works daemon start --write`, resets a temp
+- [x] **M3.1** Playwright fixture starts/stops a real `works daemon start --write`, resets a temp
   home, and exposes traces/video on failure.
 - [ ] **M3.2** Critical journeys: queue → Story → Evidence → Release; new task; import; settings
   save; add-context; ask stream; pairing/revoke; read-only mode.
@@ -145,7 +145,7 @@ the primary Windows lifecycle path going untested.
   serious/critical violations.
 - [ ] **M3.4** Screenshots are **opt-in/manual** (not a required gate); no mobile-web pass until a
   native client exists.
-- [ ] **M3.5** E2E job is a required CI check with a 15-minute budget.
+- [x] **M3.5** E2E job is a required CI check with a 15-minute budget.
 
 ### M4 — Remote and device trust, after M0 (4 days)
 
