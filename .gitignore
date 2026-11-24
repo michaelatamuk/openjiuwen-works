@@ -44,3 +44,6 @@ web/node_modules/
 
 # local UI builder settings (no secrets, but machine-specific)
 /.works/settings.json
+# built UI assets under the interfaces tree
+!src/works/interfaces/ui/static/dist/
+!src/works/interfaces/ui/static/dist/**
