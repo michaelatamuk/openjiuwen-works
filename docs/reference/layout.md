@@ -37,6 +37,9 @@ tests/
   assembly stays in `pipeline.py`.
 - **Plan mode, gate or verifier:** planning lives in `application/planning/`, gates in
   `application/approvals/`, verification in `application/execution/`.
+- **Run phase:** `application/supervisor/core.py` is the facade; the phases live in
+  `application/supervisor/{planning,execution,verification,recording}.py` and take the supervisor
+  explicitly.
 - **A new persisted record:** the model goes in `domain/`, the store in `adapters/`, and
   `domain/records.py` re-exports it for callers that read a whole task or run.
 
