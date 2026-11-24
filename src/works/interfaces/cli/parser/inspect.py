@@ -47,6 +47,7 @@ def add_inspect_commands(sub: argparse._SubParsersAction[argparse.ArgumentParser
     doctor = sub.add_parser("doctor", help="Check config, git, harness, container, credentials")
     doctor.add_argument("--repo", type=Path, default=None)
     doctor.add_argument("--json", action="store_true")
+    doctor.add_argument("--bundle", type=Path, default=None, help="Write a redacted debug bundle")
     doctor.set_defaults(func=cmd_doctor)
 
     risk = sub.add_parser("risk", help="Show the latest risk rating")

@@ -4,8 +4,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import platform
+import shutil
+import tarfile
+import tempfile
 from pathlib import Path
 
+from works.config.paths import WorksPaths
 from works.interfaces.cli.commands.common import _emit, _paths, _queue
 from works.interfaces.cli.render import table
 
@@ -132,6 +137,80 @@ def cmd_schema(args: argparse.Namespace) -> int:
     return 0
 
 
+def _tail_bytes(path: Path, limit: int = 200_000) -> bytes:
+    try:
+        return path.read_bytes()[-limit:]
+    except OSError:
+        return b""
+
+
+def _write_bundle(paths: WorksPaths, target: Path) -> Path:
+    from works.adapters.queue.files import INDEX_FILE
+    from works.adapters.queue.index import TaskIndex
+
+    target = target.expanduser().resolve()
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="works-bundle-") as raw:
+        root = Path(raw)
+        (root / "versions.json").write_text(
+            json.dumps(
+                {
+                    "works": "0.0.1",
+                    "python": platform.python_version(),
+                    "platform": platform.platform(),
+                },
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        daemon = paths.state / "daemon.json"
+        if daemon.is_file():
+            shutil.copy2(daemon, root / "daemon.json")
+        jobs: list[dict[str, object]] = []
+        for path in sorted((paths.state / "jobs").glob("*.json")):
+            try:
+                payload = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                continue
+            if isinstance(payload, dict):
+                jobs.append(
+                    {
+                        "id": payload.get("id"),
+                        "action": payload.get("action"),
+                        "status": payload.get("status"),
+                        "task_id": payload.get("task_id"),
+                        "trace_id": payload.get("trace_id"),
+                        "error_code": payload.get("error_code"),
+                    }
+                )
+        (root / "jobs.json").write_text(json.dumps(jobs, indent=2) + "\n", encoding="utf-8")
+        index_path = paths.queue / INDEX_FILE
+        index: dict[str, object] = {"exists": index_path.is_file()}
+        if index_path.is_file():
+            try:
+                index["tasks"] = TaskIndex(index_path).count()
+                index["needs_rebuild"] = TaskIndex(index_path).needs_rebuild()
+            except Exception:
+                index["error"] = "unreadable"
+        (root / "index.json").write_text(json.dumps(index, indent=2) + "\n", encoding="utf-8")
+        usage = shutil.disk_usage(paths.root)
+        (root / "disk.json").write_text(
+            json.dumps({"total": usage.total, "used": usage.used, "free": usage.free}, indent=2)
+            + "\n",
+            encoding="utf-8",
+        )
+        logs = root / "logs"
+        logs.mkdir()
+        (logs / "daemon.log").write_bytes(_tail_bytes(paths.state / "daemon.log"))
+        (logs / "security.log").write_bytes(_tail_bytes(paths.state / "security.log"))
+        with tarfile.open(target, "w:gz") as archive:
+            for item in sorted(root.rglob("*")):
+                if item.is_file():
+                    archive.add(item, arcname=item.relative_to(root).as_posix())
+    return target
+
+
 def cmd_doctor(args: argparse.Namespace) -> int:
     from works.application.doctor import failed, run_checks
 
@@ -147,4 +226,8 @@ def cmd_doctor(args: argparse.Namespace) -> int:
                 [(result.name, result.status, result.detail) for result in results],
             )
         )
+    if args.bundle is not None:
+        bundle = _write_bundle(paths, args.bundle)
+        if not args.json:
+            print(f"debug bundle: {bundle}")
     return 1 if failed(results) else 0

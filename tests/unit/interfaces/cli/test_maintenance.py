@@ -77,3 +77,29 @@ def test_restore_refuses_to_overwrite_without_force(paths, tmp_path: Path) -> No
         )
     assert code == 6
     assert "force" in out.getvalue() + err.getvalue()
+
+
+def test_debug_bundle_omits_credentials(paths, tmp_path: Path) -> None:
+    (paths.state / "http-token").write_text("super-secret-token", encoding="utf-8")
+    bundle = tmp_path / "bundle.tar.gz"
+    out, err = io.StringIO(), io.StringIO()
+    with redirect_stdout(out), redirect_stderr(err):
+        code = main(
+            [
+                "--home",
+                str(paths.root),
+                "doctor",
+                "--json",
+                "--bundle",
+                str(bundle),
+            ]
+        )
+    assert code in (0, 1)
+    with tarfile.open(bundle) as tar:
+        names = set(tar.getnames())
+        payload = b"".join(tar.extractfile(name).read() for name in names if name.endswith(".json"))
+    assert "versions.json" in names
+    assert "jobs.json" in names
+    assert "index.json" in names
+    assert "logs/security.log" in names
+    assert b"super-secret-token" not in payload

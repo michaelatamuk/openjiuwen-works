@@ -102,6 +102,9 @@ jobs:
       - name: Unit tests
         run: npm test
         working-directory: web
+      - name: Runtime dependency audit
+        run: npm audit --omit=dev
+        working-directory: web
       - name: Build
         run: npm run build
         working-directory: web

@@ -158,7 +158,7 @@ the primary Windows lifecycle path going untested.
   `Referrer-Policy`, `Permissions-Policy`.
 - [x] **M4.3** Threat model: trusted hosts, auth-on-read, pairing, token theft/lost device, replay,
   LAN MITM, `chmod` on Windows. Record it in an ADR.
-- [ ] **M4.4** `npm audit --omit=dev` (pip-audit already runs weekly); exceptions need owner +
+- [x] **M4.4** `npm audit --omit=dev` (pip-audit already runs weekly); exceptions need owner +
   expiry.
 - [x] **M4.5** Revisit `0.0.0.0` cleartext guidance: default remote demo uses a tunnel or TLS.
 
@@ -176,7 +176,7 @@ SSE reader wedging the daemon.
   outcomes, queue depth, SSE clients and p95 buckets; **no Prometheus/OTel dependency**.
 - [x] **M5.4** Add a max SSE client count and a slow-consumer policy with a test that a non-reading
   client cannot wedge the event loop or exhaust threads.
-- [ ] **M5.5** `works doctor --trace`/debug bundle: daemon.json, jobs, logs, versions, index health,
+- [x] **M5.5** `works doctor --trace`/debug bundle: daemon.json, jobs, logs, versions, index health,
   disk state; a redaction test proves no token/cookie/key is included.
 - [ ] **M5.6** **Defer** OTel OTLP, Prometheus text and SLO dashboards; the optional OTel span in
   `plan.md` §6.4 remains optional.
