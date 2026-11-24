@@ -1,0 +1,22 @@
+{
+  "runs": [
+    {
+      "base_commit": "<commit>",
+      "confirmed": false,
+      "delivered": false,
+      "duration_ms": 0,
+      "files": [
+        "calc/core.py"
+      ],
+      "finished_at": "<timestamp>",
+      "not_tested": [],
+      "proof_sha256": "<sha256>",
+      "risk": "low",
+      "run_id": "<run-id>",
+      "state": "blocked",
+      "tokens": 1300,
+      "usd": 0.013,
+      "verdict": "block"
+    }
+  ]
+}

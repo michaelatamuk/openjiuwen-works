@@ -227,17 +227,21 @@ tests at cutover.
 
 Every item names the artifact; each phase ends with a **gate**.
 
-### Phase 0a — fixtures and canonicalizer (1 day)
-- [ ] `scripts/seed_home.py`: deterministic home (repo fixture, flows, scenarios, a planning task
-  with a plan event, a proved run, a delivered + confirmed run, a flaky task). Verify: rerun twice,
-  hashes match.
-- [ ] `tests/contract/canonicalize.py`: normalizes timestamps, absolute paths, task/run ids, sha256,
-  URLs and unordered lists; documented rules. Verify: unit tests on two known payloads.
-- [ ] `scripts/capture_api_fixtures.py`: starts the legacy server against the seed home and writes
-  GET/POST fixtures. Verify: `--check` exits 0.
-- [ ] `tests/contract/test_baseline.py`: fixture presence and top-level keys.
+### Phase 0a — fixtures and canonicalizer (done)
 
-**Gate:** `uv run pytest tests/contract -q`; seed home is reproducible.
+- [x] `scripts/seed_home.py`: fixed clock, fixture repo, flows, scenarios, five tasks (queued,
+  planning, proved, released + delivered + confirmed + deployed, blocked) and a flake.
+- [x] `tests/contract/canonicalize.py`: masks timestamps, ids, hashes (short and long), commits,
+  durations, command output, markdown proofs, home/repo/python paths and any Windows absolute path;
+  unit tests cover each rule.
+- [x] `scripts/capture_api_fixtures.py`: starts the legacy server on the seed home and writes
+  canonical GET fixtures; `--check` reseeds and compares.
+- [x] `tests/contract/test_baseline.py`: fixture presence, task states, every detail section,
+  released/blocked payloads, and a leak check for timestamps and absolute paths.
+- [ ] POST fixtures: added with the action tests in Phase 3b, against isolated copies of the home.
+
+**Gate (met):** `pytest tests/contract -q`; `scripts/capture_api_fixtures.py --check` -> 16 fixtures
+match.
 
 ### Phase 0b — OpenAPI and frontend toolchain (1 day)
 - [ ] `scripts/dump_openapi.py` writes `docs/reference/openapi.json`. Verify: file changes only when

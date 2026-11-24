@@ -1,0 +1,43 @@
+{
+  "rows": [
+    {
+      "escape": false,
+      "minutes_human": null,
+      "rework": false,
+      "run_id": "<run-id>",
+      "schema_version": 1,
+      "state": "proved",
+      "task_id": "<task-id>",
+      "tokens": 1200,
+      "ts": "<timestamp>",
+      "usd": 0.012,
+      "verdict": "allow"
+    },
+    {
+      "escape": false,
+      "minutes_human": null,
+      "rework": false,
+      "run_id": "<run-id>",
+      "schema_version": 1,
+      "state": "proved",
+      "task_id": "<task-id>",
+      "tokens": 1200,
+      "ts": "<timestamp>",
+      "usd": 0.012,
+      "verdict": "allow"
+    },
+    {
+      "escape": false,
+      "minutes_human": null,
+      "rework": false,
+      "run_id": "<run-id>",
+      "schema_version": 1,
+      "state": "blocked",
+      "task_id": "<task-id>",
+      "tokens": 1300,
+      "ts": "<timestamp>",
+      "usd": 0.013,
+      "verdict": "block"
+    }
+  ]
+}

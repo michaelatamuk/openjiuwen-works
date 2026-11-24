@@ -1,0 +1,842 @@
+{
+  "artifacts": [],
+  "confirmation": null,
+  "delivery": null,
+  "deployment": null,
+  "evidence": null,
+  "features": {
+    "available": false,
+    "covered": 0,
+    "features": [],
+    "files": [],
+    "note": "No feature map yet. Add features/<product>.yaml (T2.19).",
+    "total": 0,
+    "uncovered": 0
+  },
+  "laix": [],
+  "pipeline": {
+    "blocked": null,
+    "replay": [
+      {
+        "at": "<timestamp>",
+        "data": {
+          "task": {
+            "attempts": 0,
+            "budget": {
+              "ci_minutes": 30,
+              "tokens": 400000,
+              "usd": 10.0,
+              "wall_minutes": 60
+            },
+            "created_at": "<timestamp>",
+            "flow": "fix-issue",
+            "id": "<task-id>",
+            "kind": "fix",
+            "product": "Fixture",
+            "repo": "<repo>",
+            "schema_version": 1,
+            "scope": {
+              "paths_allow": [],
+              "paths_deny": []
+            },
+            "source": {
+              "kind": "manual",
+              "ref": "SEED-PLANNING-1",
+              "title": "A plan waiting for approval"
+            },
+            "state": "queued",
+            "updated_at": "<timestamp>",
+            "waiting_on": null,
+            "wake_deadline": null,
+            "wake_default": null,
+            "wake_next": null,
+            "wake_on": null
+          }
+        },
+        "stage": "signal",
+        "type": "task.created"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "from": "queued",
+          "to": "reproducing"
+        },
+        "stage": "reproduce",
+        "type": "state.changed"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "step": "reproduce"
+        },
+        "stage": "reproduce",
+        "type": "step.started"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "exit_code": 1,
+          "step": "reproduce"
+        },
+        "stage": "reproduce",
+        "type": "step.finished"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "from": "reproducing",
+          "to": "reproduced"
+        },
+        "stage": "reproduce",
+        "type": "state.changed"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "from": "reproduced",
+          "to": "planning"
+        },
+        "stage": "plan",
+        "type": "state.changed"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "base_commit": "<commit>",
+          "brief": "Summary: Fix addition and cover the negative case.",
+          "checks_sha": "<sha256>",
+          "checks_source": "workspace",
+          "hash": "<sha256>",
+          "nodes": [
+            "reproduce",
+            "build",
+            "test"
+          ],
+          "p0": [
+            "add-negative"
+          ],
+          "p1": [],
+          "plan_id": "p-<task-id>-v1",
+          "provenance": {
+            "duration_ms": 0,
+            "model": null,
+            "planner": "deterministic",
+            "provider": null,
+            "tokens": 0,
+            "usd": 0.0
+          },
+          "scenario_ids": [
+            "add-negative"
+          ],
+          "scenario_set": "<home>\\scenarios\\fix-add.yaml",
+          "status": "validated",
+          "summary": "Fix addition and cover the negative case.",
+          "validation": {
+            "errors": [],
+            "ok": true,
+            "warnings": []
+          },
+          "version": 1
+        },
+        "stage": "plan",
+        "type": "plan.drafted"
+      }
+    ],
+    "story": [
+      {
+        "artifacts": [
+          "Reported through a person",
+          "A plan waiting for approval"
+        ],
+        "at": "<timestamp>",
+        "caption": "A person reported the problem.",
+        "id": "reported",
+        "kind": "source",
+        "label": "Reported",
+        "state": "done"
+      },
+      {
+        "artifacts": [
+          "Mira took the report",
+          "Work started on Fixture"
+        ],
+        "at": "<timestamp>",
+        "caption": "Mira picked it up.",
+        "id": "picked_up",
+        "kind": "stage",
+        "label": "Picked up",
+        "state": "done"
+      },
+      {
+        "artifacts": [
+          "The problem was reproduced",
+          "Before the fix, the check failed"
+        ],
+        "at": "<timestamp>",
+        "caption": "We saw it happen.",
+        "id": "confirmed",
+        "kind": "stage",
+        "label": "Confirmed",
+        "state": "done"
+      },
+      {
+        "artifacts": [
+          "The plan was approved",
+          "0 file(s) changed",
+          "The fix was built"
+        ],
+        "at": "<timestamp>",
+        "caption": "We built a fix.",
+        "id": "fixed",
+        "kind": "stage",
+        "label": "Fixed",
+        "state": "active"
+      },
+      {
+        "artifacts": [
+          "A must-pass check failed",
+          "The fix is not safe to release"
+        ],
+        "at": null,
+        "caption": "We checked it.",
+        "id": "checked",
+        "kind": "stage",
+        "label": "Checked",
+        "state": "pending"
+      },
+      {
+        "artifacts": [
+          "Not delivered yet"
+        ],
+        "at": null,
+        "caption": "The fix is on its way back to Fixture.",
+        "id": "delivered",
+        "kind": "gate",
+        "label": "Deliver to Fixture",
+        "state": "pending"
+      }
+    ],
+    "technical": [
+      {
+        "artifacts": [
+          "manual:SEED-PLANNING-1",
+          "A plan waiting for approval"
+        ],
+        "at": "<timestamp>",
+        "id": "signal",
+        "kind": "source",
+        "label": "Read the signal",
+        "state": "done"
+      },
+      {
+        "artifacts": [
+          "exit ?",
+          "not run"
+        ],
+        "at": "<timestamp>",
+        "id": "reproduce",
+        "kind": "agent",
+        "label": "Reproduce",
+        "state": "done"
+      },
+      {
+        "artifacts": [
+          "1 scenario(s)",
+          "plan drafted"
+        ],
+        "at": "<timestamp>",
+        "id": "plan",
+        "kind": "agent",
+        "label": "Plan",
+        "state": "active"
+      },
+      {
+        "artifacts": [
+          "waiting for a person"
+        ],
+        "at": null,
+        "id": "plan_gate",
+        "kind": "gate",
+        "label": "Plan approved",
+        "state": "pending"
+      },
+      {
+        "artifacts": [
+          "0 file(s) changed",
+          "model —"
+        ],
+        "at": null,
+        "id": "build",
+        "kind": "agent",
+        "label": "Build",
+        "state": "pending"
+      },
+      {
+        "artifacts": [
+          "verdict block",
+          "no challenge"
+        ],
+        "at": null,
+        "id": "check",
+        "kind": "verify",
+        "label": "Check",
+        "state": "pending"
+      },
+      {
+        "artifacts": [
+          "risk —",
+          "proof "
+        ],
+        "at": null,
+        "id": "proof",
+        "kind": "artifact",
+        "label": "Proof",
+        "state": "pending"
+      },
+      {
+        "artifacts": [
+          "not reached"
+        ],
+        "at": null,
+        "id": "release_gate",
+        "kind": "gate",
+        "label": "Release approved",
+        "state": "pending"
+      },
+      {
+        "artifacts": [
+          "not reached"
+        ],
+        "at": null,
+        "id": "deliver",
+        "kind": "source",
+        "label": "Deliver",
+        "state": "pending"
+      },
+      {
+        "artifacts": [
+          "awaiting confirmation"
+        ],
+        "at": null,
+        "id": "confirm",
+        "kind": "verify",
+        "label": "Confirm",
+        "state": "pending"
+      }
+    ]
+  },
+  "proof_md": "<markdown>",
+  "rail": {
+    "agents": [
+      {
+        "detail": "—",
+        "name": "—",
+        "role": "builder",
+        "tone": ""
+      },
+      {
+        "detail": "not run",
+        "name": "—",
+        "role": "challenger",
+        "tone": ""
+      },
+      {
+        "detail": "process",
+        "name": "local",
+        "role": "verifier",
+        "tone": ""
+      },
+      {
+        "detail": "not run",
+        "name": "inspector + challenger + reporter",
+        "role": "team",
+        "tone": ""
+      }
+    ],
+    "checks": [
+      {
+        "label": "Policy",
+        "value": "fail"
+      },
+      {
+        "label": "Verdict",
+        "value": "—"
+      },
+      {
+        "label": "Challenge",
+        "value": "not run"
+      },
+      {
+        "label": "Team",
+        "value": "not run"
+      },
+      {
+        "label": "Confirmation",
+        "value": "not run"
+      }
+    ],
+    "cost": {
+      "duration_ms": 0,
+      "tokens": 0,
+      "usd": 0.0
+    },
+    "deliverables": [
+      {
+        "href": "",
+        "label": "Proof",
+        "value": "—"
+      },
+      {
+        "href": "",
+        "label": "Commit",
+        "value": "—"
+      },
+      {
+        "href": "",
+        "label": "Branch",
+        "value": "—"
+      },
+      {
+        "href": "",
+        "label": "Pull request",
+        "value": "—"
+      },
+      {
+        "href": "",
+        "label": "Release",
+        "value": "not released"
+      },
+      {
+        "href": "",
+        "label": "Confirmation",
+        "value": "not run"
+      }
+    ],
+    "factory": {
+      "base_commit": "<commit>",
+      "checks_sha": "<sha256>",
+      "flow": "fix-issue",
+      "run": "—"
+    },
+    "owners": [],
+    "people": [
+      "—"
+    ],
+    "task": {
+      "id": "<task-id>",
+      "product": "Fixture",
+      "source": "manual:SEED-PLANNING-1",
+      "state": "planning",
+      "title": "A plan waiting for approval"
+    }
+  },
+  "readiness": {
+    "available": true,
+    "checks": [
+      {
+        "detail": ".git found",
+        "id": "git",
+        "label": "Git repository",
+        "ok": true,
+        "status": "pass"
+      },
+      {
+        "detail": "no pyproject/package/Cargo/go module",
+        "id": "project",
+        "label": "Project manifest",
+        "ok": false,
+        "status": "fail"
+      },
+      {
+        "detail": "no features declared",
+        "id": "features",
+        "label": "Feature map",
+        "ok": false,
+        "status": "fail"
+      },
+      {
+        "detail": "none found",
+        "id": "suppressions",
+        "label": "Known suppressions",
+        "ok": true,
+        "status": "pass"
+      },
+      {
+        "detail": "0 rule(s)",
+        "id": "imports",
+        "label": "Import boundaries",
+        "ok": true,
+        "status": "pass"
+      },
+      {
+        "detail": "4 module(s)",
+        "id": "cycles",
+        "label": "Import cycles",
+        "ok": true,
+        "status": "pass"
+      },
+      {
+        "detail": "not run in the preview; run `works readiness`",
+        "id": "lint",
+        "label": "Lint",
+        "ok": null,
+        "status": "skip"
+      },
+      {
+        "detail": "not run in the preview; run `works readiness`",
+        "id": "format",
+        "label": "Format",
+        "ok": null,
+        "status": "skip"
+      },
+      {
+        "detail": "not run in the preview; run `works readiness`",
+        "id": "types",
+        "label": "Types",
+        "ok": null,
+        "status": "skip"
+      },
+      {
+        "detail": "not run in the preview; run `works readiness`",
+        "id": "tests",
+        "label": "Fast tests",
+        "ok": null,
+        "status": "skip"
+      },
+      {
+        "detail": "not run in the preview; run `works readiness`",
+        "id": "verify",
+        "label": "Product verify",
+        "ok": null,
+        "status": "skip"
+      },
+      {
+        "detail": "not run in the preview; run `works readiness`",
+        "id": "architecture",
+        "label": "Architecture boundaries",
+        "ok": null,
+        "status": "skip"
+      }
+    ],
+    "failed": 2,
+    "features": [],
+    "import_cycles": [],
+    "import_edges": {
+      "calc": [],
+      "calc.core": [],
+      "tests.test_core": [
+        "calc"
+      ],
+      "tests.test_mul": [
+        "calc"
+      ]
+    },
+    "note": "No .works/readiness.yaml found. Add one before autonomy.",
+    "passed": 4,
+    "skipped": 6,
+    "status": "fail",
+    "suppressions": [],
+    "total": 12,
+    "unknown_suppressions": []
+  },
+  "release": {
+    "blockers": [
+      "task is planning, not proved",
+      "plan gate has no human approval",
+      "release gate has no human approval",
+      "no finished run"
+    ],
+    "commit": null,
+    "plan_gate": null,
+    "proof_sha256": null,
+    "ready": false,
+    "release_gate": null,
+    "released": false,
+    "run_id": null,
+    "task_id": "<task-id>"
+  },
+  "run": null,
+  "runs": [],
+  "summary": {
+    "decision": null,
+    "flow": "fix-issue",
+    "id": "<task-id>",
+    "kind": "fix",
+    "product": "Fixture",
+    "risk": null,
+    "source": "manual:SEED-PLANNING-1",
+    "state": "planning",
+    "title": "A plan waiting for approval",
+    "updated_at": "<timestamp>",
+    "waiting_on": null,
+    "would_block": 0
+  },
+  "task": {
+    "attempts": 0,
+    "budget": {
+      "ci_minutes": 30,
+      "tokens": 400000,
+      "usd": 10.0,
+      "wall_minutes": 60
+    },
+    "created_at": "<timestamp>",
+    "flow": "fix-issue",
+    "id": "<task-id>",
+    "kind": "fix",
+    "product": "Fixture",
+    "repo": "<repo>",
+    "schema_version": 1,
+    "scope": {
+      "paths_allow": [],
+      "paths_deny": []
+    },
+    "source": {
+      "kind": "manual",
+      "ref": "SEED-PLANNING-1",
+      "title": "A plan waiting for approval"
+    },
+    "state": "planning",
+    "updated_at": "<timestamp>",
+    "waiting_on": null,
+    "wake_deadline": null,
+    "wake_default": null,
+    "wake_next": null,
+    "wake_on": null
+  },
+  "team": {
+    "history": [],
+    "latest": null
+  },
+  "thread": [
+    {
+      "at": "<timestamp>",
+      "body": "A plan waiting for approval",
+      "card": null,
+      "facts": [
+        "manual:SEED-PLANNING-1",
+        "Fixture"
+      ],
+      "generated": false,
+      "generated_label": "",
+      "role": "person",
+      "seq": 1,
+      "stance": "",
+      "title": "Reported",
+      "tone": "",
+      "type": "task.created"
+    },
+    {
+      "at": "<timestamp>",
+      "body": "The failing check failed on the base commit, as expected.",
+      "card": null,
+      "facts": [
+        "reproduce"
+      ],
+      "generated": false,
+      "generated_label": "",
+      "role": "verifier",
+      "seq": 4,
+      "stance": "",
+      "title": "Reproduction confirmed",
+      "tone": "ok",
+      "type": "step.finished"
+    },
+    {
+      "at": "<timestamp>",
+      "body": "Fix addition and cover the negative case.",
+      "card": {
+        "kind": "question",
+        "options": [
+          {
+            "action": "approve-plan",
+            "label": "Approve plan",
+            "recommended": true,
+            "tone": "primary"
+          },
+          {
+            "action": "open-run",
+            "label": "Open run"
+          }
+        ],
+        "prompt": "Review the plan, then approve it or open the run.",
+        "rows": [
+          [
+            "Plan",
+            "p-<task-id>-v1"
+          ],
+          [
+            "Steps",
+            "reproduce -> build -> test"
+          ],
+          [
+            "Scenarios",
+            "1 (1 P0 / 0 P1)"
+          ],
+          [
+            "Planner",
+            "deterministic"
+          ],
+          [
+            "Lint",
+            "ok"
+          ],
+          [
+            "Hash",
+            "<sha>"
+          ],
+          [
+            "Planner cost",
+            "not reported"
+          ]
+        ]
+      },
+      "facts": [
+        "p-<task-id>-v1",
+        "3 step(s)",
+        "1 scenario(s)",
+        "1 P0",
+        "0 P1"
+      ],
+      "generated": false,
+      "generated_label": "",
+      "role": "builder",
+      "seq": 7,
+      "stance": "",
+      "title": "Plan drafted",
+      "tone": "",
+      "type": "plan.drafted"
+    }
+  ],
+  "timeline": [
+    {
+      "data": {
+        "task": {
+          "attempts": 0,
+          "budget": {
+            "ci_minutes": 30,
+            "tokens": 400000,
+            "usd": 10.0,
+            "wall_minutes": 60
+          },
+          "created_at": "<timestamp>",
+          "flow": "fix-issue",
+          "id": "<task-id>",
+          "kind": "fix",
+          "product": "Fixture",
+          "repo": "<repo>",
+          "schema_version": 1,
+          "scope": {
+            "paths_allow": [],
+            "paths_deny": []
+          },
+          "source": {
+            "kind": "manual",
+            "ref": "SEED-PLANNING-1",
+            "title": "A plan waiting for approval"
+          },
+          "state": "queued",
+          "updated_at": "<timestamp>",
+          "waiting_on": null,
+          "wake_deadline": null,
+          "wake_default": null,
+          "wake_next": null,
+          "wake_on": null
+        }
+      },
+      "seq": 1,
+      "ts": "<timestamp>",
+      "type": "task.created"
+    },
+    {
+      "data": {
+        "from": "queued",
+        "to": "reproducing"
+      },
+      "seq": 2,
+      "ts": "<timestamp>",
+      "type": "state.changed"
+    },
+    {
+      "data": {
+        "step": "reproduce"
+      },
+      "seq": 3,
+      "ts": "<timestamp>",
+      "type": "step.started"
+    },
+    {
+      "data": {
+        "exit_code": 1,
+        "step": "reproduce"
+      },
+      "seq": 4,
+      "ts": "<timestamp>",
+      "type": "step.finished"
+    },
+    {
+      "data": {
+        "from": "reproducing",
+        "to": "reproduced"
+      },
+      "seq": 5,
+      "ts": "<timestamp>",
+      "type": "state.changed"
+    },
+    {
+      "data": {
+        "from": "reproduced",
+        "to": "planning"
+      },
+      "seq": 6,
+      "ts": "<timestamp>",
+      "type": "state.changed"
+    },
+    {
+      "data": {
+        "base_commit": "<commit>",
+        "brief": "Summary: Fix addition and cover the negative case.",
+        "checks_sha": "<sha256>",
+        "checks_source": "workspace",
+        "hash": "<sha256>",
+        "nodes": [
+          "reproduce",
+          "build",
+          "test"
+        ],
+        "p0": [
+          "add-negative"
+        ],
+        "p1": [],
+        "plan_id": "p-<task-id>-v1",
+        "provenance": {
+          "duration_ms": 0,
+          "model": null,
+          "planner": "deterministic",
+          "provider": null,
+          "tokens": 0,
+          "usd": 0.0
+        },
+        "scenario_ids": [
+          "add-negative"
+        ],
+        "scenario_set": "<home>\\scenarios\\fix-add.yaml",
+        "status": "validated",
+        "summary": "Fix addition and cover the negative case.",
+        "validation": {
+          "errors": [],
+          "ok": true,
+          "warnings": []
+        },
+        "version": 1
+      },
+      "seq": 7,
+      "ts": "<timestamp>",
+      "type": "plan.drafted"
+    }
+  ],
+  "verifier": {
+    "isolation": "process",
+    "name": "local"
+  }
+}

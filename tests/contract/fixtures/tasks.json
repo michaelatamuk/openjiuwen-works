@@ -1,0 +1,74 @@
+{
+  "tasks": [
+    {
+      "decision": null,
+      "flow": "fix-issue",
+      "id": "<task-id>",
+      "kind": "fix",
+      "product": "Fixture",
+      "risk": null,
+      "source": "manual:SEED-QUEUED-1",
+      "state": "queued",
+      "title": "A queued report",
+      "updated_at": "<timestamp>",
+      "waiting_on": null,
+      "would_block": 0
+    },
+    {
+      "decision": null,
+      "flow": "fix-issue",
+      "id": "<task-id>",
+      "kind": "fix",
+      "product": "Fixture",
+      "risk": null,
+      "source": "manual:SEED-PLANNING-1",
+      "state": "planning",
+      "title": "A plan waiting for approval",
+      "updated_at": "<timestamp>",
+      "waiting_on": null,
+      "would_block": 0
+    },
+    {
+      "decision": "ask",
+      "flow": "fix-issue",
+      "id": "<task-id>",
+      "kind": "fix",
+      "product": "Fixture",
+      "risk": "low",
+      "source": "manual:SEED-BLOCKED-1",
+      "state": "blocked",
+      "title": "A change that touches tests",
+      "updated_at": "<timestamp>",
+      "waiting_on": null,
+      "would_block": 0
+    },
+    {
+      "decision": "act",
+      "flow": "fix-issue",
+      "id": "<task-id>",
+      "kind": "fix",
+      "product": "Fixture",
+      "risk": "low",
+      "source": "manual:SEED-RELEASED-1",
+      "state": "released",
+      "title": "A released and delivered fix",
+      "updated_at": "<timestamp>",
+      "waiting_on": null,
+      "would_block": 0
+    },
+    {
+      "decision": "act",
+      "flow": "fix-issue",
+      "id": "<task-id>",
+      "kind": "fix",
+      "product": "Fixture",
+      "risk": "low",
+      "source": "manual:SEED-PROVED-1",
+      "state": "proved",
+      "title": "A proved fix",
+      "updated_at": "<timestamp>",
+      "waiting_on": null,
+      "would_block": 0
+    }
+  ]
+}

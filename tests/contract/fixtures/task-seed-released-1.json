@@ -1,0 +1,2107 @@
+{
+  "artifacts": [],
+  "confirmation": {
+    "command": null,
+    "comment_url": null,
+    "commit": "<commit>",
+    "created": true,
+    "duration_ms": 0,
+    "exit_code": 0,
+    "notes": [],
+    "ok": true,
+    "output_sha256": "<sha256>",
+    "run_id": "<run-id>",
+    "screenshots": [],
+    "target": "https://example.test/health",
+    "task_id": "<task-id>",
+    "url": "https://example.test/health"
+  },
+  "delivery": {
+    "branch": "works/seed-delivered",
+    "comment_url": "https://example.test/issues/7#comment",
+    "commit": "<commit>",
+    "created": true,
+    "dry_run": false,
+    "notes": [
+      "pull request: https://example.test/pull/7"
+    ],
+    "pr_url": "https://example.test/pull/7",
+    "provider": "github",
+    "pushed": true,
+    "run_id": "<run-id>",
+    "task_id": "<task-id>",
+    "tracker": "github"
+  },
+  "deployment": {
+    "command": [
+      "python",
+      "-m",
+      "deploy",
+      "--staging"
+    ],
+    "commit": "<commit>",
+    "created": true,
+    "dry_run": false,
+    "environment": "staging",
+    "exit_code": 0,
+    "finished_at": "<timestamp>",
+    "notes": [],
+    "output_tail": "<output>",
+    "run_id": "<run-id>",
+    "started_at": "<timestamp>",
+    "status": "deployed",
+    "task_id": "<task-id>"
+  },
+  "evidence": {
+    "artifacts": [],
+    "base_commit": "<commit>",
+    "builder_tokens": 1200,
+    "builder_usd": 0.012,
+    "challenge": {
+      "allow": true,
+      "concerns": [],
+      "credential_split": false,
+      "model": "fake-builder-1",
+      "prompt_sha256": null,
+      "provider": "fixture",
+      "reason": "fixture challenge passed",
+      "schema_version": 1,
+      "tokens": 0,
+      "usd": 0.0
+    },
+    "checks_sha": "<sha256>",
+    "credential_split": false,
+    "decision": {
+      "action": "allow",
+      "alternatives": [],
+      "confidence": 0.9,
+      "decision_id": "",
+      "raw": {},
+      "reason_code": "evidence_sufficient",
+      "requires_approval": true,
+      "schema_version": 1,
+      "source": "deterministic",
+      "trace_id": "",
+      "verb": "act"
+    },
+    "diff": "diff --git a/calc/core.py b/calc/core.py\nindex <sha>..<sha> 100644\n--- a/calc/core.py\n+++ b/calc/core.py\n@@ -2,7 +2,7 @@\n \n \n def add(a: int, b: int) -> int:\n-    return a - b\n+    return a + b\n \n \n def mul(a: int, b: int) -> int:\n",
+    "diff_sha256": "<sha256>",
+    "diff_stat": [
+      {
+        "added": 1,
+        "path": "calc/core.py",
+        "removed": 1
+      }
+    ],
+    "duration_ms": 0,
+    "features": [],
+    "files_changed": [
+      "calc/core.py"
+    ],
+    "findings": [],
+    "flow": "fix-issue",
+    "memory_recall": [],
+    "model": "fake-builder-1",
+    "not_tested": [],
+    "plan_deviations": [],
+    "plan_hash": "<sha256>",
+    "plan_id": "p-<task-id>-v1",
+    "plan_summary": "Deterministic plan for fix-issue on Fixture: 4 flow nodes and 3 scenarios.",
+    "planner_mode": "deterministic",
+    "planner_model": null,
+    "planner_provider": null,
+    "planner_tokens": 0,
+    "planner_usd": 0.0,
+    "policy": {
+      "ok": true,
+      "schema_version": 1,
+      "violations": []
+    },
+    "preview": null,
+    "product": "openjiuwen",
+    "prompt_name": null,
+    "prompt_sha256": null,
+    "proof_sha256": "<sha256>",
+    "provider": "fixture",
+    "provider_split": false,
+    "reproduce": {
+      "argv": [
+        "<python>",
+        "-m",
+        "pytest",
+        "-q"
+      ],
+      "cwd": "<home>\\worktrees\\<run-id>\\repo",
+      "duration_ms": 0,
+      "exit_code": 1,
+      "output_sha256": "<sha256>",
+      "schema_version": 1,
+      "stderr_tail": "",
+      "stdout_tail": "<output>",
+      "step": "reproduce",
+      "timed_out": false
+    },
+    "risk": {
+      "deeper_verification": false,
+      "files": 1,
+      "level": "low",
+      "lines": 0,
+      "owners": [],
+      "reasons": [
+        "no high-risk path and a bounded change"
+      ],
+      "required_reviewers": 1,
+      "rounded_up": false,
+      "schema_version": 1
+    },
+    "run_id": "<run-id>",
+    "schema_version": 1,
+    "source": "manual:SEED-RELEASED-1",
+    "state": "proved",
+    "stop_reason": "completed",
+    "task_id": "<task-id>",
+    "task_kind": "fix",
+    "test": {
+      "argv": [
+        "<python>",
+        "-m",
+        "pytest",
+        "-q"
+      ],
+      "cwd": "<home>\\worktrees\\<run-id>\\repo",
+      "duration_ms": 0,
+      "exit_code": 0,
+      "output_sha256": "<sha256>",
+      "schema_version": 1,
+      "stderr_tail": "",
+      "stdout_tail": "<output>",
+      "step": "test",
+      "timed_out": false
+    },
+    "tokens": 1200,
+    "usd": 0.012,
+    "verdict": {
+      "allow": true,
+      "outcomes": [
+        {
+          "duration_ms": 0,
+          "exit_code": 0,
+          "id": "add-negative",
+          "output_sha256": "<sha256>",
+          "passed": true,
+          "priority": "P0",
+          "schema_version": 1,
+          "weight": 1.0
+        },
+        {
+          "duration_ms": 0,
+          "exit_code": 0,
+          "id": "add-positive",
+          "output_sha256": "<sha256>",
+          "passed": true,
+          "priority": "P0",
+          "schema_version": 1,
+          "weight": 1.0
+        },
+        {
+          "duration_ms": 0,
+          "exit_code": 0,
+          "id": "mul-positive",
+          "output_sha256": "<sha256>",
+          "passed": true,
+          "priority": "P1",
+          "schema_version": 1,
+          "weight": 1.0
+        }
+      ],
+      "p0_failed": [],
+      "p1_pass_rate": 1.0,
+      "reason": "all P0 passed; P1 pass rate 100%",
+      "run_id": "<run-id>",
+      "schema_version": 1
+    },
+    "verification_share": 0.0,
+    "verifier": "local",
+    "verifier_isolation": "process",
+    "verifier_model": "fake-builder-1",
+    "verifier_provider": "fixture",
+    "verifier_tokens": 0,
+    "verifier_usd": 0.0,
+    "would_block": []
+  },
+  "features": {
+    "available": false,
+    "covered": 0,
+    "features": [],
+    "files": [],
+    "note": "No feature map yet. Add features/<product>.yaml (T2.19).",
+    "total": 0,
+    "uncovered": 0
+  },
+  "laix": [],
+  "pipeline": {
+    "blocked": null,
+    "replay": [
+      {
+        "at": "<timestamp>",
+        "data": {
+          "task": {
+            "attempts": 0,
+            "budget": {
+              "ci_minutes": 30,
+              "tokens": 400000,
+              "usd": 10.0,
+              "wall_minutes": 60
+            },
+            "created_at": "<timestamp>",
+            "flow": "fix-issue",
+            "id": "<task-id>",
+            "kind": "fix",
+            "product": "Fixture",
+            "repo": "<repo>",
+            "schema_version": 1,
+            "scope": {
+              "paths_allow": [],
+              "paths_deny": []
+            },
+            "source": {
+              "kind": "manual",
+              "ref": "SEED-RELEASED-1",
+              "title": "A released and delivered fix"
+            },
+            "state": "queued",
+            "updated_at": "<timestamp>",
+            "waiting_on": null,
+            "wake_deadline": null,
+            "wake_default": null,
+            "wake_next": null,
+            "wake_on": null
+          }
+        },
+        "stage": "signal",
+        "type": "task.created"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "from": "queued",
+          "reason": "",
+          "to": "reproducing"
+        },
+        "stage": "reproduce",
+        "type": "state.changed"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "base": "<sha>",
+          "step": "worktree"
+        },
+        "stage": "signal",
+        "type": "step.started"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "step": "reproduce"
+        },
+        "stage": "reproduce",
+        "type": "step.started"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "exit_code": 1,
+          "step": "reproduce"
+        },
+        "stage": "reproduce",
+        "type": "step.finished"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "from": "reproducing",
+          "reason": "",
+          "to": "reproduced"
+        },
+        "stage": "reproduce",
+        "type": "state.changed"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "from": "reproduced",
+          "reason": "",
+          "to": "planning"
+        },
+        "stage": "plan",
+        "type": "state.changed"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "base_commit": "<commit>",
+          "brief": "Summary: Deterministic plan for fix-issue on Fixture: 4 flow nodes and 3 scenarios.\n- reproduce: deterministic command (node=reproduce; done_when=the reproduction fails on the base commit; commands={python} -m pytest -q)\n- build: agent turn (node=build; done_when=the reproduction and tests pass)\n- test: deterministic command (node=test; done_when=the tests and scenarios pass; commands={python} -m pytest -q)\n- challenge: agent turn (node=challenge; done_when=the challenger returns allow)\nVerification: Run the flow test node.; P0 scenarios: add-positive, add-negative.; P1 scenarios: mul-positive.; Run the independent challenge node.\nAssumptions: The flow nodes and the scenario set are the source of truth.; The builder works in an isolated worktree and does not commit.\nRisks: This plan is a contract skeleton; file-level detail is chosen during the build turn.\nRollback: Discard the worktree; the builder does not commit.",
+          "checks_sha": "<sha256>",
+          "checks_source": "workspace:<home>\\flows\\fix-issue.yaml",
+          "hash": "<sha256>",
+          "nodes": [
+            "reproduce",
+            "build",
+            "test",
+            "challenge"
+          ],
+          "p0": [
+            "add-positive",
+            "add-negative"
+          ],
+          "p1": [
+            "mul-positive"
+          ],
+          "plan_id": "p-<task-id>-v1",
+          "provenance": {
+            "duration_ms": 0,
+            "error": null,
+            "fallback": false,
+            "mode": "deterministic",
+            "model": null,
+            "planner": "deterministic",
+            "prompt_sha256": null,
+            "provider": null,
+            "schema_version": 1,
+            "tokens": 0,
+            "usd": 0.0
+          },
+          "scenario_ids": [
+            "add-positive",
+            "add-negative",
+            "mul-positive"
+          ],
+          "scenario_set": "<home>\\scenarios\\fix-add.yaml",
+          "status": "validated",
+          "summary": "Deterministic plan for fix-issue on Fixture: 4 flow nodes and 3 scenarios.",
+          "validation": {
+            "checks": [
+              "summary",
+              "steps",
+              "node-coverage",
+              "step-detail",
+              "scenario-coverage",
+              "paths",
+              "commands",
+              "budget",
+              "rollback",
+              "spec",
+              "open-questions"
+            ],
+            "errors": [],
+            "ok": true,
+            "schema_version": 1,
+            "warnings": []
+          },
+          "version": 1
+        },
+        "stage": "plan",
+        "type": "plan.drafted"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "action": "ask",
+          "alternatives": [],
+          "confidence": 0.95,
+          "decision_id": "",
+          "gate": "plan",
+          "mode": "off",
+          "raw": {},
+          "reason_code": "plan_needs_person",
+          "requires_approval": true,
+          "schema_version": 1,
+          "source": "deterministic",
+          "trace_id": "",
+          "verb": "ask"
+        },
+        "stage": "plan_gate",
+        "type": "decision.made"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "from": "planning",
+          "reason": "",
+          "to": "plan_approved"
+        },
+        "stage": "plan_gate",
+        "type": "state.changed"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "by": "cli",
+          "checks_sha": "<sha256>",
+          "commit": "<commit>",
+          "decision": "approved",
+          "gate": "plan",
+          "owners": [],
+          "plan_hash": "<sha256>",
+          "plan_id": "p-<task-id>-v1",
+          "required_reviewers": 1,
+          "risk": null
+        },
+        "stage": "plan_gate",
+        "type": "gate.decided"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "from": "plan_approved",
+          "reason": "",
+          "to": "building"
+        },
+        "stage": "build",
+        "type": "state.changed"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "attempt": 1
+        },
+        "stage": "build",
+        "type": "attempt.started"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "message": "proposal received",
+          "model": "fake-builder-1",
+          "paths": [
+            "calc/core.py"
+          ],
+          "provider": "fixture",
+          "tokens": 1200,
+          "usd": 0.012
+        },
+        "stage": "proof",
+        "type": "note"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "deeper_verification": false,
+          "files": 1,
+          "level": "low",
+          "lines": 0,
+          "owners": [],
+          "reasons": [
+            "no high-risk path and a bounded change"
+          ],
+          "required_reviewers": 1,
+          "rounded_up": false,
+          "schema_version": 1
+        },
+        "stage": "proof",
+        "type": "risk.rated"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "from": "building",
+          "reason": "",
+          "to": "checking"
+        },
+        "stage": "check",
+        "type": "state.changed"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "step": "test"
+        },
+        "stage": "check",
+        "type": "step.started"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "exit_code": 0,
+          "step": "test"
+        },
+        "stage": "check",
+        "type": "step.finished"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "allow": true,
+          "concerns": [],
+          "credential_split": false,
+          "model": "fake-builder-1",
+          "prompt_sha256": null,
+          "provider": "fixture",
+          "reason": "fixture challenge passed",
+          "schema_version": 1,
+          "tokens": 0,
+          "usd": 0.0
+        },
+        "stage": "check",
+        "type": "challenge.decided"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "from": "checking",
+          "reason": "",
+          "to": "proved"
+        },
+        "stage": "proof",
+        "type": "state.changed"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "action": "allow",
+          "alternatives": [],
+          "confidence": 0.9,
+          "decision_id": "",
+          "gate": "release",
+          "mode": "off",
+          "raw": {},
+          "reason_code": "evidence_sufficient",
+          "requires_approval": true,
+          "schema_version": 1,
+          "source": "deterministic",
+          "trace_id": "",
+          "verb": "act"
+        },
+        "stage": "release_gate",
+        "type": "decision.made"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "message": "proof is ready; gate 2 is the next step"
+        },
+        "stage": "proof",
+        "type": "note"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "from": "proved",
+          "reason": "release approved",
+          "to": "releasing"
+        },
+        "stage": "release_gate",
+        "type": "state.changed"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "from": "releasing",
+          "reason": "release approved",
+          "to": "released"
+        },
+        "stage": "deliver",
+        "type": "state.changed"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "by": "cli",
+          "commit": "<commit>",
+          "decision": "approved",
+          "gate": "release",
+          "proof_sha256": "<sha256>",
+          "released_at": "<timestamp>",
+          "run_id": "<run-id>"
+        },
+        "stage": "release_gate",
+        "type": "gate.decided"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "branch": "works/seed-delivered",
+          "comment_url": "https://example.test/issues/7#comment",
+          "commit": "<commit>",
+          "created": true,
+          "dry_run": false,
+          "notes": [
+            "pull request: https://example.test/pull/7"
+          ],
+          "pr_url": "https://example.test/pull/7",
+          "provider": "github",
+          "pushed": true,
+          "run_id": "<run-id>",
+          "task_id": "<task-id>",
+          "tracker": "github"
+        },
+        "stage": "signal",
+        "type": "delivery.finished"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "command": null,
+          "comment_url": null,
+          "commit": "<commit>",
+          "created": true,
+          "duration_ms": 0,
+          "exit_code": 0,
+          "notes": [],
+          "ok": true,
+          "output_sha256": "<sha256>",
+          "run_id": "<run-id>",
+          "screenshots": [],
+          "target": "https://example.test/health",
+          "task_id": "<task-id>",
+          "url": "https://example.test/health"
+        },
+        "stage": "signal",
+        "type": "confirmation.finished"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "command": [
+            "python",
+            "-m",
+            "deploy",
+            "--staging"
+          ],
+          "commit": "<commit>",
+          "created": true,
+          "dry_run": false,
+          "environment": "staging",
+          "exit_code": 0,
+          "finished_at": "<timestamp>",
+          "notes": [],
+          "output_tail": "<output>",
+          "run_id": "<run-id>",
+          "started_at": "<timestamp>",
+          "status": "deployed",
+          "task_id": "<task-id>"
+        },
+        "stage": "signal",
+        "type": "deploy.finished"
+      }
+    ],
+    "story": [
+      {
+        "artifacts": [
+          "Reported through a person",
+          "A released and delivered fix"
+        ],
+        "at": "<timestamp>",
+        "caption": "A person reported the problem.",
+        "id": "reported",
+        "kind": "source",
+        "label": "Reported",
+        "state": "done"
+      },
+      {
+        "artifacts": [
+          "Mira took the report",
+          "Work started on Fixture"
+        ],
+        "at": "<timestamp>",
+        "caption": "Mira picked it up.",
+        "id": "picked_up",
+        "kind": "stage",
+        "label": "Picked up",
+        "state": "done"
+      },
+      {
+        "artifacts": [
+          "The problem was reproduced",
+          "Before the fix, the check failed"
+        ],
+        "at": "<timestamp>",
+        "caption": "We saw it happen.",
+        "id": "confirmed",
+        "kind": "stage",
+        "label": "Confirmed",
+        "state": "done"
+      },
+      {
+        "artifacts": [
+          "The plan was approved",
+          "1 file(s) changed",
+          "The fix was built"
+        ],
+        "at": "<timestamp>",
+        "caption": "We built a fix.",
+        "id": "fixed",
+        "kind": "stage",
+        "label": "Fixed",
+        "state": "done"
+      },
+      {
+        "artifacts": [
+          "All must-pass checks passed",
+          "The independent review passed"
+        ],
+        "at": "<timestamp>",
+        "caption": "We checked it.",
+        "id": "checked",
+        "kind": "stage",
+        "label": "Checked",
+        "state": "done"
+      },
+      {
+        "artifacts": [
+          "The released fix was confirmed",
+          "https://example.test/health"
+        ],
+        "at": "<timestamp>",
+        "caption": "The released fix was confirmed in Fixture.",
+        "id": "delivered",
+        "kind": "gate",
+        "label": "Confirmed in Fixture",
+        "state": "done"
+      }
+    ],
+    "technical": [
+      {
+        "artifacts": [
+          "manual:SEED-RELEASED-1",
+          "A released and delivered fix"
+        ],
+        "at": "<timestamp>",
+        "id": "signal",
+        "kind": "source",
+        "label": "Read the signal",
+        "state": "done"
+      },
+      {
+        "artifacts": [
+          "exit 1",
+          "the problem was reproduced"
+        ],
+        "at": "<timestamp>",
+        "id": "reproduce",
+        "kind": "agent",
+        "label": "Reproduce",
+        "state": "done"
+      },
+      {
+        "artifacts": [
+          "3 scenario(s)",
+          "plan drafted"
+        ],
+        "at": "<timestamp>",
+        "id": "plan",
+        "kind": "agent",
+        "label": "Plan",
+        "state": "done"
+      },
+      {
+        "artifacts": [
+          "by cli",
+          "commit <commit>"
+        ],
+        "at": "<timestamp>",
+        "id": "plan_gate",
+        "kind": "gate",
+        "label": "Plan approved",
+        "state": "done"
+      },
+      {
+        "artifacts": [
+          "1 file(s) changed",
+          "model fake-builder-1"
+        ],
+        "at": "<timestamp>",
+        "id": "build",
+        "kind": "agent",
+        "label": "Build",
+        "state": "done"
+      },
+      {
+        "artifacts": [
+          "verdict allow",
+          "challenge allow"
+        ],
+        "at": "<timestamp>",
+        "id": "check",
+        "kind": "verify",
+        "label": "Check",
+        "state": "done"
+      },
+      {
+        "artifacts": [
+          "risk low",
+          "proof <sha256>"
+        ],
+        "at": "<timestamp>",
+        "id": "proof",
+        "kind": "artifact",
+        "label": "Proof",
+        "state": "done"
+      },
+      {
+        "artifacts": [
+          "by cli",
+          "commit <commit>"
+        ],
+        "at": "<timestamp>",
+        "id": "release_gate",
+        "kind": "gate",
+        "label": "Release approved",
+        "state": "done"
+      },
+      {
+        "artifacts": [
+          "branch works/seed-delivered",
+          "commit <commit>"
+        ],
+        "at": "<timestamp>",
+        "id": "deliver",
+        "kind": "source",
+        "label": "Deliver",
+        "state": "done"
+      },
+      {
+        "artifacts": [
+          "confirmation pass",
+          "https://example.test/health"
+        ],
+        "at": "<timestamp>",
+        "id": "confirm",
+        "kind": "verify",
+        "label": "Confirm",
+        "state": "done"
+      }
+    ]
+  },
+  "proof_md": "<markdown>",
+  "rail": {
+    "agents": [
+      {
+        "detail": "fixture",
+        "name": "fake-builder-1",
+        "role": "builder",
+        "tone": ""
+      },
+      {
+        "detail": "allow",
+        "name": "fake-builder-1",
+        "role": "challenger",
+        "tone": "ok"
+      },
+      {
+        "detail": "process",
+        "name": "local",
+        "role": "verifier",
+        "tone": ""
+      },
+      {
+        "detail": "not run",
+        "name": "inspector + challenger + reporter",
+        "role": "team",
+        "tone": ""
+      }
+    ],
+    "checks": [
+      {
+        "label": "Policy",
+        "value": "pass"
+      },
+      {
+        "label": "Verdict",
+        "value": "allow"
+      },
+      {
+        "label": "Challenge",
+        "value": "allow"
+      },
+      {
+        "label": "Team",
+        "value": "not run"
+      },
+      {
+        "label": "Confirmation",
+        "value": "pass"
+      }
+    ],
+    "cost": {
+      "duration_ms": 0,
+      "tokens": 1200,
+      "usd": 0.012
+    },
+    "deliverables": [
+      {
+        "href": "",
+        "label": "Proof",
+        "value": "<sha>"
+      },
+      {
+        "href": "",
+        "label": "Commit",
+        "value": "<sha>"
+      },
+      {
+        "href": "",
+        "label": "Branch",
+        "value": "works/seed-delivered"
+      },
+      {
+        "href": "https://example.test/pull/7",
+        "label": "Pull request",
+        "value": "https://example.test/pull/7"
+      },
+      {
+        "href": "",
+        "label": "Release",
+        "value": "released"
+      },
+      {
+        "href": "",
+        "label": "Confirmation",
+        "value": "pass"
+      }
+    ],
+    "factory": {
+      "base_commit": "<commit>",
+      "checks_sha": "<sha256>",
+      "flow": "fix-issue",
+      "run": "<run-id>"
+    },
+    "owners": [],
+    "people": [
+      "cli"
+    ],
+    "task": {
+      "id": "<task-id>",
+      "product": "Fixture",
+      "source": "manual:SEED-RELEASED-1",
+      "state": "released",
+      "title": "A released and delivered fix"
+    }
+  },
+  "readiness": {
+    "available": true,
+    "checks": [
+      {
+        "detail": ".git found",
+        "id": "git",
+        "label": "Git repository",
+        "ok": true,
+        "status": "pass"
+      },
+      {
+        "detail": "no pyproject/package/Cargo/go module",
+        "id": "project",
+        "label": "Project manifest",
+        "ok": false,
+        "status": "fail"
+      },
+      {
+        "detail": "no features declared",
+        "id": "features",
+        "label": "Feature map",
+        "ok": false,
+        "status": "fail"
+      },
+      {
+        "detail": "none found",
+        "id": "suppressions",
+        "label": "Known suppressions",
+        "ok": true,
+        "status": "pass"
+      },
+      {
+        "detail": "0 rule(s)",
+        "id": "imports",
+        "label": "Import boundaries",
+        "ok": true,
+        "status": "pass"
+      },
+      {
+        "detail": "4 module(s)",
+        "id": "cycles",
+        "label": "Import cycles",
+        "ok": true,
+        "status": "pass"
+      },
+      {
+        "detail": "not run in the preview; run `works readiness`",
+        "id": "lint",
+        "label": "Lint",
+        "ok": null,
+        "status": "skip"
+      },
+      {
+        "detail": "not run in the preview; run `works readiness`",
+        "id": "format",
+        "label": "Format",
+        "ok": null,
+        "status": "skip"
+      },
+      {
+        "detail": "not run in the preview; run `works readiness`",
+        "id": "types",
+        "label": "Types",
+        "ok": null,
+        "status": "skip"
+      },
+      {
+        "detail": "not run in the preview; run `works readiness`",
+        "id": "tests",
+        "label": "Fast tests",
+        "ok": null,
+        "status": "skip"
+      },
+      {
+        "detail": "not run in the preview; run `works readiness`",
+        "id": "verify",
+        "label": "Product verify",
+        "ok": null,
+        "status": "skip"
+      },
+      {
+        "detail": "not run in the preview; run `works readiness`",
+        "id": "architecture",
+        "label": "Architecture boundaries",
+        "ok": null,
+        "status": "skip"
+      }
+    ],
+    "failed": 2,
+    "features": [],
+    "import_cycles": [],
+    "import_edges": {
+      "calc": [],
+      "calc.core": [],
+      "tests.test_core": [
+        "calc"
+      ],
+      "tests.test_mul": [
+        "calc"
+      ]
+    },
+    "note": "No .works/readiness.yaml found. Add one before autonomy.",
+    "passed": 4,
+    "skipped": 6,
+    "status": "fail",
+    "suppressions": [],
+    "total": 12,
+    "unknown_suppressions": []
+  },
+  "release": {
+    "blockers": [
+      "release approval is bound to another proof"
+    ],
+    "commit": "<commit>",
+    "plan_gate": {
+      "by": "cli",
+      "checks_sha": "<sha256>",
+      "commit": "<commit>",
+      "decision": "approved",
+      "gate": "plan",
+      "owners": [],
+      "plan_hash": "<sha256>",
+      "plan_id": "p-<task-id>-v1",
+      "required_reviewers": 1,
+      "risk": null
+    },
+    "proof_sha256": "<sha256>",
+    "ready": false,
+    "release_gate": {
+      "by": "cli",
+      "commit": "<commit>",
+      "decision": "approved",
+      "gate": "release",
+      "proof_sha256": "<sha256>",
+      "released_at": "<timestamp>",
+      "run_id": "<run-id>"
+    },
+    "released": true,
+    "run_id": "<run-id>",
+    "task_id": "<task-id>"
+  },
+  "run": {
+    "attempts": 1,
+    "base_commit": "<commit>",
+    "builder_tokens": 1200,
+    "builder_usd": 0.012,
+    "checks_sha": "<sha256>",
+    "credential_split": false,
+    "decision_id": "",
+    "decision_verb": "act",
+    "duration_ms": 0,
+    "evidence_md": "<home>\\runs\\<run-id>\\evidence.md",
+    "finished_at": "<timestamp>",
+    "flow": "fix-issue",
+    "model": "fake-builder-1",
+    "plan_deviations": [],
+    "plan_hash": "<sha256>",
+    "plan_id": "p-<task-id>-v1",
+    "planner_mode": "deterministic",
+    "planner_model": null,
+    "planner_provider": null,
+    "planner_tokens": 0,
+    "planner_usd": 0.0,
+    "provider": "fixture",
+    "provider_split": false,
+    "risk_level": "low",
+    "risk_reasons": [
+      "no high-risk path and a bounded change"
+    ],
+    "run_id": "<run-id>",
+    "schema_version": 1,
+    "started_at": "<timestamp>",
+    "state": "proved",
+    "stop_reason": "completed",
+    "task_id": "<task-id>",
+    "task_kind": "fix",
+    "tokens": 1200,
+    "usd": 0.012,
+    "verification_share": 0.0,
+    "verifier": "local",
+    "verifier_isolation": "process",
+    "verifier_model": "fake-builder-1",
+    "verifier_provider": "fixture",
+    "verifier_tokens": 0,
+    "verifier_usd": 0.0
+  },
+  "runs": [
+    {
+      "base_commit": "<commit>",
+      "confirmed": true,
+      "delivered": true,
+      "duration_ms": 0,
+      "files": [
+        "calc/core.py"
+      ],
+      "finished_at": "<timestamp>",
+      "not_tested": [],
+      "proof_sha256": "<sha256>",
+      "risk": "low",
+      "run_id": "<run-id>",
+      "state": "proved",
+      "tokens": 1200,
+      "usd": 0.012,
+      "verdict": "allow"
+    }
+  ],
+  "summary": {
+    "decision": "act",
+    "flow": "fix-issue",
+    "id": "<task-id>",
+    "kind": "fix",
+    "product": "Fixture",
+    "risk": "low",
+    "source": "manual:SEED-RELEASED-1",
+    "state": "released",
+    "title": "A released and delivered fix",
+    "updated_at": "<timestamp>",
+    "waiting_on": null,
+    "would_block": 0
+  },
+  "task": {
+    "attempts": 1,
+    "budget": {
+      "ci_minutes": 30,
+      "tokens": 400000,
+      "usd": 10.0,
+      "wall_minutes": 60
+    },
+    "created_at": "<timestamp>",
+    "flow": "fix-issue",
+    "id": "<task-id>",
+    "kind": "fix",
+    "product": "Fixture",
+    "repo": "<repo>",
+    "schema_version": 1,
+    "scope": {
+      "paths_allow": [],
+      "paths_deny": []
+    },
+    "source": {
+      "kind": "manual",
+      "ref": "SEED-RELEASED-1",
+      "title": "A released and delivered fix"
+    },
+    "state": "released",
+    "updated_at": "<timestamp>",
+    "waiting_on": null,
+    "wake_deadline": null,
+    "wake_default": null,
+    "wake_next": null,
+    "wake_on": null
+  },
+  "team": {
+    "history": [],
+    "latest": null
+  },
+  "thread": [
+    {
+      "at": "<timestamp>",
+      "body": "A released and delivered fix",
+      "card": null,
+      "facts": [
+        "manual:SEED-RELEASED-1",
+        "Fixture"
+      ],
+      "generated": false,
+      "generated_label": "",
+      "role": "person",
+      "seq": 1,
+      "stance": "",
+      "title": "Reported",
+      "tone": "",
+      "type": "task.created"
+    },
+    {
+      "at": "<timestamp>",
+      "body": "The failing check failed on the base commit, as expected.",
+      "card": null,
+      "facts": [
+        "reproduce"
+      ],
+      "generated": false,
+      "generated_label": "",
+      "role": "verifier",
+      "seq": 5,
+      "stance": "",
+      "title": "Reproduction confirmed",
+      "tone": "ok",
+      "type": "step.finished"
+    },
+    {
+      "at": "<timestamp>",
+      "body": "Deterministic plan for fix-issue on Fixture: 4 flow nodes and 3 scenarios.",
+      "card": {
+        "kind": "question",
+        "options": [
+          {
+            "action": "open-run",
+            "label": "Open run"
+          }
+        ],
+        "prompt": "Review the plan, then approve it or open the run.",
+        "rows": [
+          [
+            "Plan",
+            "p-<task-id>-v1"
+          ],
+          [
+            "Steps",
+            "reproduce -> build -> test -> challenge"
+          ],
+          [
+            "Scenarios",
+            "3 (2 P0 / 1 P1)"
+          ],
+          [
+            "Planner",
+            "deterministic"
+          ],
+          [
+            "Lint",
+            "ok"
+          ],
+          [
+            "Hash",
+            "<sha>"
+          ],
+          [
+            "Planner cost",
+            "not reported"
+          ]
+        ]
+      },
+      "facts": [
+        "p-<task-id>-v1",
+        "4 step(s)",
+        "3 scenario(s)",
+        "2 P0",
+        "1 P1"
+      ],
+      "generated": false,
+      "generated_label": "",
+      "role": "builder",
+      "seq": 8,
+      "stance": "",
+      "title": "Plan drafted",
+      "tone": "",
+      "type": "plan.drafted"
+    },
+    {
+      "at": "<timestamp>",
+      "body": "plan_needs_person",
+      "card": null,
+      "facts": [
+        "gate plan"
+      ],
+      "generated": false,
+      "generated_label": "",
+      "role": "verifier",
+      "seq": 9,
+      "stance": "",
+      "title": "Decision: ask",
+      "tone": "",
+      "type": "decision.made"
+    },
+    {
+      "at": "<timestamp>",
+      "body": "cli opened the plan gate.",
+      "card": {
+        "kind": "gate",
+        "rows": [
+          [
+            "Gate",
+            "plan"
+          ],
+          [
+            "Decision",
+            "approved"
+          ],
+          [
+            "By",
+            "cli"
+          ],
+          [
+            "Commit",
+            "<sha>"
+          ]
+        ]
+      },
+      "facts": [
+        "commit <commit>"
+      ],
+      "generated": false,
+      "generated_label": "",
+      "role": "person",
+      "seq": 11,
+      "stance": "",
+      "title": "Plan approved",
+      "tone": "ok",
+      "type": "gate.decided"
+    },
+    {
+      "at": "<timestamp>",
+      "body": "The builder is editing the disposable worktree.",
+      "card": null,
+      "facts": [],
+      "generated": false,
+      "generated_label": "",
+      "role": "builder",
+      "seq": 13,
+      "stance": "",
+      "title": "Build attempt 1 started",
+      "tone": "",
+      "type": "attempt.started"
+    },
+    {
+      "at": "<timestamp>",
+      "body": "fake-builder-1 proposed a change to 1 file(s).",
+      "card": null,
+      "facts": [
+        "calc/core.py"
+      ],
+      "generated": false,
+      "generated_label": "",
+      "role": "builder",
+      "seq": 14,
+      "stance": "",
+      "title": "Proposal received",
+      "tone": "",
+      "type": "note"
+    },
+    {
+      "at": "<timestamp>",
+      "body": "no high-risk path and a bounded change",
+      "card": null,
+      "facts": [
+        "owners none"
+      ],
+      "generated": false,
+      "generated_label": "",
+      "role": "verifier",
+      "seq": 15,
+      "stance": "",
+      "title": "Risk: low",
+      "tone": "",
+      "type": "risk.rated"
+    },
+    {
+      "at": "<timestamp>",
+      "body": "Exit code 0.",
+      "card": null,
+      "facts": [
+        "test"
+      ],
+      "generated": false,
+      "generated_label": "",
+      "role": "verifier",
+      "seq": 18,
+      "stance": "",
+      "title": "Tests passed",
+      "tone": "ok",
+      "type": "step.finished"
+    },
+    {
+      "at": "<timestamp>",
+      "body": "fixture challenge passed",
+      "card": {
+        "kind": "challenge",
+        "rows": [
+          [
+            "Allow",
+            "yes"
+          ],
+          [
+            "Model",
+            "fake-builder-1"
+          ]
+        ]
+      },
+      "facts": [
+        "concerns 0"
+      ],
+      "generated": false,
+      "generated_label": "",
+      "role": "challenger",
+      "seq": 19,
+      "stance": "",
+      "title": "Independent check allowed",
+      "tone": "ok",
+      "type": "challenge.decided"
+    },
+    {
+      "at": "<timestamp>",
+      "body": "evidence_sufficient",
+      "card": null,
+      "facts": [
+        "gate release"
+      ],
+      "generated": false,
+      "generated_label": "",
+      "role": "verifier",
+      "seq": 21,
+      "stance": "",
+      "title": "Decision: act",
+      "tone": "",
+      "type": "decision.made"
+    },
+    {
+      "at": "<timestamp>",
+      "body": "proof is ready; gate 2 is the next step",
+      "card": null,
+      "facts": [],
+      "generated": false,
+      "generated_label": "",
+      "role": "system",
+      "seq": 22,
+      "stance": "",
+      "title": "Note",
+      "tone": "",
+      "type": "note"
+    },
+    {
+      "at": "<timestamp>",
+      "body": "release approved",
+      "card": null,
+      "facts": [],
+      "generated": false,
+      "generated_label": "",
+      "role": "system",
+      "seq": 24,
+      "stance": "",
+      "title": "State: released",
+      "tone": "ok",
+      "type": "state.changed"
+    },
+    {
+      "at": "<timestamp>",
+      "body": "cli opened the release gate.",
+      "card": {
+        "kind": "gate",
+        "rows": [
+          [
+            "Gate",
+            "release"
+          ],
+          [
+            "Decision",
+            "approved"
+          ],
+          [
+            "By",
+            "cli"
+          ],
+          [
+            "Commit",
+            "<sha>"
+          ]
+        ]
+      },
+      "facts": [
+        "commit <commit>",
+        "proof <sha256>"
+      ],
+      "generated": false,
+      "generated_label": "",
+      "role": "person",
+      "seq": 25,
+      "stance": "",
+      "title": "Release approved",
+      "tone": "ok",
+      "type": "gate.decided"
+    },
+    {
+      "at": "<timestamp>",
+      "body": "works/seed-delivered · <sha>",
+      "card": {
+        "kind": "delivery",
+        "rows": [
+          [
+            "Branch",
+            "works/seed-delivered"
+          ],
+          [
+            "Commit",
+            "<sha>"
+          ],
+          [
+            "Pull request",
+            "https://example.test/pull/7"
+          ],
+          [
+            "Comment",
+            "https://example.test/issues/7#comment"
+          ]
+        ]
+      },
+      "facts": [
+        "github",
+        "github"
+      ],
+      "generated": false,
+      "generated_label": "",
+      "role": "delivery",
+      "seq": 26,
+      "stance": "",
+      "title": "Delivered",
+      "tone": "ok",
+      "type": "delivery.finished"
+    },
+    {
+      "at": "<timestamp>",
+      "body": "https://example.test/health",
+      "card": {
+        "kind": "confirmation",
+        "rows": [
+          [
+            "Result",
+            "pass"
+          ],
+          [
+            "Target",
+            "https://example.test/health"
+          ],
+          [
+            "Output SHA",
+            "<sha>"
+          ]
+        ]
+      },
+      "facts": [
+        "exit 0",
+        "proof <sha256>"
+      ],
+      "generated": false,
+      "generated_label": "",
+      "role": "confirmation",
+      "seq": 27,
+      "stance": "",
+      "title": "Confirmation passed",
+      "tone": "ok",
+      "type": "confirmation.finished"
+    },
+    {
+      "at": "<timestamp>",
+      "body": "staging · <sha>",
+      "card": {
+        "kind": "deploy",
+        "rows": [
+          [
+            "Environment",
+            "staging"
+          ],
+          [
+            "Commit",
+            "<sha>"
+          ],
+          [
+            "Status",
+            "deployed"
+          ]
+        ]
+      },
+      "facts": [
+        "exit 0",
+        "deployed"
+      ],
+      "generated": false,
+      "generated_label": "",
+      "role": "delivery",
+      "seq": 28,
+      "stance": "",
+      "title": "Deployed",
+      "tone": "ok",
+      "type": "deploy.finished"
+    }
+  ],
+  "timeline": [
+    {
+      "data": {
+        "task": {
+          "attempts": 0,
+          "budget": {
+            "ci_minutes": 30,
+            "tokens": 400000,
+            "usd": 10.0,
+            "wall_minutes": 60
+          },
+          "created_at": "<timestamp>",
+          "flow": "fix-issue",
+          "id": "<task-id>",
+          "kind": "fix",
+          "product": "Fixture",
+          "repo": "<repo>",
+          "schema_version": 1,
+          "scope": {
+            "paths_allow": [],
+            "paths_deny": []
+          },
+          "source": {
+            "kind": "manual",
+            "ref": "SEED-RELEASED-1",
+            "title": "A released and delivered fix"
+          },
+          "state": "queued",
+          "updated_at": "<timestamp>",
+          "waiting_on": null,
+          "wake_deadline": null,
+          "wake_default": null,
+          "wake_next": null,
+          "wake_on": null
+        }
+      },
+      "seq": 1,
+      "ts": "<timestamp>",
+      "type": "task.created"
+    },
+    {
+      "data": {
+        "from": "queued",
+        "reason": "",
+        "to": "reproducing"
+      },
+      "seq": 2,
+      "ts": "<timestamp>",
+      "type": "state.changed"
+    },
+    {
+      "data": {
+        "base": "<sha>",
+        "step": "worktree"
+      },
+      "seq": 3,
+      "ts": "<timestamp>",
+      "type": "step.started"
+    },
+    {
+      "data": {
+        "step": "reproduce"
+      },
+      "seq": 4,
+      "ts": "<timestamp>",
+      "type": "step.started"
+    },
+    {
+      "data": {
+        "exit_code": 1,
+        "step": "reproduce"
+      },
+      "seq": 5,
+      "ts": "<timestamp>",
+      "type": "step.finished"
+    },
+    {
+      "data": {
+        "from": "reproducing",
+        "reason": "",
+        "to": "reproduced"
+      },
+      "seq": 6,
+      "ts": "<timestamp>",
+      "type": "state.changed"
+    },
+    {
+      "data": {
+        "from": "reproduced",
+        "reason": "",
+        "to": "planning"
+      },
+      "seq": 7,
+      "ts": "<timestamp>",
+      "type": "state.changed"
+    },
+    {
+      "data": {
+        "base_commit": "<commit>",
+        "brief": "Summary: Deterministic plan for fix-issue on Fixture: 4 flow nodes and 3 scenarios.\n- reproduce: deterministic command (node=reproduce; done_when=the reproduction fails on the base commit; commands={python} -m pytest -q)\n- build: agent turn (node=build; done_when=the reproduction and tests pass)\n- test: deterministic command (node=test; done_when=the tests and scenarios pass; commands={python} -m pytest -q)\n- challenge: agent turn (node=challenge; done_when=the challenger returns allow)\nVerification: Run the flow test node.; P0 scenarios: add-positive, add-negative.; P1 scenarios: mul-positive.; Run the independent challenge node.\nAssumptions: The flow nodes and the scenario set are the source of truth.; The builder works in an isolated worktree and does not commit.\nRisks: This plan is a contract skeleton; file-level detail is chosen during the build turn.\nRollback: Discard the worktree; the builder does not commit.",
+        "checks_sha": "<sha256>",
+        "checks_source": "workspace:<home>\\flows\\fix-issue.yaml",
+        "hash": "<sha256>",
+        "nodes": [
+          "reproduce",
+          "build",
+          "test",
+          "challenge"
+        ],
+        "p0": [
+          "add-positive",
+          "add-negative"
+        ],
+        "p1": [
+          "mul-positive"
+        ],
+        "plan_id": "p-<task-id>-v1",
+        "provenance": {
+          "duration_ms": 0,
+          "error": null,
+          "fallback": false,
+          "mode": "deterministic",
+          "model": null,
+          "planner": "deterministic",
+          "prompt_sha256": null,
+          "provider": null,
+          "schema_version": 1,
+          "tokens": 0,
+          "usd": 0.0
+        },
+        "scenario_ids": [
+          "add-positive",
+          "add-negative",
+          "mul-positive"
+        ],
+        "scenario_set": "<home>\\scenarios\\fix-add.yaml",
+        "status": "validated",
+        "summary": "Deterministic plan for fix-issue on Fixture: 4 flow nodes and 3 scenarios.",
+        "validation": {
+          "checks": [
+            "summary",
+            "steps",
+            "node-coverage",
+            "step-detail",
+            "scenario-coverage",
+            "paths",
+            "commands",
+            "budget",
+            "rollback",
+            "spec",
+            "open-questions"
+          ],
+          "errors": [],
+          "ok": true,
+          "schema_version": 1,
+          "warnings": []
+        },
+        "version": 1
+      },
+      "seq": 8,
+      "ts": "<timestamp>",
+      "type": "plan.drafted"
+    },
+    {
+      "data": {
+        "action": "ask",
+        "alternatives": [],
+        "confidence": 0.95,
+        "decision_id": "",
+        "gate": "plan",
+        "mode": "off",
+        "raw": {},
+        "reason_code": "plan_needs_person",
+        "requires_approval": true,
+        "schema_version": 1,
+        "source": "deterministic",
+        "trace_id": "",
+        "verb": "ask"
+      },
+      "seq": 9,
+      "ts": "<timestamp>",
+      "type": "decision.made"
+    },
+    {
+      "data": {
+        "from": "planning",
+        "reason": "",
+        "to": "plan_approved"
+      },
+      "seq": 10,
+      "ts": "<timestamp>",
+      "type": "state.changed"
+    },
+    {
+      "data": {
+        "by": "cli",
+        "checks_sha": "<sha256>",
+        "commit": "<commit>",
+        "decision": "approved",
+        "gate": "plan",
+        "owners": [],
+        "plan_hash": "<sha256>",
+        "plan_id": "p-<task-id>-v1",
+        "required_reviewers": 1,
+        "risk": null
+      },
+      "seq": 11,
+      "ts": "<timestamp>",
+      "type": "gate.decided"
+    },
+    {
+      "data": {
+        "from": "plan_approved",
+        "reason": "",
+        "to": "building"
+      },
+      "seq": 12,
+      "ts": "<timestamp>",
+      "type": "state.changed"
+    },
+    {
+      "data": {
+        "attempt": 1
+      },
+      "seq": 13,
+      "ts": "<timestamp>",
+      "type": "attempt.started"
+    },
+    {
+      "data": {
+        "message": "proposal received",
+        "model": "fake-builder-1",
+        "paths": [
+          "calc/core.py"
+        ],
+        "provider": "fixture",
+        "tokens": 1200,
+        "usd": 0.012
+      },
+      "seq": 14,
+      "ts": "<timestamp>",
+      "type": "note"
+    },
+    {
+      "data": {
+        "deeper_verification": false,
+        "files": 1,
+        "level": "low",
+        "lines": 0,
+        "owners": [],
+        "reasons": [
+          "no high-risk path and a bounded change"
+        ],
+        "required_reviewers": 1,
+        "rounded_up": false,
+        "schema_version": 1
+      },
+      "seq": 15,
+      "ts": "<timestamp>",
+      "type": "risk.rated"
+    },
+    {
+      "data": {
+        "from": "building",
+        "reason": "",
+        "to": "checking"
+      },
+      "seq": 16,
+      "ts": "<timestamp>",
+      "type": "state.changed"
+    },
+    {
+      "data": {
+        "step": "test"
+      },
+      "seq": 17,
+      "ts": "<timestamp>",
+      "type": "step.started"
+    },
+    {
+      "data": {
+        "exit_code": 0,
+        "step": "test"
+      },
+      "seq": 18,
+      "ts": "<timestamp>",
+      "type": "step.finished"
+    },
+    {
+      "data": {
+        "allow": true,
+        "concerns": [],
+        "credential_split": false,
+        "model": "fake-builder-1",
+        "prompt_sha256": null,
+        "provider": "fixture",
+        "reason": "fixture challenge passed",
+        "schema_version": 1,
+        "tokens": 0,
+        "usd": 0.0
+      },
+      "seq": 19,
+      "ts": "<timestamp>",
+      "type": "challenge.decided"
+    },
+    {
+      "data": {
+        "from": "checking",
+        "reason": "",
+        "to": "proved"
+      },
+      "seq": 20,
+      "ts": "<timestamp>",
+      "type": "state.changed"
+    },
+    {
+      "data": {
+        "action": "allow",
+        "alternatives": [],
+        "confidence": 0.9,
+        "decision_id": "",
+        "gate": "release",
+        "mode": "off",
+        "raw": {},
+        "reason_code": "evidence_sufficient",
+        "requires_approval": true,
+        "schema_version": 1,
+        "source": "deterministic",
+        "trace_id": "",
+        "verb": "act"
+      },
+      "seq": 21,
+      "ts": "<timestamp>",
+      "type": "decision.made"
+    },
+    {
+      "data": {
+        "message": "proof is ready; gate 2 is the next step"
+      },
+      "seq": 22,
+      "ts": "<timestamp>",
+      "type": "note"
+    },
+    {
+      "data": {
+        "from": "proved",
+        "reason": "release approved",
+        "to": "releasing"
+      },
+      "seq": 23,
+      "ts": "<timestamp>",
+      "type": "state.changed"
+    },
+    {
+      "data": {
+        "from": "releasing",
+        "reason": "release approved",
+        "to": "released"
+      },
+      "seq": 24,
+      "ts": "<timestamp>",
+      "type": "state.changed"
+    },
+    {
+      "data": {
+        "by": "cli",
+        "commit": "<commit>",
+        "decision": "approved",
+        "gate": "release",
+        "proof_sha256": "<sha256>",
+        "released_at": "<timestamp>",
+        "run_id": "<run-id>"
+      },
+      "seq": 25,
+      "ts": "<timestamp>",
+      "type": "gate.decided"
+    },
+    {
+      "data": {
+        "branch": "works/seed-delivered",
+        "comment_url": "https://example.test/issues/7#comment",
+        "commit": "<commit>",
+        "created": true,
+        "dry_run": false,
+        "notes": [
+          "pull request: https://example.test/pull/7"
+        ],
+        "pr_url": "https://example.test/pull/7",
+        "provider": "github",
+        "pushed": true,
+        "run_id": "<run-id>",
+        "task_id": "<task-id>",
+        "tracker": "github"
+      },
+      "seq": 26,
+      "ts": "<timestamp>",
+      "type": "delivery.finished"
+    },
+    {
+      "data": {
+        "command": null,
+        "comment_url": null,
+        "commit": "<commit>",
+        "created": true,
+        "duration_ms": 0,
+        "exit_code": 0,
+        "notes": [],
+        "ok": true,
+        "output_sha256": "<sha256>",
+        "run_id": "<run-id>",
+        "screenshots": [],
+        "target": "https://example.test/health",
+        "task_id": "<task-id>",
+        "url": "https://example.test/health"
+      },
+      "seq": 27,
+      "ts": "<timestamp>",
+      "type": "confirmation.finished"
+    },
+    {
+      "data": {
+        "command": [
+          "python",
+          "-m",
+          "deploy",
+          "--staging"
+        ],
+        "commit": "<commit>",
+        "created": true,
+        "dry_run": false,
+        "environment": "staging",
+        "exit_code": 0,
+        "finished_at": "<timestamp>",
+        "notes": [],
+        "output_tail": "<output>",
+        "run_id": "<run-id>",
+        "started_at": "<timestamp>",
+        "status": "deployed",
+        "task_id": "<task-id>"
+      },
+      "seq": 28,
+      "ts": "<timestamp>",
+      "type": "deploy.finished"
+    }
+  ],
+  "verifier": {
+    "isolation": "process",
+    "name": "local"
+  }
+}
