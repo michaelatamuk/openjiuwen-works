@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import threading
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -9,6 +10,7 @@ from pathlib import Path
 from works.adapters.queue.ledger import Ledger
 from works.adapters.queue.store import Queue
 from works.application.settings import BuilderSettings, load_builder_settings, settings_path
+from works.application.supervisor import Supervisor
 from works.config.paths import WorksPaths, load_paths
 from works.domain.errors import ConfigError
 from works.interfaces.api.jobs import JobRunner
@@ -56,3 +58,33 @@ def build_state(
         jobs=JobRunner(resolved, queue),
         live=EventHub(resolved),
     )
+
+
+def build_supervisor(
+    paths: WorksPaths,
+    *,
+    task_id: str | None = None,
+    trace: str | None = None,
+) -> Supervisor:
+    """Build a supervisor from saved settings, with an optional recorded trace."""
+    from works.interfaces.cli.commands.wiring import _supervisor
+
+    args = argparse.Namespace(
+        home=paths.root,
+        trace=Path(trace).expanduser().resolve() if trace else None,
+        live=False,
+        swarm=False,
+        swarm_python=None,
+        swarm_home=None,
+        model=None,
+        model_base=None,
+        prompt=None,
+        ppma=None,
+        ppma_space="me",
+        decision=None,
+        verifier="local",
+        verifier_image=None,
+        task_id=task_id,
+    )
+    supervisor: Supervisor = _supervisor(args)
+    return supervisor
