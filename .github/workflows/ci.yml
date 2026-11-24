@@ -65,6 +65,11 @@ jobs:
       - name: Install
         run: npm ci
         working-directory: web
+      - name: Generate API types
+        run: npm run generate:api
+        working-directory: web
+      - name: Generated client is current
+        run: git diff --ignore-cr-at-eol --exit-code -- web/src/api/generated
       - name: Typecheck
         run: npm run typecheck
         working-directory: web

@@ -343,15 +343,20 @@ performance gate is tracked in Phase 8.
 
 **Gate (met):** `pytest tests/unit/interfaces/api/test_live.py`; full suite green.
 
-### Phase 5a — frontend toolchain and client (2 days)
-- [ ] `web/src/api/generated/schema.ts` from OpenAPI (committed); CI regenerates and fails on diff.
-- [ ] `client.ts`: cookie credentials, typed errors, `Idempotency-Key`.
-- [ ] `hooks.ts`: `useTasks`, `useTaskDetail`, `useActions`, `useJob`, `useMetrics`, `useEvents`.
-- [ ] `useJob` state machine: queued/running/succeeded/failed/cancelled, progress/log, refresh on
-  success, disabled while busy.
-- [ ] Vitest setup and tests for client/hooks with mocked fetch.
+### Phase 5a — typed client and hooks (done)
 
-**Gate:** `npm run typecheck && npm test`.
+- [x] `web/src/api/generated/schema.ts` generated from the committed OpenAPI file; CI regenerates
+  it and fails on a diff.
+- [x] `web/src/api/client.ts`: same-origin credentials, typed task/detail/job/action calls,
+  `Idempotency-Key` on writes, structured `ApiError` (`status`, `code`, `message`), streamed ask.
+- [x] `web/src/api/hooks.ts`: `useTasks`, `useTaskDetail`, `useMetrics`, `useSettings`, `useAction`,
+  `useJob`, `useEvents` with cache invalidation from named SSE events.
+- [x] `useJob` polls while queued/running, stops at a terminal status, invalidates the task and
+  calls `onDone` once.
+- [x] Query client provider added in `main.jsx`; Vitest tests cover the client, error mapping,
+  idempotency, status helpers, task loading and event invalidation.
+
+**Gate (met):** `npm run typecheck && npm test && npm run build`.
 
 ### Phase 5b — screens (5 days)
 - [ ] Queue (search, filters, grouping/counts, mobile new task, live dot).
