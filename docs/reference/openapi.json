@@ -1,0 +1,82 @@
+{
+  "components": {
+    "schemas": {
+      "Health": {
+        "properties": {
+          "ai": {
+            "additionalProperties": true,
+            "title": "Ai",
+            "type": "object"
+          },
+          "builder": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Builder"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "readonly": {
+            "title": "Readonly",
+            "type": "boolean"
+          },
+          "root": {
+            "title": "Root",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          },
+          "write": {
+            "title": "Write",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok",
+          "readonly",
+          "write",
+          "root",
+          "version",
+          "ai"
+        ],
+        "title": "Health",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "openJiuwen Works",
+    "version": "0.0.1"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "operationId": "get_health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Health"
+      }
+    }
+  }
+}

@@ -258,17 +258,23 @@ match.
 
 **Gate (met):** `npm ci && npm run typecheck && npm test && npm run build`.
 
-### Phase 1 — daemon skeleton (1.5 days)
-- [ ] `interfaces/api/app.py`: `create_app(paths)`, lifespan start/stop, `GET /api/v1/health`.
-- [ ] `interfaces/api/wiring.py`: `build_supervisor(settings, task)` factory shared by jobs/CLI/tests.
-- [ ] `interfaces/cli/commands/daemon.py` + `cli/parser/daemon.py`: `works daemon --host --port
-  --write` (loopback only unless `--allow-remote`).
-- [ ] `interfaces/api/schemas/health.py`.
-- [ ] Tests use `asgi-lifespan` (or `TestClient`) so lifespan runs.
-- [ ] Lazy import of `interfaces.api` so `works --help` works without the `server` extra.
+### Phase 1 — daemon skeleton (done)
 
-**Gate:** `uv run pytest tests/unit/interfaces/api -q`; `works daemon --help`; health matches legacy
-keys.
+- [x] `pyproject.toml`: `server = [fastapi, uvicorn, sse-starlette]`; `httpx` in dev; lockfile
+  updated; CI syncs `--extra dev --extra server`.
+- [x] `interfaces/api/app.py`: `create_app(paths, writable)`, lifespan state, versioned
+  `/api/v1/health`, versioned OpenAPI URL.
+- [x] `interfaces/api/wiring.py`: `AppState`/`build_state` (paths, queue, ledger, settings). The
+  per-job supervisor factory moves to Phase 3a, where jobs exist.
+- [x] `interfaces/api/schemas/health.py` and `routes/health.py` reuse the read presenter.
+- [x] `interfaces/cli/commands/daemon.py` + `cli/parser/daemon.py`: `works daemon --host --port
+  --write --allow-remote`; non-loopback binds are refused by default.
+- [x] `scripts/dump_openapi.py` writes `docs/reference/openapi.json`; CI checks it is current and
+  smokes `works --help` / `works version`.
+- [x] Tests use FastAPI `TestClient` as a context manager so the lifespan runs (no extra dependency).
+
+**Gate (met):** `pytest tests/unit/interfaces/api`; `works daemon --help`; health matches the legacy
+keys; `dump_openapi.py --check`.
 
 ### Phase 2 — read API (3 days)
 - [ ] `schemas/tasks.py`: `TaskSummary` (all fields from `detail.py`), `TaskDetail` (task, summary,
