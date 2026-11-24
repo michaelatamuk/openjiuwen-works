@@ -62,13 +62,6 @@ class HarnessError(WorksError):
     exit_code = EXIT_BLOCKED
 
 
-class NotImplementedYet(WorksError):
-    """A command exists but its milestone has not landed."""
-
-    code = "not_implemented"
-    exit_code = EXIT_USAGE
-
-
 def exit_code_for(exc: BaseException) -> int:
     if isinstance(exc, WorksError):
         return exc.exit_code
