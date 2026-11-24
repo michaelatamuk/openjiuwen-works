@@ -267,7 +267,9 @@ def seed(root: Path, *, now: datetime = DEFAULT_NOW) -> WorksPaths:
     if proved_dir is not None:
         artifacts = proved_dir / "artifacts"
         artifacts.mkdir(parents=True, exist_ok=True)
-        (artifacts / "screenshot.txt").write_text("rendered preview\n", encoding="utf-8")
+        (artifacts / "screenshot.txt").write_text(
+            "rendered preview\n", encoding="utf-8", newline="\n"
+        )
     _backdate(queue, proved.id, now - timedelta(hours=3), timedelta(hours=1))
 
     released = _submit(

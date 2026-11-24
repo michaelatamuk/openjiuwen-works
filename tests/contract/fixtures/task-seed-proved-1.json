@@ -5,7 +5,7 @@
       "name": "screenshot.txt",
       "path": "screenshot.txt",
       "sha256": "",
-      "size": 18,
+      "size": 17,
       "url": "/api/tasks/<task-id>/artifacts/screenshot.txt"
     }
   ],
