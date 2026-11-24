@@ -13,7 +13,7 @@ launcher is refused by the SDK on Windows.
 
 ## Decision
 
-- Add `LiveHarness` (`src/works/harness/openjiuwen.py`), selected with `works run --live`.
+- Add `LiveHarness` (`src/works/adapters/harness/openjiuwen/builder.py`), selected with `works run --live`.
 - One turn per proposal. The agent edits the worktree in place, so the proposal carries
   `applied=True` and the paths it touched; the supervisor does not re-apply a patch.
 - Policy checks the touched paths **after the turn and before any test runs**. Bytecode and tool

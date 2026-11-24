@@ -824,7 +824,7 @@ Internal only: nothing is published to the upstream fork until M2 is green.
   - 2026-11-22: Docker argument builder, path/env rewriting and `works doctor` daemon status are in,
     tested through a recorded runner. The process verifier drops builder credentials, `works doctor`
     warns on a shared key, and Evidence records the verifier name and isolation. A live container
-    test now runs in CI (`tests/test_docker_live.py`); local runs need a running daemon.
+    test now runs in CI (`tests/integration/test_docker_live.py`); local runs need a running daemon.
 - [ ] **T2.26** JiuwenSwarm boundary: `works.swarm.v1` request/result contract, an isolated
   `SwarmHarness`, `works swarm doctor` and `works run --swarm`; no fake fallback. **M**
   - 2026-11-22: adapter and preflight are in and tested. The local checkout now starts; the

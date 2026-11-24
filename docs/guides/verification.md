@@ -76,7 +76,7 @@ command inside a container with:
 
 The adapter fails closed: if Docker is installed but its daemon is unreachable, the run stops with a
 configuration error instead of quietly using the host. `works doctor` reports the same status.
-Tests drive the Docker argument builder through a recorded runner; `tests/test_docker_live.py` runs
+Tests drive the Docker argument builder through a recorded runner; `tests/integration/test_docker_live.py` runs
 the real container in CI, and locally when `WORKS_TEST_DOCKER=1` and Docker is running.
 
 The process verifier drops every name that looks like a credential, including `WORKS_MODEL_KEY` and

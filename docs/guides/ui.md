@@ -161,4 +161,4 @@ the Evidence readiness panel run `works readiness` through a local POST.
 - React 19 + Vite, built into `src/works/interfaces/ui/static/dist`; no Tailwind or shadcn yet, and Playwright
   is not wired into CI.
 
-Tests: `pytest tests/test_ui.py tests/test_ui_pipeline.py`.
+Tests: `pytest tests/unit/interfaces/api/test_ui.py tests/unit/interfaces/api/test_ui_pipeline.py`.

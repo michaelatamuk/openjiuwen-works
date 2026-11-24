@@ -1,166 +1,21 @@
 import { useState } from "react";
 import { Modal } from "../../ui/Modal.jsx";
-
-const PROVIDER_FALLBACK = {
-  claudecode: { label: "Claude Code", kind: "General coding harness", available: true, missing: "Needs SDK" },
-  dsh: { label: "DeepSeek Harness", kind: "DeepSeek native", available: false, missing: "Needs SDK" },
-  native: { label: "Jiuwen native", kind: "In-process DeepAgent", available: false, missing: "Needs runtime" },
-  codex: { label: "Codex", kind: "OpenAI Codex", available: false, missing: "Needs SDK" },
-};
-
-const PROVIDER_ORDER = ["claudecode", "dsh", "native", "codex"];
-
-const RUNTIME_FALLBACK = {
-  openjiuwen: {
-    label: "OpenJiuwen harness",
-    kind: "One agent inside Works; pick a provider",
-    scope: "inside Works",
-    available: true,
-  },
-  swarm: {
-    label: "JiuwenSwarm",
-    kind: "A multi-agent team outside Works",
-    scope: "outside Works",
-    available: false,
-  },
-};
-
-const RUNTIME_ORDER = ["openjiuwen", "swarm"];
-
-const PLANNER_MODES_FALLBACK = [
-  { id: "deterministic", label: "Deterministic", kind: "Flow + scenarios only; no model" },
-  { id: "shadow", label: "Shadow", kind: "Model proposal stored beside the plan" },
-  { id: "assisted", label: "Assisted", kind: "Model proposal merged and linted" },
-  { id: "deep", label: "Deep", kind: "Assisted plus an independent critic" },
-  { id: "spec", label: "Spec", kind: "Requirements, design and tasks artefacts plus the plan" },
-  { id: "auto", label: "Auto", kind: "Pick assisted or deep from planned risk; you still approve" },
-];
-
-const PLANNER_PROVIDER_ORDER = ["claudecode", "native"];
-
-const MODEL_SUGGESTIONS = {
-  claudecode: ["deepseek-chat", "deepseek-reasoner", "claude-sonnet-4-5", "claude-opus-4-1", "claude-haiku-4-5"],
-  dsh: ["deepseek-chat", "deepseek-reasoner"],
-  native: ["deepseek-chat", "deepseek-reasoner", "gpt-5", "gpt-5-mini"],
-  codex: ["gpt-5", "gpt-5-codex", "o4-mini"],
-};
-
-function credentialLabel(provider, state, providers) {
-  const meta = providers[provider];
-  if (!meta?.available) return meta?.missing || "Needs setup";
-  if (provider === "dsh" || provider === "codex") return "Provider-managed";
-  return {
-    ready: "Ready",
-    missing: "Needs setup",
-    separate: "Separate credential",
-    shared: "Shared credential",
-    builder: "Uses builder credential",
-  }[state] || "Managed locally";
-}
-
-const PROVIDER_LETTERS = { claudecode: "C", dsh: "D", native: "J", codex: "X" };
-
-function ProviderCard({ id, meta, active, disabled, onSelect }) {
-  const letter = PROVIDER_LETTERS[id] || (meta.label || id).slice(0, 1).toUpperCase();
-  return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={active}
-      className={`provider-card provider-${id} ${active ? "active" : ""}`}
-      disabled={disabled}
-      onClick={() => onSelect(id)}
-    >
-      <span className="provider-mark" aria-hidden="true">{letter}</span>
-      <span className="provider-copy">
-        <b>{meta.label || id}</b>
-        <em>{meta.kind || "Model harness"}</em>
-      </span>
-      <span className={`provider-state ${meta.available ? "ready" : "missing"}`}>
-        {meta.available ? "Ready" : (meta.missing || "Needs setup")}
-      </span>
-    </button>
-  );
-}
-
-function ModelInput({ id, value, onChange, disabled, provider, placeholder = "Provider default" }) {
-  const listId = `model-options-${id}`;
-  return (
-    <>
-      <input
-        list={listId}
-        value={value}
-        disabled={disabled}
-        onChange={onChange}
-        placeholder={placeholder}
-      />
-      <datalist id={listId}>
-        {(MODEL_SUGGESTIONS[provider] || []).map((model) => (
-          <option key={model} value={model} />
-        ))}
-      </datalist>
-    </>
-  );
-}
-
-function ProviderSetup({ ids, providers }) {
-  const missing = ids.filter((id) => !(providers[id] || PROVIDER_FALLBACK[id])?.available);
-  if (!missing.length) return null;
-  return (
-    <details className="provider-setup" open>
-      <summary>Setup for unavailable providers</summary>
-      {missing.map((id) => {
-        const meta = providers[id] || PROVIDER_FALLBACK[id];
-        return (
-          <div className="provider-setup-row" key={id}>
-            <b>{meta.label || id}</b>
-            <p>{meta.reason || "This provider is not ready in Works' Python environment."}</p>
-            {(meta.install || []).map((command) => (
-              <code key={command}>{command}</code>
-            ))}
-          </div>
-        );
-      })}
-    </details>
-  );
-}
-
-function PlannerModeCard({ id, meta, active, onSelect }) {
-  return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={active}
-      className={`planner-mode-card ${active ? "active" : ""}`}
-      onClick={() => onSelect(id)}
-    >
-      <b>{meta.label}</b>
-      <em>{meta.kind}</em>
-    </button>
-  );
-}
-
-function RuntimeCard({ id, meta, active, onSelect }) {
-  return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={active}
-      className={`runtime-card runtime-${id} ${active ? "active" : ""}`}
-      onClick={() => onSelect(id)}
-    >
-      <span className="runtime-copy">
-        <b>{meta.label}</b>
-        <em>{meta.kind}</em>
-      </span>
-      <span className={`runtime-state ${meta.available ? "ready" : "missing"}`}>
-        {meta.available ? "Ready" : "Needs setup"}
-      </span>
-      <span className="runtime-scope">{meta.scope || "inside Works"}</span>
-      {id === "swarm" ? <span className="runtime-contract">works.swarm.v1</span> : null}
-    </button>
-  );
-}
+import {
+  ModelInput,
+  PlannerModeCard,
+  ProviderCard,
+  ProviderSetup,
+  RuntimeCard,
+} from "./cards.jsx";
+import {
+  PLANNER_MODES_FALLBACK,
+  PLANNER_PROVIDER_ORDER,
+  PROVIDER_FALLBACK,
+  PROVIDER_ORDER,
+  RUNTIME_FALLBACK,
+  RUNTIME_ORDER,
+  credentialLabel,
+} from "./options.js";
 
 export function SettingsDialog({
   theme,

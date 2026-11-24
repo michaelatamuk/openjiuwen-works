@@ -14,7 +14,7 @@ eager imports of the domain modules, `works --help` took 775 ms on the developme
 - Domain modules are imported inside the command that needs them.
 - `works status` reads the derived SQLite index through `works/fast.py`, which imports only the
   standard library.
-- Hot paths are measured by `scripts/bench.py` and guarded by `tests/test_performance.py`.
+- Hot paths are measured by `scripts/bench.py` and guarded by `tests/integration/test_performance.py`.
 
 ## Consequences
 
