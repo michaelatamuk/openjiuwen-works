@@ -12,7 +12,7 @@ import importlib
 import json
 import os
 import signal
-import subprocess
+import subprocess  # nosec B404 - spawns our own module, never a shell
 import sys
 import time
 import urllib.error
@@ -27,7 +27,7 @@ from works.domain.errors import ConfigError, NotFoundError
 
 INFO_FILE = "daemon.json"
 LOCK_FILE = "daemon.lock"
-TOKEN_FILE = "http-token"  # noqa: S105 - a file name, not a secret
+TOKEN_FILE = "http-token"  # noqa: S105  # nosec B105 - a file name, not a secret
 LOG_FILE = "daemon.log"
 HEALTH_TIMEOUT = 1.5
 START_TIMEOUT = 25.0
@@ -106,7 +106,7 @@ def read_token(info: DaemonInfo) -> str:
 def fetch_health(host: str, port: int, *, timeout: float = HEALTH_TIMEOUT) -> dict[str, Any] | None:
     url = f"http://{host}:{port}/api/v1/health"
     try:
-        with urllib.request.urlopen(url, timeout=timeout) as response:
+        with urllib.request.urlopen(url, timeout=timeout) as response:  # nosec B310
             payload = json.loads(response.read().decode("utf-8"))
     except (OSError, ValueError):
         return None
@@ -134,7 +134,10 @@ def _windows_alive(pid: int) -> bool:
 
     process_query_limited_information = 0x1000
     still_active = 259
-    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    windll = getattr(ctypes, "WinDLL", None)
+    if windll is None:
+        return False
+    kernel32 = windll("kernel32", use_last_error=True)
     kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
     kernel32.OpenProcess.restype = wintypes.HANDLE
     kernel32.GetExitCodeProcess.argtypes = [wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD)]
@@ -175,7 +178,10 @@ def process_started_at(pid: int) -> float | None:
         from ctypes import wintypes
 
         process_query_limited_information = 0x1000
-        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        windll = getattr(ctypes, "WinDLL", None)
+        if windll is None:
+            return None
+        kernel32 = windll("kernel32", use_last_error=True)
         kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
         kernel32.OpenProcess.restype = wintypes.HANDLE
         kernel32.GetProcessTimes.argtypes = [
@@ -393,12 +399,14 @@ def start_daemon(
         "close_fds": True,
     }
     if os.name == "nt":
-        kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW
+        flags = int(getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0x00000200))
+        flags |= int(getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000))
+        kwargs["creationflags"] = flags
     else:
         kwargs["start_new_session"] = True
     started_at = time.time()
     try:
-        process = subprocess.Popen(  # noqa: S603 - our own module
+        process = subprocess.Popen(  # noqa: S603  # nosec B603 - fixed argv, no shell
             _daemon_command(paths, host=host, port=port, write=write),
             **kwargs,
         )
@@ -438,7 +446,7 @@ def _post_shutdown(info: DaemonInfo, token: str, *, timeout: float = 3.0) -> boo
         },
     )
     try:
-        with urllib.request.urlopen(request, timeout=timeout):  # noqa: S310 - loopback
+        with urllib.request.urlopen(request, timeout=timeout):  # noqa: S310  # nosec B310
             return True
     except urllib.error.HTTPError as exc:
         return exc.code < 400
@@ -448,9 +456,11 @@ def _post_shutdown(info: DaemonInfo, token: str, *, timeout: float = 3.0) -> boo
 
 def _signal_stop(pid: int) -> None:
     if os.name == "nt":
-        with contextlib.suppress(OSError, ValueError):
-            os.kill(pid, signal.CTRL_BREAK_EVENT)
-            return
+        ctrl_break = getattr(signal, "CTRL_BREAK_EVENT", None)
+        if ctrl_break is not None:
+            with contextlib.suppress(OSError, ValueError):
+                os.kill(pid, ctrl_break)
+                return
         with contextlib.suppress(OSError):
             os.kill(pid, signal.SIGTERM)
         return
