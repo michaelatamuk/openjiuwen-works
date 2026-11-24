@@ -28,6 +28,7 @@ class AppState:
     security: Security
     jobs: JobRunner
     live: EventHub
+    open_lan: bool = False
     write_lock: threading.Lock = field(default_factory=threading.Lock)
     stop_event: threading.Event = field(default_factory=threading.Event)
 
@@ -37,6 +38,7 @@ def build_state(
     *,
     writable: bool = False,
     bootstrap_token: str | None = None,
+    open_lan: bool = False,
 ) -> AppState:
     if isinstance(paths, WorksPaths):
         resolved = paths.ensure()
@@ -58,6 +60,7 @@ def build_state(
         security=Security(resolved, bootstrap_token=bootstrap_token),
         jobs=JobRunner(resolved, queue),
         live=EventHub(resolved),
+        open_lan=open_lan,
     )
 
 

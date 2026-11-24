@@ -168,7 +168,8 @@ def _foreground(args: argparse.Namespace, paths: WorksPaths) -> int:
                 f"another writable daemon already owns {paths.root}; "
                 "open it with `works daemon status --write`"
             )
-    state = build_state(paths, writable=args.write)
+    open_lan = bool(getattr(args, "open_lan", False))
+    state = build_state(paths, writable=args.write, open_lan=open_lan)
     if _requires_read_auth(args) and not state.security.permissions_ok:
         raise ConfigError(
             "a remote bind requires private permissions on .works/state; "
@@ -177,8 +178,14 @@ def _foreground(args: argparse.Namespace, paths: WorksPaths) -> int:
     app = create_app(
         state=state,
         trusted_hosts=trusted,
-        require_auth=_requires_read_auth(args),
+        require_auth=_requires_read_auth(args) and not open_lan,
     )
+    if open_lan:
+        print(
+            "WARNING: open LAN mode - anyone who can reach this port can read and write. "
+            "Use only on a network you trust.",
+            flush=True,
+        )
     if args.write:
         info = daemons.current_info(paths, host=args.host, port=args.port)
         print(f"openJiuwen Works daemon (read-write): {_bootstrap_url(info)}", flush=True)
@@ -205,6 +212,11 @@ def _start(args: argparse.Namespace, paths: WorksPaths) -> int:
             f"refusing to bind {args.host!r}; pass --allow-remote for a non-loopback address"
         )
     _trusted_hosts(args)
+    if bool(getattr(args, "open_lan", False)) and not args.json:
+        print(
+            "WARNING: open LAN mode - anyone who can reach this port can read and write.",
+            flush=True,
+        )
     existing = daemons.current_daemon(paths)
     if existing is not None:
         _report(existing, write=args.write, json=args.json, started=False)
@@ -216,6 +228,7 @@ def _start(args: argparse.Namespace, paths: WorksPaths) -> int:
         write=args.write,
         trusted_hosts=tuple(getattr(args, "trusted_host", None) or ()),
         allow_remote=bool(getattr(args, "allow_remote", False)),
+        open_lan=bool(getattr(args, "open_lan", False)),
     )
     _report(info, write=args.write, json=args.json, started=True)
     return 0

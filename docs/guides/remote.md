@@ -24,6 +24,23 @@ works --home /path/to/workspace daemon start --write \
   `/api/v1/health` and `/api/v1/session` stay open, so a client can discover the daemon and exchange
   a token.
 
+### The simple mode: no login on your own network
+
+If the whole network is yours (home Wi-Fi, a VM host, a lab switch), skip tokens and pairing:
+
+```bash
+works --home /path/to/workspace daemon start --write \
+  --host 0.0.0.0 --allow-remote --trusted-host 192.168.1.20 --open-lan
+```
+
+Any browser on that network opens `http://192.168.1.20:8765/` and everything works: reads, writes,
+approvals, settings. The daemon prints a warning because **this is a trust decision**: anyone who can
+reach the port can approve a plan, release a fix or change settings. Never use `--open-lan` on a
+shared, guest or public network, and never together with a tunnel to the internet.
+
+Without `--open-lan` the daemon keeps the safe default: a browser shows a Connect screen once and then
+remembers the credential.
+
 The token is `.works/state/http-token`. Treat it as a password; rotate it with
 `POST /api/v1/admin/rotate-token` (authenticated). A native client stores it in the OS keystore.
 

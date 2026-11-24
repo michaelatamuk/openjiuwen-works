@@ -144,3 +144,13 @@ def test_rotate_invalidates_the_old_bearer_and_sessions(paths) -> None:
             "/api/v1/jobs/j-missing", headers={"Authorization": f"Bearer {new}"}
         )
         assert new_write.status_code == 404
+
+
+def test_open_lan_allows_anonymous_writes(paths) -> None:
+    from works.interfaces.api.wiring import build_state
+
+    app = create_app(state=build_state(paths, writable=True, open_lan=True))
+    with TestClient(app, base_url=BASE) as client:
+        response = client.delete("/api/v1/jobs/j-missing")
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "not_found"

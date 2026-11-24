@@ -382,6 +382,7 @@ def _daemon_command(
     write: bool,
     trusted_hosts: tuple[str, ...] = (),
     allow_remote: bool = False,
+    open_lan: bool = False,
 ) -> list[str]:
     command = [
         sys.executable,
@@ -399,6 +400,8 @@ def _daemon_command(
         command.append("--write")
     if allow_remote:
         command.append("--allow-remote")
+    if open_lan:
+        command.append("--open-lan")
     for trusted in trusted_hosts:
         command.extend(["--trusted-host", trusted])
     return command
@@ -420,6 +423,7 @@ def start_daemon(
     timeout: float = START_TIMEOUT,
     trusted_hosts: tuple[str, ...] = (),
     allow_remote: bool = False,
+    open_lan: bool = False,
 ) -> DaemonInfo:
     existing = current_daemon(paths)
     if existing is not None:
@@ -450,6 +454,7 @@ def start_daemon(
                 write=write,
                 trusted_hosts=trusted_hosts,
                 allow_remote=allow_remote,
+                open_lan=open_lan,
             ),
             **kwargs,
         )

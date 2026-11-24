@@ -140,3 +140,16 @@ def test_a_wildcard_bind_is_probed_on_loopback() -> None:
     assert daemon._probe_host("0.0.0.0") == "127.0.0.1"  # noqa: S104 - a literal, not a bind
     assert daemon._probe_host("::") == "::1"
     assert daemon._probe_host("192.168.1.20") == "192.168.1.20"
+
+
+def test_open_lan_is_forwarded_to_the_child(paths) -> None:
+    command = daemon._daemon_command(
+        paths,
+        host="192.168.1.20",
+        port=8771,
+        write=True,
+        trusted_hosts=("192.168.1.20",),
+        allow_remote=True,
+        open_lan=True,
+    )
+    assert "--open-lan" in command

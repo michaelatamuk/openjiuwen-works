@@ -255,5 +255,7 @@ def require_write(request: Request) -> None:
     state = request.app.state.works
     if not state.writable:
         raise ReadOnlyError("the daemon is read-only; start it with --write")
+    if getattr(state, "open_lan", False):
+        return
     if not state.security.is_authenticated(request):
         raise AuthError("a write token is required; open the daemon with its bootstrap URL")

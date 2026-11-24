@@ -37,6 +37,14 @@ def add_daemon_commands(sub: argparse._SubParsersAction[argparse.ArgumentParser]
         default=None,
         help="Host header allowed on a remote bind; repeat for several names",
     )
+    daemon.add_argument(
+        "--open-lan",
+        action="store_true",
+        help=(
+            "No login on the LAN: anyone who can reach the port can read and write. "
+            "Only for a network you fully trust."
+        ),
+    )
     daemon.add_argument("--json", action="store_true")
     daemon.add_argument(
         "--label",
