@@ -2,7 +2,7 @@
 
 - `guides/` - setup and day-to-day operation: runbook, UI, live harness, Swarm, readiness,
   release, intake, memory, decisions, verification and waiting.
-- `design/` - the product plan and the planner design.
+- `design/` - the product plan, the planner design and the stack migration plan.
 - `reference/` - the layout map, feature map and the agent-core boundary.
 - `adrs/` - architecture decision records.
 - `brand/` and `ui/` - mascot and UI concept assets.
