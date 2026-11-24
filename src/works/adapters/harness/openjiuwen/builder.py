@@ -9,9 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
-import json
 import os
-import re
 import shutil
 import tempfile
 from collections.abc import Callable
@@ -21,66 +19,38 @@ from typing import Any
 
 from works.adapters.git.repo import GitRepo
 from works.adapters.harness.base import Proposal, ProposalRequest
+from works.adapters.harness.openjiuwen.builder_defaults import (
+    DEFAULT_BASE,
+    DEFAULT_MODEL,
+    builder_prompt,
+    default_base,
+    default_cli,
+    default_key,
+    default_model,
+    is_artifact,
+)
+from works.adapters.harness.openjiuwen.challenge import parse_challenge
 from works.adapters.harness.openjiuwen.providers import (
     create_harness,
     selected_provider,
     validate_provider,
 )
 from works.adapters.harness.usage import UsageTotals
-from works.application.prompts import DEFAULT_PROMPT, Prompt, load_prompt
+from works.application.prompts import DEFAULT_PROMPT, load_prompt
 from works.domain.errors import ConfigError, HarnessError
 from works.domain.records import Challenge
 
-DEFAULT_MODEL = "deepseek-chat"
-DEFAULT_BASE = "https://api.deepseek.com/anthropic"
-_ARTIFACT_PARTS = frozenset(
-    {"__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", ".hypothesis"}
-)
-
-
-def is_artifact(path: str) -> bool:
-    """Bytecode and tool caches are by-products, not edits, and are never policy-relevant."""
-    parts = set(Path(path).parts)
-    return bool(parts & _ARTIFACT_PARTS) or path.endswith((".pyc", ".pyo"))
-
-
-def default_model() -> str:
-    return os.environ.get("WORKS_MODEL", DEFAULT_MODEL)
-
-
-def default_base() -> str:
-    return os.environ.get("WORKS_MODEL_BASE", DEFAULT_BASE)
-
-
-def default_key() -> str:
-    key = os.environ.get("WORKS_MODEL_KEY") or os.environ.get("ANTHROPIC_API_KEY")
-    if not key:
-        raise ConfigError(
-            "no model key: set ANTHROPIC_API_KEY (or WORKS_MODEL_KEY) for the live harness"
-        )
-    return key
-
-
-def default_cli() -> str | None:
-    cli = os.environ.get("CLAUDE_CLI")
-    if cli is None:
-        return None
-    if cli.lower().endswith((".cmd", ".bat")):
-        raise ConfigError(
-            "CLAUDE_CLI points at a batch file; the Claude Agent SDK refuses .cmd/.bat on Windows. "
-            "Use the bundled claude.exe or install the native build."
-        )
-    return cli
-
-
-def builder_prompt(request: ProposalRequest, prompt: Prompt | None = None) -> str:
-    loaded = prompt or load_prompt(DEFAULT_PROMPT)
-    return loaded.render(
-        worktree=str(request.worktree),
-        ref=request.source_ref,
-        title=request.title.strip() or request.source_ref,
-        plan=str(request.plan.get("brief") or "No plan brief was recorded."),
-    )
+__all__ = [
+    "DEFAULT_BASE",
+    "DEFAULT_MODEL",
+    "LiveHarness",
+    "builder_prompt",
+    "default_base",
+    "default_cli",
+    "default_key",
+    "default_model",
+    "is_artifact",
+]
 
 
 class LiveHarness:
@@ -339,38 +309,15 @@ class LiveHarness:
                 usd=usd,
                 prompt_sha256=self._challenge_prompt.sha256,
             )
-        match = re.search(r"\{.*\}", text, re.S)
-        try:
-            payload = json.loads(match.group(0)) if match else {}
-            allow = payload.get("allow")
-            if not isinstance(allow, bool):
-                raise ValueError("allow is not a boolean")
-            concerns = payload.get("concerns", [])
-            if not isinstance(concerns, list):
-                concerns = []
-            return Challenge(
-                allow=allow,
-                reason=str(payload.get("reason") or ""),
-                concerns=[str(item) for item in concerns],
-                model=self._verifier_model,
-                provider=self.verifier_provider,
-                credential_split=self.credential_split,
-                tokens=tokens,
-                usd=usd,
-                prompt_sha256=self._challenge_prompt.sha256,
-            )
-        except (ValueError, json.JSONDecodeError):
-            return Challenge(
-                allow=False,
-                reason="challenger did not return a valid JSON verdict",
-                concerns=[text[:300]] if text else [],
-                model=self._verifier_model,
-                provider=self.verifier_provider,
-                credential_split=self.credential_split,
-                tokens=tokens,
-                usd=usd,
-                prompt_sha256=self._challenge_prompt.sha256,
-            )
+        return parse_challenge(
+            text,
+            tokens=tokens,
+            usd=usd,
+            model=self._verifier_model,
+            provider=self.verifier_provider,
+            credential_split=self.credential_split,
+            prompt_sha256=self._challenge_prompt.sha256,
+        )
 
     @staticmethod
     def _protocol_types(request: ProposalRequest) -> tuple[Any, Any, Any, Any]:

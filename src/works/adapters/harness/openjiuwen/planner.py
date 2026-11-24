@@ -7,21 +7,17 @@ owns the human gate.
 
 from __future__ import annotations
 
-import asyncio
-import contextlib
 import json
-import re
 import time
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
-from works.adapters.harness.openjiuwen.providers import (
-    ProviderName,
-    create_harness,
-    validate_provider,
+from works.adapters.harness.openjiuwen.planner_parsing import (
+    _validate_plan_provider,
+    parse_critique_json,
+    parse_plan_json,
 )
-from works.adapters.harness.usage import UsageTotals
+from works.adapters.harness.openjiuwen.planner_turn import _run_turn
+from works.adapters.harness.openjiuwen.providers import ProviderName
 from works.application.planning.service import (
     PlanCritique,
     PlannerContext,
@@ -35,139 +31,7 @@ from works.application.planning.service import (
 from works.application.prompts import Prompt, load_prompt
 from works.domain.errors import ConfigError
 
-_PLAN_PROVIDERS = frozenset({"claudecode", "native"})
-_JSON_OBJECT = re.compile(r"\{.*\}", re.DOTALL)
-
-
-@dataclass(frozen=True)
-class TurnOutput:
-    text: str
-    tokens: int = 0
-    usd: float = 0.0
-
-
-def _final_text(result: Any) -> str:
-    if result is not None and isinstance(result.final_output, str):
-        return result.final_output
-    parts: list[str] = []
-    if result is not None:
-        for message in getattr(result, "messages", ()) or ():
-            for block in getattr(message, "content", ()) or ():
-                content = getattr(block, "content", None)
-                if isinstance(content, str):
-                    parts.append(content)
-    return "\n".join(parts)
-
-
-def _json_object(text: str, what: str) -> dict[str, Any]:
-    match = _JSON_OBJECT.search(text)
-    if match is None:
-        raise ConfigError(f"the {what} returned no JSON object")
-    try:
-        payload: Any = json.loads(match.group(0))
-    except json.JSONDecodeError as exc:
-        raise ConfigError(f"the {what} returned invalid JSON: {exc}") from exc
-    if not isinstance(payload, dict):
-        raise ConfigError(f"the {what} returned a non-object JSON value")
-    return payload
-
-
-def parse_plan_json(text: str) -> PlanProposal:
-    try:
-        return PlanProposal.model_validate(_json_object(text, "planner"))
-    except ValueError as exc:
-        raise ConfigError(f"the planner proposal is invalid: {exc}") from exc
-
-
-def parse_critique_json(text: str) -> PlanCritique:
-    try:
-        return PlanCritique.model_validate(_json_object(text, "critic"))
-    except ValueError as exc:
-        raise ConfigError(f"the critic verdict is invalid: {exc}") from exc
-
-
-def _validate_plan_provider(provider: str) -> ProviderName:
-    selected = validate_provider(provider, env_name="planner provider")
-    if selected not in _PLAN_PROVIDERS:
-        raise ConfigError(
-            f"the planner does not support {selected!r} yet; use claudecode or native"
-        )
-    return selected
-
-
-async def _run_turn(
-    *,
-    provider: ProviderName,
-    model: str,
-    base_url: str,
-    api_key: str,
-    cwd: Path,
-    session_id: str,
-    system_prompt: str,
-    prompt: str,
-    cli_path: str | None,
-    max_turns: int,
-    timeout_s: int,
-) -> TurnOutput:
-    try:
-        from openjiuwen.harness_protocol import (
-            HarnessContext,
-            HarnessInput,
-            TurnEventKind,
-            TurnLifecycleEvent,
-        )
-    except ImportError as exc:
-        raise ConfigError("the planner needs openjiuwen.harness_protocol") from exc
-
-    harness = create_harness(
-        provider,
-        cwd,
-        model=model,
-        base_url=base_url,
-        api_key=api_key,
-        cli_path=cli_path,
-        permission_mode="plan",
-        max_turns=max_turns,
-        read_only=True,
-    )
-    harness_context = HarnessContext(
-        agent_name="works-planner",
-        agent_id="works-planner",
-        host_session_id=session_id,
-        system_prompt=system_prompt,
-        cwd=str(cwd),
-    )
-    terminal: Any = None
-    usage_totals = UsageTotals()
-    await harness.start(harness_context)
-    try:
-        receipt = await harness.send(HarnessInput(content=prompt))
-        async with asyncio.timeout(timeout_s):
-            async for event in harness.turn_events(receipt.turn_id):
-                payload = event.event
-                usage_totals.add_event(payload)
-                if (
-                    isinstance(payload, TurnLifecycleEvent)
-                    and payload.kind is not TurnEventKind.STARTED
-                ):
-                    terminal = payload
-    except TimeoutError as exc:
-        raise ConfigError(f"the planner turn did not finish within {timeout_s}s") from exc
-    finally:
-        with contextlib.suppress(Exception):
-            await harness.stop()
-
-    if terminal is None:
-        raise ConfigError("the planner turn produced no terminal event")
-    if terminal.kind is not TurnEventKind.FINISHED:
-        detail = terminal.result.error if terminal.result is not None else None
-        raise ConfigError(f"the planner turn ended as {terminal.kind}: {detail}")
-    usage_totals.add_result(terminal.result)
-    return TurnOutput(
-        text=_final_text(terminal.result),
-        tokens=usage_totals.tokens,
-        usd=usage_totals.usd,
-    )
+__all__ = ["HarnessCritic", "HarnessPlanner", "parse_critique_json", "parse_plan_json"]
 
 
 class HarnessPlanner:

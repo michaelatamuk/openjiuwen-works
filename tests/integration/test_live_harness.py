@@ -107,7 +107,7 @@ def test_an_unknown_provider_is_refused(monkeypatch: pytest.MonkeyPatch) -> None
 
 def test_optional_providers_fail_closed_without_their_sdk(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "works.adapters.harness.openjiuwen.providers.availability",
+        "works.adapters.harness.openjiuwen.provider_factory.availability",
         lambda: {"claudecode": True, "dsh": False, "native": False, "codex": False},
     )
 
