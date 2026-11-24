@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api, waitForJob } from "../api/client";
+import { api, isUnauthorized, waitForJob } from "../api/client";
 import type { Health, Job, TaskDetail, TaskSummary } from "../api/client";
 import type { BuilderSettings } from "../features/settings/types";
 import type { EvidenceDetail, EvidenceTimelineEvent } from "../features/evidence/Evidence";
@@ -12,6 +12,7 @@ import {
   Lightbox, NewTaskDialog, Palette, RunDialog, SettingsDialog,
 } from "../features/dialogs/Dialogs";
 import { Evidence } from "../features/evidence/Evidence";
+import { SignIn } from "../features/auth/SignIn";
 import { Queue } from "../features/queue/Queue";
 import { Release } from "../features/release/Release";
 import { Story } from "../features/story/Story";
@@ -192,6 +193,7 @@ export default function App() {
   const [event, setEvent] = useState<EvidenceTimelineEvent | null>(null);
   const [toast, setToast] = useState("");
   const [connected, setConnected] = useState(false);
+  const [authNeeded, setAuthNeeded] = useState(false);
   const [theme, setTheme] = useState(localStorage.getItem("works.theme") || "light");
   const [density, setDensity] = useState(localStorage.getItem("works.density") || "comfortable");
   const [pollMs, setPollMs] = useState(Number(localStorage.getItem("works.poll") || 15000));
@@ -210,6 +212,10 @@ export default function App() {
       const data = await api.tasks(200);
       setTasks(data.tasks || []);
     } catch (error) {
+      if (isUnauthorized(error)) {
+        setAuthNeeded(true);
+        return;
+      }
       notify(`Queue unavailable: ${errorMessage(error)}`);
     }
   }, [notify]);
@@ -291,7 +297,13 @@ export default function App() {
         setProducts(productNames(p.products));
         setDetectors(detectorList(d.detectors));
       })
-      .catch((error: unknown) => notify(`Works unavailable: ${errorMessage(error)}`));
+      .catch((error: unknown) => {
+        if (isUnauthorized(error)) {
+          setAuthNeeded(true);
+          return;
+        }
+        notify(`Works unavailable: ${errorMessage(error)}`);
+      });
     loadTasks().then(() => {
       if (initial.taskId) selectTask(initial.taskId, initial.view || view, false, initial.at);
     });
@@ -399,6 +411,10 @@ export default function App() {
     ? `${stateLabel(detail.task.state)} / reported ${timeAgo(detail.task.created_at)}`
     : "Select a report to read its story, proof and decision.";
   const crumb = detail ? crumbFor(view) : "Queue";
+
+  if (authNeeded) {
+    return <SignIn onSignedIn={() => window.location.reload()} />;
+  }
 
   return (
     <div className="workspace">

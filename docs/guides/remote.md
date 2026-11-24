@@ -53,3 +53,8 @@ Pair a phone with `works daemon pair --label phone`; enter the printed code on t
 token, the code expires after five minutes, and devices expire after 30 days. Revoke a lost device
 with `DELETE /api/v1/admin/devices/<id>` or the Settings device list. Rotating the daemon token
 revokes every device at once.
+
+A browser that has no daemon session opens a **Connect** screen: paste the token or a pairing code
+once. The browser keeps it in `localStorage`, exchanges it for an HttpOnly session cookie, and
+re-exchanges it automatically after a daemon restart, so the URL never has to carry `?bootstrap=`
+again. A revoked device or a rotated token is rejected and the browser asks for a new credential.

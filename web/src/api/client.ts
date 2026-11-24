@@ -112,33 +112,140 @@ function errorDetails(data: unknown, status: number): ApiError {
   return new ApiError(`HTTP ${status}`, status);
 }
 
+const TOKEN_KEY = "works.token";
+
 let session: Promise<void> | null = null;
+
+function urlToken(): string | null {
+  return new URLSearchParams(location.search).get("bootstrap");
+}
+
+export function rememberedToken(): string | null {
+  try {
+    return localStorage.getItem(TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function rememberToken(token: string): void {
+  try {
+    localStorage.setItem(TOKEN_KEY, token);
+  } catch {
+    // Private mode: the cookie still works for this browser session.
+  }
+}
+
+export function forgetToken(): void {
+  try {
+    localStorage.removeItem(TOKEN_KEY);
+  } catch {
+    // Nothing to forget.
+  }
+  session = null;
+}
+
+function clearBootstrapParam(): void {
+  const params = new URLSearchParams(location.search);
+  if (!params.has("bootstrap")) return;
+  params.delete("bootstrap");
+  const query = params.toString();
+  history.replaceState(null, "", `${location.pathname}${query ? `?${query}` : ""}${location.hash}`);
+}
+
+async function exchange(token: string): Promise<void> {
+  const response = await fetch(`${BASE}/session`, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token }),
+  });
+  if (response.ok) return;
+  const text = await response.text().catch(() => "");
+  let data: unknown = {};
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = {};
+  }
+  throw errorDetails(data, response.status);
+}
 
 function ensureSession(): Promise<void> {
   if (session) return session;
+  const token = urlToken() ?? rememberedToken();
+  if (!token) return Promise.resolve();
   session = (async () => {
-    const params = new URLSearchParams(location.search);
-    const token = params.get("bootstrap");
-    if (!token) return;
-    await fetch(`${BASE}/session`, {
-      method: "POST",
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token }),
-    });
-    params.delete("bootstrap");
-    const query = params.toString();
-    history.replaceState(
-      null,
-      "",
-      `${location.pathname}${query ? `?${query}` : ""}${location.hash}`,
-    );
+    try {
+      await exchange(token);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) forgetToken();
+      throw error;
+    }
+    rememberToken(token);
+    clearBootstrapParam();
   })();
   return session;
 }
 
+export function isUnauthorized(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 401;
+}
+
+/** Paste a daemon token once; the browser remembers it and re-exchanges after a restart. */
+export async function signIn(token: string): Promise<void> {
+  const clean = token.trim();
+  if (!clean) throw new ApiError("Enter the token or a pairing code", 400, "bad_request");
+  await exchange(clean);
+  rememberToken(clean);
+  clearBootstrapParam();
+  session = Promise.resolve();
+}
+
+/** A one-time pairing code from `works daemon pair`, exchanged for a 30-day device token. */
+export async function pairAndSignIn(code: string, label = "browser"): Promise<void> {
+  const response = await fetch(`${BASE}/pair`, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code: code.trim(), label }),
+  });
+  const text = await response.text();
+  let data: unknown = {};
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = {};
+  }
+  if (!response.ok) throw errorDetails(data, response.status);
+  const token = (data as { token?: unknown }).token;
+  if (typeof token !== "string" || !token) {
+    throw new ApiError("The daemon did not return a device token", 502, "bad_response");
+  }
+  await signIn(token);
+}
+
+export async function connect(credential: string): Promise<void> {
+  const clean = credential.trim();
+  if (!clean) throw new ApiError("Enter the token or a pairing code", 400, "bad_request");
+  try {
+    await signIn(clean);
+    return;
+  } catch (error) {
+    if (!isUnauthorized(error)) throw error;
+  }
+  try {
+    await pairAndSignIn(clean);
+  } catch (error) {
+    if (isUnauthorized(error)) {
+      throw new ApiError("That is not a valid token or pairing code", 401, "unauthorized");
+    }
+    throw error;
+  }
+}
+
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  if ((options.method ?? "GET") !== "GET") await ensureSession();
+  await ensureSession();
   const headers: Record<string, string> = { ...(options.headers ?? {}) };
   if (options.body !== undefined) headers["Content-Type"] = "application/json";
   if (options.idempotencyKey) headers["Idempotency-Key"] = options.idempotencyKey;

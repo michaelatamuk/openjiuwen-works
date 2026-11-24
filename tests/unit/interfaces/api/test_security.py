@@ -61,6 +61,28 @@ def test_write_without_a_token_is_401(paths) -> None:
         assert response.json()["error"]["code"] == "auth_error"
 
 
+def test_a_paired_device_token_can_start_a_browser_session(paths) -> None:
+    client, app = make_client(paths)
+    with client:
+        token = app.state.works.security.token
+        started = client.post(
+            "/api/v1/admin/pair",
+            json={"label": "phone"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert started.status_code == 200, started.text
+        code = started.json()["code"]
+        paired = client.post("/api/v1/pair", json={"code": code})
+        assert paired.status_code == 200, paired.text
+        device_token = paired.json()["token"]
+
+        session = client.post("/api/v1/session", json={"token": device_token})
+        assert session.status_code == 200, session.text
+        assert client.cookies.get(COOKIE_NAME)
+        again = client.post("/api/v1/session", json={"token": "not-a-token"})
+        assert again.status_code == 401
+
+
 def test_read_only_mode_is_403(paths) -> None:
     client, app = make_client(paths, writable=False)
     with client:

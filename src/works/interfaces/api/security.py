@@ -101,13 +101,13 @@ class Security:
         return token
 
     def start_session(self, token: str) -> str | None:
-        """Consume a bootstrap token or the persistent token; return a session id."""
+        """Consume a bootstrap token, the persistent token or a device token; return a session."""
         supplied = token.strip()
         if not supplied:
             return None
         if self._bootstrap and hmac.compare_digest(supplied, self._bootstrap):
             self._bootstrap = ""
-        elif not hmac.compare_digest(supplied, self._token):
+        elif not hmac.compare_digest(supplied, self._token) and self._device(supplied) is None:
             return None
         session = secrets.token_urlsafe(32)
         self._sessions.add(session)
