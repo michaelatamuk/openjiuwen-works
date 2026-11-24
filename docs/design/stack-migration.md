@@ -243,20 +243,20 @@ Every item names the artifact; each phase ends with a **gate**.
 **Gate (met):** `pytest tests/contract -q`; `scripts/capture_api_fixtures.py --check` -> 16 fixtures
 match.
 
-### Phase 0b — OpenAPI and frontend toolchain (1 day)
-- [ ] `scripts/dump_openapi.py` writes `docs/reference/openapi.json`. Verify: file changes only when
-  routes change.
-- [ ] `web/package.json`: add `typescript`, `@types/react`, `@types/react-dom`, `@tanstack/react-query`,
-  `zod`, `openapi-typescript`, `vitest`, `@testing-library/react`, `@testing-library/jest-dom`,
-  `jsdom`; scripts `dev/build/typecheck/test/generate:api`. Verify: `npm ci` succeeds with a
-  regenerated `package-lock.json` committed.
-- [ ] `web/tsconfig.json`: `strict`, `allowJs`, `jsx: react-jsx`, `moduleResolution: bundler`,
-  `types: ["vitest/globals"]`, `include: ["src"]`.
-- [ ] `web/vite.config.js`: test config with `environment: "jsdom"`.
-- [ ] `.github/workflows/ci.yml`: `uv sync --frozen --extra dev --extra server`; add `web` and
-  `contract` jobs; smoke `uv run works --help` and `works version`.
+### Phase 0b — frontend toolchain (done)
 
-**Gate:** `npm ci && npm run typecheck && npm test` and `uv run works --help`.
+- [x] `web/package.json`: TypeScript 5.9, React types, TanStack Query, Zod, `openapi-typescript`,
+  Vitest, Testing Library and jsdom; scripts `dev/build/typecheck/test/generate:api`; the lockfile is
+  regenerated and committed (`npm ci --dry-run` is clean).
+- [x] `web/tsconfig.json`: strict for TS files, `allowJs`, `jsx: react-jsx`,
+  `moduleResolution: bundler`, Vitest and jest-dom types.
+- [x] `web/vite.config.js`: Vitest with jsdom and a setup file; a toolchain test runs.
+- [x] `.github/workflows/ci.yml`: a `web` job runs install, typecheck, unit tests, build, and fails if
+  the committed `dist` changes.
+- [ ] `scripts/dump_openapi.py`: moved to Phase 1, because it needs the FastAPI app.
+- [ ] `--extra server` in CI: moved to Phase 1 with the first HTTP tests.
+
+**Gate (met):** `npm ci && npm run typecheck && npm test && npm run build`.
 
 ### Phase 1 — daemon skeleton (1.5 days)
 - [ ] `interfaces/api/app.py`: `create_app(paths)`, lifespan start/stop, `GET /api/v1/health`.

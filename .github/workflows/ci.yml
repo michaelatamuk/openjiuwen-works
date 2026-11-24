@@ -46,6 +46,31 @@ jobs:
           find /tmp/pytest-of-runner -name commands.jsonl -print -exec cat {} \; || true
           find /tmp/pytest-of-runner -name evidence.md -print -exec sed -n '1,100p' {} \; || true
 
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install
+        run: npm ci
+        working-directory: web
+      - name: Typecheck
+        run: npm run typecheck
+        working-directory: web
+      - name: Unit tests
+        run: npm test
+        working-directory: web
+      - name: Build
+        run: npm run build
+        working-directory: web
+      - name: Built bundle is committed
+        run: git diff --exit-code -- src/works/interfaces/ui/static/dist
+
   docker-verifier:
     runs-on: ubuntu-latest
     timeout-minutes: 15
