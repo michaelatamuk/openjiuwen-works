@@ -358,20 +358,27 @@ performance gate is tracked in Phase 8.
 
 **Gate (met):** `npm run typecheck && npm test && npm run build`.
 
-### Phase 5b — screens (5 days)
-- [ ] Queue (search, filters, grouping/counts, mobile new task, live dot).
-- [ ] Story (route, receipts, replay, present mode, copy link, memory badge, blocked callout).
-- [ ] Evidence (pipeline, verdict, findings, challenge, commands, change, readiness, features,
-  artifacts/lightbox, timeline, exports, policy/risk/decision/residual/cost/verifier/team/LAIX).
-- [ ] Release (packet, gate, deliver/confirm/deploy as jobs, compare runs, deployment/LAIX).
-- [ ] Session (transcript, chapters, ask stream, review/commentary jobs, add context, run log, rail).
-- [ ] Settings (runtime/provider, verifier split, planner modes/critic, workspace, read-only).
-- [ ] Dialogs: Factory metrics/ledger, Run, Event, Palette, Help, Import; toasts and shortcuts.
-- [ ] Delete `lib/api.js`; every parity row from §18 has a test.
+### Phase 5b — screens (transport done, parity tests pending)
 
-**Gate:** `typecheck && test && build`, plus the parity matrix.
+- [x] The shell, Queue, Story, Evidence, Release, Session, Settings and dialogs now read through the
+  typed client: tasks/detail/health/maps/metrics/ledger/settings/create/import/action/readiness.
+- [x] App uses named SSE events and reconnects; long actions return 202 and the UI waits for the job
+  result before refreshing or toasting.
+- [x] Session uses the streamed ask call and actions for context/review/commentary; Evidence links
+  exports through `/api/v1`.
+- [x] `web/src/lib/api.js` deleted; `mira.svg` moved to `web/public` so the bundle serves it.
+- [ ] Automated per-screen parity tests: the matrix in §18 is still a manual checklist; only the
+  client/hook layers have tests.
+- [ ] Tailwind/shadcn were not adopted; the existing CSS is kept, as decided.
 
-### Phase 6 — processes, runs, Windows lifecycle (4 days)
+**Gate (met for transport):** `npm run typecheck && npm test && npm run build`; a manual parity
+pass against the matrix is still required before calling the UI complete.
+
+### Phase 6 — processes, runs, Windows lifecycle (partially done)
+
+- [x] `works ui` now starts the FastAPI app, serves `dist` at `/`, serves `/mira.svg` from the
+  bundle, returns JSON 404 under `/api`, and opens a bootstrap URL in write mode.
+- [x] `works daemon` prints its bootstrap URL and shares the same static/API app.
 - [ ] `daemon.json` `{pid, host, port, home, started_at, token_path}`; pid reuse check; graceful stop
   (`CTRL_BREAK_EVENT` on Windows, health identity before kill); single-instance lock.
 - [ ] Start detached with `cwd=home`, allow-listed env snapshot, log redirection; relative repos
@@ -380,7 +387,6 @@ performance gate is tracked in Phase 8.
   guarded under a daemon.
 - [ ] CLI `--daemon` waits for jobs (`run_job_and_wait`), prints the same JSON, maps exit codes;
   `--standalone` remains default and refuses when a daemon owns the home.
-- [ ] Static: `dist` at `/`, `/mira.svg` from `dist`, API 404 before SPA fallback.
 
 **Gate:** daemon + UI + `POST /dispatch` concurrently; no lock conflicts; kill the UI, run survives;
 restart daemon, stale jobs/owners reconciled.

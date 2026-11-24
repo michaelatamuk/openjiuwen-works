@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { api } from "../../lib/api.js";
+import { api } from "../../api/client";
 import { Modal } from "../../ui/Modal.jsx";
 
 function parsePrompt(text, products = []) {
@@ -97,18 +97,14 @@ export function NewTaskDialog({ products, onClose, onCreated, onToast }) {
     }
     setBusy(true);
     try {
-      const result = await api("/api/tasks", {
-        method: "POST",
-        headers: { "X-Works-Write": "1" },
-        body: {
-          repo: valueFor("repo", repo).trim(),
-          product: valueFor("product", product).trim(),
-          ref: finalRef,
-          title: finalTitle,
-          kind,
-          task_kind: taskKind,
-          flow,
-        },
+      const result = await api.createTask({
+        repo: valueFor("repo", repo).trim(),
+        product: valueFor("product", product).trim(),
+        ref: finalRef,
+        title: finalTitle,
+        kind,
+        task_kind: taskKind,
+        flow,
       });
       const finalRepo = valueFor("repo", repo).trim();
       if (finalRepo) localStorage.setItem("works.repo", finalRepo);

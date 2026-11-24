@@ -97,7 +97,33 @@ function errorDetails(data: unknown, status: number): ApiError {
   return new ApiError(`HTTP ${status}`, status);
 }
 
+let session: Promise<void> | null = null;
+
+function ensureSession(): Promise<void> {
+  if (session) return session;
+  session = (async () => {
+    const params = new URLSearchParams(location.search);
+    const token = params.get("bootstrap");
+    if (!token) return;
+    await fetch(`${BASE}/session`, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    });
+    params.delete("bootstrap");
+    const query = params.toString();
+    history.replaceState(
+      null,
+      "",
+      `${location.pathname}${query ? `?${query}` : ""}${location.hash}`,
+    );
+  })();
+  return session;
+}
+
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  if ((options.method ?? "GET") !== "GET") await ensureSession();
   const headers: Record<string, string> = { ...(options.headers ?? {}) };
   if (options.body !== undefined) headers["Content-Type"] = "application/json";
   if (options.idempotencyKey) headers["Idempotency-Key"] = options.idempotencyKey;
@@ -154,11 +180,26 @@ export const api = {
     request<{ ok: boolean; builder: Json }>("/settings/builder", { method: "POST", body }),
 };
 
+export async function waitForJob(jobId: string, timeoutMs = 180_000): Promise<Job> {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    const job = await api.job(jobId);
+    if (!isActive(job.status)) return job;
+    if (Date.now() > deadline) throw new ApiError("job timed out", 504, "timeout");
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+}
+
+function isActive(status: JobStatus): boolean {
+  return status === "queued" || status === "running";
+}
+
 export async function askStream(
   taskId: string,
   question: string,
   onEvent: (event: Json) => void,
 ): Promise<Json | null> {
+  await ensureSession();
   const response = await fetch(`${BASE}/ask/stream`, {
     method: "POST",
     credentials: "same-origin",

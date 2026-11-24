@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { api } from "../../lib/api.js";
+import { api, waitForJob } from "../../api/client";
 import { Modal } from "../../ui/Modal.jsx";
 
 export function ImportDialog({ products, detectors, onClose, onImported, onToast }) {
@@ -21,8 +21,11 @@ export function ImportDialog({ products, detectors, onClose, onImported, onToast
       if (source === "github") { body.repository = repository; body.label = label; }
       if (source === "jira") { body.url = url; body.jql = jql; }
       if (source === "detector") { body.name = detector; }
-      const result = await api("/api/sources", { method: "POST", headers: { "X-Works-Write": "1" }, body });
-      onToast(`${result.imported ?? 0} task(s) imported.`);
+      const accepted = await api.sources(body);
+      const job = await waitForJob(accepted.job.id);
+      if (job.status !== "succeeded") throw new Error(job.error || "import failed");
+      const result = job.result || {};
+      onToast(`${result.created ?? 0} task(s) imported.`);
       onImported();
     } catch (error) {
       onToast(`Import failed: ${error.message}`);

@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { postAction, streamAsk } from "../../lib/api.js";
+import { api, askStream } from "../../api/client";
 import { roleLabel } from "../../lib/format.js";
 import { ChapterBar } from "./ChapterBar.jsx";
 import { Composer } from "./Composer.jsx";
@@ -136,12 +136,14 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
     try {
       if (activeMode === "ask" && canAsk) {
         setPendingQuestion(message);
-        await streamAsk(detail.task.id, message, (delta) => setStreamed((current) => current + delta));
+        await askStream(detail.task.id, message, (event) => {
+          if (event.type === "delta") setStreamed((current) => current + String(event.text || ""));
+        });
         setStreamed("");
         await onRefresh();
         setPendingQuestion("");
       } else {
-        await postAction("add-context", detail.task.id, { message });
+        await api.action({ action: "add-context", task_id: detail.task.id, message });
         onToast("Context added to the worklog.");
         await onRefresh();
       }

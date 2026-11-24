@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from urllib.parse import quote
 
 from works.domain.errors import ConfigError
 from works.interfaces.cli.commands.common import _paths
@@ -20,7 +21,14 @@ def cmd_daemon(args: argparse.Namespace) -> int:
             f"refusing to bind {args.host!r}; pass --allow-remote for a non-loopback address"
         )
     from works.interfaces.api.app import create_app
+    from works.interfaces.api.wiring import build_state
 
-    app = create_app(_paths(args), writable=args.write)
+    state = build_state(_paths(args), writable=args.write)
+    app = create_app(state=state)
+    if args.write:
+        url = f"http://{args.host}:{args.port}/?bootstrap={quote(state.security.bootstrap_token)}"
+        print(f"openJiuwen Works daemon (read-write): {url}", flush=True)
+    else:
+        print(f"openJiuwen Works daemon (read-only): http://{args.host}:{args.port}/", flush=True)
     uvicorn.run(app, host=args.host, port=args.port, log_level="info")
     return 0

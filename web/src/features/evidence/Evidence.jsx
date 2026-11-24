@@ -51,7 +51,7 @@ export function Evidence({ detail, onShowRun, onAction, onLightbox, onOpenEvent,
           </dl>
           <div className="export-row">
             {exports.map(([label, kind]) => (
-              <a key={kind} className="btn ghost" href={`/api/tasks/${encodeURIComponent(task.id)}/export/${kind}`} download>{label}</a>
+              <a key={kind} className="btn ghost" href={`/api/v1/tasks/${encodeURIComponent(task.id)}/export/${kind}`} download>{label}</a>
             ))}
           </div>
         </Card>

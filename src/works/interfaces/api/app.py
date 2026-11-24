@@ -12,7 +12,8 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from fastapi import FastAPI, Request, Response
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from works.config.paths import WorksPaths
 from works.domain.errors import (
@@ -42,9 +43,10 @@ from works.interfaces.api.routes import (
     sources,
     tasks,
 )
-from works.interfaces.api.wiring import build_state
+from works.interfaces.api.wiring import AppState, build_state
 
 VERSION = "0.0.1"
+DIST = Path(__file__).resolve().parents[1] / "ui" / "static" / "dist"
 LOOPBACK = ("127.0.0.1", "localhost", "::1")
 ERROR_STATUS: tuple[tuple[type[WorksError], int], ...] = (
     (ReadOnlyError, 403),
@@ -70,19 +72,20 @@ def create_app(
     writable: bool = False,
     trusted_hosts: tuple[str, ...] | None = None,
     bootstrap_token: str | None = None,
+    state: AppState | None = None,
 ) -> FastAPI:
     trusted = frozenset(trusted_hosts or LOOPBACK)
 
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
-        state = build_state(paths, writable=writable, bootstrap_token=bootstrap_token)
-        application.state.works = state
-        state.live.start()
+        current = state or build_state(paths, writable=writable, bootstrap_token=bootstrap_token)
+        application.state.works = current
+        current.live.start()
         try:
             yield
         finally:
-            state.live.stop()
-            state.jobs.shutdown()
+            current.live.stop()
+            current.jobs.shutdown()
 
     app = FastAPI(
         title="openJiuwen Works",
@@ -142,4 +145,52 @@ def create_app(
         downloads.router,
     ):
         app.include_router(router, prefix="/api/v1")
+
+    if (DIST / "assets").is_dir():
+        app.mount("/assets", StaticFiles(directory=DIST / "assets"), name="assets")
+
+        @app.get("/", include_in_schema=False)
+        def index() -> Response:
+            target = DIST / "index.html"
+            if not target.is_file():
+                return JSONResponse(
+                    status_code=404,
+                    content={
+                        "ok": False,
+                        "error": {
+                            "code": "not_found",
+                            "message": "UI bundle missing; run `npm --prefix web run build`",
+                        },
+                    },
+                )
+            return FileResponse(target)
+
+        @app.get("/{path:path}", include_in_schema=False)
+        def spa(path: str) -> Response:
+            if path.startswith("api/"):
+                return JSONResponse(
+                    status_code=404,
+                    content={
+                        "ok": False,
+                        "error": {"code": "not_found", "message": "unknown endpoint"},
+                    },
+                )
+            root = DIST.resolve()
+            target = (DIST / path).resolve()
+            if path and root in target.parents and target.is_file():
+                return FileResponse(target)
+            index_file = DIST / "index.html"
+            if index_file.is_file():
+                return FileResponse(index_file)
+            return JSONResponse(
+                status_code=404,
+                content={
+                    "ok": False,
+                    "error": {
+                        "code": "not_found",
+                        "message": "UI bundle missing; run `npm --prefix web run build`",
+                    },
+                },
+            )
+
     return app

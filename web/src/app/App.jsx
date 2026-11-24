@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api } from "../lib/api.js";
+import { api, waitForJob } from "../api/client";
 import {
   CompareDialog, EventDialog, FactoryDialog, HelpDialog, ImportDialog,
   Lightbox, NewTaskDialog, Palette, RunDialog, SettingsDialog,
@@ -49,7 +49,7 @@ export default function App() {
 
   const loadTasks = useCallback(async () => {
     try {
-      const data = await api("/api/tasks?limit=200");
+      const data = await api.tasks(200);
       setTasks(data.tasks || []);
     } catch (error) {
       notify(`Queue unavailable: ${error.message}`);
@@ -59,7 +59,7 @@ export default function App() {
   const loadDetail = useCallback(async (id) => {
     if (!id) return;
     try {
-      const data = await api(`/api/tasks/${encodeURIComponent(id)}`);
+      const data = await api.task(id);
       if (selectedRef.current === id) {
         setDetail(data);
         detailRef.current = data;
@@ -95,16 +95,23 @@ export default function App() {
   async function runAction(action, body = {}) {
     if (!selectedRef.current) return null;
     try {
-      const result = await api("/api/actions", {
-        method: "POST",
-        headers: { "X-Works-Write": "1" },
-        body: { action, task_id: selectedRef.current, ...body },
-      });
-      const count = (result.messages || []).length;
+      let result =
+        action === "run-readiness"
+          ? await api.readiness({ task_id: selectedRef.current })
+          : await api.action({ action, task_id: selectedRef.current, ...body });
+      if (result?.job) {
+        const job = await waitForJob(result.job.id);
+        if (job.status !== "succeeded") {
+          throw new Error(job.error || `${action} did not finish`);
+        }
+        result = job.result;
+      }
+      const count = Array.isArray(result?.messages) ? result.messages.length : 0;
       if (action === "discussion") notify("Team review added to the conversation.");
       else if (action === "commentary") notify("Agent commentary added to the conversation.");
+      else if (action === "run-readiness") notify(`Readiness: ${result?.status ?? "done"}.`);
       else if (count) notify(`${count} ${action} message(s) added.`);
-      else if (result.event?.type === "thread.note") notify("Context added to the worklog.");
+      else if (result?.event?.type === "thread.note") notify("Context added to the worklog.");
       else notify(`${action} recorded.`);
       await refresh();
       return result;
@@ -117,7 +124,7 @@ export default function App() {
   useEffect(() => {
     const initial = parseHash();
     if (initial.view) setView(initial.view);
-    Promise.all([api("/api/health"), api("/api/products"), api("/api/detectors")])
+    Promise.all([api.health(), api.products(), api.detectors()])
       .then(([h, p, d]) => {
         setHealth(h);
         setProducts((p.products || []).map((item) => item.name));
@@ -155,11 +162,9 @@ export default function App() {
   }, [selectTask, view]);
 
   useEffect(() => {
-    const source = new EventSource("/api/events");
+    const source = new EventSource("/api/v1/events");
     let timer;
-    source.onopen = () => setConnected(true);
-    source.onerror = () => setConnected(false);
-    source.onmessage = () => {
+    const schedule = () => {
       setConnected(true);
       window.clearTimeout(timer);
       timer = window.setTimeout(() => {
@@ -167,7 +172,19 @@ export default function App() {
         if (selectedRef.current) loadDetail(selectedRef.current);
       }, 160);
     };
+    const names = [
+      "queue.changed",
+      "task.changed",
+      "run.changed",
+      "job.changed",
+      "settings.changed",
+      "resync",
+    ];
+    for (const name of names) source.addEventListener(name, schedule);
+    source.onopen = () => setConnected(true);
+    source.onerror = () => setConnected(false);
     return () => {
+      for (const name of names) source.removeEventListener(name, schedule);
       source.close();
       window.clearTimeout(timer);
     };
@@ -337,11 +354,7 @@ export default function App() {
             localStorage.setItem("works.poll", String(nextPoll));
             localStorage.setItem("works.repo", repo.trim());
             if (builder && health?.write) {
-              const result = await api("/api/settings/builder", {
-                method: "POST",
-                headers: { "X-Works-Write": "1" },
-                body: builder,
-              });
+              const result = await api.saveSettings(builder);
               setHealth((current) => current ? { ...current, builder: result.builder } : current);
             }
             setDialog(null);

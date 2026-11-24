@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api } from "../../lib/api.js";
+import { api } from "../../api/client";
 import { fmtMs, fmtUsd } from "../../lib/format.js";
 import { Table } from "../../ui/primitives.jsx";
 import { Modal } from "../../ui/Modal.jsx";
@@ -9,7 +9,7 @@ export function FactoryDialog({ onClose }) {
   const [ledger, setLedger] = useState([]);
   const [error, setError] = useState("");
   useEffect(() => {
-    Promise.all([api("/api/metrics"), api("/api/ledger")])
+    Promise.all([api.metrics(), api.ledger()])
       .then(([m, l]) => { setMetrics(m.metrics || {}); setLedger((l.rows || []).slice().reverse().slice(0, 30)); })
       .catch((exc) => setError(exc.message));
   }, []);
