@@ -69,7 +69,7 @@ jobs:
         run: npm run build
         working-directory: web
       - name: Built bundle is committed
-        run: git diff --exit-code -- src/works/interfaces/ui/static/dist
+        run: git diff --ignore-cr-at-eol --exit-code -- src/works/interfaces/ui/static/dist
 
   docker-verifier:
     runs-on: ubuntu-latest
