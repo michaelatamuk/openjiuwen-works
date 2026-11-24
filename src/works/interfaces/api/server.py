@@ -11,21 +11,14 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any, cast
 from urllib.parse import parse_qs, unquote, urlparse
 
-from works.adapters.queue.ledger import Ledger
 from works.adapters.queue.store import Queue
-from works.application.observability.metrics import collect
 from works.config.paths import WorksPaths
 from works.domain.errors import ConfigError
-from works.interfaces.api import write
+from works.interfaces.api import read, write
 from works.interfaces.api.live import LiveState
 from works.interfaces.api.presenters.tasks import (
     _export,
     _run_index,
-    _run_summaries,
-    _task_detail,
-    _tasks,
-    detector_map,
-    product_map,
 )
 from works.interfaces.api.static import ASSETS, STATIC, _content_type, _dist_asset
 
@@ -192,35 +185,16 @@ class Handler(BaseHTTPRequestHandler):
         self._json(*write.save_builder_settings(self.paths, payload))
 
     def _api(self, path: str, query: dict[str, list[str]]) -> None:
-        queue = Queue(self.paths)
         try:
             if path == "/api/health":
-                from works.application.assistant.chat import availability
-                from works.application.settings import builder_health, load_builder_settings
-
-                try:
-                    settings = load_builder_settings(self.paths)
-                except ConfigError:
-                    settings = None
-                self._json(
-                    HTTPStatus.OK,
-                    {
-                        "ok": True,
-                        "readonly": not self.writable,
-                        "write": self.writable,
-                        "root": str(self.paths.root),
-                        "version": "0.0.1",
-                        "ai": availability(),
-                        "builder": builder_health(self.paths, settings),
-                    },
-                )
+                self._json(*read.health(self.paths, writable=self.writable))
                 return
             if path == "/api/products":
-                self._json(HTTPStatus.OK, {"ok": True, **product_map(self.paths)})
+                self._json(*read.products(self.paths))
                 return
             if path == "/api/detectors":
                 refresh = query.get("refresh", ["0"])[0] in ("1", "true", "yes")
-                self._json(HTTPStatus.OK, {"ok": True, **detector_map(self.paths, refresh=refresh)})
+                self._json(*read.detectors(self.paths, refresh=refresh))
                 return
             if path == "/api/tasks":
                 limit_raw = query.get("limit", ["200"])[0]
@@ -228,7 +202,7 @@ class Handler(BaseHTTPRequestHandler):
                     limit = max(1, min(1000, int(limit_raw)))
                 except ValueError:
                     limit = 200
-                self._json(HTTPStatus.OK, {"tasks": _tasks(queue, limit)})
+                self._json(*read.tasks(self.paths, limit=limit))
                 return
             if path.startswith("/api/tasks/") and "/artifacts/" in path:
                 self._artifact(path)
@@ -238,22 +212,17 @@ class Handler(BaseHTTPRequestHandler):
                 return
             if path.startswith("/api/tasks/") and path.endswith("/runs"):
                 task_id = unquote(path.removeprefix("/api/tasks/").removesuffix("/runs"))
-                self._json(HTTPStatus.OK, {"runs": _run_summaries(self.paths, task_id)})
+                self._json(*read.runs(self.paths, task_id))
                 return
             if path.startswith("/api/tasks/"):
                 task_id = unquote(path.removeprefix("/api/tasks/"))
-                self._json(HTTPStatus.OK, _task_detail(queue, self.paths, task_id))
+                self._json(*read.detail(self.paths, task_id))
                 return
             if path == "/api/metrics":
-                metrics = collect(queue, Ledger(self.paths.ledger))
-                self._json(HTTPStatus.OK, {"metrics": metrics.model_dump(mode="json")})
+                self._json(*read.metrics(self.paths))
                 return
             if path == "/api/ledger":
-                rows = Ledger(self.paths.ledger).rows()
-                self._json(
-                    HTTPStatus.OK,
-                    {"rows": [row.model_dump(mode="json") for row in rows[-200:]]},
-                )
+                self._json(*read.ledger(self.paths))
                 return
             self._json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "unknown endpoint"})
         except Exception as exc:

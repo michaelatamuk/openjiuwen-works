@@ -27,9 +27,9 @@ tests/
 - **CLI command:** the handler goes in `interfaces/cli/commands/<group>.py`; its arguments go in
   `interfaces/cli/parser/<group>.py`. Groups are `tasks`, `plan`, `run`, `delivery`, `intake`,
   `inspect`, `gates`, `quality`, `memory`, `team` and `ui`.
-- **HTTP route:** GET payloads belong with the presenters; POST routes go in
-  `interfaces/api/write.py` and return `(HTTPStatus, payload)`. `server.py` only parses the envelope,
-  dispatches and sends the response. Streaming stays in the handler.
+- **HTTP route:** GET payloads go in `interfaces/api/read.py`, POST routes in
+  `interfaces/api/write.py`; both return `(HTTPStatus, payload)`. `server.py` only parses the
+  envelope, dispatches and sends the response. Streaming and binary responses stay in the handler.
 - **Thread message:** add a small handler in the lifecycle module under
   `interfaces/api/presenters/thread/messages/` (`signal`, `plan`, `build`, `verify`, `deliver`,
   `notes`) and register the event type in `core.py`.
