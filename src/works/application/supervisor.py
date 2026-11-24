@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
-import secrets
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -29,7 +28,7 @@ from works.application.execution.artifacts import collect_artifacts
 from works.application.execution.flakes import active_flakes
 from works.application.execution.quarantine import ensure_outside
 from works.application.execution.quarantine import load as load_quarantine
-from works.application.execution.scenarios import Scenario, ScenarioSet, judge, load_scenario_set
+from works.application.execution.scenarios import Scenario, judge, load_scenario_set
 from works.application.execution.verifier import LocalVerifier, Verifier
 from works.application.memory.ppma import Memory, NullMemory
 from works.application.planning.memory import PlanMemory
@@ -44,6 +43,7 @@ from works.application.planning.service import (
     plan_brief,
     plan_deviations,
 )
+from works.application.run_context import RunContext, _required, new_run_id
 from works.config.logging import get_logger
 from works.config.paths import WorksPaths
 from works.domain.errors import (
@@ -55,12 +55,11 @@ from works.domain.errors import (
     StateError,
     WorksError,
 )
-from works.domain.evidence import Artifact, DiffStatRow, Evidence, write_evidence
+from works.domain.evidence import DiffStatRow, Evidence, write_evidence
 from works.domain.flow import FlowSpec, GateMode, Node, PathsSpec
 from works.domain.policy import PolicyReport, Violation, check_patch, check_paths, paths_from_patch
 from works.domain.records import (
     Challenge,
-    CommandRecord,
     Finding,
     LedgerRow,
     RunRecord,
@@ -71,57 +70,14 @@ from works.domain.records import (
     TaskState,
     Verdict,
 )
-from works.domain.risk import RiskLevel, RiskRating, rate_risk
+from works.domain.risk import RiskLevel, rate_risk
 from works.domain.state import TERMINAL
 from works.domain.trusted import is_check_path, load_trusted_flow
 
 LOG = get_logger("supervisor")
 
 
-def new_run_id(now: datetime | None = None) -> str:
-    stamp = (now or datetime.now(tz=UTC)).strftime("%Y%m%dT%H%M%S")
-    return f"r-{stamp}-{secrets.token_hex(3)}"
-
-
-def _required[T](value: T | None, what: str) -> T:
-    if value is None:
-        raise StateError(f"{what} is not set; the run cannot continue")
-    return value
-
-
 @dataclass
-class RunContext:
-    task: Task
-    flow: FlowSpec
-    run_id: str
-    run_dir: Path
-    worktree: Path | None
-    base_commit: str | None = None
-    checks_sha: str | None = None
-    checks_source: str | None = None
-    started_at: datetime = field(default_factory=lambda: datetime.now(tz=UTC))
-    commands: list[CommandRecord] = field(default_factory=list)
-    reproduce: CommandRecord | None = None
-    test: CommandRecord | None = None
-    preview: CommandRecord | None = None
-    artifacts: list[Artifact] = field(default_factory=list)
-    memory_recall: list[str] = field(default_factory=list)
-    proposal: Proposal | None = None
-    verdict: Verdict | None = None
-    challenge: Challenge | None = None
-    policy: PolicyReport = field(default_factory=lambda: PolicyReport(ok=True))
-    risk: RiskRating | None = None
-    decisions: list[GateVerdict] = field(default_factory=list)
-    would_block: list[str] = field(default_factory=list)
-    plan: dict[str, Any] = field(default_factory=dict)
-    plan_deviations: list[str] = field(default_factory=list)
-    scenario_set: ScenarioSet | None = None
-    scenario_dir: Path | None = None
-    state: TaskState = TaskState.QUEUED
-    stop_reason: StopReason = StopReason.COMPLETED
-    error: str | None = None
-
-
 class Supervisor:
     def __init__(
         self,
