@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from works.domain.errors import (
     EXIT_BLOCKED,
@@ -12,12 +11,7 @@ from works.domain.errors import (
     ConfigError,
 )
 from works.interfaces.cli.commands.common import _emit, _paths
-
-if TYPE_CHECKING:
-    pass
-
-
-from works.interfaces.cli.commands.run import _planner_for
+from works.interfaces.cli.commands.wiring import _planner_for
 
 
 def cmd_plan(args: argparse.Namespace) -> int:
