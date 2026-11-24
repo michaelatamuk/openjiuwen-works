@@ -35,6 +35,32 @@ dev = [
 live = [
   "claude-agent-sdk>=0.2.121,<0.3",
 ]
+# Jiuwen native: openjiuwen ships the DeepAgent runtime and pins most of its own tree
+# (anthropic, openai, sqlalchemy, transformers, pymilvus, trafilatura, ...). The probe also
+# needs the three modules openjiuwen keeps outside its core set.
+native = [
+  "openjiuwen>=0.1.21,<0.2",
+  "httpx>=0.24",
+  "jsonschema-path",
+  "tqdm",
+]
+# DeepSeek Harness SDK (still a 0.2 release candidate upstream; pinned tightly on purpose).
+dsh = [
+  "deepseek-harness-sdk>=0.2.2rc2,<0.3",
+]
+codex = [
+  "openai-codex>=0.172",
+]
+# One extra for "every live provider": what the Settings surface and `works doctor` recommend.
+providers = [
+  "openjiuwen>=0.1.21,<0.2",
+  "httpx>=0.24",
+  "jsonschema-path",
+  "tqdm",
+  "deepseek-harness-sdk>=0.2.2rc2,<0.3",
+  "openai-codex>=0.172",
+  "claude-agent-sdk>=0.2.121,<0.3",
+]
 preview = [
   "playwright>=1.49",
 ]

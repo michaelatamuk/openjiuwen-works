@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import importlib.util
 import os
 import shutil
 import subprocess  # nosec B404
@@ -70,36 +69,25 @@ def _flow_check(paths: WorksPaths) -> CheckResult:
 
 
 def _harness_check() -> CheckResult:
-    try:
-        spec = importlib.util.find_spec("openjiuwen.harness_protocol")
-    except (ImportError, ModuleNotFoundError):
-        spec = None
-    try:
-        sdk = importlib.util.find_spec("claude_agent_sdk")
-    except (ImportError, ModuleNotFoundError):
-        sdk = None
-    native = None
-    if sdk is not None and sdk.origin:
-        candidate = Path(sdk.origin).parent / "_bundled" / "claude.exe"
-        native = str(candidate) if candidate.exists() else None
-    if spec is not None and sdk is not None and native is not None:
+    from works.adapters.harness.openjiuwen.provider_setup import EVERY_PROVIDER, provider_setup
+
+    providers = provider_setup()
+    ready = [name for name, item in providers.items() if item["available"]]
+    if ready:
         return CheckResult(
             name="harness",
             status="ok",
-            detail=f"live ready: openjiuwen + claude-agent-sdk + {native}",
+            detail=f"live providers ready: {', '.join(ready)}",
         )
     missing = []
-    if spec is None:
-        missing.append("openjiuwen.harness_protocol")
-    if sdk is None:
-        missing.append("claude-agent-sdk")
-    if sdk is not None and native is None:
-        missing.append("bundled claude.exe")
-    return CheckResult(
-        name="harness",
-        status="warn",
-        detail=f"fake harness in use; missing: {', '.join(missing)}",
-    )
+    for name, item in providers.items():
+        reason = str(item.get("reason") or "")
+        if reason:
+            missing.append(f"{name}: {reason}")
+    detail = "fake harness in use; no live provider. " + EVERY_PROVIDER
+    if missing:
+        detail += " " + "; ".join(missing)
+    return CheckResult(name="harness", status="warn", detail=detail)
 
 
 def _ppma_check(environ: dict[str, str]) -> CheckResult:

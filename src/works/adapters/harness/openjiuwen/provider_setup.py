@@ -50,15 +50,17 @@ _MODULE_PACKAGES = {
     "alembic": "alembic>=1.13.1",
 }
 
+# The install hints name a project extra, never a hand-copied pip list: `openjiuwen` already
+# pins most of the native tree, and the extra adds the three modules it leaves out.
+NATIVE_EXTRA = 'pip install "openjiuwen-works[native]"'
+DSH_EXTRA = 'pip install "openjiuwen-works[dsh]"'
+CODEX_EXTRA = 'pip install "openjiuwen-works[codex]"'
+CLAUDE_EXTRA = 'pip install "openjiuwen-works[live]"'
+EVERY_PROVIDER = 'pip install "openjiuwen-works[providers]"'
+
 
 def _missing(modules: tuple[str, ...]) -> list[str]:
     return [module for module in modules if not has(module)]
-
-
-def _install(packages: list[str]) -> list[str]:
-    if not packages:
-        return []
-    return [f"pip install {' '.join(packages)}"]
 
 
 def provider_setup() -> dict[str, dict[str, Any]]:
@@ -77,17 +79,17 @@ def provider_setup() -> dict[str, dict[str, Any]]:
             "openjiuwen is visible, but Works' Python is missing the native runtime modules: "
             + ", ".join(native_missing)
         )
-        native_install = _install([_MODULE_PACKAGES[module] for module in native_missing])
+        native_install = [NATIVE_EXTRA]
     elif has("openjiuwen.harness_providers.native") and len(native_sdks) == 2:
         native_reason = "Works can see openjiuwen, but no Anthropic or OpenAI SDK is installed."
-        native_install = _install(["anthropic", "openai"])
+        native_install = [NATIVE_EXTRA]
     elif not has("openjiuwen.harness_providers.native"):
         native_reason = (
             "openjiuwen's native DeepAgent provider is not on Works' Python path. Works uses its "
             "own Python environment, so an installation in another interpreter is not visible "
             "here. Install openjiuwen in the Works environment or run Works from its checkout."
         )
-        native_install = ["pip install openjiuwen"]
+        native_install = [NATIVE_EXTRA]
     else:
         native_reason = ""
         native_install = []
@@ -102,7 +104,7 @@ def provider_setup() -> dict[str, dict[str, Any]]:
         if claude_missing
         else ""
     )
-    claude_install = ["uv sync --extra live"] if claude_missing else []
+    claude_install = [CLAUDE_EXTRA] if claude_missing else []
 
     dsh_missing = not has("deepseek_harness")
     dsh_home = bool(os.environ.get("WORKS_DSH_HOME"))
@@ -110,20 +112,23 @@ def provider_setup() -> dict[str, dict[str, Any]]:
     dsh_install: list[str] = []
     if dsh_missing:
         dsh_reason = "The DeepSeek Harness SDK (`deepseek_harness`) is not installed."
-        dsh_install.append("pip install deepseek-harness-sdk")
-    elif not dsh_home:
-        dsh_reason = (
-            "The DeepSeek Harness home is not set; point Works at the DSH checkout "
-            "(see docs/live-harness.md)."
-        )
-        dsh_install.append("Set the DeepSeek Harness home in your shell")
+        dsh_install.append(DSH_EXTRA)
+    if not dsh_home:
+        if dsh_missing:
+            dsh_reason += " The DeepSeek Harness home is not set either."
+        else:
+            dsh_reason = (
+                "The DeepSeek Harness home is not set; point Works at the DSH checkout "
+                "(see docs/guides/live-harness.md)."
+            )
+        dsh_install.append("Set WORKS_DSH_HOME to the DeepSeek Harness home")
 
     codex_reason = (
         "The OpenAI Codex SDK (`openai_codex`) is not installed and no Codex CLI was found."
         if not has("openai_codex")
         else ""
     )
-    codex_install = ["pip install openai-codex"] if codex_reason else []
+    codex_install = [CODEX_EXTRA] if codex_reason else []
 
     return {
         "claudecode": {

@@ -18,10 +18,32 @@ flag is passed; explicit flags still win per run.
 
 ## Setup
 
-```bash
-uv sync --extra live
-# openjiuwen must be installed, or on PYTHONPATH (the agent-core checkout is enough)
-```
+Every live provider is a project extra, so nobody has to copy a pip list out of the UI:
+
+| Provider | Extra | Command |
+|---|---|---|
+| Jiuwen native | `native` | `pip install "openjiuwen-works[native]"` |
+| DeepSeek Harness | `dsh` | `pip install "openjiuwen-works[dsh]"` |
+| OpenAI Codex | `codex` | `pip install "openjiuwen-works[codex]"` |
+| Claude Code | `live` | `pip install "openjiuwen-works[live]"` |
+| all of the above | `providers` | `pip install "openjiuwen-works[providers]"` |
+
+From a checkout use the matching `uv sync --extra native --extra dsh --extra codex`. The `native`
+extra is one line — `openjiuwen>=0.1.21` — because openjiuwen already pins its own tree (anthropic,
+openai, sqlalchemy, transformers, pymilvus, trafilatura, ...); the extra only adds the three modules
+openjiuwen keeps outside its core set (`httpx`, `jsonschema-path`, `tqdm`).
+
+Live providers stay optional on purpose:
+
+- `openjiuwen` is large (hundreds of MB with `transformers`, `pymilvus` and the document stack) and
+  requires Python `<3.14`, while the daemon, queue, evidence and UI install and run without it;
+- a missing runtime must degrade to the fake harness with a clear reason, never break
+  `pip install openjiuwen-works` on a platform where one of those wheels is missing;
+- `deepseek-harness-sdk` is still a `0.2` release candidate and is pinned tightly;
+- installing is not enabling: keys, `WORKS_DSH_HOME` and the Codex login stay yours.
+
+`openjiuwen` must be importable by Works' own interpreter: the extra installs it, or put the
+agent-core checkout on `PYTHONPATH`.
 
 Environment:
 
