@@ -1,9 +1,12 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { postAction, streamAsk } from "../../lib/api.js";
 import { roleLabel } from "../../lib/format.js";
+import { ChapterBar } from "./ChapterBar.jsx";
+import { Composer } from "./Composer.jsx";
 import { Message } from "./Message.jsx";
 import { Rail } from "./Rail.jsx";
 import { ReviewGroup } from "./ReviewGroup.jsx";
+import { SessionHead } from "./SessionHead.jsx";
 import {
   PHASES,
   REVIEW_TYPES,
@@ -172,112 +175,39 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
   return (
     <div className={`cl-thread ${sessionMode === "pipeline" ? "conversation" : "log"}`}>
       <div className="cl-main">
-        <div className="cl-head">
-          <div className="cl-eyebrow">
-            {source
-              ? <a href={source} target="_blank" rel="noopener noreferrer">{detail.task.source.ref}</a>
-              : <span>{detail.task.source.ref}</span>}
-            <span>{detail.task.product}</span>
-            <span className="cl-live-text"><i /> Live</span>
-            <span className="cl-head-actions">
-              <span className="cl-mode-switch" role="tablist" aria-label="Session mode">
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={sessionMode === "pipeline"}
-                  className={sessionMode === "pipeline" ? "active" : ""}
-                  onClick={() => setSessionMode("pipeline")}
-                >
-                  Conversation
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={sessionMode === "log"}
-                  className={sessionMode === "log" ? "active" : ""}
-                  onClick={() => setSessionMode("log")}
-                >
-                  Run log
-                </button>
-              </span>
-              {writable && canAsk ? (
-                <span className="cl-ai-actions">
-                  <span className="cl-ai-label">Ask AI</span>
-                  <button
-                    type="button"
-                    className="cl-text-btn"
-                    disabled={Boolean(aiBusy)}
-                    title="Ask the team for a review of this run"
-                    onClick={() => runAi("discussion")}
-                  >
-                    {aiBusy === "discussion" ? "Reviewing…" : "Review"}
-                  </button>
-                  <button
-                    type="button"
-                    className="cl-text-btn"
-                    disabled={Boolean(aiBusy)}
-                    title="Ask the agents for commentary on this run"
-                    onClick={() => runAi("commentary")}
-                  >
-                    {aiBusy === "commentary" ? "Writing…" : "Commentary"}
-                  </button>
-                </span>
-              ) : null}
-            </span>
-          </div>
-          {sessionMode === "pipeline" && decision && (decision.action === "approve-plan" || decision.tone === "red") ? (
-            <div className={`cl-decision ${decision.tone}`}>
-              <div>
-                <span>{decision.label}</span>
-                <b>{decision.text}</b>
-              </div>
-              <button
-                type="button"
-                onClick={() => (decision.action ? threadAction(decision.action) : onView(decision.view))}
-              >
-                {decision.button}
-              </button>
-            </div>
-          ) : null}
-        </div>
+        <SessionHead
+          detail={detail}
+          source={source}
+          sessionMode={sessionMode}
+          writable={writable}
+          canAsk={canAsk}
+          aiBusy={aiBusy}
+          decision={decision}
+          onMode={setSessionMode}
+          onAi={runAi}
+          onDecision={threadAction}
+          onView={onView}
+        />
 
         <div className="cl-work">
           <div className="cl-chat">
             {sessionMode === "log" ? (
-              <nav className="cl-chapter-bar" aria-label="Run chapters">
-                {phases.map((phase) => (
-                  <button
-                    key={phase.id}
-                    type="button"
-                    className={`cl-chapter-chip ${phase.state} ${!showAll && (selectedPhase || currentId) === phase.id ? "active" : ""}`}
-                    onClick={() => {
-                      setShowAll(false);
-                      setSelectedPhase(phase.id === currentId ? null : phase.id);
-                      if (lineRef.current) lineRef.current.scrollTop = 0;
-                    }}
-                  >
-                    <span className="cl-phase-dot" aria-hidden="true" />
-                    {phase.label}
-                    <span className="cl-chapter-chip-count">{phase.items.length}</span>
-                  </button>
-                ))}
-                <label className="cl-chapter-all">
-                  <input
-                    type="checkbox"
-                    checked={showAll}
-                    onChange={(event) => {
-                      setShowAll(event.target.checked);
-                      setSelectedPhase(null);
-                    }}
-                  />
-                  All chapters
-                </label>
-                {selectedPhase ? (
-                  <button type="button" className="cl-chapter-reset" onClick={() => setSelectedPhase(null)}>
-                    Back to current
-                  </button>
-                ) : null}
-              </nav>
+              <ChapterBar
+                phases={phases}
+                showAll={showAll}
+                selectedPhase={selectedPhase}
+                currentId={currentId}
+                onSelect={(id) => {
+                  setShowAll(false);
+                  setSelectedPhase(id === currentId ? null : id);
+                  if (lineRef.current) lineRef.current.scrollTop = 0;
+                }}
+                onShowAll={(checked) => {
+                  setShowAll(checked);
+                  setSelectedPhase(null);
+                }}
+                onReset={() => setSelectedPhase(null)}
+              />
             ) : null}
             {sessionMode === "log" && origin ? (
               <div className="cl-origin">
@@ -356,37 +286,18 @@ export function Thread({ detail, ai, writable, onAction, onView, onRefresh, onSh
         ) : null}
 
         {writable ? (
-          <form className={`cl-composer ${focused ? "focused" : ""}`} ref={formRef} onSubmit={submit}>
-            <div className="cl-composer-row">
-              {canAsk ? (
-                <button
-                  type="button"
-                  className="cl-mode"
-                  onClick={() => setMode(activeMode === "ask" ? "note" : "ask")}
-                  title={activeMode === "ask" ? "Switch to Add context" : "Switch to Ask Mira"}
-                >
-                  {activeMode === "ask" ? "Ask" : "Note"}
-                </button>
-              ) : <span className="cl-mode">Note</span>}
-              <textarea
-                rows={1}
-                value={text}
-                placeholder={activeMode === "ask" ? "Ask about this run..." : "Add context to this run..."}
-                onChange={(event) => setText(event.target.value)}
-                onFocus={() => setFocused(true)}
-                onBlur={() => setFocused(false)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) formRef.current?.requestSubmit();
-                }}
-              />
-              <button type="submit" className="cl-send" disabled={busy || !text.trim()} aria-label={activeMode === "ask" ? "Ask Mira" : "Add context"}>
-                ↑
-              </button>
-            </div>
-            {focused || text ? (
-              <div className="cl-helper">Ctrl Enter to send · advisory only, never opens a gate</div>
-            ) : null}
-          </form>
+          <Composer
+            canAsk={canAsk}
+            activeMode={activeMode}
+            text={text}
+            busy={busy}
+            focused={focused}
+            formRef={formRef}
+            onText={setText}
+            onFocus={setFocused}
+            onToggleMode={() => setMode(activeMode === "ask" ? "note" : "ask")}
+            onSubmit={submit}
+          />
         ) : (
           <p className="cl-readonly">Start <span className="mono">works ui --write</span> to ask Mira or add context.</p>
         )}
