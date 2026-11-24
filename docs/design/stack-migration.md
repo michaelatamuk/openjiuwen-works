@@ -401,16 +401,26 @@ performance gate is tracked in Phase 8.
 does not affect the run; killing the daemon and restarting it fails the orphan job, releases the
 task owner, and serves a new run. Evidence: `python scripts/smoke_daemon.py`.
 
-### Phase 7 — cutover, packaging, tests (2 days)
-- [ ] Delete old HTTP modules; migrate/delete `tests/unit/interfaces/api/test_ui.py` and friends.
-- [ ] CI runs `pytest` in the cutover gate; coverage stays ≥ 80%.
-- [ ] Package worker scripts and default flows; resolve via `importlib.resources`; wheel test asserts
-  `dist/index.html`, workers and flows are present.
-- [ ] Installed-wheel smoke: `works ui` + `works ask` + `works team verify` in a temp home.
-- [ ] CI checks `dist` freshness (build then `git diff --exit-code`).
-- [ ] Docs: `ui.md`, `runbook.md`, `layout.md`, README commands; tag `pre-fastapi`.
+### Phase 7 - cutover, packaging, tests (done; ask/team wheel smoke deferred)
 
-**Gate:** CI green; wheel smoke passes.
+- [x] Delete old HTTP modules; `interfaces/api/server.py` and `tests/unit/interfaces/api/test_ui.py`
+  are gone. The `test_ui_pipeline.py` presenter tests remain.
+- [x] CI runs `pytest` in the cutover gate; coverage stays ≥ 80%.
+- [x] Package worker scripts and default flows: Hatch force-includes `flows` and the three workers
+  under `works/resources`; `works.config.resources` resolves both the source tree and the wheel.
+  `Flows` are copied into a fresh home by `WorksPaths.ensure()`.
+- [x] `scripts/check_wheel.py` asserts `dist/index.html`, the flows and the workers are in the wheel;
+  a `wheel` CI job builds and checks it.
+- [x] `scripts/smoke_wheel.py` extracts the wheel, imports it ahead of the source tree, runs
+  `works --help`, `version`, `doctor` against a fresh home (packaged flow copied) and `works ui`,
+  then stops it. Runs locally and in CI.
+- [ ] Full `works ask` + `works team verify` wheel smoke: both need agent-core, a model key and a
+  finished run, so they are covered by unit tests and the daemon/API gates rather than the wheel job.
+- [x] CI checks `dist` freshness (build then `git diff --exit-code`).
+- [x] Docs: `ui.md`, `runbook.md`, `layout.md`, README commands; tag `pre-fastapi`.
+
+**Gate (met for cutover/packaging):** CI green; wheel content and installed-wheel smoke pass. The
+external-runtime `ask`/`team` wheel smoke is the only deferred check.
 
 ### Phase 8 — hardening (2.5 days)
 - [ ] 10,000-task load test and 20 SSE clients; p95 targets.

@@ -87,6 +87,18 @@ npm ci
 npm run build
 ```
 
+For a headless local daemon:
+
+```bash
+uv sync --extra server
+works --home /path/to/workspace daemon start --write --port 8765
+works --home /path/to/workspace daemon status
+works --home /path/to/workspace daemon stop
+```
+
+`daemon start` prints a bootstrap URL; the same UI is served at `/`. The daemon owns runs and jobs
+for that home, and standalone `works run` refuses while it is running.
+
 The original recorded M0 demo:
 
 ```powershell
@@ -136,7 +148,7 @@ uv run works memory recall --ppma http://127.0.0.1:8766
 | **Loop** | Queue, policy, disposable worktree, reproduce, build, check, proof and ledger work end to end. |
 | **Live builder** | Real `openjiuwen` harness on an Anthropic-compatible endpoint (default Claude Code; `dsh`/`codex` selectable when installed); model, tokens, USD and prompt hash are recorded. |
 | **Proof** | Computed evidence page and immutable ledger row; P0/P1 verdict, policy, risk, cost, diff and residual gaps. |
-| **GUI** | A React/Vite app served by `works ui`: Story with the wave route, Evidence, Release and a Claude-style Session that reads the whole run as one conversation — person report, plan, build, check, release — with a Run log switch, inline human gates, a 900px measure, a right-edge context rail and near-white panes. SSE (`/api/events`) updates the queue and worklog without polling; `Ask Mira` streams over `/api/ask/stream`. Every AI answer is labelled and advisory. Factory shows metrics and the ledger; artifacts open in a lightbox; settings control theme, density and fallback refresh. |
+| **GUI** | A React/Vite app served by `works ui`: Story with the wave route, Evidence, Release and a Claude-style Session that reads the whole run as one conversation - person report, plan, build, check, release - with a Run log switch, inline human gates, a 900px measure, a right-edge context rail and near-white panes. SSE (`/api/v1/events`) updates the queue and worklog without polling; `Ask Mira` streams over `/api/v1/ask/stream`. Every AI answer is labelled and advisory. Factory shows metrics and the ledger; artifacts open in a lightbox; settings control theme, density and fallback refresh. |
 | **Readiness** | `works readiness` runs lint, format, types, fast tests, product verify, architecture and import boundaries; the report carries the internal import graph and fails on cycles, and a red gate blocks live runs. |
 | **Feature map** | `features/<product>.yaml`; Evidence shows covered, failed and not-covered features. |
 | **Memory** | When configured, finished runs are reported to PPMA; older runs can be backfilled; `works memory recall` reads statements. |

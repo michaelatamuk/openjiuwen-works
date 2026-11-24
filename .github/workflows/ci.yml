@@ -82,6 +82,24 @@ jobs:
       - name: Built bundle is committed
         run: git diff --ignore-cr-at-eol --exit-code -- src/works/interfaces/ui/static/dist
 
+  wheel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.4.0
+        with:
+          enable-cache: true
+      - run: uv python install 3.12
+      - name: Build wheel
+        run: uv build --wheel
+      - name: Wheel contains the runtime bundle
+        run: python3 scripts/check_wheel.py dist/*.whl
+      - name: Installed wheel smoke
+        run: |
+          uv sync --frozen --extra server
+          uv run python scripts/smoke_wheel.py --wheel dist/*.whl
+
   docker-verifier:
     runs-on: ubuntu-latest
     timeout-minutes: 15

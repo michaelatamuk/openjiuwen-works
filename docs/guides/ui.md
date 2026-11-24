@@ -1,13 +1,17 @@
 # Local GUI
 
-`works ui` opens a local window over the queue and run artifacts. Read-only by default;
-`works ui --write` enables task creation, intake, readiness, release, delivery, confirmation and
-team verification.
+`works ui` starts the FastAPI app and opens a local window over the queue and run artifacts. It is
+read-only by default; `works ui --write` enables task creation, intake, readiness, release, delivery,
+confirmation and team verification. For a headless process use `works daemon start --write` and
+`works daemon stop|status`; both print the bootstrap URL for the browser.
 
 ```powershell
 works --home C:\path\to\workspace ui --port 8765
 works --home C:\path\to\workspace ui --port 8765 --write
-# open the printed URL; Ctrl+C stops the server
+works --home C:\path\to\workspace daemon start --write --port 8765
+works --home C:\path\to\workspace daemon status
+works --home C:\path\to\workspace daemon stop
+# open the printed URL; Ctrl+C stops a foreground ui
 ```
 
 Global `--home` comes before the subcommand. Use `--no-open` to avoid launching a browser.
@@ -15,9 +19,9 @@ Global `--home` comes before the subcommand. Use `--no-open` to avoid launching 
 ## React/Vite and live updates
 
 The interface is a React/Vite app in `web/`; `works ui` serves its built assets from
-`src/works/interfaces/ui/static/dist`. The queue and open task subscribe to `GET /api/events` (SSE), so a
+`src/works/interfaces/ui/static/dist`. The queue and open task subscribe to `GET /api/v1/events` (SSE), so a
 new run, event, gate, note or answer appears without a reload; the Settings fallback refresh is
-used only if the stream drops. `Ask Mira` keeps its own `POST /api/ask/stream` token stream.
+used only if the stream drops. `Ask Mira` keeps its own `POST /api/v1/ask/stream` token stream.
 
 To rebuild after a UI change:
 
@@ -141,24 +145,27 @@ Times have one source: the hero, the header and the route all read the reported 
 
 ## Read-only by default, writes on request
 
-The server binds to `127.0.0.1` and serves GET/HEAD. A POST returns `405` in the default mode; it
-reads `queue/` and `runs/` and never writes them.
+The server binds to `127.0.0.1` and reads are open on loopback. A write in the default mode returns
+`403 read_only`; reads never write `queue/` or `runs/`.
 
 `works ui --write` opens the first write path: a **+ New task** button in the task list context.
 It opens a Claude-style prompt ("What should Mira work on?") with the exact fields under
 **Details**. The typed text is parsed locally for a reference, product, repository and title;
 untouched fields follow the draft and stop following it when a person edits one. No model is
 called and nothing is created by itself. It creates only a `queued`
-task through `POST /api/tasks` (local-only, `X-Works-Write`, repo/.git, reference and title
+task through `POST /api/v1/tasks` (bearer or session auth, repo/.git, reference and title
 validation), never starts a run and never approves a gate. The same mode lets
 the Evidence readiness panel run `works readiness` through a local POST.
 
 ## Limits
 
 - Readiness commands run only in `--write`; the default preview shows static checks.
-- Live updates use `GET /api/events` (SSE); the Settings fallback refresh is configurable.
-- No auth; local-only writes. The LAN preview stays read-only.
+- Live updates use `GET /api/v1/events` (SSE); the Settings fallback refresh is configurable.
+- Writes need the persistent bearer token from `.works/state/http-token` or the one-time bootstrap
+  URL; reads are open on loopback. Do not bind the UI to a non-loopback address.
 - React 19 + Vite, built into `src/works/interfaces/ui/static/dist`; no Tailwind or shadcn yet, and Playwright
   is not wired into CI.
 
-Tests: `pytest tests/unit/interfaces/api/test_ui.py tests/unit/interfaces/api/test_ui_pipeline.py`.
+Tests: `pytest tests/unit/interfaces/api tests/contract` for the API and parity fixtures;
+`cd web && npm test` for the screen matrix. The daemon lifecycle gate is
+`python scripts/smoke_daemon.py`.

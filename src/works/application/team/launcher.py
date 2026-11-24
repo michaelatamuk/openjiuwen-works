@@ -16,6 +16,7 @@ from typing import Any
 from works.adapters.queue.store import Queue
 from works.application.delivery.release import latest_run_dir
 from works.config.paths import WorksPaths
+from works.config.resources import worker as worker_path
 from works.domain.errors import ConfigError
 from works.domain.evidence import Evidence
 from works.domain.records import RunRecord
@@ -58,13 +59,16 @@ def run_team_verify(
         "risk": evidence.risk.level.value if evidence.risk else "low",
         "not_tested": evidence.not_tested,
     }
-    repo_root = Path(__file__).resolve().parents[4]
+    src_root = Path(__file__).resolve().parents[3]
     core = agent_core or Path(
         os.environ.get("WORKS_AGENT_CORE") or r"C:\Workspace\openjiuwen\agent-core"
     )
+    worker = worker_path("team_verify_worker.py")
+    if worker is None:
+        raise ConfigError("agent-core team worker not found in the Works package")
     env = os.environ.copy()
     env["PYTHONPATH"] = os.pathsep.join(
-        [str(repo_root / "src"), str(core), env.get("PYTHONPATH", "")]
+        [str(src_root), str(core), env.get("PYTHONPATH", "")]
     ).strip(os.pathsep)
     handle, tmp_name = tempfile.mkstemp(prefix="works-team-", suffix=".json")
     os.close(handle)
@@ -73,7 +77,7 @@ def run_team_verify(
         completed = subprocess.run(  # nosec B603
             [
                 str(interpreter),
-                str(repo_root / "scripts" / "team_verify_worker.py"),
+                str(worker),
                 str(result_path),
             ],
             input=json.dumps(payload),

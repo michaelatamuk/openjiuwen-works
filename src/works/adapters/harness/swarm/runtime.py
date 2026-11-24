@@ -9,6 +9,7 @@ from typing import Any
 
 from works.adapters.harness.swarm.contract import CONTRACT, SwarmDiagnostic
 from works.adapters.processes.runner import CommandResult, CommandRunner, SubprocessRunner
+from works.config.resources import worker
 from works.domain.errors import ConfigError
 
 
@@ -24,8 +25,8 @@ def default_swarm_home() -> Path:
 
 
 def _repo_adapter() -> Path | None:
-    adapter = Path(__file__).resolve().parents[5] / "scripts" / "swarm_adapter.py"
-    return adapter if adapter.is_file() else None
+    adapter = worker("swarm_adapter.py")
+    return adapter if adapter is not None and adapter.is_file() else None
 
 
 def default_entrypoint() -> list[str]:

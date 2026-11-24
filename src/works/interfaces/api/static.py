@@ -1,33 +1,8 @@
-"""HTTP API presenters and runtime helpers."""
+"""Small HTTP helpers shared by the API presenters."""
 
 from __future__ import annotations
 
 from pathlib import Path
-
-# The Vite bundle in dist/ is the page; only the mascot still comes from this folder.
-STATIC = {
-    "mira.svg": "mira.svg",
-}
-
-
-ASSETS = Path(__file__).resolve().parents[1] / "ui" / "static"
-
-
-DIST = ASSETS / "dist"
-
-
-def _dist_asset(name: str) -> Path | None:
-    if not DIST.is_dir():
-        return None
-    if name in ("", "index.html"):
-        target = DIST / "index.html"
-    elif name.startswith("assets/"):
-        target = (DIST / name).resolve()
-    else:
-        return None
-    if DIST.resolve() not in target.parents and target != DIST / "index.html":
-        return None
-    return target if target.is_file() else None
 
 
 def _content_type(path: Path) -> str:

@@ -28,7 +28,8 @@ def factory_root() -> Path:
 def paths(tmp_path: Path) -> WorksPaths:
     root = tmp_path / "works"
     workspace = WorksPaths(root).ensure()
-    shutil.copytree(FACTORY_ROOT / "flows", workspace.flows)
+    if not workspace.flows.exists():
+        shutil.copytree(FACTORY_ROOT / "flows", workspace.flows)
     return workspace
 
 

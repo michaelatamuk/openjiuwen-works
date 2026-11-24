@@ -74,6 +74,32 @@ file; if the subscription is wrong, start a new wait from a state the machine al
 **Do:** nothing if the other process is alive; it will release the claim. If it died, follow the
 dead-owner procedure above. `works dispatch` never runs a claimed task twice.
 
+## A writable daemon owns the home
+
+**See:** `a writable daemon owns …; use --daemon or works daemon stop`.
+
+**Why:** one process owns runs and jobs for a home. A second writable daemon would race the queue
+and the worktrees.
+
+**Do:** route the command through the daemon (`works run --daemon`, `works dispatch --daemon`),
+or stop it first. `works ui --write` takes the same lock and also counts as the owner.
+
+## `daemon start` or `daemon stop` does not settle
+
+**See:** `the daemon did not become healthy`, `no daemon is running`, or a stop that reports a pid
+still alive.
+
+**Why:** a stale `daemon.json`, a port already in use, or a process that is not answering with this
+home's health identity.
+
+**Do:**
+1. `works daemon status` — a dead pid clears the identity file; a foreign home is not adopted.
+2. Read `.works/state/daemon.log`; a bind failure or import error is at the end.
+3. `works daemon stop` posts `/admin/shutdown` with the token. It only signals/kills a pid that
+   still answers with this home's `/health`; never kill a pid by hand without that check.
+4. If a hung process keeps the port, stop it from Task Manager and start again. The recorded pid is
+   the daemon's own, not the Windows venv launcher.
+
 ## `config_error`: `a scenario set is required`
 
 **Why:** scenarios are written before the build; the plan cannot be judged without them.

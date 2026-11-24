@@ -42,6 +42,10 @@ class WorksPaths:
     def ensure(self) -> WorksPaths:
         for directory in (self.queue, self.runs, self.worktrees, self.state):
             directory.mkdir(parents=True, exist_ok=True)
+        if not self.flows.exists():
+            from works.config.resources import copy_default_flows
+
+            copy_default_flows(self.flows)
         return self
 
     def task_dir(self, task_id: str) -> Path:

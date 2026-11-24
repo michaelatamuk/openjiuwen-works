@@ -6,9 +6,10 @@ import os
 from pathlib import Path
 from typing import Any
 
+from works.config.resources import worker
 from works.domain.errors import ConfigError
 
-WORKER = Path(__file__).resolve().parents[4] / "scripts" / "agent_chat_worker.py"
+WORKER = worker("agent_chat_worker.py")
 DEFAULT_MODEL = "deepseek-chat"
 DEFAULT_BASE = "https://api.deepseek.com/anthropic"
 
@@ -28,7 +29,7 @@ def availability() -> dict[str, Any]:
     key = os.environ.get("WORKS_MODEL_KEY") or os.environ.get("ANTHROPIC_API_KEY")
     python = agent_python()
     core = agent_core()
-    available = bool(key) and python.exists() and core.exists() and WORKER.exists()
+    available = bool(key) and python.exists() and core.exists() and WORKER is not None
     reason = ""
     if not key:
         reason = "no model key: set ANTHROPIC_API_KEY or WORKS_MODEL_KEY"
@@ -36,7 +37,7 @@ def availability() -> dict[str, Any]:
         reason = f"agent-core Python not found: {python}"
     elif not core.exists():
         reason = f"agent-core checkout not found: {core}"
-    elif not WORKER.exists():
+    elif WORKER is None:
         reason = "agent chat worker not found"
     return {
         "available": available,
@@ -48,7 +49,7 @@ def availability() -> dict[str, Any]:
 
 def command() -> list[str]:
     state = availability()
-    if not state["available"]:
+    if not state["available"] or WORKER is None:
         raise ConfigError(f"Mira is not available: {state['reason']}")
     return [str(agent_python()), str(WORKER)]
 

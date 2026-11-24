@@ -7,9 +7,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from string import Template
 
+from works.config.resources import flow_file
 from works.domain.errors import ConfigError
 
-DEFAULT_PROMPT = Path("flows/fix-issue/prompts/build.md")
+DEFAULT_PROMPT = flow_file("fix-issue/prompts/build.md") or Path("flows/fix-issue/prompts/build.md")
 REQUIRED = ("worktree", "ref", "title")
 
 

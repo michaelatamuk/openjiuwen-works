@@ -54,6 +54,12 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src/works"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"flows" = "works/resources/flows"
+"scripts/agent_chat_worker.py" = "works/resources/scripts/agent_chat_worker.py"
+"scripts/team_verify_worker.py" = "works/resources/scripts/team_verify_worker.py"
+"scripts/swarm_adapter.py" = "works/resources/scripts/swarm_adapter.py"
+
 [tool.ruff]
 line-length = 100
 target-version = "py312"
