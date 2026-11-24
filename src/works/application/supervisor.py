@@ -337,6 +337,22 @@ class Supervisor:
         approve_plan: bool,
         scenario_set: Path | None,
     ) -> None:
+        if not await self._prepare(ctx, repo, scenario_set):
+            return
+        if not self._approve_plan(ctx, repo, approve_plan):
+            return
+        touched = await self._build(ctx, repo)
+        if touched is None:
+            return
+        proposal = _required(ctx.proposal, "proposal")
+        if not self._enforce_policy(ctx, repo, proposal, touched):
+            return
+        if not await self._verify(ctx, proposal):
+            return
+        self._prove(ctx)
+
+    async def _prepare(self, ctx: RunContext, repo: GitRepo, scenario_set: Path | None) -> bool:
+        """Reproduce the defect and draft the plan. False means the run stops here."""
         flow = ctx.flow
         task = ctx.task
         if task.state is TaskState.QUEUED:
@@ -348,7 +364,7 @@ class Supervisor:
             if reproduce.ok:
                 ctx.state = TaskState.REPRODUCING
                 self._stop(ctx, StopReason.NOT_REPRODUCIBLE)
-                return
+                return False
             self._move(ctx, TaskState.REPRODUCED)
             self._recall_memory(ctx)
             await self._draft_plan(ctx, repo, scenario_set)
@@ -362,8 +378,11 @@ class Supervisor:
             ctx.worktree = self._prepare_worktree(
                 ctx, repo, _required(ctx.base_commit, "base commit")
             )
+        return True
 
-        gate = flow.gate("plan")
+    def _approve_plan(self, ctx: RunContext, repo: GitRepo, approve_plan: bool) -> bool:
+        """Check the plan gate. False means the plan is not approved yet."""
+        gate = ctx.flow.gate("plan")
         current = self._current_state(ctx)
         already_approved = current is TaskState.PLAN_APPROVED
         if already_approved:
@@ -378,7 +397,7 @@ class Supervisor:
             approve_plan = True
         if not approve_plan and not already_approved and gate.action != "allow":
             self._stop(ctx, StopReason.NEEDS_PLAN_APPROVAL)
-            return
+            return False
         if current is TaskState.PLANNING:
             self._move(ctx, TaskState.PLAN_APPROVED)
             approver = "cli" if approve_plan else "flow"
@@ -409,24 +428,26 @@ class Supervisor:
                     "plan_hash": ctx.plan.get("hash"),
                 },
             )
-
         if not ctx.plan:
             raise ConfigError("no scenario set was provided for the run")
         self._load_plan_scenarios(ctx, repo)
+        return True
 
+    async def _build(self, ctx: RunContext, repo: GitRepo) -> list[str] | None:
+        """One builder turn, then risk and plan drift. None means the run stops."""
+        flow = ctx.flow
+        task = ctx.task
         self._move(ctx, TaskState.BUILDING)
         proposal = await self._propose(ctx)
         if proposal is None:
-            return
+            return None
         ctx.proposal = proposal
-
         if proposal.tokens > task.budget.tokens or proposal.usd > task.budget.usd:
             self._stop(ctx, StopReason.BUDGET_EXCEEDED)
-            return
+            return None
         if self._over_wall(ctx):
             self._stop(ctx, StopReason.BUDGET_EXCEEDED, detail="wall-clock budget")
-            return
-
+            return None
         worktree = _required(ctx.worktree, "worktree")
         touched = proposal.touched_paths or (
             repo.all_changed_files(worktree)
@@ -467,7 +488,14 @@ class Supervisor:
                     f"{ctx.risk.required_reviewers} reviewers"
                 ],
             )
+        return touched
 
+    def _enforce_policy(
+        self, ctx: RunContext, repo: GitRepo, proposal: Proposal, touched: list[str]
+    ) -> bool:
+        """Check touched paths against the flow. False means the change is refused."""
+        flow = ctx.flow
+        worktree = _required(ctx.worktree, "worktree")
         check_touched = [path for path in touched if is_check_path(path)]
         if check_touched and ctx.task.kind is not TaskKind.CHECK_CHANGE:
             ctx.policy = PolicyReport(
@@ -481,8 +509,7 @@ class Supervisor:
                 ],
             )
             self._stop(ctx, StopReason.POLICY_VIOLATION)
-            return
-
+            return False
         violations = (
             check_paths(touched, flow.paths)
             if proposal.applied
@@ -494,12 +521,15 @@ class Supervisor:
                 self._observe(ctx, "policy", [v.reason for v in violations])
             else:
                 self._stop(ctx, StopReason.POLICY_VIOLATION)
-                return
-
+                return False
         if not proposal.applied:
             repo.apply_patch(worktree, proposal.patch, ctx.run_dir / "proposal.diff")
-        self._move(ctx, TaskState.CHECKING)
+        return True
 
+    async def _verify(self, ctx: RunContext, proposal: Proposal) -> bool:
+        """Preview, test, challenge and judge the change. False stops the run."""
+        flow = ctx.flow
+        self._move(ctx, TaskState.CHECKING)
         if any(node.id == "preview" for node in flow.nodes):
             preview_node = flow.node("preview")
             if preview_node.mode is not GateMode.OFF:
@@ -510,14 +540,12 @@ class Supervisor:
                         self._observe(ctx, "preview", [f"exit {preview.exit_code}"])
                     else:
                         self._stop(ctx, StopReason.TESTS_FAILED, detail="preview failed")
-                        return
-
+                        return False
         if any(node.id == "preview" for node in flow.nodes) and ctx.worktree is not None:
             ctx.artifacts = collect_artifacts(
                 ctx.worktree / ".works" / "artifacts",
                 ctx.run_dir / "artifacts",
             )
-
         if any(node.id == "test" for node in flow.nodes):
             test_node = flow.node("test")
             if test_node.mode is not GateMode.OFF:
@@ -528,11 +556,10 @@ class Supervisor:
                         self._observe(ctx, "test", [f"exit {test.exit_code}"])
                     else:
                         self._stop(ctx, StopReason.TESTS_FAILED)
-                        return
+                        return False
                 if self._over_wall(ctx):
                     self._stop(ctx, StopReason.BUDGET_EXCEEDED, detail="wall-clock budget")
-                    return
-
+                    return False
         if any(node.id == "challenge" for node in flow.nodes):
             challenge_node = flow.node("challenge")
             if challenge_node.mode is not GateMode.OFF:
@@ -543,10 +570,9 @@ class Supervisor:
                         self._observe(ctx, "challenge", [challenge.reason])
                     else:
                         self._stop(ctx, StopReason.CHALLENGE_FAILED, detail=challenge.reason)
-                        return
-
+                        return False
         if not self._check_flakes(ctx):
-            return
+            return False
         verdict = await self._judge(ctx)
         ctx.verdict = verdict
         (ctx.run_dir / "verdict.json").write_text(
@@ -554,7 +580,10 @@ class Supervisor:
         )
         if not verdict.allow:
             self._stop(ctx, StopReason.VERDICT_FAILED)
-            return
+            return False
+        return True
+
+    def _prove(self, ctx: RunContext) -> None:
         self._move(ctx, TaskState.PROVED)
         self._decide(ctx, "release")
         self._queue.append(
