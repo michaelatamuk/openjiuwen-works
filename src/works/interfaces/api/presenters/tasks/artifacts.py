@@ -24,7 +24,11 @@ def _artifact_kind(name: str) -> str:
 
 
 def _artifact_list(
-    run_dir: Path | None, task_id: str, evidence: dict[str, Any] | None
+    run_dir: Path | None,
+    task_id: str,
+    evidence: dict[str, Any] | None,
+    *,
+    prefix: str = "/api",
 ) -> list[dict[str, Any]]:
     items: dict[str, dict[str, Any]] = {}
     for artifact in (evidence or {}).get("artifacts") or []:
@@ -38,7 +42,7 @@ def _artifact_list(
             "name": Path(relative).name,
             "kind": str(artifact.get("kind") or _artifact_kind(relative)),
             "sha256": str(artifact.get("sha256") or ""),
-            "url": f"/api/tasks/{quote(task_id)}/artifacts/"
+            "url": f"{prefix}/tasks/{quote(task_id)}/artifacts/"
             + "/".join(quote(part) for part in relative.split("/")),
         }
     root = (run_dir / "artifacts") if run_dir is not None else None
@@ -55,7 +59,7 @@ def _artifact_list(
                 "kind": _artifact_kind(relative),
                 "sha256": "",
                 "size": path.stat().st_size,
-                "url": f"/api/tasks/{quote(task_id)}/artifacts/"
+                "url": f"{prefix}/tasks/{quote(task_id)}/artifacts/"
                 + "/".join(quote(part) for part in relative.split("/")),
             }
     return sorted(items.values(), key=lambda item: item["path"])

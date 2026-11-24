@@ -1,5 +1,14 @@
 {
-  "artifacts": [],
+  "artifacts": [
+    {
+      "kind": "log",
+      "name": "screenshot.txt",
+      "path": "screenshot.txt",
+      "sha256": "",
+      "size": 18,
+      "url": "/api/tasks/<task-id>/artifacts/screenshot.txt"
+    }
+  ],
   "confirmation": null,
   "delivery": null,
   "deployment": null,

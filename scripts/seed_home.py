@@ -263,6 +263,11 @@ def seed(root: Path, *, now: datetime = DEFAULT_NOW) -> WorksPaths:
 
     proved = _submit(queue, repo.path, ref="SEED-PROVED-1", title="A proved fix", product="Fixture")
     _run(paths, queue, proved, "fix-add.json", scenarios)
+    proved_dir = latest_run_dir(paths, proved.id)
+    if proved_dir is not None:
+        artifacts = proved_dir / "artifacts"
+        artifacts.mkdir(parents=True, exist_ok=True)
+        (artifacts / "screenshot.txt").write_text("rendered preview\n", encoding="utf-8")
     _backdate(queue, proved.id, now - timedelta(hours=3), timedelta(hours=1))
 
     released = _submit(

@@ -59,8 +59,8 @@ def runs(paths: WorksPaths, task_id: str) -> Result:
     return HTTPStatus.OK, {"runs": _run_summaries(paths, task_id)}
 
 
-def detail(paths: WorksPaths, task_id: str) -> Result:
-    return HTTPStatus.OK, _task_detail(Queue(paths), paths, task_id)
+def detail(paths: WorksPaths, task_id: str, *, api_prefix: str = "/api") -> Result:
+    return HTTPStatus.OK, _task_detail(Queue(paths), paths, task_id, api_prefix=api_prefix)
 
 
 def metrics(paths: WorksPaths) -> Result:

@@ -8,17 +8,18 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 
 from works.config.paths import WorksPaths
-from works.interfaces.api.routes import health
+from works.interfaces.api.routes import downloads, health, maps, observability, tasks
 from works.interfaces.api.wiring import build_state
 
 VERSION = "0.0.1"
 
 
-def create_app(paths: WorksPaths | None = None, *, writable: bool = False) -> FastAPI:
+def create_app(paths: WorksPaths | Path | None = None, *, writable: bool = False) -> FastAPI:
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
         application.state.works = build_state(paths, writable=writable)
@@ -32,5 +33,12 @@ def create_app(paths: WorksPaths | None = None, *, writable: bool = False) -> Fa
         docs_url=None,
         redoc_url=None,
     )
-    app.include_router(health.router, prefix="/api/v1")
+    for router in (
+        health.router,
+        tasks.router,
+        maps.router,
+        observability.router,
+        downloads.router,
+    ):
+        app.include_router(router, prefix="/api/v1")
     return app

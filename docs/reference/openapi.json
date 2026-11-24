@@ -1,6 +1,19 @@
 {
   "components": {
     "schemas": {
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
       "Health": {
         "properties": {
           "ai": {
@@ -51,6 +64,417 @@
         ],
         "title": "Health",
         "type": "object"
+      },
+      "RunList": {
+        "properties": {
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/RunSummary"
+            },
+            "title": "Runs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "runs"
+        ],
+        "title": "RunList",
+        "type": "object"
+      },
+      "RunSummary": {
+        "properties": {
+          "base_commit": {
+            "title": "Base Commit",
+            "type": "string"
+          },
+          "confirmed": {
+            "title": "Confirmed",
+            "type": "boolean"
+          },
+          "delivered": {
+            "title": "Delivered",
+            "type": "boolean"
+          },
+          "duration_ms": {
+            "title": "Duration Ms",
+            "type": "integer"
+          },
+          "files": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Files",
+            "type": "array"
+          },
+          "finished_at": {
+            "title": "Finished At",
+            "type": "string"
+          },
+          "not_tested": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Not Tested",
+            "type": "array"
+          },
+          "proof_sha256": {
+            "title": "Proof Sha256",
+            "type": "string"
+          },
+          "risk": {
+            "title": "Risk",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "tokens": {
+            "title": "Tokens",
+            "type": "integer"
+          },
+          "usd": {
+            "title": "Usd",
+            "type": "number"
+          },
+          "verdict": {
+            "title": "Verdict",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "state",
+          "finished_at",
+          "base_commit",
+          "proof_sha256",
+          "verdict",
+          "risk",
+          "tokens",
+          "usd",
+          "duration_ms",
+          "files",
+          "not_tested",
+          "delivered",
+          "confirmed"
+        ],
+        "title": "RunSummary",
+        "type": "object"
+      },
+      "TaskDetail": {
+        "properties": {
+          "artifacts": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Artifacts",
+            "type": "array"
+          },
+          "confirmation": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmation"
+          },
+          "delivery": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivery"
+          },
+          "deployment": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deployment"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence"
+          },
+          "features": {
+            "additionalProperties": true,
+            "title": "Features",
+            "type": "object"
+          },
+          "laix": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Laix",
+            "type": "array"
+          },
+          "pipeline": {
+            "additionalProperties": true,
+            "title": "Pipeline",
+            "type": "object"
+          },
+          "proof_md": {
+            "default": "",
+            "title": "Proof Md",
+            "type": "string"
+          },
+          "rail": {
+            "additionalProperties": true,
+            "title": "Rail",
+            "type": "object"
+          },
+          "readiness": {
+            "additionalProperties": true,
+            "title": "Readiness",
+            "type": "object"
+          },
+          "release": {
+            "additionalProperties": true,
+            "title": "Release",
+            "type": "object"
+          },
+          "run": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run"
+          },
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/RunSummary"
+            },
+            "title": "Runs",
+            "type": "array"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/TaskSummary"
+          },
+          "task": {
+            "additionalProperties": true,
+            "title": "Task",
+            "type": "object"
+          },
+          "team": {
+            "additionalProperties": true,
+            "title": "Team",
+            "type": "object"
+          },
+          "thread": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Thread",
+            "type": "array"
+          },
+          "timeline": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Timeline",
+            "type": "array"
+          },
+          "verifier": {
+            "additionalProperties": true,
+            "title": "Verifier",
+            "type": "object"
+          }
+        },
+        "required": [
+          "task",
+          "summary",
+          "timeline",
+          "pipeline",
+          "readiness",
+          "features",
+          "release",
+          "team",
+          "laix",
+          "verifier",
+          "artifacts",
+          "runs",
+          "thread",
+          "rail"
+        ],
+        "title": "TaskDetail",
+        "type": "object"
+      },
+      "TaskList": {
+        "properties": {
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/TaskSummary"
+            },
+            "title": "Tasks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tasks"
+        ],
+        "title": "TaskList",
+        "type": "object"
+      },
+      "TaskSummary": {
+        "properties": {
+          "decision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision"
+          },
+          "flow": {
+            "title": "Flow",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "product": {
+            "title": "Product",
+            "type": "string"
+          },
+          "risk": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          },
+          "waiting_on": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Waiting On"
+          },
+          "would_block": {
+            "title": "Would Block",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "state",
+          "flow",
+          "product",
+          "source",
+          "title",
+          "kind",
+          "updated_at",
+          "would_block"
+        ],
+        "title": "TaskSummary",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
       }
     }
   },
@@ -60,6 +484,48 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/detectors": {
+      "get": {
+        "operationId": "detectors_api_v1_detectors_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "refresh",
+            "required": false,
+            "schema": {
+              "default": "0",
+              "title": "Refresh",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Detectors Api V1 Detectors Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Detectors"
+      }
+    },
     "/api/v1/health": {
       "get": {
         "operationId": "get_health_api_v1_health_get",
@@ -76,6 +542,278 @@
           }
         },
         "summary": "Get Health"
+      }
+    },
+    "/api/v1/ledger": {
+      "get": {
+        "operationId": "ledger_api_v1_ledger_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Ledger Api V1 Ledger Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Ledger"
+      }
+    },
+    "/api/v1/metrics": {
+      "get": {
+        "operationId": "metrics_api_v1_metrics_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Metrics Api V1 Metrics Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Metrics"
+      }
+    },
+    "/api/v1/products": {
+      "get": {
+        "operationId": "products_api_v1_products_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Products Api V1 Products Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Products"
+      }
+    },
+    "/api/v1/tasks": {
+      "get": {
+        "operationId": "list_tasks_api_v1_tasks_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Tasks"
+      }
+    },
+    "/api/v1/tasks/{task_id}": {
+      "get": {
+        "operationId": "task_detail_api_v1_tasks__task_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "task_id",
+            "required": true,
+            "schema": {
+              "title": "Task Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Task Detail"
+      }
+    },
+    "/api/v1/tasks/{task_id}/artifacts/{name}": {
+      "get": {
+        "operationId": "artifact_api_v1_tasks__task_id__artifacts__name__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "task_id",
+            "required": true,
+            "schema": {
+              "title": "Task Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Artifact"
+      }
+    },
+    "/api/v1/tasks/{task_id}/export/{kind}": {
+      "get": {
+        "operationId": "export_api_v1_tasks__task_id__export__kind__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "task_id",
+            "required": true,
+            "schema": {
+              "title": "Task Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "title": "Kind",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export"
+      }
+    },
+    "/api/v1/tasks/{task_id}/runs": {
+      "get": {
+        "operationId": "task_runs_api_v1_tasks__task_id__runs_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "task_id",
+            "required": true,
+            "schema": {
+              "title": "Task Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Task Runs"
       }
     }
   }

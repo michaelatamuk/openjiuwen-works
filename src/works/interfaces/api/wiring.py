@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
 from works.adapters.queue.ledger import Ledger
 from works.adapters.queue.store import Queue
@@ -20,8 +21,13 @@ class AppState:
     settings: BuilderSettings | None
 
 
-def build_state(paths: WorksPaths | None = None, *, writable: bool = False) -> AppState:
-    resolved = (paths or load_paths()).ensure()
+def build_state(paths: WorksPaths | Path | None = None, *, writable: bool = False) -> AppState:
+    if isinstance(paths, WorksPaths):
+        resolved = paths.ensure()
+    elif paths is not None:
+        resolved = WorksPaths(paths).ensure()
+    else:
+        resolved = load_paths().ensure()
     try:
         settings = load_builder_settings(resolved) if settings_path(resolved).exists() else None
     except ConfigError:

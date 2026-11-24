@@ -28,11 +28,7 @@ def _download(target: Path, filename: str, *, inline: bool) -> Download:
     )
 
 
-def resolve_export(paths: WorksPaths, path: str) -> Download | None:
-    rest = unquote(path.removeprefix("/api/tasks/"))
-    task_id, separator, kind = rest.partition("/export/")
-    if not separator or not task_id or not kind:
-        return None
+def find_export(paths: WorksPaths, task_id: str, kind: str) -> Download | None:
     found = _export(paths, task_id, kind)
     if found is None:
         return None
@@ -40,11 +36,7 @@ def resolve_export(paths: WorksPaths, path: str) -> Download | None:
     return _download(target, filename, inline=False)
 
 
-def resolve_artifact(paths: WorksPaths, path: str) -> Download | None:
-    rest = unquote(path.removeprefix("/api/tasks/"))
-    task_id, separator, name = rest.partition("/artifacts/")
-    if not separator or not task_id or not name:
-        return None
+def find_artifact(paths: WorksPaths, task_id: str, name: str) -> Download | None:
     run_info = _run_index(paths).get(task_id)
     if run_info is None:
         return None
@@ -53,3 +45,19 @@ def resolve_artifact(paths: WorksPaths, path: str) -> Download | None:
     if root not in target.parents or not target.is_file():
         return None
     return _download(target, target.name, inline=True)
+
+
+def resolve_export(paths: WorksPaths, path: str) -> Download | None:
+    rest = unquote(path.removeprefix("/api/tasks/"))
+    task_id, separator, kind = rest.partition("/export/")
+    if not separator or not task_id or not kind:
+        return None
+    return find_export(paths, task_id, kind)
+
+
+def resolve_artifact(paths: WorksPaths, path: str) -> Download | None:
+    rest = unquote(path.removeprefix("/api/tasks/"))
+    task_id, separator, name = rest.partition("/artifacts/")
+    if not separator or not task_id or not name:
+        return None
+    return find_artifact(paths, task_id, name)

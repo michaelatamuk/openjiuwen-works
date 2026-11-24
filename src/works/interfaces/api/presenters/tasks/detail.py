@@ -76,7 +76,9 @@ def _run_summaries(paths: WorksPaths, task_id: str) -> list[dict[str, Any]]:
     return items
 
 
-def _task_detail(queue: Queue, paths: WorksPaths, task_id: str) -> dict[str, Any]:
+def _task_detail(
+    queue: Queue, paths: WorksPaths, task_id: str, *, api_prefix: str = "/api"
+) -> dict[str, Any]:
     task = queue.load(task_id)
     events = queue.events(task_id)
     runs = _run_index(paths)
@@ -141,7 +143,7 @@ def _task_detail(queue: Queue, paths: WorksPaths, task_id: str) -> dict[str, Any
         "team": team_payload,
         "laix": laix,
         "verifier": verifier,
-        "artifacts": _artifact_list(run_dir, task_id, evidence),
+        "artifacts": _artifact_list(run_dir, task_id, evidence, prefix=api_prefix),
         "runs": _run_summaries(paths, task_id),
         "thread": _thread(task, events),
         "rail": _thread_rail(

@@ -55,7 +55,7 @@ def test_artifact_urls_and_proof_strings_are_masked() -> None:
 
     canonical = canonicalize(payload)
 
-    assert canonical["url"] == "/api/v1/tasks/<task-id>/artifacts/shot.png"
+    assert canonical["url"] == "/api/tasks/<task-id>/artifacts/shot.png"
     assert canonical["artifact"] == "commit <commit>"
     assert canonical["proof"] == "proof <sha256>"
     assert canonical["sha"] == "<sha256>"
