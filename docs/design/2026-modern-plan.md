@@ -156,11 +156,11 @@ the primary Windows lifecycle path going untested.
   lands in M0; this is the surface around it.)
 - [x] **M4.2** Security headers: CSP compatible with Vite assets/SSE, `X-Content-Type-Options`,
   `Referrer-Policy`, `Permissions-Policy`.
-- [ ] **M4.3** Threat model: trusted hosts, auth-on-read, pairing, token theft/lost device, replay,
+- [x] **M4.3** Threat model: trusted hosts, auth-on-read, pairing, token theft/lost device, replay,
   LAN MITM, `chmod` on Windows. Record it in an ADR.
 - [ ] **M4.4** `npm audit --omit=dev` (pip-audit already runs weekly); exceptions need owner +
   expiry.
-- [ ] **M4.5** Revisit `0.0.0.0` cleartext guidance: default remote demo uses a tunnel or TLS.
+- [x] **M4.5** Revisit `0.0.0.0` cleartext guidance: default remote demo uses a tunnel or TLS.
 
 ### M5 — Observability, liveness and SSE limits (3 days)
 

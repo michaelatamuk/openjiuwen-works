@@ -41,7 +41,21 @@ class RequestContextMiddleware:
             if message.get("type") == "http.response.start":
                 status = int(message.get("status") or 0)
                 headers_out = message.setdefault("headers", [])
-                headers_out.append((b"x-request-id", request_id.encode("latin-1")))
+                headers_out.extend(
+                    (
+                        (b"x-request-id", request_id.encode("latin-1")),
+                        (b"x-content-type-options", b"nosniff"),
+                        (b"referrer-policy", b"no-referrer"),
+                        (b"permissions-policy", b"camera=(), microphone=(), geolocation=()"),
+                        (
+                            b"content-security-policy",
+                            b"default-src 'self'; img-src 'self' data:; "
+                            b"style-src 'self' 'unsafe-inline'; script-src 'self'; "
+                            b"connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; "
+                            b"form-action 'self'",
+                        ),
+                    )
+                )
             await send(message)
             if message.get("type") == "http.response.body" and not message.get("more_body", False):
                 LOG.info(

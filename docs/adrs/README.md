@@ -21,5 +21,6 @@ deleted — a superseded decision is marked as such and points to its replacemen
 | [014](014-one-proof-two-readings.md) | One proof, two readings: Story for people, Evidence for engineers | superseded in part by 015 |
 | [015](015-story-line.md) | The task is a line; Mira is the courier | accepted |
 | [016](016-local-daemon.md) | One local daemon owns the home; many clients use `/api/v1` | accepted |
+| [017](017-remote-trust.md) | Remote bind is explicit, authenticated and rate limited | accepted |
 
 Format: context, decision, consequences, alternatives rejected.

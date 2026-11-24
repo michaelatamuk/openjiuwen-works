@@ -92,3 +92,12 @@ def test_ops_metrics_are_json(paths) -> None:
     assert set(body["jobs"]) == {"queued", "running", "succeeded", "failed", "cancelled"}
     assert body["tasks"] == 0
     assert body["sse_clients"] == 0
+
+
+def test_security_headers_are_present(paths) -> None:
+    app = create_app(paths)
+    with TestClient(app, base_url="http://127.0.0.1") as client:
+        response = client.get("/api/v1/health")
+    assert response.headers["x-content-type-options"] == "nosniff"
+    assert response.headers["referrer-policy"] == "no-referrer"
+    assert "frame-ancestors 'none'" in response.headers["content-security-policy"]
