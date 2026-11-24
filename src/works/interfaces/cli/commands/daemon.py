@@ -118,6 +118,8 @@ def cmd_daemon(args: argparse.Namespace) -> int:
         return _stop(args, paths)
     if action == "status":
         return _status(args, paths)
+    if action == "pair":
+        return _pair(args, paths)
     return _foreground(args, paths)
 
 
@@ -142,6 +144,11 @@ def _foreground(args: argparse.Namespace, paths: WorksPaths) -> int:
                 "open it with `works daemon status --write`"
             )
     state = build_state(paths, writable=args.write)
+    if _requires_read_auth(args) and not state.security.permissions_ok:
+        raise ConfigError(
+            "a remote bind requires private permissions on .works/state; "
+            "fix the ACL on the home or use a loopback daemon behind a tunnel"
+        )
     app = create_app(
         state=state,
         trusted_hosts=trusted,
@@ -201,6 +208,26 @@ def _stop(args: argparse.Namespace, paths: WorksPaths) -> int:
         _emit({"running": False, "stopped": True, "pid": info.pid})
     else:
         print(f"stopped daemon {info.pid} for {info.home}")
+    return 0
+
+
+def _pair(args: argparse.Namespace, paths: WorksPaths) -> int:
+    from works.interfaces.cli.daemon_client import DaemonClient
+
+    info = daemons.current_daemon(paths)
+    if info is None:
+        raise ConfigError(f"no daemon is running for {paths.root}")
+    client = DaemonClient(info)
+    body = client.post("/api/v1/admin/pair", {"label": args.label})
+    code = str(body.get("code") or "")
+    if not code:
+        raise ConfigError("the daemon did not return a pairing code")
+    url = f"{info.base_url}/api/v1/pair"
+    if args.json:
+        _emit({**body, "url": url})
+    else:
+        print(f"pairing code: {code}")
+        print(f"expires in {body.get('expires_in', 0)}s; post it to {url}")
     return 0
 
 

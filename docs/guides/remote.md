@@ -48,5 +48,8 @@ origin would need an explicit CORS decision, which is not enabled today.
 - The phone never runs git, worktrees or subprocesses. It calls `/api/v1`, receives job ids and
   reads the SSE stream; the desktop daemon performs the work.
 
-Pairing codes and per-device tokens are not implemented yet. Until then, provision the bearer token
-out of band and rotate it when a device is lost.
+Pair a phone with `works daemon pair --label phone`; enter the printed code on the device at
+`POST /api/v1/pair` (or the Settings surface). The daemon stores only a SHA-256 hash of the device
+token, the code expires after five minutes, and devices expire after 30 days. Revoke a lost device
+with `DELETE /api/v1/admin/devices/<id>` or the Settings device list. Rotating the daemon token
+revokes every device at once.

@@ -19,9 +19,9 @@ def add_daemon_commands(sub: argparse._SubParsersAction[argparse.ArgumentParser]
     daemon.add_argument(
         "action",
         nargs="?",
-        choices=("run", "start", "stop", "status"),
+        choices=("run", "start", "stop", "status", "pair"),
         default="run",
-        help="run in the foreground (default), or start/stop/status a detached daemon",
+        help="run in the foreground, or start/stop/status/pair a detached daemon",
     )
     daemon.add_argument("--host", default="127.0.0.1")
     daemon.add_argument("--port", type=int, default=8765)
@@ -38,4 +38,9 @@ def add_daemon_commands(sub: argparse._SubParsersAction[argparse.ArgumentParser]
         help="Host header allowed on a remote bind; repeat for several names",
     )
     daemon.add_argument("--json", action="store_true")
+    daemon.add_argument(
+        "--label",
+        default="device",
+        help="Device label used by `daemon pair`",
+    )
     daemon.set_defaults(func=cmd_daemon)

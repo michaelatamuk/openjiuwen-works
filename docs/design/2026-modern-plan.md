@@ -1,0 +1,330 @@
+# Works 2026 modernization plan (v2)
+
+**Status:** revised after a staff-engineer critique of v1  
+**Date:** 2026-11-24  
+**Scope:** local-first daemon, CLI, web UI, packaging, AI quality and engineering system.  
+**Non-goals:** microservices, Redis/Postgres, Kubernetes, multi-tenant SaaS, a cloud control plane.
+Works stays one home with one writable daemon.
+
+## 0. What changed after the critique
+
+The v1 plan was directionally right but overstated “new” work, misstated the baseline, undercounted
+the type migration, and added platform pieces that do not pay for themselves in a local tool. This
+version:
+
+- separates **landing**, **hardening** and **new** work;
+- narrows the index to scalar columns and hydrates the visible page from events, avoiding a
+  `domain/application` logic leak into `adapters/`;
+- moves Windows lifecycle CI and server-side idempotency to Phase 0;
+- replaces OTel/Prometheus/SQLite-job-store/release-signing churn with measurable local gaps:
+  backup/restore, retention, liveness/readiness, SSE limits, prompt provenance and a mutation gate;
+- reconciles the plan with the existing standard in [`plan.md`](plan.md) §6.4, which is stricter
+  than v1 in mutation score, circuit breaking, prompt hashes and “no bare threads”;
+- fixes the arithmetic: **63 engineer-days + 20% ≈ 76 days**, not 57 days in 8 weeks.
+
+## 1. Baseline: done, in flight, new
+
+| Area | Status | Notes |
+|---|---|---|
+| FastAPI `/api/v1`, OpenAPI, generated TS client | **done** | `src/works/interfaces/api`, `web/src/api` |
+| Daemon lock, pid identity, start/stop/status, Windows launcher fix | **done** | `scripts/smoke_daemon.py` is manual evidence |
+| Jobs, cancellation, timeout, late-result protection | **done** | thread pool, child-tree kill |
+| Body limits, request IDs, JSON logs, p95 bench with 20 SSE | **done** | 50 tasks / 500 ms gate |
+| Remote bind, trusted hosts, auth-on-read, Host/Origin | **done** | `guard.py` pure ASGI |
+| Pairing codes, device tokens, revoke | **in flight** | uncommitted; needs rate limit, audit, expiry, Windows ACL |
+| Server-side `Idempotency-Key` | **false signal** | client sends it; no route consumes it |
+| Windows CI for daemon lifecycle/wheel | **missing** | CI is Ubuntu-only |
+| Python 3.13 / 3.14 | **missing / excluded** | `requires-python = ">=3.12,<3.14"`; CI only 3.12 |
+| Strict TypeScript across the UI | **partial** | `allowJs`, `checkJs: false`, screens are `.jsx` |
+| Playwright E2E / axe | **missing** | jsdom + parity tests only |
+| Backup/restore, retention, session TTL, audit log | **missing** | local-first product gaps |
+| Mutation gate on new code | **partial** | weekly gate covers three modules only |
+| Makefile, pre-commit, changelog, contributor guide | **done** | use them; don’t re-plan them |
+| Weekly `pip-audit` / Bandit supply chain | **done** | `.github/workflows/supply-chain.yml` |
+
+## 2. Reconcile with the engineering standard
+
+[`docs/design/plan.md`](plan.md) §6.4 already requires, among others:
+
+- mutation score ≥70% on core (`queue/`, `policy/`, `verify/`);
+- a provider circuit breaker after repeated failures;
+- prompt hash recorded in the run/proof;
+- structured JSON-only agent output;
+- “async for I/O; no bare threads”.
+
+The current job executor uses threads. This plan therefore includes **either** an approved ADR
+exception for the bounded job pool **or** a migration to structured `asyncio` tasks. Do not ship two
+design documents that disagree. The mutation gate stays and expands to the new index/job code.
+
+## 3. Workstreams
+
+Estimates are engineer-days for one senior engineer; add 20% contingency. Every item names the
+failure it prevents and the proof that detects it.
+
+### M0 — Land and harden the in-flight work (6 days)
+
+**Prevents:** a “secure remote” story that is prose, not code; duplicate side effects from retries;
+the primary Windows lifecycle path going untested.
+
+- [x] **M0.1** Review and land pairing with: device expiry/idle expiry, an append-only security audit
+  log (pair start/success/failure, revoke, rotate, auth failure; no secrets), rate limits on
+  `/pair`, `/session` and `/admin/*`, and a real Windows ACL for `http-token`/`devices.json`
+  (or an explicit refusal to run a remote bind on a home without a private ACL).
+  *Proof:* non-loopback `Host`/`Origin` E2E; 20 failed attempts → `429` + `Retry-After`; audit
+  assertions; Windows ACL test.
+- [x] **M0.2** Implement server-side `Idempotency-Key` replay for side-effecting actions
+  (`release`, `deliver`, `confirm`, `deploy`, `team-verify`, `runs`, `dispatch`) keyed by
+  `(key, route, body hash)`; return the prior result on replay and `409` on mismatch. Do **not**
+  apply it to `/pair`; `POST /tasks` is already idempotent by deterministic task id.
+  *Proof:* replay returns the same job/result; a changed body returns `409`; no duplicate
+  delivery/comment/deploy call in the fake provider.
+- [x] **M0.3** Add a `windows-latest` CI job for `works daemon start/status/stop`, the detached
+  launcher/pid identity, `CTRL_BREAK_EVENT`, wheel install and `scripts/smoke_daemon.py` (short
+  mode). *Proof:* the job is required and green; it fails if the launcher-pid regression returns.
+- [x] **M0.4** Add Python 3.13 to the CI matrix; keep 3.14 a decision after the dependency cap is
+  reviewed. *Proof:* 3.13 check job green.
+- [ ] **M0.5** Record the prompt hash in `run.json` and `evidence.md` (existing standard, currently
+  missing end-to-end). *Proof:* a test finds the same hash in both.
+- [x] **M0.6** Fix docs contradictions: remote pairing wording, CONTRIBUTING Playwright claims,
+  Tailwind/shadcn decision in `plan.md` vs `stack-migration.md`. *Proof:* link/text check in CI.
+
+### M1 — End-to-end type safety (11 days)
+
+**Prevents:** untyped API payloads and UI props silently diverging from the contract.  
+**Proof:** strict `tsc`, mypy flags, ESLint and a grep gate.
+
+- [ ] **M1.1** Add `py.typed` and keep `mypy --strict`; add `disallow_any_explicit = true` and
+  `warn_return_any = true`. Remove `Any` from public interfaces. **Do not add a second type
+  checker** (pyright/ty) just to duplicate mypy.
+- [ ] **M1.2** Convert `web/src/app/*` and `web/src/features/**` to `.tsx` in reviewed slices;
+  start with Queue and Story, then Evidence/Release/Session/Settings.
+- [ ] **M1.3** Turn on `checkJs`, then `allowJs: false`; include `vite.config.js`/`vitest.setup.js`
+  only when they are migrated. Keep the committed `dist` gate green at every step.
+- [ ] **M1.4** Add Zod validation at the HTTP boundary for tasks, detail, health, jobs and settings;
+  move `zod` to runtime dependencies if it ships in the bundle.
+- [ ] **M1.5** Add ESLint 9 flat config (`typescript-eslint`, `react-hooks`, `jsx-a11y`, import
+  rules) and a CI `npm run lint`.
+- [ ] **M1.6** Add a CI grep gate for `as any`, `: any`, `@ts-ignore`, `@ts-expect-error` under
+  `web/src/app|features|ui`; every exported component has an explicit props type.
+- [ ] **M1.7** Document the typed-component pattern in `CONTRIBUTING.md`.
+
+### M2 — Read API at 10k tasks (5 days)
+
+**Prevents:** O(N) scanning of task and event files on every queue request.  
+**Proof:** 10k/20-SSE benchmark and an index/file parity test.
+
+- [ ] **M2.1** Extend `TaskIndex` with **scalar** columns only: `product`, `title`, `kind`,
+  `updated_at`, `waiting_on`. Keep `risk`, `decision`, `would_block` out of SQLite; they stay
+  event-derived.
+- [ ] **M2.2** Add `TaskIndex.list_recent(limit)`; `GET /tasks` takes the page ids from the index and
+  hydrates only those tasks/events through the existing presenter. No adapter imports from
+  `interfaces/api`.
+- [ ] **M2.3** Schema version + rebuild on mismatch + corrupt-index fallback + a rebuild time
+  budget. *Proof:* corrupted index and old schema tests.
+- [ ] **M2.4** Add an index/file parity test on a 500-task seeded home: every `_task_summary` field
+  is deep-equal between the two paths.
+- [ ] **M2.5** Add the 10k benchmark: `scripts/bench_api.py --tasks 10000` must seed through
+  `TaskIndex.replace`, not 10k fsync submissions; 3 runs, median p95; fail above 250 ms **and**
+  above 120% of the `main` baseline for two consecutive runs.
+- [ ] **M2.6** Write the API compatibility rule: additive-only `/api/v1`, deprecation window, and a
+  generated-client compile check against the previous schema.
+- [ ] **M2.7** **Drop** cursor pagination and ETag for now; revisit only if server-side search
+  appears.
+
+### M3 — Browser E2E and accessibility (8 days)
+
+**Prevents:** UI/daemon integration regressions that jsdom cannot see.  
+**Proof:** Playwright against a real seeded daemon + axe.
+
+- [ ] **M3.1** Playwright fixture starts/stops a real `works daemon start --write`, resets a temp
+  home, and exposes traces/video on failure.
+- [ ] **M3.2** Critical journeys: queue → Story → Evidence → Release; new task; import; settings
+  save; add-context; ask stream; pairing/revoke; read-only mode.
+- [ ] **M3.3** `@axe-core/playwright` on Story, Evidence, Release, Session, Settings; fail on
+  serious/critical violations.
+- [ ] **M3.4** Screenshots are **opt-in/manual** (not a required gate); no mobile-web pass until a
+  native client exists.
+- [ ] **M3.5** E2E job is a required CI check with a 15-minute budget.
+
+### M4 — Remote and device trust, after M0 (4 days)
+
+**Prevents:** a LAN bind that leaks reads or cannot revoke a lost phone.  
+**Proof:** non-loopback pairing/revoke E2E and a threat-model ADR that maps to tests.
+
+- [ ] **M4.1** Settings/CLI device management: list, last seen, revoke, rotate all. (Pairing itself
+  lands in M0; this is the surface around it.)
+- [ ] **M4.2** Security headers: CSP compatible with Vite assets/SSE, `X-Content-Type-Options`,
+  `Referrer-Policy`, `Permissions-Policy`.
+- [ ] **M4.3** Threat model: trusted hosts, auth-on-read, pairing, token theft/lost device, replay,
+  LAN MITM, `chmod` on Windows. Record it in an ADR.
+- [ ] **M4.4** `npm audit --omit=dev` (pip-audit already runs weekly); exceptions need owner +
+  expiry.
+- [ ] **M4.5** Revisit `0.0.0.0` cleartext guidance: default remote demo uses a tunnel or TLS.
+
+### M5 — Observability, liveness and SSE limits (3 days)
+
+**Prevents:** a slow run that cannot be explained; `/health` coupled to model SDK state; a stalled
+SSE reader wedging the daemon.  
+**Proof:** trace-id log schema, JSON metrics, liveness/readiness tests, slow-consumer test.
+
+- [ ] **M5.1** Add `trace_id` to `Job.as_dict()` and job start/finish logs alongside
+  `request_id`/`job_id`; a log-schema test enforces the fields.
+- [ ] **M5.2** Split `/health/live` (cheap) from `/health/ready` (builder/provider diagnostics);
+  keep `/health` compatible for now. Remove health from the p95 gate until split.
+- [ ] **M5.3** Extend the existing JSON `/metrics` (or add one if absent) with named counters for job
+  outcomes, queue depth, SSE clients and p95 buckets; **no Prometheus/OTel dependency**.
+- [ ] **M5.4** Add a max SSE client count and a slow-consumer policy with a test that a non-reading
+  client cannot wedge the event loop or exhaust threads.
+- [ ] **M5.5** `works doctor --trace`/debug bundle: daemon.json, jobs, logs, versions, index health,
+  disk state; a redaction test proves no token/cookie/key is included.
+- [ ] **M5.6** **Defer** OTel OTLP, Prometheus text and SLO dashboards; the optional OTel span in
+  `plan.md` §6.4 remains optional.
+
+### M6 — AI quality, prompts and invariants (14 days)
+
+**Prevents:** silent prompt/model regressions and “advice” that can change a gate.  
+**Proof:** a recorded eval set with denominators/thresholds, prompt hash in proof, hostile-model
+invariants.
+
+- [ ] **M6.1** Prompt registry with SHA-256, owner, changelog; runs record the hash (M0.5 lands the
+  first half).
+- [ ] **M6.2** Golden eval set on recorded traces, with explicit denominators: 30 planner cases,
+  20 ask Q/A with citations, 12 injection cases. Numeric thresholds and a max regression delta
+  (e.g. ≤2 points) vs the recorded baseline.
+- [ ] **M6.3** Invariant tests with a hostile fake model: no gate/release/evidence change; no agent
+  grades its own work; path policy decides paths; invalid JSON fails closed.
+- [ ] **M6.4** Per-run and per-day token/cost ceilings; a typed blocked state, not a silent stop.
+- [ ] **M6.5** Record provider/model/version/cost per call in evidence.
+- [ ] **M6.6** **Defer** cross-provider fallback; it is a product decision with cost/quality
+  trade-offs, not a modernization gate.
+
+### M7 — Reliability, backup and data lifecycle (6 days)
+
+**Prevents:** lost evidence, unbounded job growth, duplicate side effects, ambiguous crash state.  
+**Proof:** crash matrix on Windows/Linux, restore test, retention test, disk check.
+
+- [ ] **M7.1** Add `heartbeat_at`, `pid`, `daemon_id` to jobs; bounded queue/backpressure with
+  `429`/`503` + retry hint. Keep JSON job files; **do not** move to SQLite yet.
+- [ ] **M7.2** Crash matrix: 30 injected points across named phases, on Windows (`TerminateProcess`,
+  `taskkill /F`, truncated JSON, interrupted `atomic_write`) and Linux (`SIGKILL`). Assert terminal
+  state, owner released, exactly-once fake delivery/comment/deploy, no orphan child, readable
+  restart explanation.
+- [ ] **M7.3** `works backup`/`works restore`: a home archive (events, runs, ledger, settings) and a
+  restore test that preserves evidence and task state.
+- [ ] **M7.4** Retention: prune terminal jobs while keeping a summary; compact/rotate per-task event
+  logs only with an explicit policy; `works doctor` reports disk use; index rebuild has a budget.
+- [ ] **M7.5** Do **not** auto-resume a killed run; partial git/PR/deploy state is not safe. Document
+  at-least-once semantics and phase idempotency.
+
+### M8 — Runtime matrix and supply chain (4 days)
+
+**Prevents:** unsupported Python/Node surprises and unverifiable dependencies.  
+**Proof:** 3.13 CI, Renovate, SBOM, `npm audit`, clean-venv wheel smoke.
+
+- [ ] **M8.1** 3.13 matrix (M0.4); decide 3.14 only after `requires-python` and dependencies allow.
+- [ ] **M8.2** Renovate (better than Dependabot for `uv`) for Python and npm, grouped updates.
+- [ ] **M8.3** CycloneDX SBOM published with the wheel; checksums; `npm audit --omit=dev`/OSV.
+- [ ] **M8.4** Clean 3.13 venv wheel install with `--require-hashes`, `works doctor`, daemon
+  start/status/stop; no signed-wheel theater until a real publish workflow exists.
+- [ ] **M8.5** Windows service recipe: Task Scheduler or NSSM, start-at-logon, stop test. No MSI.
+- [ ] **M8.6** Document what is deferred: Sigstore signing, reproducible builds, installer — after a
+  release process exists.
+
+### M9 — Developer experience, mutation and docs (2 days)
+
+**Prevents:** “works on my machine” checks and contradictory docs.  
+**Proof:** Makefile targets, mutation gate, docs link check.
+
+- [ ] **M9.1** Extend the existing `Makefile` (not `just`) with `e2e`, `wheel`, `bench`; keep
+  `check`/`security`; pre-commit already exists.
+- [ ] **M9.2** Keep the mutation gate ≥70% and include the new index/job modules in `only_mutate`.
+- [ ] **M9.3** Docs: fix contradictions (M0.6), add contributor guide updates, link-check script;
+  no MkDocs dependency.
+- [ ] **M9.4** API compatibility ADR and generated-client compile check (M2.6).
+
+## 4. Sequencing and gates
+
+### Phase 0 — Land the safety floor (week 1)
+
+M0.
+
+**Gate 0 (local met; CI pending):** pairing with rate limit/audit/expiry/ACL; idempotent replay
+tested; Windows and 3.13 jobs added; docs contradictions fixed. The first CI run is the gate.
+
+### Phase 1 — Types and the queue (weeks 2–4)
+
+M1 + M2. Queue/Story typing first, then the index schema derived from the typed UI.
+
+**Gate 1:** strict `tsc`/ESLint/mypy; 10k `/tasks` p95 <250 ms with 20 SSE (median of 3, also ≤120%
+of `main`); index/file parity; no `.jsx` under `features/`.
+
+### Phase 2 — Browser and phone (weeks 5–6)
+
+M3 + M4.
+
+**Gate 2:** Playwright critical flows + axe; pairing/revoke from a non-loopback host; CSP and
+security headers; threat-model ADR with mapped tests.
+
+### Phase 3 — Operability (weeks 7–8)
+
+M5 + M7.
+
+**Gate 3:** trace id in every job/log/metrics; liveness/readiness split; slow-consumer test; 30 crash
+points on Windows+Linux; backup/restore and retention tests.
+
+### Phase 4 — AI and release (weeks 9–12)
+
+M6 + M8 + M9.
+
+**Gate 4:** eval thresholds with denominators; hostile-model invariants; 3.13 wheel smoke; SBOM;
+mutation ≥70%; docs link check.
+
+### Effort
+
+M0 6 + M1 11 + M2 5 + M3 8 + M4 4 + M5 3 + M6 14 + M7 6 + M8 4 + M9 2 = **63 engineer-days**,
+**~76 with 20% contingency**. That is **12–14 weeks for one engineer**, or **8–9 weeks with two**
+(one backend/data, one web/reliability). The v1 8-week/57-day schedule was arithmetically impossible.
+
+## 5. Acceptance metrics
+
+| Area | Gate |
+|---|---|
+| Types | `py.typed`; `mypy --strict` + `disallow_any_explicit`; `tsc --noEmit` with `allowJs: false`; no `.jsx` under `features/`; CI grep for `as any`/`: any`/`@ts-ignore` = 0 |
+| Performance | `bench_api --tasks 10000 --streams 20 --requests 500 --max-p95-ms 250`, seeded by `TaskIndex.replace`, 3 runs, median; fail >250 ms or >120% of `main` two runs in a row |
+| Index | 500-task deep-equal index/file summaries; corrupt/old schema rebuild; rebuild budget; no O(N) API path |
+| Reliability | 30 crash points, Windows+Linux; terminal job state; owner released; exactly-once fake side effects; no orphan child; readable restart explanation |
+| Security | non-loopback pairing/revoke E2E; 20 failed attempts → 429 + Retry-After; audit log assertions; Windows ACL test; pip/npm audit zero high/critical with owner+expiry exceptions |
+| Observability | `trace_id` in `Job.as_dict()` and job logs; log-schema test; JSON metrics named counters; SSE slow-consumer test |
+| AI | prompt hash in `run.json` + `evidence.md`; golden set denominators and thresholds; max-regression delta; budget blocked state; hostile-model invariants |
+| Release | 3.13 clean-venv wheel install (`--require-hashes`), `doctor`, daemon start/status/stop; SBOM; no signing gate until publish exists |
+| Quality | mutation ≥70% on core + new index/job modules; docs link check; `Makefile` `e2e`/`wheel`/`bench` |
+
+## 6. Top risks
+
+1. **Scope inflation toward a platform.** OTel, Prometheus, SQLite jobs, signing and installers are
+   “modern” but not needed for one home; they crowd out Windows CI, backup and idempotency.
+2. **Index/domain drift.** Encoding event-derived risk/decision into SQLite duplicates presenter
+   logic or leaks `interfaces/api` into `adapters/`. This version forbids that.
+3. **Type migration destabilizes the UI.** 35 `.jsx` files + ESLint + Zod + `allowJs: false` at once
+   will break the committed `dist` gate. Slice it screen-by-screen with the current gate green.
+4. **False confidence in “secure remote”.** Cleartext bearer, a Windows `chmod` no-op, no audit,
+   no session expiry, and rate limiting behind a tunnel are not security. M0 must land code, not
+   prose.
+5. **Gate-cutting under schedule pressure.** If the plan is compressed, Windows CI, the crash matrix
+   and mutation are cut first — exactly the evidence that makes the product trustworthy. Use the
+   corrected effort and two engineers where possible.
+
+## 7. Drop or defer (explicit)
+
+- **Drop:** pyright/ty as a second Python checker; native-client Kotlin/C# probe; cursor pagination
+  and ETag for a local 200-row page; mobile-web viewport pass; screenshot diffs as a required gate.
+- **Defer:** OTel OTLP, Prometheus, SLO dashboards; provider fallback; SQLite job store and
+  auto-resume; Python 3.14 as primary; Sigstore signing, MSI/installer, reproducible build; `just`,
+  MkDocs.
+
+## 8. Definition of done
+
+A new engineer can trace one request through types, logs and tests; a 10k queue loads quickly with
+20 live streams; a phone pairs and is revoked safely; a crash leaves a deterministic state and a
+restorable home; a prompt/model change is measured, not guessed; and a release is reproducible and
+verifiable — **without adding a cloud dependency**.

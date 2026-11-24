@@ -30,7 +30,9 @@ from works.domain.errors import (
 )
 from works.interfaces.api.context import RequestContextMiddleware
 from works.interfaces.api.guard import LocalOnlyMiddleware, ReadAuthMiddleware
+from works.interfaces.api.idempotency import IdempotencyMiddleware
 from works.interfaces.api.limits import BodyLimitMiddleware
+from works.interfaces.api.ratelimit import RateLimitMiddleware
 from works.interfaces.api.routes import (
     actions,
     admin,
@@ -41,6 +43,7 @@ from works.interfaces.api.routes import (
     jobs,
     maps,
     observability,
+    pair,
     readiness,
     runs,
     session,
@@ -81,6 +84,7 @@ def create_app(
     state: AppState | None = None,
     max_body_bytes: int = MAX_BODY,
     require_auth: bool = False,
+    rate_limit: bool = True,
 ) -> FastAPI:
     trusted = frozenset(trusted_hosts or LOOPBACK)
 
@@ -103,14 +107,18 @@ def create_app(
         docs_url=None,
         redoc_url=None,
     )
-    app.add_middleware(BodyLimitMiddleware, max_bytes=max_body_bytes)
-    app.add_middleware(RequestContextMiddleware)
+    # `add_middleware` is innermost-first. Outer order:
+    # request id -> body limit -> rate limit -> host -> read auth -> idempotency.
+    app.add_middleware(IdempotencyMiddleware)
     app.add_middleware(
         ReadAuthMiddleware,
         require=require_auth,
         authorize=lambda request: bool(app.state.works.security.is_authenticated(request)),
     )
     app.add_middleware(LocalOnlyMiddleware, trusted=trusted)
+    app.add_middleware(RateLimitMiddleware, enabled=rate_limit)
+    app.add_middleware(BodyLimitMiddleware, max_bytes=max_body_bytes)
+    app.add_middleware(RequestContextMiddleware)
 
     @app.exception_handler(WorksError)
     async def works_error(request: Request, exc: WorksError) -> JSONResponse:
@@ -122,6 +130,7 @@ def create_app(
     for router in (
         health.router,
         admin.router,
+        pair.router,
         session.router,
         actions.router,
         runs.router,

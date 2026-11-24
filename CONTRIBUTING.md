@@ -29,7 +29,8 @@ Or on Windows: `powershell -ExecutionPolicy Bypass -File scripts/check.ps1`.
 - A new dependency needs a reason in the PR and a line in an ADR.
 - A change to a decision needs a new ADR or an amendment; never edit history silently.
 - Do not weaken the path policy to make a change fit. Narrow the change.
-- If a change touches `web/`, Playwright, axe and screenshot diffs are required.
+- If a change touches `web/`, Vitest parity tests are required today; Playwright/axe and
+  opt-in visual snapshots become required when the E2E job lands (2026 plan, M3).
 - No new TODO; an old TODO is a refactoring trigger at the next gate.
 - Refactoring is scheduled (RG0–RG4). Do not mix it with feature work.
 

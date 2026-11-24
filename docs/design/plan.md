@@ -254,8 +254,9 @@ v0 is CLI-first. If and when a window is built, it is a separate `web/` app and 
 
 **Stack**
 
-React 19 + TypeScript strict + Vite + Tailwind CSS v4 + shadcn/ui (Radix primitives) +
-TanStack Query; SSE for live runs; Playwright + axe for tests; visual snapshots for regressions.
+React 19 + TypeScript strict + Vite + TanStack Query; the existing CSS is kept for now; a
+Tailwind/shadcn decision is deferred (the stack migration chose no Tailwind). SSE for live runs;
+Playwright + axe and opt-in visual snapshots are the 2026 target.
 
 **Design**
 
