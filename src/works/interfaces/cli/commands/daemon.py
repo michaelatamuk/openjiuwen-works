@@ -56,7 +56,16 @@ def run_server(
                 f"another writable daemon already owns {paths.root}; "
                 "stop it with `works daemon stop`"
             )
-    server = uvicorn.Server(uvicorn.Config(app, host=host, port=port, log_level=log_level))
+    server = uvicorn.Server(
+        uvicorn.Config(
+            app,
+            host=host,
+            port=port,
+            log_level=log_level,
+            log_config=None,
+            access_log=False,
+        )
+    )
 
     def watch() -> None:
         state.stop_event.wait()

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import logging
+import os
 import secrets
 import threading
 import time
@@ -12,6 +14,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 
+from works.adapters.processes.runner import CURRENT_CANCEL
 from works.adapters.queue.atomic import atomic_write
 from works.adapters.queue.store import Queue
 from works.config.paths import WorksPaths
@@ -19,6 +22,7 @@ from works.domain.errors import ConflictError, NotFoundError
 
 JobStatus = Literal["queued", "running", "succeeded", "failed", "cancelled"]
 FINAL = frozenset({"succeeded", "failed", "cancelled"})
+LOG = logging.getLogger("works.jobs")
 
 
 class JobCancelled(Exception):
@@ -53,6 +57,7 @@ class Job:
     error_code: str | None = None
     log_tail: str = ""
     cancelable: bool = True
+    timeout_s: float | None = None
 
     def as_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -66,6 +71,7 @@ class JobRunner:
         self._executor = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="works-job")
         self._jobs: dict[str, Job] = {}
         self._cancel: dict[str, threading.Event] = {}
+        self._timers: dict[str, threading.Timer] = {}
         self._locks: dict[str, str] = {}
         self._guard = threading.RLock()
         self.reconcile()
@@ -92,29 +98,61 @@ class JobRunner:
         body: Callable[[JobContext], Any],
         *,
         task_id: str | None = None,
+        timeout_s: float | None = None,
     ) -> Job:
+        if timeout_s is None:
+            raw = os.environ.get("WORKS_JOB_TIMEOUT")
+            timeout_s = float(raw) if raw else None
         with self._guard:
             if task_id is not None and task_id in self._locks:
                 raise ConflictError(f"task {task_id} already has a running job")
-            job = Job(id=f"j-{secrets.token_hex(6)}", action=action, task_id=task_id)
+            job = Job(
+                id=f"j-{secrets.token_hex(6)}",
+                action=action,
+                task_id=task_id,
+                timeout_s=timeout_s,
+            )
             self._jobs[job.id] = job
             self._cancel[job.id] = threading.Event()
             if task_id is not None:
                 self._locks[task_id] = job.id
             self._persist(job)
+            if timeout_s is not None and timeout_s > 0:
+                timer = threading.Timer(timeout_s, self._expire, args=(job.id,))
+                timer.daemon = True
+                self._timers[job.id] = timer
         self._executor.submit(self._run, job.id, body)
+        pending = self._timers.get(job.id)
+        if pending is not None:
+            pending.start()
         return job
+
+    def _expire(self, job_id: str) -> None:
+        with self._guard:
+            job = self._jobs.get(job_id)
+            if job is None or job.status in FINAL:
+                return
+            self._cancel[job_id].set()
+            job.error_code = "timeout"
+            job.error = f"job timed out after {job.timeout_s or 0:.1f}s"
+            job.log_tail = job.error
+            self._finish(job, "failed")
 
     def _run(self, job_id: str, body: Callable[[JobContext], Any]) -> None:
         with self._guard:
             job = self._jobs[job_id]
             event = self._cancel[job_id]
-            if event.is_set():
+            if event.is_set() or job.status in FINAL:
                 self._finish(job, "cancelled")
                 return
             job.status = "running"
             job.started_at = time.time()
             self._persist(job)
+            LOG.info(
+                "job started",
+                extra={"job_id": job.id, "task_id": job.task_id, "action": job.action},
+            )
+        token = CURRENT_CANCEL.set(event)
         try:
             result = body(JobContext(job_id=job_id, cancel_event=event))
         except JobCancelled:
@@ -129,15 +167,33 @@ class JobRunner:
             with self._guard:
                 job.result = result
             self._finish(job, "cancelled" if event.is_set() else "succeeded")
+        finally:
+            CURRENT_CANCEL.reset(token)
 
     def _finish(self, job: Job, status: JobStatus) -> None:
         with self._guard:
+            if job.status in FINAL:
+                return
+            timer = self._timers.pop(job.id, None)
+            if timer is not None:
+                timer.cancel()
             job.status = status
             job.finished_at = time.time()
             job.cancelable = False
             if job.task_id is not None:
                 self._locks.pop(job.task_id, None)
             self._persist(job)
+            started = job.started_at or job.created_at
+            LOG.info(
+                "job finished",
+                extra={
+                    "job_id": job.id,
+                    "task_id": job.task_id,
+                    "action": job.action,
+                    "status": status,
+                    "duration_ms": int((time.time() - started) * 1000),
+                },
+            )
 
     def cancel(self, job_id: str) -> Job:
         with self._guard:
@@ -147,6 +203,9 @@ class JobRunner:
             if job.status in FINAL:
                 return job
             self._cancel[job_id].set()
+            timer = self._timers.pop(job.id, None)
+            if timer is not None:
+                timer.cancel()
             if job.status == "queued":
                 self._finish(job, "cancelled")
             return job
@@ -181,4 +240,8 @@ class JobRunner:
                         pass
 
     def shutdown(self) -> None:
+        with self._guard:
+            for timer in self._timers.values():
+                timer.cancel()
+            self._timers.clear()
         self._executor.shutdown(wait=False, cancel_futures=True)

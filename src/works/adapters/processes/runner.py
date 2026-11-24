@@ -9,12 +9,17 @@ import os
 # The runner is the one place that starts processes; argv is always a list.
 import subprocess  # nosec B404
 import sys
+import threading
 import time
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Protocol
 
 from works.domain.records import CommandRecord
+
+# A job sets this for its worker thread; SubprocessRunner kills the child tree when it flips.
+CURRENT_CANCEL: ContextVar[threading.Event | None] = ContextVar("works_job_cancel", default=None)
 
 _SECRET_MARKERS = ("KEY", "TOKEN", "SECRET", "PASSWORD", "PASSWD", "CREDENTIAL")
 
@@ -143,6 +148,19 @@ class SubprocessRunner:
             errors="replace",
             **kwargs,
         )
+        cancel = CURRENT_CANCEL.get()
+        stop = threading.Event()
+        watcher: threading.Thread | None = None
+        if cancel is not None:
+
+            def watch() -> None:
+                while not stop.wait(0.05):
+                    if cancel.is_set():
+                        _kill_tree(process)
+                        return
+
+            watcher = threading.Thread(target=watch, name="works-command-cancel", daemon=True)
+            watcher.start()
         timed_out = False
         try:
             stdout, stderr = process.communicate(timeout=timeout_s)
@@ -150,6 +168,10 @@ class SubprocessRunner:
             timed_out = True
             _kill_tree(process)
             stdout, stderr = process.communicate()
+        finally:
+            stop.set()
+            if watcher is not None:
+                watcher.join(timeout=1)
         duration_ms = int((time.monotonic() - started) * 1000)
         return CommandResult(
             argv=tuple(argv),

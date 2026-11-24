@@ -26,6 +26,7 @@ import zipfile
 from pathlib import Path
 
 BASE = "/api/v1"
+FACTORY = Path(__file__).resolve().parents[1]
 
 
 def free_port() -> int:
@@ -92,9 +93,25 @@ def find_identity(site: Path) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--wheel", type=Path, required=True)
+    parser.add_argument(
+        "--full",
+        action="store_true",
+        help=(
+            "also seed a home, stream an ask and run team verify (needs agent-core and a model key)"
+        ),
+    )
     args = parser.parse_args()
     wheel = args.wheel.expanduser().resolve()
     assert wheel.is_file(), f"wheel not found: {wheel}"
+
+    key = os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("WORKS_MODEL_KEY")
+    agent_python = Path(
+        os.environ.get("WORKS_AGENT_PYTHON")
+        or r"C:\Workspace\openjiuwen\agent-core\.venv\Scripts\python.exe"
+    )
+    full = bool(args.full and key and agent_python.exists())
+    if args.full and not full:
+        print("[skip] --full needs a model key and the agent-core Python")
 
     python = Path(sys.executable)
     temporary = Path(tempfile.mkdtemp(prefix="works-wheel-"))
@@ -121,6 +138,31 @@ def main() -> int:
         assert (home / "flows" / "fix-issue" / "prompts" / "build.md").is_file()
         print("[ok] doctor loads the packaged flow into the fresh home")
 
+        task_id = ""
+        if full:
+            seed = subprocess.run(
+                [
+                    str(python),
+                    str(FACTORY / "scripts" / "seed_home.py"),
+                    "--root",
+                    str(home),
+                    "--force",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=600,
+            )
+            assert seed.returncode == 0, seed.stdout + seed.stderr
+            status = payload(run(python, site, home, "status", "--json"))
+            tasks = status.get("tasks") or []
+            proved = next(
+                (item for item in tasks if item.get("state") == "proved"),
+                None,
+            )
+            assert proved is not None, status
+            task_id = str(proved["id"])
+            print(f"[ok] seeded a proved task through the wheel: {task_id}")
+
         port = free_port()
         env = os.environ.copy()
         env["PYTHONPATH"] = os.pathsep.join([str(site), env.get("PYTHONPATH", "")]).strip(
@@ -137,7 +179,7 @@ def main() -> int:
                 "ui",
                 "--port",
                 str(port),
-                "--read-only",
+                "--write" if full else "--read-only",
                 "--no-open",
             ],
             stdout=log,
@@ -146,7 +188,7 @@ def main() -> int:
             env=env,
         )
         try:
-            deadline = time.monotonic() + 30
+            deadline = time.monotonic() + 60
             body = None
             while time.monotonic() < deadline:
                 body = health(port)
@@ -155,6 +197,35 @@ def main() -> int:
                 time.sleep(0.1)
             assert body is not None and Path(str(body.get("root"))).resolve() == home.resolve()
             print(f"[ok] works ui served the wheel on {port}")
+
+            if full:
+                token = (
+                    (home / ".works" / "state" / "http-token").read_text(encoding="utf-8").strip()
+                )
+                request = urllib.request.Request(
+                    f"http://127.0.0.1:{port}{BASE}/ask/stream",
+                    data=json.dumps(
+                        {"task_id": task_id, "question": "What is the verdict?"}
+                    ).encode("utf-8"),
+                    headers={
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {token}",
+                    },
+                    method="POST",
+                )
+                with urllib.request.urlopen(request, timeout=240) as response:  # noqa: S310
+                    text = response.read().decode("utf-8")
+                events = [
+                    json.loads(line[6:]) for line in text.splitlines() if line.startswith("data: ")
+                ]
+                assert any(item.get("type") == "done" for item in events), text
+                print("[ok] ask streamed a model answer through the packaged worker")
+
+                team = run(python, site, home, "team", "verify", task_id, "--json", timeout=240)
+                assert team.returncode == 0, team.stdout + team.stderr
+                result = payload(team)
+                assert result.get("verdict") == "allow", result
+                print("[ok] team verify ran the packaged worker")
         finally:
             kill_tree(ui.pid)
             ui.wait(timeout=10)

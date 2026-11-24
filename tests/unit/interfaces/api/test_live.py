@@ -123,3 +123,18 @@ def test_ask_stream_forwards_events(paths, monkeypatch) -> None:
     assert response.status_code == 200
     assert '"type": "delta"' in response.text
     assert '"type": "done"' in response.text
+
+
+def test_twenty_subscribers_receive_the_same_event(paths) -> None:
+    hub = EventHub(paths)
+    channels = [hub.subscribe() for _ in range(20)]
+    try:
+        event = hub.publish("queue.changed", {"reason": "load"})
+        assert event.id == 1
+        for channel in channels:
+            received = channel.get_nowait()
+            assert received.id == event.id
+            assert received.event == "queue.changed"
+    finally:
+        for channel in channels:
+            hub.unsubscribe(channel)

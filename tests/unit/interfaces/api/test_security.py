@@ -90,3 +90,35 @@ def test_a_foreign_origin_is_refused(paths) -> None:
         )
     assert response.status_code == 403
     assert response.json()["error"]["code"] == "forbidden"
+
+
+def test_rotate_invalidates_the_old_bearer_and_sessions(paths) -> None:
+    client, app = make_client(paths)
+    with client:
+        old = app.state.works.security.token
+        session = client.post("/api/v1/session", json={"token": old})
+        assert session.status_code == 200
+        assert client.cookies.get(COOKIE_NAME)
+
+        rotated = client.post(
+            "/api/v1/admin/rotate-token",
+            headers={"Authorization": f"Bearer {old}"},
+        )
+        assert rotated.status_code == 200
+        new = rotated.json()["token"]
+        assert new != old
+        assert (paths.state / "http-token").read_text(encoding="utf-8").strip() == new
+
+        old_write = client.delete(
+            "/api/v1/jobs/j-missing", headers={"Authorization": f"Bearer {old}"}
+        )
+        assert old_write.status_code == 401
+
+        client.cookies.clear()
+        cookie_only = client.delete("/api/v1/jobs/j-missing")
+        assert cookie_only.status_code == 401
+
+        new_write = client.delete(
+            "/api/v1/jobs/j-missing", headers={"Authorization": f"Bearer {new}"}
+        )
+        assert new_write.status_code == 404

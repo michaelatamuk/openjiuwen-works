@@ -13,6 +13,7 @@ import secrets
 
 from fastapi import Request
 
+from works.adapters.queue.atomic import atomic_write
 from works.config.paths import WorksPaths
 from works.domain.errors import AuthError, ReadOnlyError
 
@@ -59,6 +60,16 @@ class Security:
         session = secrets.token_urlsafe(32)
         self._sessions.add(session)
         return session
+
+    def rotate(self) -> str:
+        """Replace the persistent bearer token and invalidate every live session."""
+        token = secrets.token_urlsafe(32)
+        atomic_write(self._token_path, token + "\n")
+        with contextlib.suppress(OSError):
+            os.chmod(self._token_path, 0o600)
+        self._token = token
+        self._sessions.clear()
+        return token
 
     def is_authenticated(self, request: Request) -> bool:
         header = request.headers.get("authorization", "")

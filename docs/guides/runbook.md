@@ -100,6 +100,22 @@ home's health identity.
 4. If a hung process keeps the port, stop it from Task Manager and start again. The recorded pid is
    the daemon's own, not the Windows venv launcher.
 
+## A job timed out or was cancelled
+
+**See:** `error_code: timeout`, or `status: cancelled` after `DELETE /jobs/{id}`.
+
+**Why:** `WORKS_JOB_TIMEOUT` expired, or a person cancelled the job. A late builder result cannot
+overwrite the final status.
+
+**Do:** inspect the job log tail, fix the cause (a long build, a hung command), then re-run. Cancel
+kills the child process tree; if a third-party process outlives it, check `daemon.log`.
+
+## The token leaked
+
+**Do:** call `POST /api/v1/admin/rotate-token` with the current bearer token (or use the Settings
+surface once it exposes it). The old bearer and every session cookie stop working; the CLI reads the
+new `.works/state/http-token` on its next run. Do not commit the token file.
+
 ## `config_error`: `a scenario set is required`
 
 **Why:** scenarios are written before the build; the plan cannot be judged without them.

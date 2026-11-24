@@ -60,3 +60,12 @@ def test_daemon_refuses_a_remote_bind() -> None:
     )
     with pytest.raises(ConfigError, match="allow-remote"):
         cmd_daemon(args)
+
+
+def test_request_id_is_echoed_or_generated(paths) -> None:
+    app = create_app(paths)
+    with TestClient(app, base_url="http://127.0.0.1") as client:
+        echoed = client.get("/api/v1/health", headers={"X-Request-ID": "req-123"})
+        generated = client.get("/api/v1/health")
+    assert echoed.headers["x-request-id"] == "req-123"
+    assert generated.headers["x-request-id"]

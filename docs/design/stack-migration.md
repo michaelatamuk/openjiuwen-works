@@ -401,7 +401,7 @@ performance gate is tracked in Phase 8.
 does not affect the run; killing the daemon and restarting it fails the orphan job, releases the
 task owner, and serves a new run. Evidence: `python scripts/smoke_daemon.py`.
 
-### Phase 7 - cutover, packaging, tests (done; ask/team wheel smoke deferred)
+### Phase 7 - cutover, packaging, tests (done)
 
 - [x] Delete old HTTP modules; `interfaces/api/server.py` and `tests/unit/interfaces/api/test_ui.py`
   are gone. The `test_ui_pipeline.py` presenter tests remain.
@@ -414,22 +414,31 @@ task owner, and serves a new run. Evidence: `python scripts/smoke_daemon.py`.
 - [x] `scripts/smoke_wheel.py` extracts the wheel, imports it ahead of the source tree, runs
   `works --help`, `version`, `doctor` against a fresh home (packaged flow copied) and `works ui`,
   then stops it. Runs locally and in CI.
-- [ ] Full `works ask` + `works team verify` wheel smoke: both need agent-core, a model key and a
-  finished run, so they are covered by unit tests and the daemon/API gates rather than the wheel job.
+- [x] Full `works ask` + `works team verify` wheel smoke: `scripts/smoke_wheel.py --full` seeds a
+  proved task, streams `/api/v1/ask/stream` through the packaged worker and runs `team verify`
+  through the packaged agent-core worker. It passed locally; CI keeps the deterministic smoke and
+  skips `--full` when agent-core or the model key is absent.
 - [x] CI checks `dist` freshness (build then `git diff --exit-code`).
 - [x] Docs: `ui.md`, `runbook.md`, `layout.md`, README commands; tag `pre-fastapi`.
 
-**Gate (met for cutover/packaging):** CI green; wheel content and installed-wheel smoke pass. The
-external-runtime `ask`/`team` wheel smoke is the only deferred check.
+**Gate (met):** CI green; wheel content, deterministic smoke and the local `--full` ask/team smoke
+pass.
 
-### Phase 8 — hardening (2.5 days)
-- [ ] 10,000-task load test and 20 SSE clients; p95 targets.
-- [ ] Cancel-with-side-effects, daemon crash, stale owner, token rotation tests.
-- [ ] Body-size middleware (chunked included), job timeouts, Origin/Host tests.
-- [ ] Logging: request_id/job_id, uvicorn access logs through the same formatter.
-- [ ] Final full runs and ADR update.
+### Phase 8 - hardening (done; explicit p95 CI gate deferred)
 
-**Gate:** all §17 checks on a fresh clone.
+- [x] 10,000-task status budget (slow test) and a 20-subscriber SSE fan-out test.
+- [ ] HTTP p95 targets for the read API with 20 SSE clients — measured by hand, not a CI gate yet.
+- [x] Cancel-with-side-effects: a job cancel sets a context event that kills the child process tree;
+  daemon crash/reconcile, stale owner and token rotation are covered by tests.
+- [x] Body-size middleware rejects declared and chunked bodies with 413; job timeouts fail a job
+  without letting a late result overwrite it; Origin/Host tests cover foreign values.
+- [x] Logging: `request_id` and `job_id` are structured fields; request logs and Uvicorn startup
+  logs use the same JSON formatter; Uvicorn access logging is disabled in favor of the request log.
+- [x] Final full runs: `pytest` green, deterministic wheel smoke and the local `--full` ask/team
+  smoke green; ADR [016](../adrs/016-local-daemon.md) records the daemon decision.
+
+**Gate (met except p95):** all §17 checks on a fresh clone; the explicit HTTP p95 budget remains a
+manual/deferred measurement.
 
 ## 9. Frontend mechanics
 

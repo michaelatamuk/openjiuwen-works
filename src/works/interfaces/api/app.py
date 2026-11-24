@@ -6,10 +6,10 @@ so `works --help` keeps working without the `server` extra.
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator, Awaitable, Callable
+import os
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
-from urllib.parse import urlsplit
 
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import FileResponse, JSONResponse
@@ -28,6 +28,9 @@ from works.domain.errors import (
     UnavailableError,
     WorksError,
 )
+from works.interfaces.api.context import RequestContextMiddleware
+from works.interfaces.api.guard import LocalOnlyMiddleware
+from works.interfaces.api.limits import BodyLimitMiddleware
 from works.interfaces.api.routes import (
     actions,
     admin,
@@ -50,6 +53,7 @@ from works.interfaces.api.wiring import AppState, build_state
 VERSION = "0.0.1"
 DIST = Path(__file__).resolve().parents[1] / "ui" / "static" / "dist"
 LOOPBACK = ("127.0.0.1", "localhost", "::1")
+MAX_BODY = int(os.environ.get("WORKS_MAX_BODY_BYTES", str(4 * 1024 * 1024)))
 ERROR_STATUS: tuple[tuple[type[WorksError], int], ...] = (
     (ReadOnlyError, 403),
     (AuthError, 401),
@@ -75,6 +79,7 @@ def create_app(
     trusted_hosts: tuple[str, ...] | None = None,
     bootstrap_token: str | None = None,
     state: AppState | None = None,
+    max_body_bytes: int = MAX_BODY,
 ) -> FastAPI:
     trusted = frozenset(trusted_hosts or LOOPBACK)
 
@@ -97,32 +102,9 @@ def create_app(
         docs_url=None,
         redoc_url=None,
     )
-
-    @app.middleware("http")
-    async def local_only(
-        request: Request, call_next: Callable[[Request], Awaitable[Response]]
-    ) -> Response:
-        hostname = urlsplit(f"//{request.headers.get('host', '')}").hostname or ""
-        if hostname not in trusted:
-            return JSONResponse(
-                status_code=403,
-                content={
-                    "ok": False,
-                    "error": {"code": "forbidden", "message": "host not allowed"},
-                },
-            )
-        origin = request.headers.get("origin")
-        if origin:
-            origin_host = urlsplit(origin).hostname or ""
-            if origin_host not in trusted and origin_host != hostname:
-                return JSONResponse(
-                    status_code=403,
-                    content={
-                        "ok": False,
-                        "error": {"code": "forbidden", "message": "origin not allowed"},
-                    },
-                )
-        return await call_next(request)
+    app.add_middleware(BodyLimitMiddleware, max_bytes=max_body_bytes)
+    app.add_middleware(RequestContextMiddleware)
+    app.add_middleware(LocalOnlyMiddleware, trusted=trusted)
 
     @app.exception_handler(WorksError)
     async def works_error(request: Request, exc: WorksError) -> JSONResponse:

@@ -16,7 +16,9 @@ The daemon serves `/api/v1` on loopback. The OpenAPI schema is
 `{ "ok": false, "error": { "code": "...", "message": "..." } }`
 
 Statuses follow the `WorksError` class: 400 config/validation, 401 auth, 403 policy/read-only,
-404 missing, 409 state/conflict, 502 harness, 503 unavailable, 500 unexpected.
+404 missing, 409 state/conflict, 413 body too large, 502 harness, 503 unavailable, 500 unexpected.
+A request may carry `X-Request-ID`; the response echoes it and the value is in the request log.
+Writes larger than 4 MiB are refused (declared or chunked); `WORKS_MAX_BODY_BYTES` overrides it.
 
 ## Endpoints
 
@@ -43,6 +45,7 @@ Statuses follow the `WorksError` class: 400 config/validation, 401 auth, 403 pol
 | GET | `/events` | SSE |
 | POST | `/ask/stream` | SSE `delta`/`done`/`error` |
 | POST | `/admin/shutdown` | authenticated graceful stop; not in the schema |
+| POST | `/admin/rotate-token` | authenticated bearer-token rotation; clears sessions |
 
 ## Actions
 
@@ -83,6 +86,11 @@ process, and `works ui` is the same app with the SPA at `/`.
   JSON as the standalone commands, and return the same exit codes. Standalone runs refuse while
   a writable daemon owns the home. Relative scenario, quarantine, trace and prompt paths are
   resolved by the CLI before they are sent.
+- A job may set `WORKS_JOB_TIMEOUT` (seconds). A timeout fails the job with `error_code: timeout`;
+  cancelling a job kills its child process tree and no late result can overwrite the final status.
+- Request logs and Uvicorn startup logs share the JSON formatter. Each request carries a
+  `request_id`; jobs carry a `job_id`. Uvicorn access logging is disabled in favour of the request
+  log.
 
 `python scripts/smoke_daemon.py` is the lifecycle gate: it seeds a home, runs a read-only UI on a
 second port, dispatches while stopping the UI, runs `works run --daemon`, kills the daemon

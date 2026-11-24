@@ -21,7 +21,20 @@ class JsonFormatter(logging.Formatter):
             "logger": record.name,
             "message": record.getMessage(),
         }
-        for key in ("run_id", "task_id", "step", "duration_ms", "tokens", "usd"):
+        for key in (
+            "run_id",
+            "task_id",
+            "job_id",
+            "request_id",
+            "step",
+            "method",
+            "path",
+            "status",
+            "action",
+            "duration_ms",
+            "tokens",
+            "usd",
+        ):
             value = getattr(record, key, None)
             if value is not None:
                 payload[key] = value
@@ -40,6 +53,11 @@ def configure(level: str = "INFO", *, stream: Any = None) -> None:
     root.handlers[:] = [handler]
     root.setLevel(level.upper())
     root.propagate = False
+    for name in ("uvicorn", "uvicorn.error", "uvicorn.access"):
+        server = logging.getLogger(name)
+        server.handlers[:] = [handler]
+        server.setLevel(level.upper())
+        server.propagate = False
     _CONFIGURED = True
 
 

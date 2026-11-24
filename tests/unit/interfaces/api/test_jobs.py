@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import json
+import sys
 import threading
 import time
 
 import pytest
 
+from works.adapters.processes.runner import SubprocessRunner
 from works.adapters.queue.store import Queue
 from works.domain.errors import ConflictError
 from works.domain.records import Source, SourceKind
@@ -125,3 +127,46 @@ def test_reconcile_fails_orphans_and_releases_the_owner(paths) -> None:
 
 def test_the_state_directory_exists(paths) -> None:
     assert paths.state.is_dir()
+
+
+def test_a_job_timeout_fails_and_ignores_the_late_result(paths) -> None:
+    release = threading.Event()
+
+    def slow(_ctx) -> str:
+        release.wait(2)
+        return "late"
+
+    runner = JobRunner(paths, Queue(paths))
+    try:
+        job = runner.submit("demo", slow, timeout_s=0.05)
+        done = wait_for(runner, job.id, FINAL)
+        assert done.status == "failed"
+        assert done.error_code == "timeout"
+        assert done.error is not None and "timed out" in done.error
+        release.set()
+        time.sleep(0.2)
+        assert runner.get(job.id).status == "failed"
+    finally:
+        runner.shutdown()
+
+
+def test_cancel_kills_a_child_process(paths) -> None:
+    def run_child(_ctx) -> object:
+        return SubprocessRunner().run(
+            [sys.executable, "-c", "import time; time.sleep(30)"],
+            paths.root,
+            timeout_s=30,
+        )
+
+    runner = JobRunner(paths, Queue(paths))
+    try:
+        job = runner.submit("demo", run_child, timeout_s=30)
+        wait_for(runner, job.id, {"running"})
+        time.sleep(0.2)
+        started = time.monotonic()
+        runner.cancel(job.id)
+        done = wait_for(runner, job.id, FINAL, timeout=10)
+        assert done.status == "cancelled"
+        assert time.monotonic() - started < 10
+    finally:
+        runner.shutdown()
