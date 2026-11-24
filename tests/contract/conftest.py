@@ -20,5 +20,5 @@ def seeded_home(tmp_path_factory: pytest.TempPathFactory) -> Path:
 @pytest.fixture(scope="session")
 def client(seeded_home: Path) -> Iterator[TestClient]:
     app = create_app(seeded_home)
-    with TestClient(app) as test_client:
+    with TestClient(app, base_url="http://127.0.0.1") as test_client:
         yield test_client

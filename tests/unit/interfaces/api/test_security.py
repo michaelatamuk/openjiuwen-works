@@ -1,0 +1,92 @@
+from __future__ import annotations
+
+from fastapi.testclient import TestClient
+
+from works.interfaces.api.app import create_app
+from works.interfaces.api.security import COOKIE_NAME
+
+BASE = "http://127.0.0.1"
+
+
+def make_client(
+    paths,
+    *,
+    writable: bool = True,
+    token: str = "bootstrap",  # noqa: S107
+):
+    app = create_app(paths, writable=writable, bootstrap_token=token)
+    return TestClient(app, base_url=BASE), app
+
+
+def test_bootstrap_token_is_one_time(paths) -> None:
+    client, _ = make_client(paths)
+    with client:
+        first = client.post("/api/v1/session", json={"token": "bootstrap"})
+        assert first.status_code == 200
+        assert first.json() == {"ok": True}
+        assert client.cookies.get(COOKIE_NAME)
+        cookie = first.headers["set-cookie"].lower()
+        assert "httponly" in cookie
+        assert "samesite=strict" in cookie
+
+        second = client.post("/api/v1/session", json={"token": "bootstrap"})
+        assert second.status_code == 401
+        assert second.json()["error"]["code"] == "auth_error"
+
+
+def test_session_cookie_authorizes_a_write(paths) -> None:
+    client, _ = make_client(paths)
+    with client:
+        assert client.post("/api/v1/session", json={"token": "bootstrap"}).status_code == 200
+        response = client.delete("/api/v1/jobs/j-missing")
+        assert response.status_code == 404
+        assert response.json()["error"]["code"] == "not_found"
+
+
+def test_bearer_token_authorizes_a_write(paths) -> None:
+    client, app = make_client(paths)
+    with client:
+        token = app.state.works.security.token
+        response = client.delete(
+            "/api/v1/jobs/j-missing", headers={"Authorization": f"Bearer {token}"}
+        )
+        assert response.status_code == 404
+
+
+def test_write_without_a_token_is_401(paths) -> None:
+    client, _ = make_client(paths)
+    with client:
+        response = client.delete("/api/v1/jobs/j-missing")
+        assert response.status_code == 401
+        assert response.json()["error"]["code"] == "auth_error"
+
+
+def test_read_only_mode_is_403(paths) -> None:
+    client, app = make_client(paths, writable=False)
+    with client:
+        token = app.state.works.security.token
+        response = client.delete(
+            "/api/v1/jobs/j-missing", headers={"Authorization": f"Bearer {token}"}
+        )
+        assert response.status_code == 403
+        assert response.json()["error"]["code"] == "read_only"
+
+
+def test_a_foreign_host_is_refused(paths) -> None:
+    app = create_app(paths)
+    with TestClient(app, base_url="http://evil.test") as client:
+        response = client.get("/api/v1/health")
+    assert response.status_code == 403
+    assert response.json()["error"]["code"] == "forbidden"
+
+
+def test_a_foreign_origin_is_refused(paths) -> None:
+    client, _ = make_client(paths)
+    with client:
+        response = client.post(
+            "/api/v1/session",
+            json={"token": "bootstrap"},
+            headers={"Origin": "http://evil.test"},
+        )
+    assert response.status_code == 403
+    assert response.json()["error"]["code"] == "forbidden"

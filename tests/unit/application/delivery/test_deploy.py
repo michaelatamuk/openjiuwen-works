@@ -94,7 +94,7 @@ def test_deploy_requires_delivery(paths, repo) -> None:
 def test_deploy_reads_the_product_map(paths, repo, tmp_path) -> None:
     task, _ = _delivered(paths, repo, tmp_path)
     config = paths.root / ".works"
-    config.mkdir()
+    config.mkdir(exist_ok=True)
     (config / "products.yaml").write_text(
         "products:\n  openjiuwen:\n    repo: .\n    deploy: ['python', '-c', 'print(1)']\n",
         encoding="utf-8",

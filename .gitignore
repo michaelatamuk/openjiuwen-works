@@ -47,3 +47,6 @@ web/node_modules/
 # built UI assets under the interfaces tree
 !src/works/interfaces/ui/static/dist/
 !src/works/interfaces/ui/static/dist/**
+
+# local daemon state
+.works/state/

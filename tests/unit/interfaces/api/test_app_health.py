@@ -13,7 +13,7 @@ from works.interfaces.cli.parser import build_parser
 
 def test_health_matches_the_legacy_shape(paths) -> None:
     app = create_app(paths, writable=True)
-    with TestClient(app) as client:
+    with TestClient(app, base_url="http://127.0.0.1") as client:
         response = client.get("/api/v1/health")
 
     assert response.status_code == 200
@@ -29,7 +29,7 @@ def test_health_matches_the_legacy_shape(paths) -> None:
 
 def test_read_only_default(paths) -> None:
     app = create_app(paths)
-    with TestClient(app) as client:
+    with TestClient(app, base_url="http://127.0.0.1") as client:
         body = client.get("/api/v1/health").json()
 
     assert body["readonly"] is True
@@ -38,7 +38,7 @@ def test_read_only_default(paths) -> None:
 
 def test_openapi_is_versioned(paths) -> None:
     app = create_app(paths)
-    with TestClient(app) as client:
+    with TestClient(app, base_url="http://127.0.0.1") as client:
         response = client.get("/api/v1/openapi.json")
 
     assert response.status_code == 200

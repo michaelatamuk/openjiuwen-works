@@ -10,6 +10,8 @@ from works.adapters.queue.store import Queue
 from works.application.settings import BuilderSettings, load_builder_settings, settings_path
 from works.config.paths import WorksPaths, load_paths
 from works.domain.errors import ConfigError
+from works.interfaces.api.jobs import JobRunner
+from works.interfaces.api.security import Security
 
 
 @dataclass(frozen=True)
@@ -19,9 +21,16 @@ class AppState:
     ledger: Ledger
     writable: bool
     settings: BuilderSettings | None
+    security: Security
+    jobs: JobRunner
 
 
-def build_state(paths: WorksPaths | Path | None = None, *, writable: bool = False) -> AppState:
+def build_state(
+    paths: WorksPaths | Path | None = None,
+    *,
+    writable: bool = False,
+    bootstrap_token: str | None = None,
+) -> AppState:
     if isinstance(paths, WorksPaths):
         resolved = paths.ensure()
     elif paths is not None:
@@ -32,10 +41,13 @@ def build_state(paths: WorksPaths | Path | None = None, *, writable: bool = Fals
         settings = load_builder_settings(resolved) if settings_path(resolved).exists() else None
     except ConfigError:
         settings = None
+    queue = Queue(resolved)
     return AppState(
         paths=resolved,
-        queue=Queue(resolved),
+        queue=queue,
         ledger=Ledger(resolved.ledger),
         writable=writable,
         settings=settings,
+        security=Security(resolved, bootstrap_token=bootstrap_token),
+        jobs=JobRunner(resolved, queue),
     )

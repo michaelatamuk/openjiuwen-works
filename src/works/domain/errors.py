@@ -62,6 +62,27 @@ class HarnessError(WorksError):
     exit_code = EXIT_BLOCKED
 
 
+class AuthError(WorksError):
+    """A write needs a valid local token."""
+
+    code = "auth_error"
+    exit_code = EXIT_USAGE
+
+
+class ReadOnlyError(AuthError):
+    """The daemon runs without write routes."""
+
+    code = "read_only"
+    exit_code = EXIT_POLICY
+
+
+class UnavailableError(WorksError):
+    """An optional runtime, SDK or service is missing."""
+
+    code = "unavailable"
+    exit_code = EXIT_BLOCKED
+
+
 def exit_code_for(exc: BaseException) -> int:
     if isinstance(exc, WorksError):
         return exc.exit_code

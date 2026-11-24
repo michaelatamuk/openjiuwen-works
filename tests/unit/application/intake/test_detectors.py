@@ -103,7 +103,7 @@ def test_fetch_alerts_adds_a_token_and_refuses_errors(monkeypatch: pytest.Monkey
 
 
 def test_configured_detector_ingests_once(paths, repo) -> None:
-    (paths.root / ".works").mkdir()
+    (paths.root / ".works").mkdir(exist_ok=True)
     alerts = paths.root / ".works" / "alerts.json"
     alerts.write_text(json.dumps([{"id": "a1", "title": "Disk full"}]), encoding="utf-8")
     (paths.root / ".works" / "detectors.yaml").write_text(

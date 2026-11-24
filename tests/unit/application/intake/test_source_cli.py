@@ -69,7 +69,7 @@ def test_source_github_is_idempotent(paths, tmp_path, monkeypatch) -> None:
 
 
 def test_source_refuses_an_unmapped_product(paths, monkeypatch) -> None:
-    (paths.root / ".works").mkdir()
+    (paths.root / ".works").mkdir(exist_ok=True)
     (paths.root / ".works" / "products.yaml").write_text(
         "products:\n  blender:\n    repo: apps/blender\n", encoding="utf-8"
     )

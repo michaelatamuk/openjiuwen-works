@@ -32,13 +32,16 @@ class WorksPaths:
         return self.root / "ledger.jsonl"
 
     @property
+    def state(self) -> Path:
+        return self.root / ".works" / "state"
+
+    @property
     def scenarios(self) -> Path:
         return self.root.parent / "works-scenarios"
 
     def ensure(self) -> WorksPaths:
-        self.queue.mkdir(parents=True, exist_ok=True)
-        self.runs.mkdir(parents=True, exist_ok=True)
-        self.worktrees.mkdir(parents=True, exist_ok=True)
+        for directory in (self.queue, self.runs, self.worktrees, self.state):
+            directory.mkdir(parents=True, exist_ok=True)
         return self
 
     def task_dir(self, task_id: str) -> Path:

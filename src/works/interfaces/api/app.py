@@ -6,24 +6,76 @@ so `works --help` keeps working without the `server` extra.
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from pathlib import Path
+from urllib.parse import urlsplit
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
+from fastapi.responses import JSONResponse
 
 from works.config.paths import WorksPaths
-from works.interfaces.api.routes import downloads, health, maps, observability, tasks
+from works.domain.errors import (
+    AuthError,
+    ConfigError,
+    ConflictError,
+    HarnessError,
+    NotFoundError,
+    PolicyError,
+    ReadOnlyError,
+    StateError,
+    UnavailableError,
+    WorksError,
+)
+from works.interfaces.api.routes import (
+    downloads,
+    health,
+    jobs,
+    maps,
+    observability,
+    session,
+    tasks,
+)
 from works.interfaces.api.wiring import build_state
 
 VERSION = "0.0.1"
+LOOPBACK = ("127.0.0.1", "localhost", "::1")
+ERROR_STATUS: tuple[tuple[type[WorksError], int], ...] = (
+    (ReadOnlyError, 403),
+    (AuthError, 401),
+    (PolicyError, 403),
+    (NotFoundError, 404),
+    (StateError, 409),
+    (ConflictError, 409),
+    (HarnessError, 502),
+    (UnavailableError, 503),
+    (ConfigError, 400),
+    (WorksError, 500),
+)
 
 
-def create_app(paths: WorksPaths | Path | None = None, *, writable: bool = False) -> FastAPI:
+def _error_body(exc: WorksError) -> dict[str, object]:
+    return {"ok": False, "error": {"code": exc.code, "message": str(exc)}}
+
+
+def create_app(
+    paths: WorksPaths | Path | None = None,
+    *,
+    writable: bool = False,
+    trusted_hosts: tuple[str, ...] | None = None,
+    bootstrap_token: str | None = None,
+) -> FastAPI:
+    trusted = frozenset(trusted_hosts or LOOPBACK)
+
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
-        application.state.works = build_state(paths, writable=writable)
-        yield
+        application.state.works = build_state(
+            paths, writable=writable, bootstrap_token=bootstrap_token
+        )
+        try:
+            yield
+        finally:
+            application.state.works.jobs.shutdown()
 
     app = FastAPI(
         title="openJiuwen Works",
@@ -33,9 +85,45 @@ def create_app(paths: WorksPaths | Path | None = None, *, writable: bool = False
         docs_url=None,
         redoc_url=None,
     )
+
+    @app.middleware("http")
+    async def local_only(
+        request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
+        hostname = urlsplit(f"//{request.headers.get('host', '')}").hostname or ""
+        if hostname not in trusted:
+            return JSONResponse(
+                status_code=403,
+                content={
+                    "ok": False,
+                    "error": {"code": "forbidden", "message": "host not allowed"},
+                },
+            )
+        origin = request.headers.get("origin")
+        if origin:
+            origin_host = urlsplit(origin).hostname or ""
+            if origin_host not in trusted and origin_host != hostname:
+                return JSONResponse(
+                    status_code=403,
+                    content={
+                        "ok": False,
+                        "error": {"code": "forbidden", "message": "origin not allowed"},
+                    },
+                )
+        return await call_next(request)
+
+    @app.exception_handler(WorksError)
+    async def works_error(request: Request, exc: WorksError) -> JSONResponse:
+        status = next(
+            (code for error_type, code in ERROR_STATUS if isinstance(exc, error_type)), 500
+        )
+        return JSONResponse(status_code=status, content=_error_body(exc))
+
     for router in (
         health.router,
+        session.router,
         tasks.router,
+        jobs.router,
         maps.router,
         observability.router,
         downloads.router,

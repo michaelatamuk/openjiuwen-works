@@ -316,7 +316,7 @@ def test_products_endpoint_reflects_the_map(paths, repo) -> None:
         status, body = get(base, "/api/products")
         assert status == 200
         assert json.loads(body)["configured"] is False
-    (paths.root / ".works").mkdir()
+    (paths.root / ".works").mkdir(exist_ok=True)
     (paths.root / ".works" / "products.yaml").write_text(
         f'products:\n  firefox:\n    repo: "{repo.path.as_posix()}"\n', encoding="utf-8"
     )
@@ -329,7 +329,7 @@ def test_products_endpoint_reflects_the_map(paths, repo) -> None:
 
 
 def test_a_new_task_can_use_the_product_map(paths, repo) -> None:
-    (paths.root / ".works").mkdir()
+    (paths.root / ".works").mkdir(exist_ok=True)
     (paths.root / ".works" / "products.yaml").write_text(
         f'products:\n  firefox:\n    repo: "{repo.path.as_posix()}"\n', encoding="utf-8"
     )
@@ -345,7 +345,7 @@ def test_a_new_task_can_use_the_product_map(paths, repo) -> None:
 
 
 def test_detector_endpoint_and_intake(paths, repo) -> None:
-    (paths.root / ".works").mkdir()
+    (paths.root / ".works").mkdir(exist_ok=True)
     alerts = paths.root / ".works" / "alerts.json"
     alerts.write_text(json.dumps([{"id": "a1", "title": "Disk full"}]), encoding="utf-8")
     (paths.root / ".works" / "detectors.yaml").write_text(

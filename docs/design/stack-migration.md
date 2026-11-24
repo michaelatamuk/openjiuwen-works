@@ -293,15 +293,22 @@ keys; `dump_openapi.py --check`.
 **Gate (met):** `pytest tests/contract tests/unit/interfaces/api`; 19 contract tests pass. The
 performance gate is tracked in Phase 8.
 
-### Phase 3a — jobs, security, session (3 days)
-- [ ] `security.py`: persistent token, bootstrap tokens, `POST /session`, cookie, Host/Origin checks,
-  `.works/state/` gitignore, Windows ACL. Tests: missing/wrong token, bad Host, read-only mode.
-- [ ] `jobs.py`: executor (2 workers), persisted statuses, cancel flag, process registry,
-  reconciliation at startup, per-task lock. Tests: cancel, restart, stale owner.
-- [ ] `CommandRunner`/`subprocess` calls register their process so cancellation can kill it.
-- [ ] `domain/errors.py`: `AuthError`, `UnavailableError`; mapping tests.
+### Phase 3a — jobs, security, session (done, subprocess kill deferred)
 
-**Gate:** `pytest tests/unit/interfaces/api/test_{security,jobs}.py`; crash/restart test passes.
+- [x] `WorksPaths.state` + `.works/state/` creation and gitignore.
+- [x] `security.py`: owner-only persistent token, one-time bootstrap token, `POST /session` with an
+  HttpOnly `SameSite=Strict` cookie, Bearer support, loopback Host and Origin checks.
+- [x] `require_write` dependency: 401 without a token, 403 in read-only mode.
+- [x] `jobs.py`: two-worker executor, persisted statuses, one job per task, cancellation flag,
+  startup reconciliation that fails orphans and releases their queue owner.
+- [x] `domain/errors.py`: `AuthError`, `ReadOnlyError`, `UnavailableError`; the app maps
+  `WorksError` to the §5.3 statuses with a JSON error body.
+- [x] `GET/DELETE /api/v1/jobs/{id}` and security/jobs tests (bootstrap, cookie, bearer, host,
+  origin, read-only, success, failure, cancel, lock, reconcile).
+- [ ] Killing an in-flight child process on cancel is wired with the actions in Phase 3b, because no
+  current job starts a subprocess yet.
+
+**Gate (met):** `pytest tests/unit/interfaces/api`; crash/restart reconciliation test passes.
 
 ### Phase 3b — actions, readiness, sources, settings (2 days)
 - [ ] `routes/actions.py`: 9 actions + `deploy`; sync/job split from §5.2; 202 + job for long ones.
