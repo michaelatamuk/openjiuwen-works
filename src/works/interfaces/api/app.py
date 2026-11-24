@@ -29,7 +29,9 @@ from works.domain.errors import (
 )
 from works.interfaces.api.routes import (
     actions,
+    ask,
     downloads,
+    events,
     health,
     jobs,
     maps,
@@ -73,13 +75,14 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
-        application.state.works = build_state(
-            paths, writable=writable, bootstrap_token=bootstrap_token
-        )
+        state = build_state(paths, writable=writable, bootstrap_token=bootstrap_token)
+        application.state.works = state
+        state.live.start()
         try:
             yield
         finally:
-            application.state.works.jobs.shutdown()
+            state.live.stop()
+            state.jobs.shutdown()
 
     app = FastAPI(
         title="openJiuwen Works",
@@ -127,6 +130,8 @@ def create_app(
         health.router,
         session.router,
         actions.router,
+        events.router,
+        ask.router,
         readiness.router,
         sources.router,
         settings.router,

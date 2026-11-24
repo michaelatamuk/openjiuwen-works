@@ -12,6 +12,7 @@ from works.application.settings import BuilderSettings, load_builder_settings, s
 from works.config.paths import WorksPaths, load_paths
 from works.domain.errors import ConfigError
 from works.interfaces.api.jobs import JobRunner
+from works.interfaces.api.live import EventHub
 from works.interfaces.api.security import Security
 
 
@@ -24,6 +25,7 @@ class AppState:
     settings: BuilderSettings | None
     security: Security
     jobs: JobRunner
+    live: EventHub
     write_lock: threading.Lock = field(default_factory=threading.Lock)
 
 
@@ -52,4 +54,5 @@ def build_state(
         settings=settings,
         security=Security(resolved, bootstrap_token=bootstrap_token),
         jobs=JobRunner(resolved, queue),
+        live=EventHub(resolved),
     )

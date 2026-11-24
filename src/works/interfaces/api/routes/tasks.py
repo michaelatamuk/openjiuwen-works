@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Query, Request
+from typing import Any
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.responses import JSONResponse
 
 from works.domain.errors import NotFoundError
-from works.interfaces.api import read
+from works.interfaces.api import read, write
 from works.interfaces.api.schemas.tasks import RunList, TaskDetail, TaskList
+from works.interfaces.api.security import require_write
 from works.interfaces.api.wiring import AppState
 
 router = APIRouter()
@@ -21,6 +25,13 @@ def _state(request: Request) -> AppState:
 def list_tasks(request: Request, limit: int = Query(default=200, ge=1, le=1000)) -> TaskList:
     _, payload = read.tasks(_state(request).paths, limit=limit)
     return TaskList.model_validate(payload)
+
+
+@router.post("/tasks", dependencies=[Depends(require_write)])
+def create_task(request: Request, payload: dict[str, Any]) -> JSONResponse:
+    state = _state(request)
+    status, body = write.create_task(state.paths, payload, state.write_lock)
+    return JSONResponse(status_code=int(status), content=body)
 
 
 @router.get("/tasks/{task_id}", response_model=TaskDetail)

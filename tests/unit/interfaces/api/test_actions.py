@@ -147,3 +147,23 @@ def test_settings_round_trip(seeded_client: TestClient, auth: dict[str, str]) ->
     )
     assert saved.status_code == 200
     assert saved.json()["builder"]["runtime"] == "openjiuwen"
+
+
+def test_create_task_is_idempotent(
+    seeded_client: TestClient, auth: dict[str, str], seeded_home
+) -> None:
+    payload = {
+        "repo": str(seeded_home / "repo"),
+        "ref": "SEED-CREATED-1",
+        "title": "A task created through the API",
+        "product": "Fixture",
+        "flow": "fix-issue",
+    }
+    first = seeded_client.post(f"{BASE}/tasks", headers=auth, json=payload)
+    assert first.status_code == 201, first.text
+    created = first.json()
+    assert created["created"] is True
+
+    second = seeded_client.post(f"{BASE}/tasks", headers=auth, json=payload)
+    assert second.status_code == 200
+    assert second.json()["task"]["id"] == created["task"]["id"]

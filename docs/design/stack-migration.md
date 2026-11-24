@@ -319,6 +319,7 @@ performance gate is tracked in Phase 8.
   job.
 - [x] `routes/sources.py`: GitHub/Jira/detector imports run as jobs and reuse the legacy intake.
 - [x] `routes/settings.py`: GET returns builder health; POST saves settings for the next job.
+- [x] `POST /tasks` creates a task (201) or returns the duplicate (200).
 - [x] One `WorksError` handler covers the status table from §5.3.
 - [x] `scripts/smoke_api.py`: seeds a home, adds context, approves a plan, releases a proved task
   and runs readiness through the new API.
@@ -328,14 +329,19 @@ performance gate is tracked in Phase 8.
 
 **Gate (met):** `pytest tests/contract tests/unit/interfaces/api`; `python scripts/smoke_api.py`.
 
-### Phase 4 — live updates (2 days)
-- [ ] `live.py`: event mapper (tail `events.jsonl`, job store, settings), ring buffer, epoch,
-  `resync`; heartbeat.
-- [ ] `routes/events.py`: named SSE, `Last-Event-ID`, disconnect handling.
-- [ ] `routes/ask.py`: bridge `ask_mira_stream` through a thread; `delta/done/error`.
-- [ ] Tests: task/run/job events, heartbeat, gap → `resync`, stream cancel.
+### Phase 4 — live updates (done)
 
-**Gate:** `pytest tests/unit/interfaces/api/test_sse.py`.
+- [x] `live.py`: `LiveState` now derives typed changes from changed paths; `EventHub` assigns ids,
+  keeps a 200-event ring, carries an epoch and fans out named events.
+- [x] `routes/events.py`: named SSE with `Last-Event-ID` replay, a `resync` event when the ring is
+  behind, a 15-second heartbeat and disconnect cleanup.
+- [x] `routes/ask.py`: streams `delta`/`done`/`error` from `ask_mira_stream`; failures after headers
+  become error events.
+- [x] Tests: hub replay/gap, subscriber fan-out, file-change mapping (task and job), connected
+  comment, resync, ask stream.
+- [x] `docs/reference/http-api.md`: endpoints, actions, auth, errors and live events.
+
+**Gate (met):** `pytest tests/unit/interfaces/api/test_live.py`; full suite green.
 
 ### Phase 5a — frontend toolchain and client (2 days)
 - [ ] `web/src/api/generated/schema.ts` from OpenAPI (committed); CI regenerates and fails on diff.
