@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 
 import { fmtMs, fmtUsd, shortSha } from "../../lib/format.js";
-import { Card, EmptyProof, Pill } from "../../ui/primitives.jsx";
+import { Card, EmptyProof, Pill } from "../../ui/primitives";
 import {
   Artifacts,
   ChallengeCard,
@@ -13,7 +13,7 @@ import {
   Readiness,
   Timeline,
   VerdictCard,
-} from "./sections.jsx";
+} from "./sections";
 
 export type EvidenceStage = {
   id: string;

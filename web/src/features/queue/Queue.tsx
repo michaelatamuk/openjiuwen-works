@@ -1,7 +1,7 @@
 import type { ChangeEvent } from "react";
 
 import { groups, riskLabel, riskTone, stateLabel, timeAgo } from "../../lib/format.js";
-import { Pill } from "../../ui/primitives.jsx";
+import { Pill } from "../../ui/primitives";
 
 export type QueueTask = {
   id: string;

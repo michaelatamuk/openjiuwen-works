@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { fmtMs, fmtUsd, shortSha, timeAgo } from "../../lib/format.js";
-import { Card, Pill, Table } from "../../ui/primitives.jsx";
+import { Card, Pill, Table } from "../../ui/primitives";
 
 export type ReleaseGateDecision = {
   decision?: string | null;

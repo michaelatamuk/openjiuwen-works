@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 
 import { eventSummary, fmtMs, stateLabel, timeAgo } from "../../lib/format.js";
-import { Card } from "../../ui/primitives.jsx";
-import { Receipt } from "./Receipt.jsx";
-import { Route } from "./Route.jsx";
+import { Card } from "../../ui/primitives";
+import { Receipt } from "./Receipt";
+import { Route } from "./Route";
 import { headline, lede } from "./copy.js";
 
 export type StoryStage = {
@@ -12,6 +12,21 @@ export type StoryStage = {
   state?: string;
   kind?: string;
   at?: string;
+};
+
+export type StoryOutcome = {
+  priority?: string;
+  passed?: boolean;
+};
+
+export type StoryEvidence = {
+  files_changed?: string[];
+  verdict?: {
+    allow?: boolean;
+    outcomes?: StoryOutcome[];
+  } | null;
+  challenge?: { allow?: boolean } | null;
+  not_tested?: string[];
 };
 
 export type StoryEvent = {
@@ -37,6 +52,7 @@ export type StoryDetail = {
   timeline?: { type: string }[];
   summary?: { risk?: string | null };
   run?: { run_id: string; duration_ms: number };
+  evidence?: StoryEvidence | null;
 };
 
 export type StoryProps = {
