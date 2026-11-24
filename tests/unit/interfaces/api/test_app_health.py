@@ -55,6 +55,8 @@ def test_daemon_parser_defaults() -> None:
 
 
 def test_daemon_refuses_a_remote_bind() -> None:
-    args = argparse.Namespace(host="192.0.2.1", port=8765, write=False, allow_remote=False)
+    args = argparse.Namespace(
+        host="192.0.2.1", port=8765, write=False, allow_remote=False, home=None
+    )
     with pytest.raises(ConfigError, match="allow-remote"):
         cmd_daemon(args)

@@ -16,21 +16,32 @@ def cmd_ui(args: argparse.Namespace) -> int:
     import webbrowser
 
     try:
-        import uvicorn
+        import uvicorn  # noqa: F401
     except ImportError as exc:  # pragma: no cover - install hint
         raise ConfigError("the UI needs the server extra: uv sync --extra server") from exc
     from works.interfaces.api.app import create_app
     from works.interfaces.api.wiring import build_state
+    from works.interfaces.cli.commands.daemon import run_server
 
     if args.write and args.read_only:
         raise ConfigError("use either --write or --read-only, not both")
     if args.host not in LOOPBACK:
         raise ConfigError(f"refusing to bind {args.host!r}; the local UI is loopback-only")
-    state = build_state(_paths(args), writable=args.write)
+    paths = _paths(args)
+    if args.write:
+        from works.adapters import daemon as daemons
+
+        if daemons.current_daemon(paths) is not None:
+            raise ConfigError(
+                f"another writable daemon already owns {paths.root}; "
+                "use it instead or stop it with `works daemon stop`"
+            )
+    state = build_state(paths, writable=args.write)
     app = create_app(state=state)
     url = f"http://{args.host}:{args.port}/"
     if args.write:
-        url += f"?bootstrap={quote(state.security.bootstrap_token)}"
+        token = state.security.token
+        url += f"?bootstrap={quote(token)}"
     mode = "read-write" if args.write else "read-only"
     if args.json:
         _emit({"url": url, "readonly": not args.write, "write": bool(args.write)})
@@ -40,5 +51,12 @@ def cmd_ui(args: argparse.Namespace) -> int:
     if not args.no_open:
         webbrowser.open(url)
     with contextlib.suppress(KeyboardInterrupt):
-        uvicorn.run(app, host=args.host, port=args.port, log_level="warning")
+        run_server(
+            app,
+            state,
+            host=args.host,
+            port=args.port,
+            write=args.write,
+            log_level="warning",
+        )
     return 0

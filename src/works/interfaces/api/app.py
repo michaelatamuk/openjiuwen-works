@@ -30,6 +30,7 @@ from works.domain.errors import (
 )
 from works.interfaces.api.routes import (
     actions,
+    admin,
     ask,
     downloads,
     events,
@@ -132,6 +133,7 @@ def create_app(
 
     for router in (
         health.router,
+        admin.router,
         session.router,
         actions.router,
         runs.router,

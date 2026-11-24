@@ -52,7 +52,7 @@ def test_a_run_is_a_job_and_writes_a_record(paths, repo, factory_root) -> None:
         assert response.status_code == 202, response.text
         job = wait_job(client, response.json()["job"]["id"])
         assert job["status"] == "succeeded", job
-        record = job["result"]
+        record = job["result"]["run"]
         assert record["task_id"] == task_id
         assert record["state"] == "proved"
 

@@ -31,6 +31,9 @@ Statuses follow the `WorksError` class: 400 config/validation, 401 auth, 403 pol
 | GET | `/tasks/{id}/export/{kind}` | attachment download |
 | GET | `/tasks/{id}/artifacts/{name:path}` | inline artifact |
 | POST | `/actions` | sync or 202 + job (see below) |
+| POST | `/runs` | 202 + job; run one task through the saved builder or a trace |
+| POST | `/dispatch` | 202 + job; run up to `limit` queued tasks |
+| GET | `/runs/{run_id}` | a run record from disk |
 | GET/DELETE | `/jobs/{id}` | status / cancel |
 | POST | `/readiness` | 202 + job |
 | POST | `/sources` | 202 + job |
@@ -39,6 +42,7 @@ Statuses follow the `WorksError` class: 400 config/validation, 401 auth, 403 pol
 | GET | `/metrics`, `/ledger` | factory observability |
 | GET | `/events` | SSE |
 | POST | `/ask/stream` | SSE `delta`/`done`/`error` |
+| POST | `/admin/shutdown` | authenticated graceful stop; not in the schema |
 
 ## Actions
 
@@ -58,3 +62,24 @@ Sync: `add-context`, `approve-plan`, `release`. Jobs: `commentary`, `discussion`
 - `resync` when `Last-Event-ID` falls outside the replay ring
 
 The server keeps the last 200 events per process; a restart starts a new epoch.
+
+## Daemon lifecycle
+
+`works daemon` runs in the foreground. `works daemon start|stop|status` manages a detached
+process, and `works ui` is the same app with the SPA at `/`.
+
+- `.works/state/daemon.json` holds `{pid, host, port, home, started_at, token_path}`. A stale
+  file is cleared when the pid is gone, the home does not match, or `/health` does not answer
+  with this home's `root`.
+- A writable daemon takes an exclusive `.works/state/daemon.lock`; a second writable daemon for
+  the same home refuses to start. Read-only daemons take no lock.
+- The detached child runs with `cwd` set to the home, a small allow-listed environment, and
+  output appended to `.works/state/daemon.log`.
+- `works daemon stop` posts `/admin/shutdown` with the bearer token, falling back to
+  `SIGTERM`/`CTRL_BREAK_EVENT`. It only kills a pid that still answers with this home's health
+  identity, so a reused pid is never terminated.
+- `works run --daemon` and `works dispatch --daemon` submit a job, wait for it, print the same
+  JSON as the standalone commands, and return the same exit codes. Standalone runs refuse while
+  a writable daemon owns the home. Relative scenario, quarantine, trace and prompt paths are
+  resolved by the CLI before they are sent.
+

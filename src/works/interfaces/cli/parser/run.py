@@ -34,6 +34,11 @@ def add_run_commands(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -
     run.add_argument("--decision", choices=("off", "shadow", "laix"), default=None)
     run.add_argument("--verifier", choices=("local", "docker"), default="local")
     run.add_argument("--verifier-image", default=None)
+    run.add_argument(
+        "--daemon",
+        action="store_true",
+        help="Run through the local daemon instead of in this process",
+    )
     run.add_argument("--json", action="store_true")
     run.set_defaults(func=cmd_run)
 
@@ -73,6 +78,11 @@ def add_run_commands(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -
     dispatch.add_argument("--decision", choices=("off", "shadow", "laix"), default=None)
     dispatch.add_argument("--verifier", choices=("local", "docker"), default="local")
     dispatch.add_argument("--verifier-image", default=None)
+    dispatch.add_argument(
+        "--daemon",
+        action="store_true",
+        help="Dispatch through the local daemon instead of in this process",
+    )
     dispatch.add_argument("--json", action="store_true")
     dispatch.set_defaults(func=cmd_dispatch)
 

@@ -29,6 +29,7 @@ class AppState:
     jobs: JobRunner
     live: EventHub
     write_lock: threading.Lock = field(default_factory=threading.Lock)
+    stop_event: threading.Event = field(default_factory=threading.Event)
 
 
 def build_state(
@@ -65,25 +66,35 @@ def build_supervisor(
     *,
     task_id: str | None = None,
     trace: str | None = None,
+    live: bool = False,
+    swarm: bool = False,
+    model: str | None = None,
+    model_base: str | None = None,
+    prompt: str | None = None,
+    ppma: str | None = None,
+    ppma_space: str = "me",
+    decision: str | None = None,
+    verifier: str = "local",
+    verifier_image: str | None = None,
 ) -> Supervisor:
-    """Build a supervisor from saved settings, with an optional recorded trace."""
+    """Build a supervisor from saved settings, with optional per-run overrides."""
     from works.interfaces.cli.commands.wiring import _supervisor
 
     args = argparse.Namespace(
         home=paths.root,
         trace=Path(trace).expanduser().resolve() if trace else None,
-        live=False,
-        swarm=False,
+        live=live,
+        swarm=swarm,
         swarm_python=None,
         swarm_home=None,
-        model=None,
-        model_base=None,
-        prompt=None,
-        ppma=None,
-        ppma_space="me",
-        decision=None,
-        verifier="local",
-        verifier_image=None,
+        model=model,
+        model_base=model_base,
+        prompt=Path(prompt).expanduser().resolve() if prompt else None,
+        ppma=ppma,
+        ppma_space=ppma_space,
+        decision=decision,
+        verifier=verifier,
+        verifier_image=verifier_image,
         task_id=task_id,
     )
     supervisor: Supervisor = _supervisor(args)

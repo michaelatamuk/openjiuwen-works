@@ -375,17 +375,49 @@ export interface components {
              * @default false
              */
             approve_plan: boolean;
+            /** Decision */
+            decision?: string | null;
             /**
              * Limit
              * @default 10
              */
             limit: number;
+            /**
+             * Live
+             * @default false
+             */
+            live: boolean;
+            /** Model */
+            model?: string | null;
+            /** Model Base */
+            model_base?: string | null;
+            /** Ppma */
+            ppma?: string | null;
+            /**
+             * Ppma Space
+             * @default me
+             */
+            ppma_space: string;
+            /** Prompt */
+            prompt?: string | null;
             /** Quarantine */
             quarantine?: string | null;
             /** Scenarios */
             scenarios?: string | null;
+            /**
+             * Swarm
+             * @default false
+             */
+            swarm: boolean;
             /** Trace */
             trace?: string | null;
+            /**
+             * Verifier
+             * @default local
+             */
+            verifier: string;
+            /** Verifier Image */
+            verifier_image?: string | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -432,14 +464,46 @@ export interface components {
              * @default false
              */
             approve_plan: boolean;
+            /** Decision */
+            decision?: string | null;
+            /**
+             * Live
+             * @default false
+             */
+            live: boolean;
+            /** Model */
+            model?: string | null;
+            /** Model Base */
+            model_base?: string | null;
+            /** Ppma */
+            ppma?: string | null;
+            /**
+             * Ppma Space
+             * @default me
+             */
+            ppma_space: string;
+            /** Prompt */
+            prompt?: string | null;
             /** Quarantine */
             quarantine?: string | null;
             /** Scenarios */
             scenarios?: string | null;
+            /**
+             * Swarm
+             * @default false
+             */
+            swarm: boolean;
             /** Task Id */
             task_id: string;
             /** Trace */
             trace?: string | null;
+            /**
+             * Verifier
+             * @default local
+             */
+            verifier: string;
+            /** Verifier Image */
+            verifier_image?: string | null;
         };
         /** RunSummary */
         RunSummary: {

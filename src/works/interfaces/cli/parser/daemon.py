@@ -8,7 +8,21 @@ from works.interfaces.cli.commands.daemon import cmd_daemon
 
 
 def add_daemon_commands(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
-    daemon = sub.add_parser("daemon", help="Run the local API daemon")
+    daemon = sub.add_parser(
+        "daemon",
+        help="Run or control the local API daemon",
+        description=(
+            "Run the daemon in the foreground, or use start/stop/status to manage a "
+            "detached one. A writable daemon owns the home while it runs."
+        ),
+    )
+    daemon.add_argument(
+        "action",
+        nargs="?",
+        choices=("run", "start", "stop", "status"),
+        default="run",
+        help="run in the foreground (default), or start/stop/status a detached daemon",
+    )
     daemon.add_argument("--host", default="127.0.0.1")
     daemon.add_argument("--port", type=int, default=8765)
     daemon.add_argument("--write", action="store_true", help="Allow write routes")
@@ -17,4 +31,5 @@ def add_daemon_commands(sub: argparse._SubParsersAction[argparse.ArgumentParser]
         action="store_true",
         help="Allow a non-loopback bind (not recommended)",
     )
+    daemon.add_argument("--json", action="store_true")
     daemon.set_defaults(func=cmd_daemon)

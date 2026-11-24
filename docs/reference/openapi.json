@@ -2,11 +2,23 @@
   "components": {
     "schemas": {
       "DispatchRequest": {
+        "additionalProperties": false,
         "properties": {
           "approve_plan": {
             "default": false,
             "title": "Approve Plan",
             "type": "boolean"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision"
           },
           "limit": {
             "default": 10,
@@ -14,6 +26,60 @@
             "minimum": 1.0,
             "title": "Limit",
             "type": "integer"
+          },
+          "live": {
+            "default": false,
+            "title": "Live",
+            "type": "boolean"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "model_base": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Base"
+          },
+          "ppma": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ppma"
+          },
+          "ppma_space": {
+            "default": "me",
+            "title": "Ppma Space",
+            "type": "string"
+          },
+          "prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt"
           },
           "quarantine": {
             "anyOf": [
@@ -37,6 +103,11 @@
             ],
             "title": "Scenarios"
           },
+          "swarm": {
+            "default": false,
+            "title": "Swarm",
+            "type": "boolean"
+          },
           "trace": {
             "anyOf": [
               {
@@ -47,6 +118,22 @@
               }
             ],
             "title": "Trace"
+          },
+          "verifier": {
+            "default": "local",
+            "title": "Verifier",
+            "type": "string"
+          },
+          "verifier_image": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verifier Image"
           }
         },
         "title": "DispatchRequest",
@@ -161,11 +248,77 @@
         "type": "object"
       },
       "RunRequest": {
+        "additionalProperties": false,
         "properties": {
           "approve_plan": {
             "default": false,
             "title": "Approve Plan",
             "type": "boolean"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision"
+          },
+          "live": {
+            "default": false,
+            "title": "Live",
+            "type": "boolean"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "model_base": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Base"
+          },
+          "ppma": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ppma"
+          },
+          "ppma_space": {
+            "default": "me",
+            "title": "Ppma Space",
+            "type": "string"
+          },
+          "prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt"
           },
           "quarantine": {
             "anyOf": [
@@ -189,6 +342,11 @@
             ],
             "title": "Scenarios"
           },
+          "swarm": {
+            "default": false,
+            "title": "Swarm",
+            "type": "boolean"
+          },
           "task_id": {
             "title": "Task Id",
             "type": "string"
@@ -203,6 +361,22 @@
               }
             ],
             "title": "Trace"
+          },
+          "verifier": {
+            "default": "local",
+            "title": "Verifier",
+            "type": "string"
+          },
+          "verifier_image": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verifier Image"
           }
         },
         "required": [

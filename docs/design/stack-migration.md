@@ -379,14 +379,19 @@ pass against the matrix is still required before calling the UI complete.
 - [x] `works ui` now starts the FastAPI app, serves `dist` at `/`, serves `/mira.svg` from the
   bundle, returns JSON 404 under `/api`, and opens a bootstrap URL in write mode.
 - [x] `works daemon` prints its bootstrap URL and shares the same static/API app.
-- [ ] `daemon.json` `{pid, host, port, home, started_at, token_path}`; pid reuse check; graceful stop
-  (`CTRL_BREAK_EVENT` on Windows, health identity before kill); single-instance lock.
-- [ ] Start detached with `cwd=home`, allow-listed env snapshot, log redirection; relative repos
-  resolve against `home`.
-- [ ] `POST /runs`, `POST /dispatch`, `GET /runs/{id}`; optional `--schedule`; `dispatch --watch`
-  guarded under a daemon.
-- [ ] CLI `--daemon` waits for jobs (`run_job_and_wait`), prints the same JSON, maps exit codes;
-  `--standalone` remains default and refuses when a daemon owns the home.
+- [x] `.works/state/daemon.json` `{pid, host, port, home, started_at, token_path}` with a pid
+  start-time check, health-home identity, stale-file cleanup and an exclusive `daemon.lock` for
+  writable daemons. `works daemon start|stop|status` manage a detached process; stop is an
+  authenticated `/admin/shutdown`, then `SIGTERM`/`CTRL_BREAK_EVENT`, and never kills a pid that
+  does not answer with this home's health.
+- [x] Detached start uses `cwd=home`, an allow-listed environment snapshot and
+  `.works/state/daemon.log`; relative scenario/trace/prompt paths are resolved before sending.
+- [x] `POST /runs`, `POST /dispatch`, `GET /runs/{id}`; dispatch jobs run queued tasks and report
+  per-task errors; `dispatch --watch` is refused under a daemon.
+- [x] CLI `--daemon` submits a job, waits for it, prints the same JSON and maps exit codes;
+  standalone stays the default and refuses while a writable daemon owns the home.
+- [ ] Gate left for Phase 7: the concurrent daemon + UI + dispatch soak, and a full fake-harness
+  smoke through the detached process.
 
 **Gate:** daemon + UI + `POST /dispatch` concurrently; no lock conflicts; kill the UI, run survives;
 restart daemon, stale jobs/owners reconciled.

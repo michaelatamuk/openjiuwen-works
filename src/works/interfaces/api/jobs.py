@@ -50,6 +50,7 @@ class Job:
     finished_at: float | None = None
     result: Any = None
     error: str | None = None
+    error_code: str | None = None
     log_tail: str = ""
     cancelable: bool = True
 
@@ -121,6 +122,7 @@ class JobRunner:
         except Exception as exc:  # a job failure is a status, not a crash
             with self._guard:
                 job.error = f"{type(exc).__name__}: {exc}"[:1000]
+                job.error_code = getattr(exc, "code", None)
                 job.log_tail = job.error
             self._finish(job, "failed")
         else:
