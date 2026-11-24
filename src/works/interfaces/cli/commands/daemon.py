@@ -27,7 +27,7 @@ def _trusted_hosts(args: argparse.Namespace) -> tuple[str, ...]:
     trusted = set(LOOPBACK)
     trusted.update(extra)
     if args.host not in LOOPBACK:
-        if args.host in ("0.0.0.0", "::"):  # noqa: S104 - validated remote bind
+        if args.host in ("0.0.0.0", "::"):  # noqa: S104  # nosec B104 - validated remote bind
             if not extra:
                 raise ConfigError(
                     "a wildcard bind needs --trusted-host for the address clients will use"
