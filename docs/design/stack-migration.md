@@ -2,113 +2,144 @@
 
 **Status:** plan (not started)
 **Date:** 2026-11-24
+**Companion:** [`stack-migration-review.md`](stack-migration-review.md) — the code review that
+prompted the corrections below.
 
 ## 1. Goal
 
-Split the product into two processes and two independent codebases:
+Split the product into two processes and two codebases:
 
-- **backend** — a local daemon in Python that owns the queue, runs, SSE and long actions;
-- **frontend** — a React/TypeScript SPA, a thin client over a typed API.
+- **backend** — a local daemon (`works daemon`) in Python that owns the queue, runs, jobs, SSE and
+  settings;
+- **frontend** — a React/TypeScript SPA, a thin typed client.
 
-The engine (`domain/`, `application/`, `adapters/`) is **not rewritten**. This plan wraps the
-existing logic in a modern HTTP layer and a typed client.
+The engine (`domain/`, `application/`, `adapters/`) is **not rewritten**. The daemon wraps it.
 
 ## 2. Principles
 
 1. The event log and run artifacts stay the source of truth.
-2. One writer: the daemon owns the queue. The CLI either attaches to it or runs standalone.
-3. The CLI stays a first-class interface, not a second-class client.
-4. Local daemon, not cloud: localhost or a named pipe, with a token for writes.
-5. No microservices, Redis, Postgres or GraphQL.
-6. The API is versioned (`/api/v1`); the UI types are generated from OpenAPI.
-7. The old stdlib server stays until the final cutover and is deleted at the end.
+2. The daemon owns the queue, runs and gates. A standalone CLI is allowed only when no daemon owns
+   the home.
+3. The CLI stays a first-class client; it may run in-process or attach over HTTP.
+4. Local-only: loopback bind, token-gated writes, no CORS.
+5. Event log for integration, not service-to-service calls.
+6. API versioned as `/api/v1`; client types generated from OpenAPI.
+7. No microservices, Redis, Postgres, GraphQL or cloud.
+8. The old stdlib server is removed at cutover; rollback is a git tag, not a dual runtime.
 
 ## 3. Target architecture
 
 ```
-Browser
-  └─ SPA (React/TS) ── HTTP/JSON + SSE ──┐
-                                        │
-CLI (works …) ── in-process ────────────┤
-   └─ or HTTP client ───────────────────┤
-                                        ▼
-                             worksd (FastAPI/Uvicorn)
-                             ├─ REST /api/v1
-                             ├─ SSE /api/v1/events
-                             ├─ queue and scheduler (asyncio)
-                             ├─ long actions (jobs)
-                             └─ application/ (existing engine)
-                                        │
-                             adapters: files, git, harness, docker
+Browser ── SPA (React/TS) ── HTTP/JSON + SSE ─┐
+                                             │
+CLI (works …) ── in-process (--standalone) ──┤
+   └─ or HTTP client (--daemon) ─────────────┤
+                                             ▼
+                                  works daemon (FastAPI/Uvicorn)
+                                  ├─ /api/v1 REST + SSE
+                                  ├─ job executor (runs, long actions)
+                                  ├─ optional scheduler (queued tasks)
+                                  ├─ per-job Supervisor (engine)
+                                  └─ queue, file locks, event log
 ```
 
-Production processes: **daemon + browser**. Development: **Uvicorn + Vite + browser**.
+Production: **daemon + browser**. Development: **Uvicorn + Vite + browser**.
 
 ## 4. Stack
 
 **Backend**
-- **Python 3.13** (the project supports `>=3.12,<3.14`; move to 3.14 later, separately).
-- FastAPI, Uvicorn, Pydantic v2, `sse-starlette`.
-- asyncio tasks; `watchfiles` to watch the queue.
-- SQLite (the existing index) and file locks — unchanged.
-- `structlog`, optionally OpenTelemetry.
+- Python **3.12** (current CI) with 3.13 tested; 3.14 stays out until `pyproject` allows it.
+- FastAPI, Uvicorn, Pydantic v2, `sse-starlette`, `asgi-lifespan` (tests).
+- asyncio for the HTTP layer; the engine is async but its adapters block, so runs execute in
+  dedicated worker threads (§6).
+- SQLite index (`TaskIndex`) and file locks — unchanged.
 - Packaging: extra `server = [fastapi, uvicorn, sse-starlette]`.
 
 **Frontend**
-- React 19 + Vite + TypeScript.
-- TanStack Query (server state), Zustand (local UI state).
-- Tailwind v4 + shadcn/ui.
+- React 19 + Vite + TypeScript (strict for new files; `allowJs` during migration).
+- TanStack Query for server state; Zustand optional, only if local state grows.
+- Keep the existing CSS; **no Tailwind/shadcn rewrite** in this migration.
 - Zod + `openapi-typescript` → `web/src/api/generated`.
-- SSE hook instead of a hand-written `EventSource`.
+- Vitest + Testing Library + jsdom for hooks and pure helpers.
+- SSE hook; `ask` uses streaming `fetch`, not `EventSource`.
 
 ## 5. Contracts
 
-### 5.1 REST endpoints
+### 5.1 Endpoints (`/api/v1`)
 
-Version `/api/v1`. Errors: `{ "ok": false, "error": { "code", "message" } }`.
+| Method | Path | Auth | Result |
+|---|---|---|---|
+| GET | `/health` | read | version, write mode, builder |
+| GET | `/products`, `/detectors?refresh=` | read | maps |
+| GET | `/tasks?limit=` | read | list |
+| POST | `/tasks` | write | 201 created / 200 existing |
+| GET | `/tasks/{id}` | read | full detail |
+| GET | `/tasks/{id}/runs` | read | run summaries |
+| GET | `/tasks/{id}/export/{kind}` | read | file download |
+| GET | `/tasks/{id}/artifacts/{name:path}` | read | runtime artifact |
+| POST | `/actions` | write | 200 sync or 202 + job |
+| GET | `/jobs/{id}`, `DELETE /jobs/{id}` | read/write | job status / cancel |
+| POST | `/readiness` | write | 202 + job |
+| POST | `/sources` | write | 202 + job |
+| GET | `/settings/builder` | read | current settings |
+| POST | `/settings/builder` | write | saved settings |
+| POST | `/session` | none | exchanges bootstrap token for a cookie |
+| GET | `/events` | read | SSE |
+| POST | `/ask/stream` | write | SSE `delta`/`done`/`error` |
+| POST | `/runs` | write | 202 + job (run one task) |
+| POST | `/dispatch` | write | 202 + job (claim ready tasks) |
+| GET | `/runs/{run_id}` | read | run status and summary |
+| GET | `/metrics`, `/ledger` | read | factory metrics and ledger |
+| GET | `/system/metrics` | read | API/job/SSE telemetry (new) |
+| GET | `/openapi.json` | none | schema for client generation |
 
-| Method | Path | Purpose |
-|---|---|---|
-| GET | `/health` | version, write mode, builder |
-| GET | `/products`, `/detectors` | product and detector maps |
-| GET | `/tasks?limit=` | task list |
-| POST | `/tasks` | create a task (201 created, 200 existing) |
-| GET | `/tasks/{id}` | detail (story, proof, rail, runs) |
-| GET | `/tasks/{id}/runs` | run summaries |
-| GET | `/tasks/{id}/export/{kind}` | download a run artifact |
-| GET | `/tasks/{id}/artifacts/{name}` | runtime artifact |
-| POST | `/actions` | short actions return 200; long ones return 202 + job |
-| GET | `/jobs/{id}`, `DELETE /jobs/{id}` | job status and cancellation |
-| POST | `/readiness` | repository readiness (long → 202) |
-| POST | `/sources` | import GitHub/Jira/detector |
-| GET/POST | `/settings/builder` | builder/planner settings |
-| GET | `/metrics`, `/ledger` | observability |
-| GET | `/events` | SSE: queue, task, run and job updates |
-| POST | `/ask/stream` | streamed Mira answer (SSE) |
+`HEAD` is supported for static and download routes. An unversioned `/health` alias may exist for
+`works ui`, but `/api/v1` is canonical.
 
-Long actions: `ask`, `team-verify`, `readiness`, `deliver`, `confirm`. Everything else answers
-synchronously. Success and error bodies keep today's field names.
+Embedded URLs (artifacts, exports) are built by one helper and include the version prefix.
 
-### 5.2 Error and status mapping
+### 5.2 Actions
 
-`WorksError.code` is the API error code; status comes from the class:
+There are **nine** existing actions; `deploy` is added to close the Release gap.
 
-| Error | Status |
+| Action | Kind |
 |---|---|
-| `ConfigError` / `ValueError` | 400 |
-| `PolicyError` | 403 |
-| `NotFoundError` | 404 |
-| `StateError`, `ConflictError` | 409 |
-| `HarnessError` | 502 |
-| any other `WorksError` | 500 |
-| unexpected exception | 500, logged with a request id |
+| `add-context` | sync |
+| `approve-plan` | sync |
+| `release` | sync |
+| `ask` | dedicated `POST /ask/stream` (SSE) |
+| `commentary` | job (model call, up to 180 s) |
+| `discussion` | job (model call, up to 180 s) |
+| `deliver` | job (git/network) |
+| `confirm` | job (network/commands) |
+| `team-verify` | job (subprocess) |
+| `deploy` | job (command) — new |
 
-Unknown routes return 404 with `{"ok": false, "error": {"code": "not_found"}}`. The old server
-collapsed many of these into 404; the new API must not.
+`run-readiness` is **not** an action: the Evidence panel calls `POST /readiness` with the task’s
+repository.
 
-### 5.3 SSE events
+### 5.3 Errors
 
-`GET /api/v1/events` sends `id`, `event` and JSON `data`:
+Body: `{ "ok": false, "error": { "code": "...", "message": "..." } }`.
+
+| Source | Status |
+|---|---|
+| request validation / bad body | 400 (or FastAPI 422 for schema errors) |
+| missing/invalid auth | 401 |
+| policy refusal | 403 |
+| not found | 404 |
+| state/conflict/idempotency replay conflict | 409 |
+| missing model key, agent-core, swarm, docker daemon | 503 |
+| `HarnessError` / worker crash | 502 |
+| unexpected | 500 with a request id |
+
+Add `AuthError` (401/403) and `UnavailableError` (503) to `domain/errors.py`; keep `ConfigError`
+for user-fixable configuration. The client reads `error.message` (never `[object Object]`) and maps
+`code` to the existing toast wording.
+
+### 5.4 SSE
+
+`GET /events` sends `id`, named `event` and JSON `data`:
 
 | Event | Data |
 |---|---|
@@ -116,324 +147,367 @@ collapsed many of these into 404; the new API must not.
 | `task.changed` | `{"task_id": "t-…"}` |
 | `run.changed` | `{"task_id": "t-…", "run_id": "r-…"}` |
 | `job.changed` | `{"job_id": "j-…", "status": "running"}` |
+| `settings.changed` | `{}` |
 | `heartbeat` | `{"ts": "…"}` every 15 s |
+| `resync` | `{"epoch": "…", "reason": "gap"}` |
 
-The `id` is a monotonic counter; clients send `Last-Event-ID` to resume. `ask/stream` keeps the
-current `delta` / `done` / `error` events.
+The source of truth is `events.jsonl` plus the job store: a mapper tails new events and emits the
+named events. A ring buffer keeps the last 200 events per epoch; `Last-Event-ID` older than the
+ring gets `resync`, and the client refetches the open task/list.
 
-### 5.4 Auth and origin
+### 5.5 Auth
 
-- The daemon writes a random token to `.works/state/http-token` with owner-only permissions.
-- `works ui` opens `http://127.0.0.1:<port>/?bootstrap=<one-time-token>`; the SPA calls
-  `POST /api/v1/session` once, gets an HttpOnly `SameSite=Strict` cookie, and drops the URL token.
-- Reads work without the cookie; every mutating request requires it (or `Authorization: Bearer` for
-  the CLI).
-- Bind to `127.0.0.1` only; reject requests whose `Host` is not a loopback name.
-- No CORS in production. The Vite dev proxy makes the browser same-origin.
+- **Persistent token** `.works/state/http-token` (owner-only) for CLI `Authorization: Bearer`.
+- **Bootstrap token** per `works ui` launch, single-use, in `?bootstrap=…`. `POST /session`
+  validates it, sets an HttpOnly `SameSite=Strict` cookie (random session id kept in memory), and
+  the SPA drops the URL token.
+- Reads are allowed on loopback without a cookie. All writes require the session cookie or Bearer.
+- Reject non-loopback `Host`/`Origin`; `--host` accepts only loopback unless `--allow-remote` is
+  passed explicitly.
+- Windows: set file permissions with an ACL (`icacls`) and fall back to `chmod` where possible.
+- `.works/state/` is gitignored.
 
-### 5.5 Jobs and idempotency
+### 5.6 Jobs
 
-- Long actions run as jobs: `{id, action, status: queued|running|succeeded|failed, started_at,
-  finished_at, result, error, log_tail}`.
-- Max 2 concurrent jobs; extra ones queue. Cancellation kills the worker thread’s subprocess where
-  possible and records `cancelled`.
-- `POST /tasks` and `POST /actions` accept `Idempotency-Key`; a replay returns the first result.
+- Statuses: `queued`, `running`, `succeeded`, `failed`, `cancelled`.
+- Persisted in `.works/state/jobs/*.json`; on startup, `running` jobs become `failed`
+  (`daemon restarted`) and stale owners are reconciled.
+- Max 2 concurrent jobs; one job per task (per-task lock in the registry).
+- Cancellation is cooperative: the job gets a cancel flag and the process registry kills the active
+  child. Document that a job cannot be cancelled after a side effect (push, PR, comment, deploy).
+- Job payload: id, action, task_id, status, timestamps, result, error, `log_tail`, `cancelable`.
 
-## 6. Concurrency and the blocking engine
+### 5.7 Runs and scheduler
 
-- Uvicorn runs **one worker**. One writer, one process, file locks unchanged.
-- The engine is synchronous/blocking. Never call `Supervisor.run` on the event loop: run it in a
-  dedicated thread (`asyncio.to_thread` or a small executor with its own `asyncio.run`).
-- Long actions (Mira, team verify, readiness, deliver, confirm) use the same job executor.
-- `LiveState` keeps its watcher thread and `queue.Queue`; one broadcaster task drains it and fans
-  out to SSE clients, so clients never block each other.
-- SSE writes use `StreamingResponse` with a per-client buffers and a disconnect check.
-- `FileLock` stays for cross-process safety; `dispatch --watch` only runs inside the daemon.
+The daemon owns runs:
+
+- `POST /runs` `{task_id, approve_plan, scenarios, quarantine}` → job of kind `run`.
+- `POST /dispatch` `{limit}` → job that claims ready tasks one by one (no HTTP long-poll loop).
+- Optional `works daemon --schedule <seconds>` enables a scheduler that dispatches queued tasks when
+  enabled in settings. Off by default.
+- `works dispatch --watch` works only in `--standalone`; if a daemon owns the home it exits with a
+  clear message.
+
+## 6. Execution and concurrency
+
+`Supervisor.run` is `async def`; its adapters (git, verifier, harness processes) block.
+
+- Each run job builds **its own Supervisor** from current settings via a factory (no argparse, no
+  shared mutable supervisor) and executes it in a dedicated worker thread:
+  `asyncio.run(supervisor.run(...))`.
+- The event loop stays free for HTTP, SSE and heartbeats; a 30-second run must not delay a 1-second
+  heartbeat or `GET /tasks`.
+- Job executor: 2 workers, per-task locks, file locks unchanged.
+- Settings saved during a run apply to the next job; active jobs are listed and left alone.
+- Standalone CLI refuses to write when a daemon owns the home (`daemon.json` + lock file).
 
 ## 7. File mapping
 
 | Today | After |
 |---|---|
-| `interfaces/api/server.py` | `interfaces/http/app.py` + `routes/` (deleted) |
-| `interfaces/api/read.py` | `interfaces/http/routes/tasks.py`, `observability.py` |
-| `interfaces/api/write.py` | `interfaces/http/routes/actions.py`, `sources.py`, `settings.py` |
-| `interfaces/api/downloads.py` | `interfaces/http/routes/downloads.py` (`FileResponse`) |
-| `interfaces/api/static.py` | `StaticFiles` mount + an asset fallback route |
-| `interfaces/api/live.py` | keep `LiveState`; add `http/live.py` SSE bridge |
-| `interfaces/api/presenters/*` | keep; wrap with Pydantic response models |
-| `interfaces/cli/commands/ui.py` | start/attach the daemon; `--legacy` while migrating |
-| `web/src/lib/api.js` | `web/src/api/client.ts` (generated types) |
-| `web/src/app/App.jsx` | shell; `EventSource` replaced by `useEvents` |
+| `interfaces/api/server.py` | `interfaces/api/app.py` + `routes/` (deleted) |
+| `interfaces/api/read.py` | `interfaces/api/routes/{tasks,observability}.py` |
+| `interfaces/api/write.py` | `interfaces/api/routes/{actions,sources,settings,readiness}.py` |
+| `interfaces/api/downloads.py` | `interfaces/api/routes/downloads.py` (`FileResponse`) |
+| `interfaces/api/static.py` | `StaticFiles` + `/mira.svg` from `dist` |
+| `interfaces/api/live.py` | `interfaces/api/live.py` (SSE mapper + broadcaster) |
+| `interfaces/api/presenters/*` | keep; typed response models |
+| `interfaces/cli/commands/ui.py` | start/attach the daemon |
+| `interfaces/cli/commands/daemon.py` (new) | start/stop/status |
+| `web/src/lib/api.js` | `web/src/api/client.ts` |
+| `web/src/App.jsx` | shell; `useEvents` instead of `EventSource` |
+| `scripts/agent_chat_worker.py`, `team_verify_worker.py`, `swarm_adapter.py` | packaged workers (not repo-relative) |
+| `flows/` | default flows packaged and bootstrapped into a new home |
 
-Delete at cutover: `server.py`, `read.py`, `write.py`, `downloads.py`, `static.py` gaps,
-`web/src/lib/api.js`, and the legacy `/app.js` fallback.
+`mira.svg` moves to `web/public/` so Vite emits it into `dist`; the static special case disappears.
+Delete `server.py`, `read.py`, `write.py`, `downloads.py`, `static.py`, `lib/api.js` and the legacy
+tests at cutover.
 
 ## 8. Phases
 
-Every checkbox names the artifact it produces. A phase ends with a **gate**: a command (or a short
-list) that must be green before the next phase starts. A box without a test is a review item, not
-a done item.
+Every item names the artifact; each phase ends with a **gate**.
 
-### Phase 0 — preparation (0.5 day)
+### Phase 0a — fixtures and canonicalizer (1 day)
+- [ ] `scripts/seed_home.py`: deterministic home (repo fixture, flows, scenarios, a planning task
+  with a plan event, a proved run, a delivered + confirmed run, a flaky task). Verify: rerun twice,
+  hashes match.
+- [ ] `tests/contract/canonicalize.py`: normalizes timestamps, absolute paths, task/run ids, sha256,
+  URLs and unordered lists; documented rules. Verify: unit tests on two known payloads.
+- [ ] `scripts/capture_api_fixtures.py`: starts the legacy server against the seed home and writes
+  GET/POST fixtures. Verify: `--check` exits 0.
+- [ ] `tests/contract/test_baseline.py`: fixture presence and top-level keys.
 
-- [ ] `docs/adrs/016-local-daemon-and-typed-client.md`: decision, context, consequences; add it to
-  `docs/adrs/README.md`. Verify: file linked from the ADR index.
-- [ ] `scripts/capture_api_fixtures.py`: calls the legacy server on a demo home and writes every
-  GET/POST response to `tests/contract/fixtures/*.json`. Verify: `uv run python scripts/capture_api_fixtures.py --check`
-  exits 0 against current code.
-- [ ] `tests/contract/test_baseline.py`: asserts the fixtures are present and have the expected
-  top-level keys. Verify: `uv run pytest tests/contract -q`.
-- [ ] CI smoke step in `.github/workflows/ci.yml`: `uv run works --help` and `uv run works version`.
-  Verify: the `check` job is green on a branch.
+**Gate:** `uv run pytest tests/contract -q`; seed home is reproducible.
 
-**Gate:** `uv run pytest tests/contract -q` and the console smoke both pass.
+### Phase 0b — OpenAPI and frontend toolchain (1 day)
+- [ ] `scripts/dump_openapi.py` writes `docs/reference/openapi.json`. Verify: file changes only when
+  routes change.
+- [ ] `web/package.json`: add `typescript`, `@types/react`, `@types/react-dom`, `@tanstack/react-query`,
+  `zod`, `openapi-typescript`, `vitest`, `@testing-library/react`, `@testing-library/jest-dom`,
+  `jsdom`; scripts `dev/build/typecheck/test/generate:api`. Verify: `npm ci` succeeds with a
+  regenerated `package-lock.json` committed.
+- [ ] `web/tsconfig.json`: `strict`, `allowJs`, `jsx: react-jsx`, `moduleResolution: bundler`,
+  `types: ["vitest/globals"]`, `include: ["src"]`.
+- [ ] `web/vite.config.js`: test config with `environment: "jsdom"`.
+- [ ] `.github/workflows/ci.yml`: `uv sync --frozen --extra dev --extra server`; add `web` and
+  `contract` jobs; smoke `uv run works --help` and `works version`.
 
-### Phase 1 — daemon skeleton (1 day)
+**Gate:** `npm ci && npm run typecheck && npm test` and `uv run works --help`.
 
-- [ ] `pyproject.toml`: extra `server = ["fastapi", "uvicorn", "sse-starlette"]`, dev extra gains
-  `httpx`. Verify: `uv lock` updates and `uv sync --extra dev --extra server` succeeds.
-- [ ] `src/works/interfaces/http/app.py`: `create_app(paths)` + lifespan that builds the queue and
-  supervisor once. Verify: app imports and starts under Uvicorn.
-- [ ] `src/works/interfaces/http/wiring.py`: one dependency builder used by tests and the daemon.
-  Verify: no second copy of `WorksPaths`/`Queue` construction.
-- [ ] `src/works/interfaces/http/routes/health.py`: `GET /api/v1/health` with the exact legacy keys
-  (`ok`, `readonly`, `write`, `root`, `version`, `ai`, `builder`). Verify: schema test below.
-- [ ] `src/works/interfaces/cli/commands/daemon.py`: `works daemon --host --port --write`; registered
-  in `cli/parser/run.py`.
-- [ ] `tests/unit/interfaces/http/test_health.py`: `httpx.ASGITransport`, asserts keys and values.
-  Verify: `uv run pytest tests/unit/interfaces/http -q`.
+### Phase 1 — daemon skeleton (1.5 days)
+- [ ] `interfaces/api/app.py`: `create_app(paths)`, lifespan start/stop, `GET /api/v1/health`.
+- [ ] `interfaces/api/wiring.py`: `build_supervisor(settings, task)` factory shared by jobs/CLI/tests.
+- [ ] `interfaces/cli/commands/daemon.py` + `cli/parser/daemon.py`: `works daemon --host --port
+  --write` (loopback only unless `--allow-remote`).
+- [ ] `interfaces/api/schemas/health.py`.
+- [ ] Tests use `asgi-lifespan` (or `TestClient`) so lifespan runs.
+- [ ] Lazy import of `interfaces.api` so `works --help` works without the `server` extra.
 
-**Gate:** `uv run pytest tests/unit/interfaces/http -q` and `uv run works daemon --help`.
+**Gate:** `uv run pytest tests/unit/interfaces/api -q`; `works daemon --help`; health matches legacy
+keys.
 
-### Phase 2 — read API (2 days)
+### Phase 2 — read API (3 days)
+- [ ] `schemas/tasks.py`: `TaskSummary` (all fields from `detail.py`), `TaskDetail` (task, summary,
+  run, evidence, proof_md, timeline, pipeline, readiness, features, release, delivery, deployment,
+  confirmation, team, laix, verifier, artifacts, runs, thread, rail), `RunSummary`,
+  `Pipeline`, `ThreadMessage`, `Rail`, `Artifact`.
+- [ ] `routes/tasks.py`, `routes/maps.py`, `routes/observability.py`, `routes/downloads.py`.
+- [ ] List/detail use `TaskIndex`/`fast_read`; readiness and release cached by repo head + checks
+  sha; detail `runs` stays in the payload (explicit).
+- [ ] Contract tests compare canonicalized old/new JSON for every GET; a separate test asserts every
+  key the SPA reads is present.
+- [ ] URL helper emits `/api/v1/...`; a test fetches every URL returned in detail.
 
-- [ ] `src/works/interfaces/http/schemas/tasks.py`: `TaskSummary`, `TaskDetail`, `RunSummary`,
-  `Pipeline`, `ThreadMessage`, `Rail`, `ArtifactDownload`. Verify: models import and round-trip
-  fixtures via `model_validate`.
-- [ ] `src/works/interfaces/http/routes/tasks.py`: `GET /tasks`, `/tasks/{id}`, `/tasks/{id}/runs`.
-  Verify: contract test `tests/contract/test_tasks_api.py`.
-- [ ] `src/works/interfaces/http/routes/maps.py`: `/products`, `/detectors`. Verify: contract tests.
-- [ ] `src/works/interfaces/http/routes/observability.py`: `/metrics`, `/ledger`. Verify: contract
-  tests.
-- [ ] `src/works/interfaces/http/routes/downloads.py`: exports and artifacts via `FileResponse`,
-  path confined to the run directory. Verify: traversal test (below) and contract test.
-- [ ] `tests/contract/test_read_api.py`: for each fixture, start the new app on an empty home, seed
-  the same data, and assert JSON equality (field order irrelevant, timestamps normalized).
-- [ ] `tests/unit/interfaces/http/test_downloads.py`: rejects `../`, absolute paths, and a missing
-  run; serves a real artifact with the right content type.
+**Gate:** `pytest tests/contract tests/unit/interfaces/api`; 10,000-task list under 100 ms.
 
-**Gate:** `uv run pytest tests/contract tests/unit/interfaces/http -q` (all read endpoints).
+### Phase 3a — jobs, security, session (3 days)
+- [ ] `security.py`: persistent token, bootstrap tokens, `POST /session`, cookie, Host/Origin checks,
+  `.works/state/` gitignore, Windows ACL. Tests: missing/wrong token, bad Host, read-only mode.
+- [ ] `jobs.py`: executor (2 workers), persisted statuses, cancel flag, process registry,
+  reconciliation at startup, per-task lock. Tests: cancel, restart, stale owner.
+- [ ] `CommandRunner`/`subprocess` calls register their process so cancellation can kill it.
+- [ ] `domain/errors.py`: `AuthError`, `UnavailableError`; mapping tests.
 
-### Phase 3 — write API (2 days)
+**Gate:** `pytest tests/unit/interfaces/api/test_{security,jobs}.py`; crash/restart test passes.
 
-- [ ] `src/works/interfaces/http/security.py`: token file `.works/state/http-token` (owner-only),
-  `POST /api/v1/session` cookie bootstrap, loopback `Host` check. Verify:
-  `tests/unit/interfaces/http/test_security.py` covers missing token, wrong token, bad Host.
-- [ ] `src/works/interfaces/http/jobs.py`: executor with `max_workers=2`, statuses, cancellation,
-  log tail. Verify: `tests/unit/interfaces/http/test_jobs.py` with a fake long job and a cancel.
-- [ ] `src/works/interfaces/http/routes/actions.py`: all eight actions; `ask`, `team-verify`,
-  `readiness`, `deliver`, `confirm` return 202 + job. Verify: `tests/contract/test_actions_api.py`
-  plus a job-status test.
-- [ ] `routes/tasks.py`: `POST /tasks` with `Idempotency-Key`; replay returns the first result.
-  Verify: a test that posts twice and asserts one task.
-- [ ] `routes/sources.py`, `routes/settings.py`, `routes/readiness.py`.
-- [ ] `app.py`: one exception handler implementing the status mapping from §5.2. Verify: a
-  parametrized test per `WorksError` subclass.
-- [ ] `scripts/smoke_api.py`: create → approve-plan → release → confirm against a demo home.
+### Phase 3b — actions, readiness, sources, settings (2 days)
+- [ ] `routes/actions.py`: 9 actions + `deploy`; sync/job split from §5.2; 202 + job for long ones.
+- [ ] `routes/readiness.py`: `POST /readiness`; UI Evidence switches from `run-readiness`.
+- [ ] `routes/sources.py`, `routes/settings.py`: settings apply to the next job; GET returns saved
+  values.
+- [ ] One exception handler per §5.3.
+- [ ] `scripts/smoke_api.py`: seeded home → create, approve, run via fake harness, release, deliver,
+  confirm, deploy dry-run; asserts each response.
 
-**Gate:** `uv run pytest tests/unit/interfaces/http tests/contract -q` and `uv run python scripts/smoke_api.py`.
+**Gate:** `pytest tests/contract tests/unit/interfaces/api`; `uv run python scripts/smoke_api.py`.
 
-### Phase 4 — live updates (1 day)
+### Phase 4 — live updates (2 days)
+- [ ] `live.py`: event mapper (tail `events.jsonl`, job store, settings), ring buffer, epoch,
+  `resync`; heartbeat.
+- [ ] `routes/events.py`: named SSE, `Last-Event-ID`, disconnect handling.
+- [ ] `routes/ask.py`: bridge `ask_mira_stream` through a thread; `delta/done/error`.
+- [ ] Tests: task/run/job events, heartbeat, gap → `resync`, stream cancel.
 
-- [ ] `src/works/interfaces/http/live.py`: broadcaster task draining `LiveState`, a ring buffer of
-  the last 200 events for `Last-Event-ID`, 15 s heartbeat.
-- [ ] `routes/events.py`: `StreamingResponse` with `text/event-stream`, disconnect handling.
-  Verify: `tests/unit/interfaces/http/test_sse.py` asserts event names, ids, heartbeat and replay.
-- [ ] `routes/ask.py`: `POST /ask/stream` with the existing `delta`/`done`/`error` payloads.
-  Verify: mocked worker streaming test.
-- [ ] `docs/reference/http-api.md`: one page with the endpoints, events and error codes.
+**Gate:** `pytest tests/unit/interfaces/api/test_sse.py`.
 
-**Gate:** `uv run pytest tests/unit/interfaces/http/test_sse.py -q`.
+### Phase 5a — frontend toolchain and client (2 days)
+- [ ] `web/src/api/generated/schema.ts` from OpenAPI (committed); CI regenerates and fails on diff.
+- [ ] `client.ts`: cookie credentials, typed errors, `Idempotency-Key`.
+- [ ] `hooks.ts`: `useTasks`, `useTaskDetail`, `useActions`, `useJob`, `useMetrics`, `useEvents`.
+- [ ] `useJob` state machine: queued/running/succeeded/failed/cancelled, progress/log, refresh on
+  success, disabled while busy.
+- [ ] Vitest setup and tests for client/hooks with mocked fetch.
 
-### Phase 5 — TypeScript frontend (3–4 days)
+**Gate:** `npm run typecheck && npm test`.
 
-- [ ] `web/package.json`: add `typescript`, `@tanstack/react-query`, `zustand`, `zod`,
-  `openapi-typescript`, `vitest`; scripts `dev`, `build`, `typecheck`, `test`, `generate:api`.
-  Verify: `npm ci && npm run typecheck`.
-- [ ] `web/tsconfig.json`: `strict`, `allowJs`, `jsx: react-jsx`; new files are `.ts`/`.tsx`.
-- [ ] `web/src/api/generated/schema.d.ts`: generated from `/api/v1/openapi.json`; committed.
-  Verify: CI regenerates and fails on `git diff --exit-code`.
-- [ ] `web/src/api/client.ts`: fetch wrapper with credentials, typed errors, `Idempotency-Key`.
-- [ ] `web/src/api/hooks.ts`: `useTasks`, `useTaskDetail`, `useActions`, `useJob`, `useMetrics`.
-  Verify: `vitest` tests with a mocked fetch.
-- [ ] `web/src/api/useEvents.ts`: SSE with reconnect and cache invalidation.
-- [ ] Screens migrated one by one, each with its parity items from §18: Queue, Story, Evidence,
-  Release, Session, Settings, dialogs, palette/help.
-- [ ] Delete `web/src/lib/api.js` and the last `EventSource` call site.
+### Phase 5b — screens (5 days)
+- [ ] Queue (search, filters, grouping/counts, mobile new task, live dot).
+- [ ] Story (route, receipts, replay, present mode, copy link, memory badge, blocked callout).
+- [ ] Evidence (pipeline, verdict, findings, challenge, commands, change, readiness, features,
+  artifacts/lightbox, timeline, exports, policy/risk/decision/residual/cost/verifier/team/LAIX).
+- [ ] Release (packet, gate, deliver/confirm/deploy as jobs, compare runs, deployment/LAIX).
+- [ ] Session (transcript, chapters, ask stream, review/commentary jobs, add context, run log, rail).
+- [ ] Settings (runtime/provider, verifier split, planner modes/critic, workspace, read-only).
+- [ ] Dialogs: Factory metrics/ledger, Run, Event, Palette, Help, Import; toasts and shortcuts.
+- [ ] Delete `lib/api.js`; every parity row from §18 has a test.
 
-**Gate:** `npm run typecheck && npm test && npm run build`, plus a manual parity pass through §18.
+**Gate:** `typecheck && test && build`, plus the parity matrix.
 
-### Phase 6 — process split (2 days)
+### Phase 6 — processes, runs, Windows lifecycle (4 days)
+- [ ] `daemon.json` `{pid, host, port, home, started_at, token_path}`; pid reuse check; graceful stop
+  (`CTRL_BREAK_EVENT` on Windows, health identity before kill); single-instance lock.
+- [ ] Start detached with `cwd=home`, allow-listed env snapshot, log redirection; relative repos
+  resolve against `home`.
+- [ ] `POST /runs`, `POST /dispatch`, `GET /runs/{id}`; optional `--schedule`; `dispatch --watch`
+  guarded under a daemon.
+- [ ] CLI `--daemon` waits for jobs (`run_job_and_wait`), prints the same JSON, maps exit codes;
+  `--standalone` remains default and refuses when a daemon owns the home.
+- [ ] Static: `dist` at `/`, `/mira.svg` from `dist`, API 404 before SPA fallback.
 
-- [ ] `works daemon start|stop|status`: pidfile `.works/state/daemon.pid`, log
-  `.works/state/daemon.log`, single-instance lock. Verify: start twice → second exits with a clear
-  message; stale pidfile is recovered.
-- [ ] CLI transport: `--standalone` (default for one-shot) and `--daemon` (HTTP + token).
-  Verify: the same command returns the same JSON in both modes.
-- [ ] `works ui`: start the daemon if needed, wait for `/health`, open the browser.
-- [ ] Static mount: `dist` at `/`, SPA fallback to `index.html`, no legacy `/app.js`.
-- [ ] `dispatch --watch` refuses to run when the daemon owns the queue (or requires
-  `--standalone`).
+**Gate:** daemon + UI + `POST /dispatch` concurrently; no lock conflicts; kill the UI, run survives;
+restart daemon, stale jobs/owners reconciled.
 
-**Gate:** daemon + UI + a queued dispatch run at the same time; no lock conflicts; killing the UI
-does not stop the run.
+### Phase 7 — cutover, packaging, tests (2 days)
+- [ ] Delete old HTTP modules; migrate/delete `tests/unit/interfaces/api/test_ui.py` and friends.
+- [ ] CI runs `pytest` in the cutover gate; coverage stays ≥ 80%.
+- [ ] Package worker scripts and default flows; resolve via `importlib.resources`; wheel test asserts
+  `dist/index.html`, workers and flows are present.
+- [ ] Installed-wheel smoke: `works ui` + `works ask` + `works team verify` in a temp home.
+- [ ] CI checks `dist` freshness (build then `git diff --exit-code`).
+- [ ] Docs: `ui.md`, `runbook.md`, `layout.md`, README commands; tag `pre-fastapi`.
 
-### Phase 7 — cutover (1 day)
+**Gate:** CI green; wheel smoke passes.
 
-- [ ] Delete `interfaces/api/{server,read,write,downloads,static}.py`; update imports.
-  Verify: `uv run ruff check src tests` and `uv run mypy`.
-- [ ] `pyproject.toml`: `server` extra required by `works ui`; wheel content test
-  `tests/test_packaging.py` asserts `interfaces/ui/static/dist/index.html` is in the wheel.
-- [ ] `.github/workflows/ci.yml`: add `web` (node 22, `npm ci`, typecheck, build) and `contract`
-  jobs; keep `check`, `docker-verifier`, `benchmark`, `security`.
-- [ ] Docs: `docs/guides/ui.md`, `docs/guides/runbook.md`, `docs/reference/layout.md`,
-  `README.md` commands.
-- [ ] Tag `pre-fastapi` before the deletion commit.
+### Phase 8 — hardening (2.5 days)
+- [ ] 10,000-task load test and 20 SSE clients; p95 targets.
+- [ ] Cancel-with-side-effects, daemon crash, stale owner, token rotation tests.
+- [ ] Body-size middleware (chunked included), job timeouts, Origin/Host tests.
+- [ ] Logging: request_id/job_id, uvicorn access logs through the same formatter.
+- [ ] Final full runs and ADR update.
 
-**Gate:** CI green on the cutover commit; `uv build` wheel contains `dist`.
+**Gate:** all §17 checks on a fresh clone.
 
-### Phase 8 — hardening (2 days)
+## 9. Frontend mechanics
 
-- [ ] `scripts/load_api.py`: 200 tasks, 20 parallel SSE clients, p95 recorded. Targets from §13.
-- [ ] Timeout and cancel tests: a slow action is cancelled and the job records `cancelled`.
-- [ ] Security tests: bad Host/Origin/token, oversized body, path traversal, duplicated
-  `Idempotency-Key`.
-- [ ] Metrics wired: request latency, queue depth, active runs, job failures, SSE clients.
-- [ ] Final runs: `pytest`, `ruff`, `mypy`, `tsc --noEmit`, `vite build`, docker verifier.
-- [ ] ADR-016 updated with the final decisions from §19.
-
-**Gate:** every check in §17 passes on a fresh clone.
-
-## 9. Frontend migration mechanics
-
-- Start with `allowJs: true`, `checkJs: false`; new files are `.ts`/`.tsx` with `strict`.
-- Keep the current CSS and component structure; only state/data access changes.
-- Vite dev proxy: `/api` → `http://127.0.0.1:8765`; production is same-origin.
-- Query keys: `["tasks"]`, `["task", id]`, `["metrics"]`, `["job", id]`; invalidate on SSE and
-  after every mutation; refetch the open task on `task.changed`.
-- Map API error codes to the existing toast strings; keep the same user-visible wording.
-- Generated types are committed; CI regenerates and fails on a diff.
+- `allowJs` with per-file migration; new files strict `.ts/.tsx`.
+- Query keys `["tasks"]`, `["task", id]`, `["job", id]`, `["metrics"]`; invalidate on named SSE
+  events and after mutations.
+- Long actions use `useJob`; never toast success before completion.
+- `ask` streams with `fetch` + `ReadableStream`; no `EventSource` for POST.
+- Generated types committed; CI regenerates and diffs.
 - npm scripts: `dev`, `build`, `typecheck`, `test`, `generate:api`.
+- Vite proxy `/api` → `http://127.0.0.1:8765`; production same-origin.
 
-## 10. Structure after the migration
+## 10. Structure after migration
 
 ```
-src/works/interfaces/http/
-  app.py            # FastAPI, lifespan, wiring
-  routes/           # tasks, actions, sources, settings, observability, downloads
-  live.py           # SSE bridge and ask stream
-  schemas/          # Pydantic request/response models
-  security.py       # token, cookie, origin checks
-  jobs.py           # executor, status, cancellation
+src/works/interfaces/api/
+  app.py wiring.py live.py jobs.py security.py
+  routes/ health tasks actions readiness sources settings observability downloads events ask runs
+  schemas/ health tasks actions events settings common
+  presenters/ story tasks thread
+src/works/interfaces/cli/
+  main.py parser/ commands/ (incl. daemon.py) render.py
+src/works/interfaces/ui/static/   # favicon, dist/
 web/src/
-  api/              # client.ts, generated/, hooks (TanStack Query)
-  app/              # shell, routing
-  features/         # queue, story, evidence, release, session, settings
-  ui/               # primitives
-  styles/
+  api/ client.ts generated/ hooks.ts events.ts
+  app/ features/ ui/ lib/ styles/
+tests/ unit/ contract/ integration/ e2e/
 ```
 
 ## 11. Testing and CI
 
-- Backend: pytest with `httpx` ASGI; contract tests compare old and new JSON fixtures; SSE tests
-  with a fake clock; job tests for status and cancellation.
-- Frontend: `tsc --noEmit`, `vitest` for hooks and pure helpers, `vite build`.
-- E2E (optional): Playwright on demo data covering report → approve → release → confirm.
-- CI jobs: `check` (unchanged), `web` (node 22, `npm ci`, typecheck, build), `contract`,
-  `docker-verifier`, `benchmark`, `security`.
-- Add one smoke step: `uv run works --help` and `uv run works version`.
+- Backend: `httpx` + `asgi-lifespan`; contract fixtures on the seed home; SSE/job/security tests.
+- Frontend: `tsc --noEmit`, Vitest (jsdom), build; Playwright optional for the demo flow.
+- CI: `check` (`--extra dev --extra server`), `web`, `contract`, `docker-verifier`, `benchmark`,
+  `security`; coverage gate 80%; `dist` freshness.
+- Contract canonicalizer owns all nondeterminism; no “normalize timestamps” hand-waving.
 
-## 12. Packaging and release
+## 12. Packaging
 
-- Extra `server`; `works ui` explains how to install it if FastAPI is missing.
-- Wheel includes `src/works/interfaces/ui/static/dist`; add a wheel-content test.
-- Entry points stay `works`; `works daemon` is a subcommand, not a second script.
-- OpenAPI at `/api/v1/openapi.json`; the interactive docs are off by default.
-- Version the API path, not the package: `/api/v1` stays stable across releases.
+- Extra `server`; `works ui` prints an install hint if missing.
+- Workers and default flows ship in the wheel; no repo-relative paths at runtime.
+- Wheel-content test and installed-wheel smoke.
+- `dist` is built in CI and checked for drift.
 
-## 13. Observability and targets
+## 13. Observability
 
-- Logs: JSON with `request_id`, `task_id`, `run_id`, `job_id`, `duration_ms`.
-- Metrics: request latency, queue depth, active runs, job failures, SSE clients.
-- Targets: p95 reads < 150 ms, p95 writes < 300 ms, SSE fan-out to 20 clients, memory < 300 MB.
+- Reuse `config/logging.py`; add `request_id`, `job_id`; route Uvicorn logs through it.
+- `/metrics` stays factory metrics; `/system/metrics` adds latency, queue depth, active runs, job
+  failures, SSE clients.
+- Targets: p95 read 150 ms, p95 write 300 ms (sync actions only), 20 SSE clients, memory 300 MB,
+  10k-task list < 100 ms.
 
 ## 14. Security
 
-- Loopback bind, token-gated writes, `SameSite=Strict` cookie.
-- Artifact paths resolved and confined to the run directory (already in `downloads.py`).
-- Request body limit 64 KB on writes (as today).
-- No secrets in the UI state; Mira answers stay advisory and are stored as events.
+- Loopback only by default; token-gated writes; HttpOnly cookie; Host/Origin checks.
+- Body limit middleware (64 KB writes, chunked included).
+- Artifact path confinement (already in `downloads.py`).
+- No secrets in UI state; `.works/state/` ignored; Windows ACL for the token.
+- Read-only mode still works (`readonly` in health, writes 403).
 
 ## 15. Risks
 
 | Risk | Mitigation |
 |---|---|
-| Long actions block HTTP | job executor, `asyncio.to_thread`, limits |
-| Double writes (UI + dispatch) | one daemon owns the queue; standalone CLI is manual only |
-| Contract drift | contract tests on recorded fixtures |
-| SSE through proxies/antivirus | heartbeat, reconnect, polling fallback |
-| Windows paths and `claude.exe` | do not change adapter logic |
-| Long UI migration | migrate screen by screen, keep routing compatible |
-| Losing CLI simplicity | `--standalone` stays the default for one-shot runs |
-| Python upgrade pressure | stay on 3.13 until 3.14 is explicitly supported |
+| Blocking engine freezes the loop | per-job thread + `asyncio.run`; heartbeat test |
+| Two writers | daemon-owned queue; standalone guarded by home lock |
+| Cancellation after side effects | documented semantics + cancel flag before effects |
+| Crash leaves owners | persisted jobs + startup reconciliation + PID/start-time check |
+| Contract drift | seed home + canonicalizer + complete schemas |
+| Stale `dist` | CI build + diff check |
+| Settings not applied | per-job supervisor factory + test |
+| Windows lifecycle | `daemon.json`, cwd=home, env snapshot, graceful stop |
+| UI regressions | parity matrix with per-screen tests |
+| Schedule slip | 28–35 days, 20% contingency |
 
 ## 16. Estimate
 
 | Phase | Days |
 |---|---|
-| 0. Preparation | 0.5 |
-| 1. Daemon skeleton | 1 |
-| 2. Read API | 2 |
-| 3. Write API | 2 |
-| 4. Live | 1 |
-| 5. TypeScript frontend | 3–4 |
-| 6. Processes | 2 |
-| 7. Cutover | 1 |
-| 8. Hardening | 2 |
-| **Total** | **~14–16 days** |
+| 0a fixtures/canonicalizer | 1 |
+| 0b OpenAPI/toolchain | 1 |
+| 1 skeleton | 1.5 |
+| 2 read API | 3 |
+| 3a jobs/security | 3 |
+| 3b actions/readiness/sources/settings | 2 |
+| 4 live | 2 |
+| 5a toolchain/client | 2 |
+| 5b screens | 5 |
+| 6 processes/runs/Windows | 4 |
+| 7 cutover/packaging/tests | 2 |
+| 8 hardening | 2.5 |
+| **Subtotal** | **29** |
+| Contingency 20% | ~6 |
+| **Total** | **~35 days** |
 
 ## 17. Definition of done
 
-- [ ] `works ui` starts the daemon; the UI runs on `/api/v1`.
-- [ ] CLI: both `--standalone` and `--daemon` work.
-- [ ] Contract tests: old and new JSON match.
-- [ ] `pytest`, `ruff`, `mypy`, `tsc --noEmit`, `vite build` are green.
-- [ ] CI is green; the stdlib server is deleted.
-- [ ] ADR-016 and updated guides are committed.
+- [ ] `works daemon` + UI on `/api/v1`; CLI both modes; standalone guarded.
+- [ ] Runs and dispatch through the daemon; jobs persisted and reconciled.
+- [ ] Contract tests: canonicalized parity for every endpoint.
+- [ ] `pytest` (coverage ≥ 80%), `ruff`, `mypy`, `tsc --noEmit`, `vitest`, build all green.
+- [ ] CI green; old server and old tests deleted; wheel smoke passes.
+- [ ] Parity matrix complete; `dist` fresh; docs and ADR updated.
 
-## 18. Parity checklist (must work in the new UI)
+## 18. Parity matrix
 
-- Queue: search, filters (state/product/source), selection, live dot.
-- New task: prompt draft, details, product/repo/ref/title, source and task kind, flow.
-- Import: GitHub, Jira, detector; duplicate handling.
-- Story: route, receipts, replay slider, present mode, copy link.
-- Evidence: pipeline, verdict, findings, challenge, commands, change, readiness, features,
-  artifacts/lightbox, timeline filters, exports.
-- Release: packet, gate 2, deliver, deploy, confirm, compare runs.
-- Session: transcript, chapters, ask/stream, review, commentary, add context, run log.
-- Settings: builder runtime/provider, verifier split, planner modes/critic, theme/density/poll,
-  repository path.
-- Palette, help, toasts, theme persistence, keyboard shortcuts.
+| Screen | Files | API | Actions | Test |
+|---|---|---|---|---|
+| Queue + grouping | `features/queue/*` | `GET /tasks` | — | list/filter/sort |
+| New task | `dialogs/task-composer` | `POST /tasks` | — | create + duplicate |
+| Import | `dialogs/import` | `POST /sources` | job | counts + duplicate |
+| Story | `features/story/*` | `GET /tasks/{id}`, events | — | states, replay, copy link |
+| Evidence | `features/evidence/*` | detail, `/readiness`, exports, artifacts | readiness job | cards + downloads |
+| Release | `features/release/*` | detail, `/actions` release/deliver/confirm/deploy | jobs | each job state |
+| Session | `features/session/*` | detail, `/ask/stream`, `/actions` | ask stream, commentary, discussion, add-context | stream + jobs |
+| Settings | `features/settings/*` | `/settings/builder` | save | validation + apply |
+| Factory | `dialogs/factory` | `/metrics`, `/ledger` | — | payload |
+| Run/Event/Palette/Help | dialogs | detail | — | open/close |
+| Read-only | shell | health | writes 403 | mode |
 
-## 19. Open decisions
+## 19. Decisions
 
-- Token delivery: cookie bootstrap (recommended) vs a meta tag injected into `index.html`.
-- Keep `WORKS_HTTP=legacy` for one release, or cut over in a single change.
-- `works daemon` vs a separate `worksd` entry point.
-- Whether `GET /tasks/{id}` keeps one large payload or splits into `summary` + `thread`.
-- TypeScript strictness ramp: per-file now, whole tree before cutover.
+- Package name: `interfaces/api` (not `http`).
+- Command: `works daemon` (not `worksd`).
+- No dual runtime: rollback by `pre-fastapi` tag.
+- Python: 3.12 primary, 3.13 tested; 3.14 later.
+- CSS stays; no Tailwind/shadcn.
+- Runs are daemon-owned; standalone is guarded.
+- Long actions are jobs; `ask` streams.
+- API path versioned; embedded URLs versioned.
 
 ## 20. Rollback
 
-- Before Phase 7: the old server stays; switch with `WORKS_HTTP=legacy`.
-- After cutover: a `pre-fastapi` tag plus rollback instructions in the ADR.
+- Until Phase 7 the old server is still in the tree; switch paths by reverting the phase commit.
+- After cutover: check out `pre-fastapi` and reinstall the previous version.
+
+## 21. Review traceability
+
+Every finding in [`stack-migration-review.md`](stack-migration-review.md) is addressed above:
+
+- blockers 1–6: §6, §5.7, §5.2/§8, §8 Phase 3b, §4/§8 Phase 0b, §8 Phase 7;
+- contract/schema/URL gaps: §5.1, §8 Phase 0a/2;
+- auth/jobs/SSE: §5.4–5.6;
+- static/packaging/metrics/CLI/Windows: §7, §8 Phase 6–7, §12–13;
+- parity/estimate: §16–18.
