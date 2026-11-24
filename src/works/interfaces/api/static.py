@@ -4,11 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+# The Vite bundle in dist/ is the page; only the mascot still comes from this folder.
 STATIC = {
-    "": "index.html",
-    "index.html": "index.html",
-    "app.css": "app.css",
-    "app.js": "app.js",
     "mira.svg": "mira.svg",
 }
 

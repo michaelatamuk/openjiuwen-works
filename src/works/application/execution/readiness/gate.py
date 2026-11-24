@@ -49,7 +49,7 @@ def _run_command(repo: Path, command: str, timeout_s: int) -> CheckResult:
         return CheckResult("command", "Command", "fail", f"could not start: {exc}")
     duration = int((time.monotonic() - started) * 1000)
     output = (completed.stderr or completed.stdout or "").strip().splitlines()
-    tail = " Â· ".join(output[-3:])[:500]
+    tail = " · ".join(output[-3:])[:500]
     detail = f"exit {completed.returncode} in {duration} ms" + (f": {tail}" if tail else "")
     return CheckResult(
         "command", "Command", "pass" if completed.returncode == 0 else "fail", detail

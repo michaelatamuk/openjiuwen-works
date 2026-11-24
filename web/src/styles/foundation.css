@@ -893,7 +893,6 @@ dialog dd { margin: 0; }
 .thread-msg.mira .thread-avatar { background: var(--violet); color: #fff; border-color: var(--violet); }
 .thread-ask { border-color: #ddd6fe; background: linear-gradient(180deg, var(--panel), var(--violet-soft)); }
 .thread-ask textarea { min-height: 58px; }
-.ask-live-text:empty::after { content: "�"; color: var(--faint); }
 
 /* Thread header, inline questions, composer modes, run dialog */
 .thread-head-main { min-width: 0; }

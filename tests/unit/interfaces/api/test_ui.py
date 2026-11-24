@@ -66,9 +66,6 @@ def test_static_page_and_assets(paths) -> None:
         status, asset = get(base, bundle.group(1))
         assert status == 200
         assert len(asset) > 1000
-        status, script = get(base, "/app.js")
-        assert status == 200
-        assert "boot()" in script
         status, mascot = get(base, "/mira.svg")
         assert status == 200
         assert "<svg" in mascot
