@@ -10,6 +10,8 @@ import { Release } from "../features/release/Release.jsx";
 import { Story } from "../features/story/Story.jsx";
 import { Thread } from "../features/session/Thread.jsx";
 import { Toast } from "../ui/primitives.jsx";
+import { AppHeader } from "./AppHeader.jsx";
+import { MainHead } from "./MainHead.jsx";
 import { stateLabel, timeAgo } from "../lib/format.js";
 import { VIEW_NAMES, VIEWS, crumbFor, parseHash, taskHash } from "./routing.js";
 
@@ -221,20 +223,11 @@ export default function App() {
 
   return (
     <div className="workspace">
-      <header className="appbar">
-        <div className="appbar-brand">
-          <span className="mark" aria-hidden="true">W</span>
-          <div>
-            <strong>openJiuwen Works</strong>
-            <span>LOCAL FACTORY</span>
-          </div>
-        </div>
-        <div className="appbar-actions">
-          <button className="btn ghost" type="button" onClick={() => setDialog("factory")}>Factory</button>
-          <button className="btn ghost" type="button" aria-label="Command palette" title="Command palette" onClick={() => setDialog("palette")}>Ctrl K</button>
-          <button className="btn ghost" type="button" aria-label="Settings" title="Settings" onClick={() => setDialog("settings")}>Settings</button>
-        </div>
-      </header>
+      <AppHeader
+        onFactory={() => setDialog("factory")}
+        onPalette={() => setDialog("palette")}
+        onSettings={() => setDialog("settings")}
+      />
       <div className="app">
       <Queue
         tasks={tasks}
@@ -252,26 +245,21 @@ export default function App() {
         onNew={() => setDialog("new")}
       />
       <main className="main">
-        <div className="sticky-top">
-            <header className="main-head">
-              <div className="head-copy">
-                <div className="crumb">
-                  <button type="button" className="crumb-link" onClick={() => { setSelected(null); selectedRef.current = null; setDetail(null); history.replaceState(null, "", "#/"); }}>Queue</button>
-                  {detail ? <><span className="crumb-sep">/</span>{crumb}</> : null}
-                </div>
-                <h1>{title}</h1>
-                <p>{subtitle}</p>
-              </div>
-            </header>
-            {detail ? (
-              <div className="view-tabs" role="tablist" aria-label="Detail view">
-                {VIEWS.map(([id, label]) => (
-                  <button key={id} type="button" role="tab" aria-selected={view === id} className={`view-tab ${view === id ? "active" : ""}`} onClick={() => changeView(id)}>{label}</button>
-                ))}
-                <span className={`cl-live ${connected ? "on" : ""}`} title={connected ? "Live updates connected" : "Reconnecting"} />
-              </div>
-            ) : null}
-        </div>
+        <MainHead
+          detail={detail}
+          view={view}
+          connected={connected}
+          crumb={crumb}
+          title={title}
+          subtitle={subtitle}
+          onQueue={() => {
+            setSelected(null);
+            selectedRef.current = null;
+            setDetail(null);
+            history.replaceState(null, "", "#/");
+          }}
+          onView={changeView}
+        />
         <section className={`content ${view === "thread" ? "content-session" : ""}`}>
           {!detail ? (
             <div className="empty">
