@@ -28,12 +28,16 @@ from works.domain.errors import (
     WorksError,
 )
 from works.interfaces.api.routes import (
+    actions,
     downloads,
     health,
     jobs,
     maps,
     observability,
+    readiness,
     session,
+    settings,
+    sources,
     tasks,
 )
 from works.interfaces.api.wiring import build_state
@@ -122,6 +126,10 @@ def create_app(
     for router in (
         health.router,
         session.router,
+        actions.router,
+        readiness.router,
+        sources.router,
+        settings.router,
         tasks.router,
         jobs.router,
         maps.router,

@@ -310,16 +310,23 @@ performance gate is tracked in Phase 8.
 
 **Gate (met):** `pytest tests/unit/interfaces/api`; crash/restart reconciliation test passes.
 
-### Phase 3b — actions, readiness, sources, settings (2 days)
-- [ ] `routes/actions.py`: 9 actions + `deploy`; sync/job split from §5.2; 202 + job for long ones.
-- [ ] `routes/readiness.py`: `POST /readiness`; UI Evidence switches from `run-readiness`.
-- [ ] `routes/sources.py`, `routes/settings.py`: settings apply to the next job; GET returns saved
-  values.
-- [ ] One exception handler per §5.3.
-- [ ] `scripts/smoke_api.py`: seeded home → create, approve, run via fake harness, release, deliver,
-  confirm, deploy dry-run; asserts each response.
+### Phase 3b — actions, readiness, sources, settings (done, full-run smoke deferred)
 
-**Gate:** `pytest tests/contract tests/unit/interfaces/api`; `uv run python scripts/smoke_api.py`.
+- [x] `routes/actions.py`: add-context, approve-plan and release answer synchronously; commentary,
+  discussion, deliver, confirm, team-verify and the new deploy run as jobs with 202 + job id. `ask`
+  is refused with a hint to the streaming endpoint.
+- [x] `routes/readiness.py`: `POST /readiness` resolves a task or repository and runs the gate as a
+  job.
+- [x] `routes/sources.py`: GitHub/Jira/detector imports run as jobs and reuse the legacy intake.
+- [x] `routes/settings.py`: GET returns builder health; POST saves settings for the next job.
+- [x] One `WorksError` handler covers the status table from §5.3.
+- [x] `scripts/smoke_api.py`: seeds a home, adds context, approves a plan, releases a proved task
+  and runs readiness through the new API.
+- [ ] The end-to-end create → fake-harness run → release → deliver → confirm → deploy smoke moves to
+  Phase 6, when `POST /runs` exists.
+- [ ] `Idempotency-Key` and killing an in-flight child on cancel move to Phase 6/8.
+
+**Gate (met):** `pytest tests/contract tests/unit/interfaces/api`; `python scripts/smoke_api.py`.
 
 ### Phase 4 — live updates (2 days)
 - [ ] `live.py`: event mapper (tail `events.jsonl`, job store, settings), ring buffer, epoch,

@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import threading
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from works.adapters.queue.ledger import Ledger
@@ -23,6 +24,7 @@ class AppState:
     settings: BuilderSettings | None
     security: Security
     jobs: JobRunner
+    write_lock: threading.Lock = field(default_factory=threading.Lock)
 
 
 def build_state(
