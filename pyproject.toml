@@ -39,7 +39,7 @@ preview = [
 ]
 
 [project.scripts]
-works = "works.cli:main_entry"
+works = "works.interfaces.cli.main:main_entry"
 
 [build-system]
 requires = ["hatchling"]
