@@ -7,7 +7,7 @@ import pytest
 from tests.unit.application.delivery.test_release import _proved
 from works.adapters.queue.store import Queue
 from works.domain.records import Event
-from works.interfaces.api.server import _thread_message, _thread_rail
+from works.interfaces.api.presenters.thread import _thread_message, _thread_rail
 
 
 def event(kind: str, data: dict | None = None, seq: int = 1) -> Event:
