@@ -21,7 +21,7 @@ jobs:
       - name: Install Python 3.12
         run: uv python install 3.12
       - name: Sync
-        run: uv sync --frozen --extra dev
+        run: uv sync --frozen --extra dev --extra server
       - name: Console smoke
         run: |
           uv run works --help > /dev/null
