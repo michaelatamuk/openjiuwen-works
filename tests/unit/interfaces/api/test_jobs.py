@@ -9,7 +9,7 @@ import pytest
 
 from works.adapters.processes.runner import SubprocessRunner
 from works.adapters.queue.store import Queue
-from works.domain.errors import ConflictError
+from works.domain.errors import ConflictError, UnavailableError
 from works.domain.records import Source, SourceKind
 from works.interfaces.api.jobs import Job, JobRunner
 
@@ -178,5 +178,39 @@ def test_cancel_kills_a_child_process(paths) -> None:
         done = wait_for(runner, job.id, FINAL, timeout=10)
         assert done.status == "cancelled"
         assert time.monotonic() - started < 10
+    finally:
+        runner.shutdown()
+
+
+def test_a_bounded_queue_refuses_more_pending_jobs(paths) -> None:
+    release = threading.Event()
+
+    def slow(_ctx) -> str:
+        release.wait(5)
+        return "done"
+
+    runner = JobRunner(paths, Queue(paths), max_workers=1, max_pending=1)
+    try:
+        first = runner.submit("demo", slow)
+        wait_for(runner, first.id, {"running"})
+        second = runner.submit("demo", slow)
+        with pytest.raises(UnavailableError):
+            runner.submit("demo", slow)
+        release.set()
+        assert wait_for(runner, second.id, FINAL).status == "succeeded"
+    finally:
+        release.set()
+        runner.shutdown()
+
+
+def test_jobs_record_daemon_identity_and_a_heartbeat(paths) -> None:
+    runner = JobRunner(paths, Queue(paths))
+    try:
+        job = runner.submit("demo", lambda _ctx: "ok")
+        done = wait_for(runner, job.id, FINAL)
+        payload = json.loads((paths.state / "jobs" / f"{done.id}.json").read_text(encoding="utf-8"))
+        assert payload["daemon_id"]
+        assert isinstance(payload["pid"], int)
+        assert payload["heartbeat_at"] >= payload["created_at"]
     finally:
         runner.shutdown()

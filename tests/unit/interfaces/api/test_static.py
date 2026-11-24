@@ -34,3 +34,18 @@ def test_unknown_api_paths_stay_json_404(paths) -> None:
         response = client.get("/api/v1/does-not-exist")
     assert response.status_code == 404
     assert response.json()["error"]["code"] == "not_found"
+
+
+def test_backpressure_answers_503_with_a_retry_hint(paths, monkeypatch) -> None:
+    monkeypatch.setenv("WORKS_MAX_PENDING_JOBS", "0")
+    app = create_app(paths, writable=True)
+    with TestClient(app, base_url=BASE) as client:
+        headers = {"Authorization": f"Bearer {app.state.works.security.token}"}
+        response = client.post(
+            "/api/v1/actions",
+            headers=headers,
+            json={"action": "deliver", "task_id": "t-demo"},
+        )
+    assert response.status_code == 503
+    assert response.headers["retry-after"] == "5"
+    assert response.json()["error"]["code"] == "unavailable"

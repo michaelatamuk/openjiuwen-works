@@ -103,3 +103,31 @@ def test_debug_bundle_omits_credentials(paths, tmp_path: Path) -> None:
     assert "index.json" in names
     assert "logs/security.log" in names
     assert b"super-secret-token" not in payload
+
+
+def test_prune_jobs_archives_only_old_terminal_jobs(paths, tmp_path: Path) -> None:
+    import time
+
+    jobs = paths.state / "jobs"
+    jobs.mkdir(parents=True, exist_ok=True)
+    now = time.time()
+    payloads = {
+        "j-old": {
+            "id": "j-old",
+            "action": "demo",
+            "status": "succeeded",
+            "finished_at": now - 172800,
+        },
+        "j-new": {"id": "j-new", "action": "demo", "status": "failed", "finished_at": now},
+        "j-run": {"id": "j-run", "action": "demo", "status": "running", "finished_at": None},
+    }
+    for job_id, payload in payloads.items():
+        (jobs / f"{job_id}.json").write_text(json.dumps(payload), encoding="utf-8")
+
+    code, body = invoke(paths, "prune-jobs", "--days", "1", "--json")
+    assert code == 0 and body["removed"] == 1, body
+    assert not (jobs / "j-old.json").exists()
+    assert (jobs / "j-new.json").exists()
+    assert (jobs / "j-run.json").exists()
+    archive = (paths.state / "jobs-archive.jsonl").read_text(encoding="utf-8")
+    assert "j-old" in archive

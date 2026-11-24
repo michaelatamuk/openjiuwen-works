@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import json
 import shutil
 import tarfile
 import tempfile
+import time
 from pathlib import Path
 from typing import Any
 
@@ -102,4 +104,58 @@ def cmd_restore(args: Any) -> int:
         _emit(payload)
     else:
         print(f"restored {source} into {paths.root}")
+    return 0
+
+
+def cmd_prune_jobs(args: Any) -> int:
+    paths = _paths(args)
+    directory = paths.state / "jobs"
+    cutoff = time.time() - float(args.days) * 86_400
+    archive = paths.state / "jobs-archive.jsonl"
+    removed = 0
+    for path in sorted(directory.glob("*.json")):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if not isinstance(payload, dict) or payload.get("status") not in (
+            "succeeded",
+            "failed",
+            "cancelled",
+        ):
+            continue
+        finished = float(payload.get("finished_at") or payload.get("created_at") or 0)
+        if finished > cutoff:
+            continue
+        if not args.dry_run:
+            with archive.open("a", encoding="utf-8") as handle:
+                handle.write(
+                    json.dumps(
+                        {
+                            "id": payload.get("id"),
+                            "action": payload.get("action"),
+                            "task_id": payload.get("task_id"),
+                            "status": payload.get("status"),
+                            "finished_at": payload.get("finished_at"),
+                            "trace_id": payload.get("trace_id"),
+                        },
+                        ensure_ascii=False,
+                    )
+                    + "\n"
+                )
+            path.unlink(missing_ok=True)
+        removed += 1
+    payload = {
+        "ok": True,
+        "removed": removed,
+        "dry_run": bool(args.dry_run),
+        "archive": str(archive),
+    }
+    if args.json:
+        _emit(payload)
+    else:
+        print(
+            f"{'would prune' if args.dry_run else 'pruned'} {removed} terminal job(s); "
+            f"archive: {archive}"
+        )
     return 0

@@ -126,7 +126,8 @@ def create_app(
         status = next(
             (code for error_type, code in ERROR_STATUS if isinstance(exc, error_type)), 500
         )
-        return JSONResponse(status_code=status, content=_error_body(exc))
+        headers = {"Retry-After": "5"} if status == 503 else None
+        return JSONResponse(status_code=status, content=_error_body(exc), headers=headers)
 
     for router in (
         health.router,

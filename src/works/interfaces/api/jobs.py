@@ -18,7 +18,7 @@ from works.adapters.processes.runner import CURRENT_CANCEL
 from works.adapters.queue.atomic import atomic_write
 from works.adapters.queue.store import Queue
 from works.config.paths import WorksPaths
-from works.domain.errors import ConflictError, NotFoundError
+from works.domain.errors import ConflictError, NotFoundError, UnavailableError
 
 JobStatus = Literal["queued", "running", "succeeded", "failed", "cancelled"]
 FINAL = frozenset({"succeeded", "failed", "cancelled"})
@@ -59,13 +59,25 @@ class Job:
     cancelable: bool = True
     timeout_s: float | None = None
     trace_id: str = field(default_factory=lambda: secrets.token_hex(8))
+    daemon_id: str | None = None
+    pid: int | None = None
+    heartbeat_at: float | None = None
 
     def as_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
 class JobRunner:
-    def __init__(self, paths: WorksPaths, queue: Queue, *, max_workers: int = 2) -> None:
+    HEARTBEAT_SECONDS = 5.0
+
+    def __init__(
+        self,
+        paths: WorksPaths,
+        queue: Queue,
+        *,
+        max_workers: int = 2,
+        max_pending: int | None = None,
+    ) -> None:
         self._directory = paths.state / "jobs"
         self._directory.mkdir(parents=True, exist_ok=True)
         self._queue = queue
@@ -75,12 +87,34 @@ class JobRunner:
         self._timers: dict[str, threading.Timer] = {}
         self._locks: dict[str, str] = {}
         self._guard = threading.RLock()
+        raw = os.environ.get("WORKS_MAX_PENDING_JOBS")
+        self._max_pending = max_pending or (int(raw) if raw else 64)
+        self._daemon_id = secrets.token_hex(8)
+        self._pid = os.getpid()
         self.reconcile()
+        self._stop = threading.Event()
+        self._heartbeat = threading.Thread(
+            target=self._beat_loop, name="works-job-heartbeat", daemon=True
+        )
+        self._heartbeat.start()
+
+    def _beat_loop(self) -> None:
+        """Keep queued/running job heartbeats fresh so a crash is visible in the job files."""
+        while not self._stop.wait(self.HEARTBEAT_SECONDS):
+            with self._guard:
+                live = [job for job in self._jobs.values() if job.status not in FINAL]
+                for job in live:
+                    job.heartbeat_at = time.time()
+                    try:
+                        self._persist(job)
+                    except OSError:
+                        LOG.warning("job heartbeat write failed", extra={"job_id": job.id})
 
     def _path(self, job_id: str) -> Path:
         return self._directory / f"{job_id}.json"
 
     def _persist(self, job: Job) -> None:
+        job.heartbeat_at = time.time()
         atomic_write(
             self._path(job.id),
             json.dumps(job.as_dict(), ensure_ascii=False, default=str) + "\n",
@@ -107,11 +141,19 @@ class JobRunner:
         with self._guard:
             if task_id is not None and task_id in self._locks:
                 raise ConflictError(f"task {task_id} already has a running job")
+            queued_count = sum(1 for item in self._jobs.values() if item.status == "queued")
+            if queued_count >= self._max_pending:
+                raise UnavailableError(
+                    f"too many queued jobs (limit {self._max_pending}); retry later"
+                )
             job = Job(
                 id=f"j-{secrets.token_hex(6)}",
                 action=action,
                 task_id=task_id,
                 timeout_s=timeout_s,
+                daemon_id=self._daemon_id,
+                pid=self._pid,
+                heartbeat_at=time.time(),
             )
             self._jobs[job.id] = job
             self._cancel[job.id] = threading.Event()
@@ -255,4 +297,6 @@ class JobRunner:
             for timer in self._timers.values():
                 timer.cancel()
             self._timers.clear()
+        self._stop.set()
+        self._heartbeat.join(timeout=1.0)
         self._executor.shutdown(wait=False, cancel_futures=True)
