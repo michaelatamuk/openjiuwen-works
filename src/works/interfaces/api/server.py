@@ -14,12 +14,8 @@ from urllib.parse import parse_qs, unquote, urlparse
 from works.adapters.queue.store import Queue
 from works.config.paths import WorksPaths
 from works.domain.errors import ConfigError
-from works.interfaces.api import read, write
+from works.interfaces.api import downloads, read, write
 from works.interfaces.api.live import LiveState
-from works.interfaces.api.presenters.tasks import (
-    _export,
-    _run_index,
-)
 from works.interfaces.api.static import ASSETS, STATIC, _content_type, _dist_asset
 
 LOG = logging.getLogger("works.ui")
@@ -230,45 +226,27 @@ class Handler(BaseHTTPRequestHandler):
             self._json(HTTPStatus.NOT_FOUND, {"ok": False, "error": str(exc)})
 
     def _export(self, path: str) -> None:
-        rest = unquote(path.removeprefix("/api/tasks/"))
-        task_id, separator, kind = rest.partition("/export/")
-        if not separator or not task_id or not kind:
-            self._json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "export not found"})
-            return
-        found = _export(self.paths, task_id, kind)
+        found = downloads.resolve_export(self.paths, path)
         if found is None:
             self._json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "export not found"})
             return
-        target, filename = found
-        body = target.read_bytes()
         self._respond(
             HTTPStatus.OK,
-            _content_type(target),
-            body,
-            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+            found.content_type,
+            found.body,
+            headers={"Content-Disposition": f'attachment; filename="{found.filename}"'},
         )
 
     def _artifact(self, path: str) -> None:
-        rest = unquote(path.removeprefix("/api/tasks/"))
-        task_id, separator, name = rest.partition("/artifacts/")
-        if not separator or not task_id or not name:
+        found = downloads.resolve_artifact(self.paths, path)
+        if found is None:
             self._json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "artifact not found"})
             return
-        run_info = _run_index(self.paths).get(task_id)
-        if run_info is None:
-            self._json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "run not found"})
-            return
-        root = (run_info[1] / "artifacts").resolve()
-        target = (root / name).resolve()
-        if root not in target.parents or not target.is_file():
-            self._json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "artifact not found"})
-            return
-        body = target.read_bytes()
         self._respond(
             HTTPStatus.OK,
-            _content_type(target),
-            body,
-            headers={"Content-Disposition": f'inline; filename="{target.name}"'},
+            found.content_type,
+            found.body,
+            headers={"Content-Disposition": f'inline; filename="{found.filename}"'},
         )
 
     def _events(self) -> None:
