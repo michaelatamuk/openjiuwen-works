@@ -80,6 +80,8 @@ def _replace_paths(text: str, home: Path | None, repo: Path | None) -> str:
 
 def _canon_string(text: str, home: Path | None, repo: Path | None) -> str:
     text = _replace_paths(text, home, repo)
+    if any(marker in text for marker in ("<home>", "<repo>", "<python>")):
+        text = text.replace("\\", "/")
     text = text.replace("/api/v1/", "/api/")
     text = WINDOWS_PATH.sub("<path>", text)
     text = TASK_ID.sub("<task-id>", text)

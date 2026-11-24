@@ -91,7 +91,7 @@
         "pytest",
         "-q"
       ],
-      "cwd": "<home>\\worktrees\\<run-id>\\repo",
+      "cwd": "<home>/worktrees/<run-id>/repo",
       "duration_ms": 0,
       "exit_code": 1,
       "output_sha256": "<sha256>",
@@ -128,7 +128,7 @@
         "pytest",
         "-q"
       ],
-      "cwd": "<home>\\worktrees\\<run-id>\\repo",
+      "cwd": "<home>/worktrees/<run-id>/repo",
       "duration_ms": 0,
       "exit_code": 0,
       "output_sha256": "<sha256>",
@@ -303,7 +303,7 @@
           "base_commit": "<commit>",
           "brief": "Summary: Deterministic plan for fix-issue on Fixture: 4 flow nodes and 3 scenarios.\n- reproduce: deterministic command (node=reproduce; done_when=the reproduction fails on the base commit; commands={python} -m pytest -q)\n- build: agent turn (node=build; done_when=the reproduction and tests pass)\n- test: deterministic command (node=test; done_when=the tests and scenarios pass; commands={python} -m pytest -q)\n- challenge: agent turn (node=challenge; done_when=the challenger returns allow)\nVerification: Run the flow test node.; P0 scenarios: add-positive, add-negative.; P1 scenarios: mul-positive.; Run the independent challenge node.\nAssumptions: The flow nodes and the scenario set are the source of truth.; The builder works in an isolated worktree and does not commit.\nRisks: This plan is a contract skeleton; file-level detail is chosen during the build turn.\nRollback: Discard the worktree; the builder does not commit.",
           "checks_sha": "<sha256>",
-          "checks_source": "workspace:<home>\\flows\\fix-issue.yaml",
+          "checks_source": "workspace:<home>/flows/fix-issue.yaml",
           "hash": "<sha256>",
           "nodes": [
             "reproduce",
@@ -337,7 +337,7 @@
             "add-negative",
             "mul-positive"
           ],
-          "scenario_set": "<home>\\scenarios\\fix-add.yaml",
+          "scenario_set": "<home>/scenarios/fix-add.yaml",
           "status": "validated",
           "summary": "Deterministic plan for fix-issue on Fixture: 4 flow nodes and 3 scenarios.",
           "validation": {
@@ -977,7 +977,7 @@
     "decision_id": "",
     "decision_verb": "act",
     "duration_ms": 0,
-    "evidence_md": "<home>\\runs\\<run-id>\\evidence.md",
+    "evidence_md": "<home>/runs/<run-id>/evidence.md",
     "finished_at": "<timestamp>",
     "flow": "fix-issue",
     "model": "fake-builder-1",
@@ -1449,7 +1449,7 @@
         "base_commit": "<commit>",
         "brief": "Summary: Deterministic plan for fix-issue on Fixture: 4 flow nodes and 3 scenarios.\n- reproduce: deterministic command (node=reproduce; done_when=the reproduction fails on the base commit; commands={python} -m pytest -q)\n- build: agent turn (node=build; done_when=the reproduction and tests pass)\n- test: deterministic command (node=test; done_when=the tests and scenarios pass; commands={python} -m pytest -q)\n- challenge: agent turn (node=challenge; done_when=the challenger returns allow)\nVerification: Run the flow test node.; P0 scenarios: add-positive, add-negative.; P1 scenarios: mul-positive.; Run the independent challenge node.\nAssumptions: The flow nodes and the scenario set are the source of truth.; The builder works in an isolated worktree and does not commit.\nRisks: This plan is a contract skeleton; file-level detail is chosen during the build turn.\nRollback: Discard the worktree; the builder does not commit.",
         "checks_sha": "<sha256>",
-        "checks_source": "workspace:<home>\\flows\\fix-issue.yaml",
+        "checks_source": "workspace:<home>/flows/fix-issue.yaml",
         "hash": "<sha256>",
         "nodes": [
           "reproduce",
@@ -1483,7 +1483,7 @@
           "add-negative",
           "mul-positive"
         ],
-        "scenario_set": "<home>\\scenarios\\fix-add.yaml",
+        "scenario_set": "<home>/scenarios/fix-add.yaml",
         "status": "validated",
         "summary": "Deterministic plan for fix-issue on Fixture: 4 flow nodes and 3 scenarios.",
         "validation": {

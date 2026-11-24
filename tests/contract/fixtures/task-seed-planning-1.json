@@ -129,7 +129,7 @@
           "scenario_ids": [
             "add-negative"
           ],
-          "scenario_set": "<home>\\scenarios\\fix-add.yaml",
+          "scenario_set": "<home>/scenarios/fix-add.yaml",
           "status": "validated",
           "summary": "Fix addition and cover the negative case.",
           "validation": {
@@ -820,7 +820,7 @@
         "scenario_ids": [
           "add-negative"
         ],
-        "scenario_set": "<home>\\scenarios\\fix-add.yaml",
+        "scenario_set": "<home>/scenarios/fix-add.yaml",
         "status": "validated",
         "summary": "Fix addition and cover the negative case.",
         "validation": {
