@@ -51,6 +51,7 @@ def test_daemon_parser_defaults() -> None:
     assert args.host == "127.0.0.1"
     assert args.port == 8765
     assert args.write is False
+    assert args.trusted_host is None
     assert args.func is cmd_daemon
 
 

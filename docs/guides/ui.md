@@ -162,7 +162,8 @@ the Evidence readiness panel run `works readiness` through a local POST.
 - Readiness commands run only in `--write`; the default preview shows static checks.
 - Live updates use `GET /api/v1/events` (SSE); the Settings fallback refresh is configurable.
 - Writes need the persistent bearer token from `.works/state/http-token` or the one-time bootstrap
-  URL; reads are open on loopback. Do not bind the UI to a non-loopback address.
+  URL; reads are open on loopback. Do not bind the UI to a non-loopback address. A LAN/phone client
+  needs the authenticated remote daemon described in `docs/guides/remote.md`.
 - React 19 + Vite, built into `src/works/interfaces/ui/static/dist`; no Tailwind or shadcn yet, and Playwright
   is not wired into CI.
 

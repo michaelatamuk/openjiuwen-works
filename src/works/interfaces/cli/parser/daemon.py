@@ -31,5 +31,11 @@ def add_daemon_commands(sub: argparse._SubParsersAction[argparse.ArgumentParser]
         action="store_true",
         help="Allow a non-loopback bind (not recommended)",
     )
+    daemon.add_argument(
+        "--trusted-host",
+        action="append",
+        default=None,
+        help="Host header allowed on a remote bind; repeat for several names",
+    )
     daemon.add_argument("--json", action="store_true")
     daemon.set_defaults(func=cmd_daemon)

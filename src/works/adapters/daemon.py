@@ -358,7 +358,14 @@ def current_info(paths: WorksPaths, *, host: str, port: int) -> DaemonInfo:
     )
 
 
-def _daemon_command(paths: WorksPaths, *, host: str, port: int, write: bool) -> list[str]:
+def _daemon_command(
+    paths: WorksPaths,
+    *,
+    host: str,
+    port: int,
+    write: bool,
+    trusted_hosts: tuple[str, ...] = (),
+) -> list[str]:
     command = [
         sys.executable,
         "-m",
@@ -373,6 +380,8 @@ def _daemon_command(paths: WorksPaths, *, host: str, port: int, write: bool) -> 
     ]
     if write:
         command.append("--write")
+    for trusted in trusted_hosts:
+        command.extend(["--trusted-host", trusted])
     return command
 
 
@@ -390,6 +399,7 @@ def start_daemon(
     port: int = 8765,
     write: bool = False,
     timeout: float = START_TIMEOUT,
+    trusted_hosts: tuple[str, ...] = (),
 ) -> DaemonInfo:
     existing = current_daemon(paths)
     if existing is not None:
@@ -413,7 +423,13 @@ def start_daemon(
         kwargs["start_new_session"] = True
     try:
         process = subprocess.Popen(  # noqa: S603  # nosec B603 - fixed argv, no shell
-            _daemon_command(paths, host=host, port=port, write=write),
+            _daemon_command(
+                paths,
+                host=host,
+                port=port,
+                write=write,
+                trusted_hosts=trusted_hosts,
+            ),
             **kwargs,
         )
     finally:

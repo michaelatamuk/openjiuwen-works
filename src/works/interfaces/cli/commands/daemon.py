@@ -22,6 +22,25 @@ if TYPE_CHECKING:
 LOOPBACK = frozenset({"127.0.0.1", "localhost", "::1"})
 
 
+def _trusted_hosts(args: argparse.Namespace) -> tuple[str, ...]:
+    extra = tuple(getattr(args, "trusted_host", None) or ())
+    trusted = set(LOOPBACK)
+    trusted.update(extra)
+    if args.host not in LOOPBACK:
+        if args.host in ("0.0.0.0", "::"):  # noqa: S104 - validated remote bind
+            if not extra:
+                raise ConfigError(
+                    "a wildcard bind needs --trusted-host for the address clients will use"
+                )
+        else:
+            trusted.add(args.host)
+    return tuple(sorted(trusted))
+
+
+def _requires_read_auth(args: argparse.Namespace) -> bool:
+    return args.host not in LOOPBACK
+
+
 def _bootstrap_url(info: daemons.DaemonInfo) -> str:
     url = f"{info.base_url}/"
     token = daemons.read_token(info)
@@ -111,6 +130,7 @@ def _foreground(args: argparse.Namespace, paths: WorksPaths) -> int:
         raise ConfigError(
             f"refusing to bind {args.host!r}; pass --allow-remote for a non-loopback address"
         )
+    trusted = _trusted_hosts(args)
     from works.interfaces.api.app import create_app
     from works.interfaces.api.wiring import build_state
 
@@ -122,7 +142,11 @@ def _foreground(args: argparse.Namespace, paths: WorksPaths) -> int:
                 "open it with `works daemon status --write`"
             )
     state = build_state(paths, writable=args.write)
-    app = create_app(state=state)
+    app = create_app(
+        state=state,
+        trusted_hosts=trusted,
+        require_auth=_requires_read_auth(args),
+    )
     if args.write:
         info = daemons.current_info(paths, host=args.host, port=args.port)
         print(f"openJiuwen Works daemon (read-write): {_bootstrap_url(info)}", flush=True)
@@ -148,11 +172,18 @@ def _start(args: argparse.Namespace, paths: WorksPaths) -> int:
         raise ConfigError(
             f"refusing to bind {args.host!r}; pass --allow-remote for a non-loopback address"
         )
+    _trusted_hosts(args)
     existing = daemons.current_daemon(paths)
     if existing is not None:
         _report(existing, write=args.write, json=args.json, started=False)
         return 0
-    info = daemons.start_daemon(paths, host=args.host, port=args.port, write=args.write)
+    info = daemons.start_daemon(
+        paths,
+        host=args.host,
+        port=args.port,
+        write=args.write,
+        trusted_hosts=tuple(getattr(args, "trusted_host", None) or ()),
+    )
     _report(info, write=args.write, json=args.json, started=True)
     return 0
 

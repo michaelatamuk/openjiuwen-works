@@ -29,7 +29,7 @@ from works.domain.errors import (
     WorksError,
 )
 from works.interfaces.api.context import RequestContextMiddleware
-from works.interfaces.api.guard import LocalOnlyMiddleware
+from works.interfaces.api.guard import LocalOnlyMiddleware, ReadAuthMiddleware
 from works.interfaces.api.limits import BodyLimitMiddleware
 from works.interfaces.api.routes import (
     actions,
@@ -80,6 +80,7 @@ def create_app(
     bootstrap_token: str | None = None,
     state: AppState | None = None,
     max_body_bytes: int = MAX_BODY,
+    require_auth: bool = False,
 ) -> FastAPI:
     trusted = frozenset(trusted_hosts or LOOPBACK)
 
@@ -104,6 +105,11 @@ def create_app(
     )
     app.add_middleware(BodyLimitMiddleware, max_bytes=max_body_bytes)
     app.add_middleware(RequestContextMiddleware)
+    app.add_middleware(
+        ReadAuthMiddleware,
+        require=require_auth,
+        authorize=lambda request: bool(app.state.works.security.is_authenticated(request)),
+    )
     app.add_middleware(LocalOnlyMiddleware, trusted=trusted)
 
     @app.exception_handler(WorksError)
