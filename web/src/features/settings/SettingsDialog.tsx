@@ -193,6 +193,7 @@ export function SettingsDialog({
           provider={provider}
           onProvider={setProvider}
           providers={providers}
+          providersKnown={Boolean(builder?.providers)}
           model={model}
           onModel={setModel}
           builderMeta={builderMeta}

@@ -17,6 +17,7 @@ export type BuilderSectionProps = {
   provider: string;
   onProvider: (id: string) => void;
   providers: ProviderCatalog;
+  providersKnown: boolean;
   model: string;
   onModel: (value: string) => void;
   builderMeta: ProviderMeta;
@@ -33,6 +34,7 @@ export function BuilderSection({
   provider,
   onProvider,
   providers,
+  providersKnown,
   model,
   onModel,
   builderMeta,
@@ -66,6 +68,12 @@ export function BuilderSection({
         {openjiuwen ? (
           <>
             <div className="settings-subhead">Provider inside Works</div>
+            {!providersKnown ? (
+              <p className="settings-note provider-unknown">
+                Provider status is unavailable because this browser is not signed in to the daemon.
+                Open the bootstrap link (or pair this device) before choosing a provider.
+              </p>
+            ) : null}
             <div className="provider-grid" role="radiogroup" aria-label="Builder provider">
               {PROVIDER_ORDER.map((id: string) => (
                 <ProviderCard

@@ -6,10 +6,12 @@
 
 /** @type {Record<string, ProviderMeta>} */
 const PROVIDER_FALLBACK = {
-  claudecode: { label: "Claude Code", kind: "General coding harness", available: true, missing: "Needs SDK" },
-  dsh: { label: "DeepSeek Harness", kind: "DeepSeek native", available: false, missing: "Needs SDK" },
-  native: { label: "Jiuwen native", kind: "In-process DeepAgent", available: false, missing: "Needs runtime" },
-  codex: { label: "Codex", kind: "OpenAI Codex", available: false, missing: "Needs SDK" },
+  // Never claim a provider is ready before the daemon says so: an offline or unauthenticated
+  // page must not offer a provider it cannot run.
+  claudecode: { label: "Claude Code", kind: "General coding harness", available: false, missing: "Unknown" },
+  dsh: { label: "DeepSeek Harness", kind: "DeepSeek native", available: false, missing: "Unknown" },
+  native: { label: "Jiuwen native", kind: "In-process DeepAgent", available: false, missing: "Unknown" },
+  codex: { label: "Codex", kind: "OpenAI Codex", available: false, missing: "Unknown" },
 };
 
 /** @type {string[]} */
