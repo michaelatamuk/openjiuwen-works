@@ -212,10 +212,12 @@ invariants.
 - [x] **M7.1** Jobs record `heartbeat_at`, `pid`, `daemon_id` (refreshed every 5s while queued or
   running); a bounded queue (`WORKS_MAX_PENDING_JOBS`, default 64) answers `503` with
   `Retry-After: 5`, and a per-task conflict stays `409`. JSON job files are kept; no SQLite yet.
-- [ ] **M7.2** Crash matrix: 30 injected points across named phases, on Windows (`TerminateProcess`,
-  `taskkill /F`, truncated JSON, interrupted `atomic_write`) and Linux (`SIGKILL`). Assert terminal
-  state, owner released, exactly-once fake delivery/comment/deploy, no orphan child, readable
-  restart explanation.
+- [~] **M7.2** `tests/integration/test_crash_matrix.py` covers 30 persisted-job points (five statuses ×
+  valid/truncated/empty/unknown-field/non-object) plus a leftover `atomic_write` temp file, an abrupt
+  `os._exit` and an externally killed process (`TerminateProcess`/`SIGKILL`). Each asserts the terminal
+  state, the readable restart explanation, the released task owner and idempotent re-reconcile.
+  **Still open:** an orphaned child process after a hard parent kill, and exactly-once fake
+  delivery/comment/deploy across an interrupted delivery.
 - [x] **M7.3** `works backup`/`works restore`: a home archive (events, runs, ledger, settings) and a
   restore test that preserves evidence and task state.
 - [x] **M7.4** Retention: prune terminal jobs while keeping a summary; compact/rotate per-task event
