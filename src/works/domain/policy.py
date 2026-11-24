@@ -5,7 +5,6 @@ from __future__ import annotations
 import ast
 import re
 import unicodedata
-from dataclasses import dataclass
 
 from pydantic import BaseModel, Field
 
@@ -36,15 +35,6 @@ class PolicyReport(BaseModel):
     schema_version: int = 1
     ok: bool
     violations: list[Violation] = Field(default_factory=list)
-
-
-@dataclass(frozen=True)
-class PolicyDecision:
-    violations: tuple[Violation, ...]
-
-    @property
-    def ok(self) -> bool:
-        return not self.violations
 
 
 def normalize_path(raw: str) -> str:

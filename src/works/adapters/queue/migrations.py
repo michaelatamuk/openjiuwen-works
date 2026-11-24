@@ -4,10 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import ValidationError
-
 from works.domain.errors import StateError
-from works.domain.records import SCHEMA_VERSION, Task
+from works.domain.records import SCHEMA_VERSION
 
 LEGACY_STATES: dict[str, str] = {
     "new": "queued",
@@ -47,11 +45,3 @@ def migrate_task(raw: Any) -> dict[str, Any]:
         elif source is None:
             data["source"] = {"kind": "manual", "ref": "legacy", "title": ""}
     return data
-
-
-def load_task(raw: Any) -> Task:
-    payload = migrate_task(raw)
-    try:
-        return Task.model_validate(payload)
-    except ValidationError as exc:
-        raise StateError(f"task record does not match schema v{SCHEMA_VERSION}: {exc}") from exc

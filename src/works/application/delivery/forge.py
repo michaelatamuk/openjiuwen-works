@@ -73,13 +73,6 @@ def gitlab_project(remote: str) -> str | None:
     return f"{match.group('owner')}/{match.group('repo')}"
 
 
-def issue_number(ref: str) -> tuple[str, int] | None:
-    match = SOURCE_ISSUE.match(ref)
-    if match is None:
-        return None
-    return f"{match.group('owner')}/{match.group('repo')}", int(match.group("number"))
-
-
 class GitHubForge:
     """The smallest real GitHub surface delivery needs, behind an injectable transport."""
 
