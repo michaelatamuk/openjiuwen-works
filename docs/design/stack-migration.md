@@ -424,10 +424,12 @@ task owner, and serves a new run. Evidence: `python scripts/smoke_daemon.py`.
 **Gate (met):** CI green; wheel content, deterministic smoke and the local `--full` ask/team smoke
 pass.
 
-### Phase 8 - hardening (done; explicit p95 CI gate deferred)
+### Phase 8 - hardening (done)
 
 - [x] 10,000-task status budget (slow test) and a 20-subscriber SSE fan-out test.
-- [ ] HTTP p95 targets for the read API with 20 SSE clients — measured by hand, not a CI gate yet.
+- [x] HTTP p95 target: `scripts/bench_api.py` holds 20 SSE streams over a representative 50-task
+  queue and measures `/tasks` and `/health`; the CI benchmark job fails above 500 ms p95. The
+  10,000-task budget stays a separate slow status test.
 - [x] Cancel-with-side-effects: a job cancel sets a context event that kills the child process tree;
   daemon crash/reconcile, stale owner and token rotation are covered by tests.
 - [x] Body-size middleware rejects declared and chunked bodies with 413; job timeouts fail a job
@@ -437,8 +439,7 @@ pass.
 - [x] Final full runs: `pytest` green, deterministic wheel smoke and the local `--full` ask/team
   smoke green; ADR [016](../adrs/016-local-daemon.md) records the daemon decision.
 
-**Gate (met except p95):** all §17 checks on a fresh clone; the explicit HTTP p95 budget remains a
-manual/deferred measurement.
+**Gate (met):** all §17 checks on a fresh clone; the API p95 budget runs in CI.
 
 ## 9. Frontend mechanics
 
