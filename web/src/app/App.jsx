@@ -10,20 +10,8 @@ import { Release } from "../features/release/Release.jsx";
 import { Story } from "../features/story/Story.jsx";
 import { Thread } from "../features/session/Thread.jsx";
 import { Toast } from "../ui/primitives.jsx";
-import { stateLabel, stateTone, timeAgo } from "../lib/format.js";
-
-const viewNames = ["story", "evidence", "release", "thread"];
-
-function parseHash() {
-  const match = location.hash.match(/^#\/task\/([^/?]+)(?:\/(story|evidence|release|thread))?/);
-  const query = match ? location.hash.split("?").slice(1).join("?") : "";
-  const at = new URLSearchParams(query).get("at");
-  return {
-    taskId: match ? decodeURIComponent(match[1]) : null,
-    view: match?.[2] || null,
-    at: at != null && at !== "" ? Number(at) : null,
-  };
-}
+import { stateLabel, timeAgo } from "../lib/format.js";
+import { VIEW_NAMES, VIEWS, crumbFor, parseHash, taskHash } from "./routing.js";
 
 export default function App() {
   const [health, setHealth] = useState(null);
@@ -84,16 +72,14 @@ export default function App() {
     selectedRef.current = id;
     setSelected(id);
     setDetail((current) => (current?.task?.id === id ? current : null));
-    const suffix = nextView === "evidence" ? "/evidence" : nextView === "release" ? "/release" : nextView === "thread" ? "/thread" : "/story";
-    const query = nextView === "story" && at != null ? `?at=${at}` : "";
-    const hash = `#/task/${encodeURIComponent(id)}${suffix}${query}`;
+    const hash = taskHash(id, nextView, at);
     if (push) history.pushState(null, "", hash);
     else history.replaceState(null, "", hash);
     loadDetail(id);
   }, [loadDetail, view]);
 
   const changeView = useCallback((next) => {
-    if (!viewNames.includes(next)) return;
+    if (!VIEW_NAMES.includes(next)) return;
     setView(next);
     localStorage.setItem("works.view.v3", next);
     if (selectedRef.current) selectTask(selectedRef.current, next);
@@ -231,7 +217,7 @@ export default function App() {
   const subtitle = detail
     ? `${stateLabel(detail.task.state)} / reported ${timeAgo(detail.task.created_at)}`
     : "Select a report to read its story, proof and decision.";
-  const crumb = detail ? (view === "evidence" ? "Evidence" : view === "release" ? "Release" : view === "thread" ? "Thread" : "Story") : "Queue";
+  const crumb = detail ? crumbFor(view) : "Queue";
 
   return (
     <div className="workspace">
@@ -279,7 +265,7 @@ export default function App() {
             </header>
             {detail ? (
               <div className="view-tabs" role="tablist" aria-label="Detail view">
-                {[["story", "Story"], ["evidence", "Evidence"], ["release", "Release"], ["thread", "Session"]].map(([id, label]) => (
+                {VIEWS.map(([id, label]) => (
                   <button key={id} type="button" role="tab" aria-selected={view === id} className={`view-tab ${view === id ? "active" : ""}`} onClick={() => changeView(id)}>{label}</button>
                 ))}
                 <span className={`cl-live ${connected ? "on" : ""}`} title={connected ? "Live updates connected" : "Reconnecting"} />
