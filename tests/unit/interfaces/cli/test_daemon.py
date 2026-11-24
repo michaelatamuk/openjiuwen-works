@@ -172,3 +172,21 @@ def test_dispatch_through_the_daemon_selects_the_queue(paths, repo, factory_root
     body = payload(result)
     assert body["selected"] == 2
     assert {item["task_id"] for item in body["runs"]} == {first, second}
+
+
+def test_a_wildcard_daemon_reports_a_reachable_url(paths, monkeypatch) -> None:
+    info = daemon.DaemonInfo(
+        pid=os.getpid(),
+        host="0.0.0.0",  # noqa: S104 - a literal for the display check
+        port=8771,
+        home=str(paths.root),
+        started_at=time.time(),
+        token_path=str(daemon.token_path(paths)),
+    )
+    from works.interfaces.cli import commands
+
+    monkeypatch.setattr(commands.daemon, "_primary_ipv4", lambda: "192.168.86.25")
+    from works.interfaces.cli.commands.daemon import _bootstrap_url
+
+    assert _bootstrap_url(info).startswith("http://192.168.86.25:8771/")
+    assert info.probe_base_url == "http://127.0.0.1:8771"

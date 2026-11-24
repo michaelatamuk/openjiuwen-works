@@ -59,6 +59,8 @@ ALLOW_ENV = frozenset(
         "PYTHONPATH",
         "PYTHONUTF8",
         "PYTHONIOENCODING",
+        "USERNAME",
+        "USERDOMAIN",
     }
 )
 
@@ -75,6 +77,11 @@ class DaemonInfo:
     @property
     def base_url(self) -> str:
         return f"http://{self.host}:{self.port}"
+
+    @property
+    def probe_base_url(self) -> str:
+        """The address a client on this machine can actually call for a wildcard bind."""
+        return f"http://{_probe_host(self.host)}:{self.port}"
 
     def as_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -103,8 +110,17 @@ def read_token(info: DaemonInfo) -> str:
         return ""
 
 
+def _probe_host(host: str) -> str:
+    """A wildcard bind is reachable on loopback; its literal address is not trusted."""
+    if host in ("0.0.0.0", ""):  # noqa: S104 - detecting a wildcard, not binding it
+        return "127.0.0.1"
+    if host == "::":
+        return "::1"
+    return host
+
+
 def fetch_health(host: str, port: int, *, timeout: float = HEALTH_TIMEOUT) -> dict[str, Any] | None:
-    url = f"http://{host}:{port}/api/v1/health"
+    url = f"http://{_probe_host(host)}:{port}/api/v1/health"
     try:
         with urllib.request.urlopen(url, timeout=timeout) as response:  # nosec B310
             payload = json.loads(response.read().decode("utf-8"))
@@ -365,6 +381,7 @@ def _daemon_command(
     port: int,
     write: bool,
     trusted_hosts: tuple[str, ...] = (),
+    allow_remote: bool = False,
 ) -> list[str]:
     command = [
         sys.executable,
@@ -380,6 +397,8 @@ def _daemon_command(
     ]
     if write:
         command.append("--write")
+    if allow_remote:
+        command.append("--allow-remote")
     for trusted in trusted_hosts:
         command.extend(["--trusted-host", trusted])
     return command
@@ -400,6 +419,7 @@ def start_daemon(
     write: bool = False,
     timeout: float = START_TIMEOUT,
     trusted_hosts: tuple[str, ...] = (),
+    allow_remote: bool = False,
 ) -> DaemonInfo:
     existing = current_daemon(paths)
     if existing is not None:
@@ -429,6 +449,7 @@ def start_daemon(
                 port=port,
                 write=write,
                 trusted_hosts=trusted_hosts,
+                allow_remote=allow_remote,
             ),
             **kwargs,
         )
@@ -453,7 +474,7 @@ def start_daemon(
 
 def _post_shutdown(info: DaemonInfo, token: str, *, timeout: float = 3.0) -> bool:
     request = urllib.request.Request(  # noqa: S310 - loopback
-        f"{info.base_url}/api/v1/admin/shutdown",
+        f"{info.probe_base_url}/api/v1/admin/shutdown",
         data=b"{}",
         method="POST",
         headers={

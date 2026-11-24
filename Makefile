@@ -1,4 +1,4 @@
-.PHONY: check lint format type test unit integration cov bench wheel security gitleaks demo
+.PHONY: check lint format type test unit integration cov bench wheel security gitleaks demo docs-links
 
 check: lint format type cov
 
@@ -7,6 +7,9 @@ lint:
 
 format:
 	uv run ruff format --check src tests
+
+docs-links:
+	uv run python scripts/check_docs_links.py
 
 type:
 	uv run mypy

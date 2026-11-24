@@ -7,6 +7,7 @@ session cookie created from a one-time bootstrap token (`works ui`).
 from __future__ import annotations
 
 import contextlib
+import getpass
 import hashlib
 import hmac
 import json
@@ -63,9 +64,12 @@ class Security:
     @staticmethod
     def _harden(path: Path) -> bool:
         if os.name == "nt":
-            user = os.environ.get("USERNAME")
+            user = os.environ.get("USERNAME") or os.environ.get("USER")
             if not user:
-                return False
+                try:
+                    user = getpass.getuser()
+                except Exception:  # pragma: no cover - environment without an identity
+                    return False
             result = subprocess.run(  # noqa: S603  # nosec B603 B607
                 ["icacls", str(path), "/inheritance:r", "/grant:r", f"{user}:F"],  # noqa: S607
                 capture_output=True,

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import socket
 import threading
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -41,15 +42,39 @@ def _requires_read_auth(args: argparse.Namespace) -> bool:
     return args.host not in LOOPBACK
 
 
+def _primary_ipv4() -> str:
+    """The address this machine uses for the default route (no packet is sent)."""
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as probe:
+            probe.connect(("8.8.8.8", 80))
+            candidate = str(probe.getsockname()[0])
+            if candidate and not candidate.startswith("127."):
+                return candidate
+    except OSError:
+        pass
+    try:
+        candidate = socket.gethostbyname(socket.gethostname())
+    except OSError:
+        return ""
+    return candidate if not candidate.startswith("127.") else ""
+
+
+def _display_host(info: daemons.DaemonInfo) -> str:
+    """A wildcard bind prints as an address another machine can actually open."""
+    if info.host not in ("0.0.0.0", "::"):  # noqa: S104 - a comparison, not a bind
+        return info.host
+    return _primary_ipv4() or "127.0.0.1"
+
+
 def _bootstrap_url(info: daemons.DaemonInfo) -> str:
-    url = f"{info.base_url}/"
+    url = f"http://{_display_host(info)}:{info.port}/"
     token = daemons.read_token(info)
     return f"{url}?bootstrap={quote(token)}" if token else url
 
 
 def _payload(info: daemons.DaemonInfo, *, write: bool) -> dict[str, object]:
     payload: dict[str, object] = {"running": True, **info.as_dict()}
-    payload["url"] = _bootstrap_url(info) if write else f"{info.base_url}/"
+    payload["url"] = _bootstrap_url(info) if write else f"http://{_display_host(info)}:{info.port}/"
     payload["write"] = write
     return payload
 
@@ -190,6 +215,7 @@ def _start(args: argparse.Namespace, paths: WorksPaths) -> int:
         port=args.port,
         write=args.write,
         trusted_hosts=tuple(getattr(args, "trusted_host", None) or ()),
+        allow_remote=bool(getattr(args, "allow_remote", False)),
     )
     _report(info, write=args.write, json=args.json, started=True)
     return 0

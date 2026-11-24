@@ -20,7 +20,7 @@ version:
   backup/restore, retention, liveness/readiness, SSE limits, prompt provenance and a mutation gate;
 - reconciles the plan with the existing standard in [`plan.md`](plan.md) §6.4, which is stricter
   than v1 in mutation score, circuit breaking, prompt hashes and “no bare threads”;
-- fixes the arithmetic: **63 engineer-days + 20% ≈ 76 days**, not 57 days in 8 weeks.
+- fixes the arithmetic: **69 engineer-days + 20% ≈ 76 days**, not 57 days in 8 weeks.
 
 ## 1. Baseline: done, in flight, new
 
@@ -97,8 +97,10 @@ the primary Windows lifecycle path going untested.
   `warn_return_any = true`. Remove `Any` from public interfaces. **Do not add a second type
   checker** (pyright/ty) just to duplicate mypy.
 - [x] **M1.2a** Queue, Story, Evidence and Release are typed `.tsx`; `tsc`, Vitest and the bundle
-  are green. Session/Settings and `app/*` remain.
-- [ ] **M1.2** Complete the `.tsx` migration for the remaining screens and `app/*`.
+  are green.
+- [x] **M1.2b** Session, Settings, `app/*`, dialogs, `ui/*` and every test are typed `.tsx`; there is
+  **no `.jsx` under `web/src`**. `tsc`, Vitest (35 tests) and the bundle are green; helpers such as
+  `format.js`/`options.js` stay JS behind typed boundaries until M1.3.
 - [ ] **M1.3** Turn on `checkJs`, then `allowJs: false`; include `vite.config.js`/`vitest.setup.js`
   only when they are migrated. Keep the committed `dist` gate green at every step.
 - [ ] **M1.4** Add Zod validation at the HTTP boundary for tasks, detail, health, jobs and settings;
@@ -139,13 +141,13 @@ the primary Windows lifecycle path going untested.
 
 - [x] **M3.1** Playwright fixture starts/stops a real `works daemon start --write`, resets a temp
   home, and exposes traces/video on failure.
-- [ ] **M3.2** Critical journeys: queue → Story → Evidence → Release; new task; import; settings
-  save; add-context; ask stream; pairing/revoke; read-only mode.
+- [~] **M3.2** Queue → Story → Evidence → Release and Settings pairing are covered. New task,
+  import, add-context, ask stream, revoke and read-only remain.
 - [ ] **M3.3** `@axe-core/playwright` on Story, Evidence, Release, Session, Settings; fail on
   serious/critical violations.
 - [ ] **M3.4** Screenshots are **opt-in/manual** (not a required gate); no mobile-web pass until a
-  native client exists.
-- [x] **M3.5** E2E job is a required CI check with a 15-minute budget.
+  native client exists. An opt-in visual job compares Story/Evidence/Release in light/dark.
+- [x] **M3.5** E2E job is a required CI check with a 25-minute budget.
 
 ### M4 — Remote and device trust, after M0 (4 days)
 
@@ -173,13 +175,16 @@ SSE reader wedging the daemon.
 - [x] **M5.2** Split `/health/live` (cheap) from `/health/ready` (builder/provider diagnostics);
   keep `/health` compatible for now. Remove health from the p95 gate until split.
 - [x] **M5.3** Extend the existing JSON `/metrics` (or add one if absent) with named counters for job
-  outcomes, queue depth, SSE clients and p95 buckets; **no Prometheus/OTel dependency**.
+  outcomes, queue depth, SSE clients and p95 buckets; **no Prometheus dependency**.
 - [x] **M5.4** Add a max SSE client count and a slow-consumer policy with a test that a non-reading
   client cannot wedge the event loop or exhaust threads.
-- [x] **M5.5** `works doctor --trace`/debug bundle: daemon.json, jobs, logs, versions, index health,
-  disk state; a redaction test proves no token/cookie/key is included.
-- [ ] **M5.6** **Defer** OTel OTLP, Prometheus text and SLO dashboards; the optional OTel span in
-  `plan.md` §6.4 remains optional.
+- [x] **M5.5** `works doctor --bundle`: daemon.json, jobs, logs, versions, index health, disk state;
+  a redaction test proves no token/cookie/key is included.
+- [ ] **M5.6** **Defer** Prometheus text and SLO dashboards; no external collector is required.
+- [ ] **M5.7** Instrument by default with the OpenTelemetry API/SDK using a **no-op exporter**;
+  `WORKS_OTEL=1` enables a local console/OTLP exporter. Spans cover HTTP → job → subprocess, with
+  trace-id propagation. **Proof:** overhead <5% on the p95 bench and one complete trace without a
+  collector.
 
 ### M6 — AI quality, prompts and invariants (14 days)
 
@@ -204,18 +209,20 @@ invariants.
 **Prevents:** lost evidence, unbounded job growth, duplicate side effects, ambiguous crash state.  
 **Proof:** crash matrix on Windows/Linux, restore test, retention test, disk check.
 
-- [ ] **M7.1** Add `heartbeat_at`, `pid`, `daemon_id` to jobs; bounded queue/backpressure with
-  `429`/`503` + retry hint. Keep JSON job files; **do not** move to SQLite yet.
+- [x] **M7.1** Jobs record `heartbeat_at`, `pid`, `daemon_id` (refreshed every 5s while queued or
+  running); a bounded queue (`WORKS_MAX_PENDING_JOBS`, default 64) answers `503` with
+  `Retry-After: 5`, and a per-task conflict stays `409`. JSON job files are kept; no SQLite yet.
 - [ ] **M7.2** Crash matrix: 30 injected points across named phases, on Windows (`TerminateProcess`,
   `taskkill /F`, truncated JSON, interrupted `atomic_write`) and Linux (`SIGKILL`). Assert terminal
   state, owner released, exactly-once fake delivery/comment/deploy, no orphan child, readable
   restart explanation.
 - [x] **M7.3** `works backup`/`works restore`: a home archive (events, runs, ledger, settings) and a
   restore test that preserves evidence and task state.
-- [ ] **M7.4** Retention: prune terminal jobs while keeping a summary; compact/rotate per-task event
+- [x] **M7.4** Retention: prune terminal jobs while keeping a summary; compact/rotate per-task event
   logs only with an explicit policy; `works doctor` reports disk use; index rebuild has a budget.
-- [ ] **M7.5** Do **not** auto-resume a killed run; partial git/PR/deploy state is not safe. Document
-  at-least-once semantics and phase idempotency.
+- [x] **M7.5** Killed runs are **not** auto-resumed: `reconcile()` marks them failed and releases the
+  owner. At-least-once delivery, phase idempotency and the operator recovery path are documented in
+  `docs/reference/reliability.md` and the runbook.
 
 ### M8 — Runtime matrix and supply chain (4 days)
 
@@ -239,9 +246,32 @@ invariants.
 - [x] **M9.1** Extend the existing `Makefile` (not `just`) with `e2e`, `wheel`, `bench`; keep
   `check`/`security`; pre-commit already exists.
 - [ ] **M9.2** Keep the mutation gate ≥70% and include the new index/job modules in `only_mutate`.
-- [ ] **M9.3** Docs: fix contradictions (M0.6), add contributor guide updates, link-check script;
-  no MkDocs dependency.
+- [~] **M9.3** `scripts/check_docs_links.py` + a CI step are in place (51 files, zero broken links);
+  the contributor-guide refresh and the remaining M0.6 contradictions are still open. No MkDocs.
 - [ ] **M9.4** API compatibility ADR and generated-client compile check (M2.6).
+
+### M10 - Async, React platform and renderer decisions (6 days)
+
+**Prevents:** thread-pool starvation hidden behind "async-first" slogans; unmeasured compiler/RSC
+migration.
+
+- [ ] **M10.1** Audit every FastAPI route and classify it: light async-safe I/O, blocking file/git,
+  subprocess, or SSE. Document the table in `docs/reference/http-api.md`.
+  *Proof:* every route has a class and a note on where it runs.
+- [ ] **M10.2** Convert only the measured hot read paths to `async def` (or explicit
+  `anyio.to_thread.run_sync`) so 20 SSE clients plus `/tasks` do not exhaust workers. Do not rewrite
+  blocking git/subprocess routes for fashion. *Proof:* p95/worker-starvation test before/after.
+- [ ] **M10.3** Decide the job executor: structured `asyncio` tasks **or** the bounded thread pool
+  with an ADR exception to `plan.md` §6.4 "no bare threads". Never leave the contradiction.
+  *Proof:* ADR + bounded queue test.
+- [ ] **M10.4** Enable React Compiler behind a measured build; compare bundle size, render latency
+  and test stability. Keep it if it is neutral-to-better; otherwise record the decision. *Proof:*
+  build/test green and a before/after size/latency note.
+- [ ] **M10.5** Evaluate React Server Components/Next.js against the local SPA. Expected decision:
+  **reject** (no SSR/SEO/server actions requirement); record it in an ADR. No RSC rewrite.
+  *Proof:* ADR with the rejected alternatives.
+- [ ] **M10.6** Document the async boundary and React compiler/RSC decisions in the contributor
+  guide and ADR index.
 
 ## 4. Sequencing and gates
 
@@ -273,18 +303,20 @@ M5 + M7.
 **Gate 3:** trace id in every job/log/metrics; liveness/readiness split; slow-consumer test; 30 crash
 points on Windows+Linux; backup/restore and retention tests.
 
-### Phase 4 — AI and release (weeks 9–12)
+### Phase 4 — AI, platform and release (weeks 9–13)
 
-M6 + M8 + M9.
+M6 + M8 + M9 + M10.
 
 **Gate 4:** eval thresholds with denominators; hostile-model invariants; 3.13 wheel smoke; SBOM;
-mutation ≥70%; docs link check.
+mutation ≥70%; docs link check; async route audit + measured hot-path migration; React Compiler
+decision; RSC ADR; OTel no-op trace and <5% overhead.
 
 ### Effort
 
-M0 6 + M1 11 + M2 5 + M3 8 + M4 4 + M5 3 + M6 14 + M7 6 + M8 4 + M9 2 = **63 engineer-days**,
-**~76 with 20% contingency**. That is **12–14 weeks for one engineer**, or **8–9 weeks with two**
-(one backend/data, one web/reliability). The v1 8-week/57-day schedule was arithmetically impossible.
+M0 6 + M1 11 + M2 5 + M3 8 + M4 4 + M5 4 + M6 14 + M7 6 + M8 4 + M9 2 + M10 6 =
+**69 engineer-days**, **~83 with 20% contingency**. That is **13–16 weeks for one engineer**, or
+**9–10 weeks with two** (one backend/data, one web/reliability). The v1 8-week/57-day schedule was
+arithmetically impossible.
 
 ## 5. Acceptance metrics
 
@@ -296,13 +328,17 @@ M0 6 + M1 11 + M2 5 + M3 8 + M4 4 + M5 3 + M6 14 + M7 6 + M8 4 + M9 2 = **63 eng
 | Reliability | 30 crash points, Windows+Linux; terminal job state; owner released; exactly-once fake side effects; no orphan child; readable restart explanation |
 | Security | non-loopback pairing/revoke E2E; 20 failed attempts → 429 + Retry-After; audit log assertions; Windows ACL test; pip/npm audit zero high/critical with owner+expiry exceptions |
 | Observability | `trace_id` in `Job.as_dict()` and job logs; log-schema test; JSON metrics named counters; SSE slow-consumer test |
+| OTel | no-op instrumentation by default; `WORKS_OTEL=1` local exporter; full HTTP→job→subprocess trace; <5% p95 overhead |
+| Async | every route classified; hot read paths async/offloaded; worker-starvation test with 20 SSE; job-executor ADR |
+| React platform | no `.jsx` under `app/features`; React Compiler decision with size/latency evidence; RSC ADR (expected reject) |
+| Accessibility | axe serious/critical = 0 on five screens; screenshots opt-in |
 | AI | prompt hash in `run.json` + `evidence.md`; golden set denominators and thresholds; max-regression delta; budget blocked state; hostile-model invariants |
 | Release | 3.13 clean-venv wheel install (`--require-hashes`), `doctor`, daemon start/status/stop; SBOM; no signing gate until publish exists |
 | Quality | mutation ≥70% on core + new index/job modules; docs link check; `Makefile` `e2e`/`wheel`/`bench` |
 
 ## 6. Top risks
 
-1. **Scope inflation toward a platform.** OTel, Prometheus, SQLite jobs, signing and installers are
+1. **Scope inflation toward a platform.** Prometheus, SQLite jobs, signing and installers are
    “modern” but not needed for one home; they crowd out Windows CI, backup and idempotency.
 2. **Index/domain drift.** Encoding event-derived risk/decision into SQLite duplicates presenter
    logic or leaks `interfaces/api` into `adapters/`. This version forbids that.
@@ -311,7 +347,10 @@ M0 6 + M1 11 + M2 5 + M3 8 + M4 4 + M5 3 + M6 14 + M7 6 + M8 4 + M9 2 = **63 eng
 4. **False confidence in “secure remote”.** Cleartext bearer, a Windows `chmod` no-op, no audit,
    no session expiry, and rate limiting behind a tunnel are not security. M0 must land code, not
    prose.
-5. **Gate-cutting under schedule pressure.** If the plan is compressed, Windows CI, the crash matrix
+5. **“Async-first” and RSC churn.** Rewriting blocking git/subprocess routes or moving a local SPA to
+   RSC would add risk without a user-visible requirement. M10 requires measurements and an ADR; RSC
+   is expected to be rejected.
+6. **Gate-cutting under schedule pressure.** If the plan is compressed, Windows CI, the crash matrix
    and mutation are cut first — exactly the evidence that makes the product trustworthy. Use the
    corrected effort and two engineers where possible.
 
@@ -319,9 +358,10 @@ M0 6 + M1 11 + M2 5 + M3 8 + M4 4 + M5 3 + M6 14 + M7 6 + M8 4 + M9 2 = **63 eng
 
 - **Drop:** pyright/ty as a second Python checker; native-client Kotlin/C# probe; cursor pagination
   and ETag for a local 200-row page; mobile-web viewport pass; screenshot diffs as a required gate.
-- **Defer:** OTel OTLP, Prometheus, SLO dashboards; provider fallback; SQLite job store and
-  auto-resume; Python 3.14 as primary; Sigstore signing, MSI/installer, reproducible build; `just`,
-  MkDocs.
+- **Defer:** Prometheus, SLO dashboards; provider fallback; SQLite job store and auto-resume;
+  Python 3.14 as primary; Sigstore signing, MSI/installer, reproducible build; `just`, MkDocs.
+- **Expected reject:** RSC/Next.js for the local SPA; a full async rewrite of blocking routes.
+  OTel is **not** deferred: no-op by default, opt-in exporter in M5.7.
 
 ## 8. Definition of done
 

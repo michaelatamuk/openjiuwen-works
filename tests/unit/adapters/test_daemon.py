@@ -94,6 +94,12 @@ def test_snapshot_env_keeps_the_allow_list_and_works_values(monkeypatch) -> None
     assert "SECRET_TOKEN" not in env
 
 
+def test_snapshot_env_keeps_the_windows_identity(monkeypatch) -> None:
+    monkeypatch.setenv("USERNAME", "someone")
+    env = daemon.snapshot_env()
+    assert env["USERNAME"] == "someone"
+
+
 def test_info_file_shape(paths) -> None:
     info = make_info(paths, port=9000)
     daemon.write_info(paths, info)
@@ -110,3 +116,27 @@ def test_info_file_shape(paths) -> None:
 
 def test_a_daemon_log_path_lives_in_state(paths) -> None:
     assert daemon.log_path(paths) == Path(paths.state) / "daemon.log"
+
+
+def test_a_remote_launch_forwards_allow_remote(paths) -> None:
+    command = daemon._daemon_command(
+        paths,
+        host="0.0.0.0",  # noqa: S104 - asserting the forwarded flag, not binding
+        port=8771,
+        write=True,
+        trusted_hosts=("192.168.1.20",),
+        allow_remote=True,
+    )
+    assert "--allow-remote" in command
+    assert command[command.index("--trusted-host") + 1] == "192.168.1.20"
+
+
+def test_a_loopback_launch_does_not_claim_remote(paths) -> None:
+    command = daemon._daemon_command(paths, host="127.0.0.1", port=8765, write=False)
+    assert "--allow-remote" not in command
+
+
+def test_a_wildcard_bind_is_probed_on_loopback() -> None:
+    assert daemon._probe_host("0.0.0.0") == "127.0.0.1"  # noqa: S104 - a literal, not a bind
+    assert daemon._probe_host("::") == "::1"
+    assert daemon._probe_host("192.168.1.20") == "192.168.1.20"

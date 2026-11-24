@@ -167,6 +167,22 @@ real-time scanning; the code retries, it does not ignore the failure.
 **Restore:** `works --home <new-home> restore --from works-backup.tar.gz`. A non-empty home needs
 `--force`; the restore replaces queue/runs/flows and keeps the destination's own state directory.
 
+## Job journals grow without bound
+
+**Do:** `works --home <home> prune-jobs --days 30 --json`. Finished jobs older than the window are
+reduced to one summary line each in `.works/state/jobs-archive.jsonl` and their JSON files are
+deleted; queued or running jobs are never pruned. Run it with `--dry-run` first.
+
+To collect evidence before pruning, or for any bug report, use
+`works --home <home> doctor --bundle works-debug.tar.gz`: versions, daemon identity, job summaries,
+index health, disk usage and log tails, with no tokens, cookies or device hashes.
+
+## A job was killed by a restart
+
+A restart marks the job `failed` with `daemon restarted while the job was running` and releases the
+task owner. Nothing resumes automatically; start a fresh `works run` after checking the worktree and
+remote state. See `docs/reference/reliability.md`.
+
 ## Start the daemon at logon on Windows
 
 Use Task Scheduler (or a service wrapper) with the venv Python:
