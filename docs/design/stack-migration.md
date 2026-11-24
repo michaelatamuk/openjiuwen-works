@@ -170,80 +170,149 @@ Delete at cutover: `server.py`, `read.py`, `write.py`, `downloads.py`, `static.p
 
 ## 8. Phases
 
-### Phase 0 — preparation (0.5 day)
-- [x] Fix the console script: `works = "works.interfaces.cli.main:main_entry"`.
-- [ ] ADR-016 "local daemon and typed client".
-- [ ] Freeze the current JSON as a baseline (record sample responses).
-- [ ] CI smoke test for `works --help` and `works version`.
+Every checkbox names the artifact it produces. A phase ends with a **gate**: a command (or a short
+list) that must be green before the next phase starts. A box without a test is a review item, not
+a done item.
 
-**Done when:** `works.exe` works and the contract is recorded.
+### Phase 0 — preparation (0.5 day)
+
+- [ ] `docs/adrs/016-local-daemon-and-typed-client.md`: decision, context, consequences; add it to
+  `docs/adrs/README.md`. Verify: file linked from the ADR index.
+- [ ] `scripts/capture_api_fixtures.py`: calls the legacy server on a demo home and writes every
+  GET/POST response to `tests/contract/fixtures/*.json`. Verify: `uv run python scripts/capture_api_fixtures.py --check`
+  exits 0 against current code.
+- [ ] `tests/contract/test_baseline.py`: asserts the fixtures are present and have the expected
+  top-level keys. Verify: `uv run pytest tests/contract -q`.
+- [ ] CI smoke step in `.github/workflows/ci.yml`: `uv run works --help` and `uv run works version`.
+  Verify: the `check` job is green on a branch.
+
+**Gate:** `uv run pytest tests/contract -q` and the console smoke both pass.
 
 ### Phase 1 — daemon skeleton (1 day)
-- [ ] `src/works/interfaces/http/app.py` — FastAPI plus lifespan.
-- [ ] Dependency wiring: build `WorksPaths`, `Queue`, `Supervisor` and settings once.
-- [ ] `GET /api/v1/health` with the same fields.
-- [ ] `works daemon --host --port --write` command.
-- [ ] `httpx.ASGITransport` for tests.
 
-**Done when:** Uvicorn starts, health is green, the old UI still works.
+- [ ] `pyproject.toml`: extra `server = ["fastapi", "uvicorn", "sse-starlette"]`, dev extra gains
+  `httpx`. Verify: `uv lock` updates and `uv sync --extra dev --extra server` succeeds.
+- [ ] `src/works/interfaces/http/app.py`: `create_app(paths)` + lifespan that builds the queue and
+  supervisor once. Verify: app imports and starts under Uvicorn.
+- [ ] `src/works/interfaces/http/wiring.py`: one dependency builder used by tests and the daemon.
+  Verify: no second copy of `WorksPaths`/`Queue` construction.
+- [ ] `src/works/interfaces/http/routes/health.py`: `GET /api/v1/health` with the exact legacy keys
+  (`ok`, `readonly`, `write`, `root`, `version`, `ai`, `builder`). Verify: schema test below.
+- [ ] `src/works/interfaces/cli/commands/daemon.py`: `works daemon --host --port --write`; registered
+  in `cli/parser/run.py`.
+- [ ] `tests/unit/interfaces/http/test_health.py`: `httpx.ASGITransport`, asserts keys and values.
+  Verify: `uv run pytest tests/unit/interfaces/http -q`.
+
+**Gate:** `uv run pytest tests/unit/interfaces/http -q` and `uv run works daemon --help`.
 
 ### Phase 2 — read API (2 days)
-- [ ] Pydantic response schemas in `interfaces/http/schemas/`.
-- [ ] Move `presenters/` into response models: tasks, detail, story, thread, rail.
-- [ ] products, detectors, metrics, ledger, runs, exports, artifacts.
-- [ ] Contract tests: old JSON == new JSON (fixtures from Phase 0).
 
-**Done when:** every GET endpoint matches the old contract.
+- [ ] `src/works/interfaces/http/schemas/tasks.py`: `TaskSummary`, `TaskDetail`, `RunSummary`,
+  `Pipeline`, `ThreadMessage`, `Rail`, `ArtifactDownload`. Verify: models import and round-trip
+  fixtures via `model_validate`.
+- [ ] `src/works/interfaces/http/routes/tasks.py`: `GET /tasks`, `/tasks/{id}`, `/tasks/{id}/runs`.
+  Verify: contract test `tests/contract/test_tasks_api.py`.
+- [ ] `src/works/interfaces/http/routes/maps.py`: `/products`, `/detectors`. Verify: contract tests.
+- [ ] `src/works/interfaces/http/routes/observability.py`: `/metrics`, `/ledger`. Verify: contract
+  tests.
+- [ ] `src/works/interfaces/http/routes/downloads.py`: exports and artifacts via `FileResponse`,
+  path confined to the run directory. Verify: traversal test (below) and contract test.
+- [ ] `tests/contract/test_read_api.py`: for each fixture, start the new app on an empty home, seed
+  the same data, and assert JSON equality (field order irrelevant, timestamps normalized).
+- [ ] `tests/unit/interfaces/http/test_downloads.py`: rejects `../`, absolute paths, and a missing
+  run; serves a real artifact with the right content type.
+
+**Gate:** `uv run pytest tests/contract tests/unit/interfaces/http -q` (all read endpoints).
 
 ### Phase 3 — write API (2 days)
-- [ ] `POST /tasks`, `/actions`, `/readiness`, `/sources`, `/settings/builder`.
-- [ ] Jobs for long actions; idempotency keys; token and origin checks.
-- [ ] Error mapping table implemented once, in one handler.
-- [ ] Shared locks: file locks stay, plus one job executor.
 
-**Done when:** create/approve/release flows work through the new API.
+- [ ] `src/works/interfaces/http/security.py`: token file `.works/state/http-token` (owner-only),
+  `POST /api/v1/session` cookie bootstrap, loopback `Host` check. Verify:
+  `tests/unit/interfaces/http/test_security.py` covers missing token, wrong token, bad Host.
+- [ ] `src/works/interfaces/http/jobs.py`: executor with `max_workers=2`, statuses, cancellation,
+  log tail. Verify: `tests/unit/interfaces/http/test_jobs.py` with a fake long job and a cancel.
+- [ ] `src/works/interfaces/http/routes/actions.py`: all eight actions; `ask`, `team-verify`,
+  `readiness`, `deliver`, `confirm` return 202 + job. Verify: `tests/contract/test_actions_api.py`
+  plus a job-status test.
+- [ ] `routes/tasks.py`: `POST /tasks` with `Idempotency-Key`; replay returns the first result.
+  Verify: a test that posts twice and asserts one task.
+- [ ] `routes/sources.py`, `routes/settings.py`, `routes/readiness.py`.
+- [ ] `app.py`: one exception handler implementing the status mapping from §5.2. Verify: a
+  parametrized test per `WorksError` subclass.
+- [ ] `scripts/smoke_api.py`: create → approve-plan → release → confirm against a demo home.
+
+**Gate:** `uv run pytest tests/unit/interfaces/http tests/contract -q` and `uv run python scripts/smoke_api.py`.
 
 ### Phase 4 — live updates (1 day)
-- [ ] `LiveState` → SSE broadcaster with a heartbeat and `Last-Event-ID`.
-- [ ] `POST /ask/stream` as a FastAPI streaming response.
-- [ ] Reconnect with backoff on the client.
 
-**Done when:** an open tab updates without polling and survives a dropped stream.
+- [ ] `src/works/interfaces/http/live.py`: broadcaster task draining `LiveState`, a ring buffer of
+  the last 200 events for `Last-Event-ID`, 15 s heartbeat.
+- [ ] `routes/events.py`: `StreamingResponse` with `text/event-stream`, disconnect handling.
+  Verify: `tests/unit/interfaces/http/test_sse.py` asserts event names, ids, heartbeat and replay.
+- [ ] `routes/ask.py`: `POST /ask/stream` with the existing `delta`/`done`/`error` payloads.
+  Verify: mocked worker streaming test.
+- [ ] `docs/reference/http-api.md`: one page with the endpoints, events and error codes.
+
+**Gate:** `uv run pytest tests/unit/interfaces/http/test_sse.py -q`.
 
 ### Phase 5 — TypeScript frontend (3–4 days)
-- [ ] `tsconfig`, `strict: true`, optional ESLint, `vitest`.
-- [ ] `openapi-typescript` → `web/src/api/generated/schema.d.ts`.
-- [ ] Thin client `web/src/api/client.ts` (fetch plus cookie).
-- [ ] TanStack Query hooks: `useTasks`, `useTaskDetail`, `useActions`, `useMetrics`, `useJob`.
-- [ ] SSE hook `useEvents`.
-- [ ] Migrate screens one by one: Queue → Story → Evidence → Release → Session → Settings.
-- [ ] Delete `lib/api.js` after the move.
 
-**Done when:** `tsc --noEmit` and `vite build` are green and the UI runs on the new API.
+- [ ] `web/package.json`: add `typescript`, `@tanstack/react-query`, `zustand`, `zod`,
+  `openapi-typescript`, `vitest`; scripts `dev`, `build`, `typecheck`, `test`, `generate:api`.
+  Verify: `npm ci && npm run typecheck`.
+- [ ] `web/tsconfig.json`: `strict`, `allowJs`, `jsx: react-jsx`; new files are `.ts`/`.tsx`.
+- [ ] `web/src/api/generated/schema.d.ts`: generated from `/api/v1/openapi.json`; committed.
+  Verify: CI regenerates and fails on `git diff --exit-code`.
+- [ ] `web/src/api/client.ts`: fetch wrapper with credentials, typed errors, `Idempotency-Key`.
+- [ ] `web/src/api/hooks.ts`: `useTasks`, `useTaskDetail`, `useActions`, `useJob`, `useMetrics`.
+  Verify: `vitest` tests with a mocked fetch.
+- [ ] `web/src/api/useEvents.ts`: SSE with reconnect and cache invalidation.
+- [ ] Screens migrated one by one, each with its parity items from §18: Queue, Story, Evidence,
+  Release, Session, Settings, dialogs, palette/help.
+- [ ] Delete `web/src/lib/api.js` and the last `EventSource` call site.
+
+**Gate:** `npm run typecheck && npm test && npm run build`, plus a manual parity pass through §18.
 
 ### Phase 6 — process split (2 days)
-- [ ] `works daemon start|stop|status`, pidfile, port, log.
-- [ ] CLI: `--standalone` (as today) and `--daemon` (HTTP).
-- [ ] UI assets: the backend serves `dist` via `StaticFiles`.
-- [ ] One writer: `dispatch --watch` runs only inside the daemon.
-- [ ] `works ui` = start daemon if needed + open the browser.
 
-**Done when:** UI and `dispatch` run together without races; closing the UI does not kill runs.
+- [ ] `works daemon start|stop|status`: pidfile `.works/state/daemon.pid`, log
+  `.works/state/daemon.log`, single-instance lock. Verify: start twice → second exits with a clear
+  message; stale pidfile is recovered.
+- [ ] CLI transport: `--standalone` (default for one-shot) and `--daemon` (HTTP + token).
+  Verify: the same command returns the same JSON in both modes.
+- [ ] `works ui`: start the daemon if needed, wait for `/health`, open the browser.
+- [ ] Static mount: `dist` at `/`, SPA fallback to `index.html`, no legacy `/app.js`.
+- [ ] `dispatch --watch` refuses to run when the daemon owns the queue (or requires
+  `--standalone`).
+
+**Gate:** daemon + UI + a queued dispatch run at the same time; no lock conflicts; killing the UI
+does not stop the run.
 
 ### Phase 7 — cutover (1 day)
-- [ ] FastAPI is the only server; the stdlib server is deleted.
-- [ ] `uvicorn` and `sse-starlette` are declared (extra `server`).
-- [ ] CI: `tsc --noEmit`, contract tests, daemon smoke test.
-- [ ] Docs: `docs/guides/ui.md`, `docs/reference/layout.md`, `docs/guides/runbook.md`.
 
-**Done when:** CI is green, `works ui` starts the daemon, old code is gone.
+- [ ] Delete `interfaces/api/{server,read,write,downloads,static}.py`; update imports.
+  Verify: `uv run ruff check src tests` and `uv run mypy`.
+- [ ] `pyproject.toml`: `server` extra required by `works ui`; wheel content test
+  `tests/test_packaging.py` asserts `interfaces/ui/static/dist/index.html` is in the wheel.
+- [ ] `.github/workflows/ci.yml`: add `web` (node 22, `npm ci`, typecheck, build) and `contract`
+  jobs; keep `check`, `docker-verifier`, `benchmark`, `security`.
+- [ ] Docs: `docs/guides/ui.md`, `docs/guides/runbook.md`, `docs/reference/layout.md`,
+  `README.md` commands.
+- [ ] Tag `pre-fastapi` before the deletion commit.
+
+**Gate:** CI green on the cutover commit; `uv build` wheel contains `dist`.
 
 ### Phase 8 — hardening (2 days)
-- [ ] Load smoke: 200 tasks, 20 parallel SSE clients.
-- [ ] Errors: timeouts, request cancellation, retries.
-- [ ] Security: token, Host/Origin checks, request size limits.
-- [ ] Metrics: API latency, queue depth, active runs.
-- [ ] Final full test run and ADR update.
+
+- [ ] `scripts/load_api.py`: 200 tasks, 20 parallel SSE clients, p95 recorded. Targets from §13.
+- [ ] Timeout and cancel tests: a slow action is cancelled and the job records `cancelled`.
+- [ ] Security tests: bad Host/Origin/token, oversized body, path traversal, duplicated
+  `Idempotency-Key`.
+- [ ] Metrics wired: request latency, queue depth, active runs, job failures, SSE clients.
+- [ ] Final runs: `pytest`, `ruff`, `mypy`, `tsc --noEmit`, `vite build`, docker verifier.
+- [ ] ADR-016 updated with the final decisions from §19.
+
+**Gate:** every check in §17 passes on a fresh clone.
 
 ## 9. Frontend migration mechanics
 
