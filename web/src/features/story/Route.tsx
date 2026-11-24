@@ -83,7 +83,7 @@ function Route({ stages, selected, onSelect, taskState, detail }: RouteProps) {
           <span><i className="legend-dot blocked" />Stopped</span>
         </span>
       </div>
-      <div className="route-scroll">
+      <div className="route-scroll" tabIndex={0} role="region" aria-label="Fix route">
         <div className="route-wrap">
           <svg className="route-svg" viewBox="0 0 1200 380" preserveAspectRatio="none" aria-hidden="true">
             <path className="route-base" d={baseD} />

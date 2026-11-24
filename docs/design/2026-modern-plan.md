@@ -143,8 +143,9 @@ the primary Windows lifecycle path going untested.
   home, and exposes traces/video on failure.
 - [~] **M3.2** Queue → Story → Evidence → Release and Settings pairing are covered. New task,
   import, add-context, ask stream, revoke and read-only remain.
-- [ ] **M3.3** `@axe-core/playwright` on Story, Evidence, Release, Session, Settings; fail on
-  serious/critical violations.
+- [x] **M3.3** `@axe-core/playwright` runs on Queue, Story, Evidence, Release, Session and Settings in
+  the E2E job; serious/critical violations fail the build. It already found and forced two fixes:
+  low-contrast muted text in the warm palette and a scrollable route that was not keyboard-focusable.
 - [ ] **M3.4** Screenshots are **opt-in/manual** (not a required gate); no mobile-web pass until a
   native client exists. An opt-in visual job compares Story/Evidence/Release in light/dark.
 - [x] **M3.5** E2E job is a required CI check with a 25-minute budget.
