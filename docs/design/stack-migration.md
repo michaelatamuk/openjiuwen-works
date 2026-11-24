@@ -374,7 +374,7 @@ performance gate is tracked in Phase 8.
 **Gate (met for transport):** `npm run typecheck && npm test && npm run build`; a manual parity
 pass against the matrix is still required before calling the UI complete.
 
-### Phase 6 — processes, runs, Windows lifecycle (partially done)
+### Phase 6 - processes, runs, Windows lifecycle (done)
 
 - [x] `works ui` now starts the FastAPI app, serves `dist` at `/`, serves `/mira.svg` from the
   bundle, returns JSON 404 under `/api`, and opens a bootstrap URL in write mode.
@@ -386,15 +386,20 @@ pass against the matrix is still required before calling the UI complete.
   does not answer with this home's health.
 - [x] Detached start uses `cwd=home`, an allow-listed environment snapshot and
   `.works/state/daemon.log`; relative scenario/trace/prompt paths are resolved before sending.
+  The recorded pid is the one the daemon reports after Uvicorn starts, not `Popen.pid`: the Windows
+  venv `python.exe` is a launcher, so those differ.
 - [x] `POST /runs`, `POST /dispatch`, `GET /runs/{id}`; dispatch jobs run queued tasks and report
   per-task errors; `dispatch --watch` is refused under a daemon.
 - [x] CLI `--daemon` submits a job, waits for it, prints the same JSON and maps exit codes;
   standalone stays the default and refuses while a writable daemon owns the home.
-- [ ] Gate left for Phase 7: the concurrent daemon + UI + dispatch soak, and a full fake-harness
-  smoke through the detached process.
+- [x] Gate: `scripts/smoke_daemon.py` seeds a home, runs a UI app on a second port, dispatches while
+  stopping the UI, runs `works run --daemon`, kills the daemon mid-run, verifies the orphan job
+  failed with its owner released, runs a new task after restart, and stops gracefully. Repeated
+  runs pass on Windows; the script is the gate evidence.
 
-**Gate:** daemon + UI + `POST /dispatch` concurrently; no lock conflicts; kill the UI, run survives;
-restart daemon, stale jobs/owners reconciled.
+**Gate (met):** daemon + UI + `POST /dispatch` concurrently; no lock conflicts; stopping the UI
+does not affect the run; killing the daemon and restarting it fails the orphan job, releases the
+task owner, and serves a new run. Evidence: `python scripts/smoke_daemon.py`.
 
 ### Phase 7 — cutover, packaging, tests (2 days)
 - [ ] Delete old HTTP modules; migrate/delete `tests/unit/interfaces/api/test_ui.py` and friends.

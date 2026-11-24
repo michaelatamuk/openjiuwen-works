@@ -70,7 +70,8 @@ process, and `works ui` is the same app with the SPA at `/`.
 
 - `.works/state/daemon.json` holds `{pid, host, port, home, started_at, token_path}`. A stale
   file is cleared when the pid is gone, the home does not match, or `/health` does not answer
-  with this home's `root`.
+  with this home's `root`. The pid is the daemon's own `os.getpid()`, announced after Uvicorn
+  starts, because the Windows venv `python.exe` is a launcher and `Popen.pid` is not the server.
 - A writable daemon takes an exclusive `.works/state/daemon.lock`; a second writable daemon for
   the same home refuses to start. Read-only daemons take no lock.
 - The detached child runs with `cwd` set to the home, a small allow-listed environment, and
@@ -82,4 +83,8 @@ process, and `works ui` is the same app with the SPA at `/`.
   JSON as the standalone commands, and return the same exit codes. Standalone runs refuse while
   a writable daemon owns the home. Relative scenario, quarantine, trace and prompt paths are
   resolved by the CLI before they are sent.
+
+`python scripts/smoke_daemon.py` is the lifecycle gate: it seeds a home, runs a read-only UI on a
+second port, dispatches while stopping the UI, runs `works run --daemon`, kills the daemon
+mid-run, checks restart reconciliation, and stops gracefully.
 

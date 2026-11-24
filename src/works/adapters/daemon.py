@@ -243,12 +243,11 @@ def clear_info(paths: WorksPaths) -> None:
         info_path(paths).unlink()
 
 
-def current_daemon(paths: WorksPaths) -> DaemonInfo | None:
-    """Return the live daemon for this home, clearing a stale identity file."""
-    path = info_path(paths)
+def load_info(paths: WorksPaths) -> DaemonInfo | None:
+    """Read the identity file without probing the process; None when absent or malformed."""
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-        info = DaemonInfo(
+        payload = json.loads(info_path(paths).read_text(encoding="utf-8"))
+        return DaemonInfo(
             pid=int(payload["pid"]),
             host=str(payload["host"]),
             port=int(payload["port"]),
@@ -257,6 +256,14 @@ def current_daemon(paths: WorksPaths) -> DaemonInfo | None:
             token_path=str(payload["token_path"]),
         )
     except (OSError, ValueError, KeyError, TypeError):
+        return None
+
+
+def current_daemon(paths: WorksPaths) -> DaemonInfo | None:
+    """Return the live daemon for this home, clearing a stale identity file."""
+    path = info_path(paths)
+    info = load_info(paths)
+    if info is None:
         with contextlib.suppress(FileNotFoundError):
             path.unlink()
         return None
@@ -404,7 +411,6 @@ def start_daemon(
         kwargs["creationflags"] = flags
     else:
         kwargs["start_new_session"] = True
-    started_at = time.time()
     try:
         process = subprocess.Popen(  # noqa: S603  # nosec B603 - fixed argv, no shell
             _daemon_command(paths, host=host, port=port, write=write),
@@ -412,21 +418,15 @@ def start_daemon(
         )
     finally:
         log_handle.close()
-    info = DaemonInfo(
-        pid=process.pid,
-        host=host,
-        port=port,
-        home=str(paths.root),
-        started_at=process_started_at(process.pid) or started_at,
-        token_path=str(token_path(paths)),
-    )
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
-        if _health_matches(info):
-            write_info(paths, info)
-            return info
+        found = load_info(paths)
+        if found is not None and _pid_is_the_daemon(found) and _health_matches(found):
+            return found
         code = process.poll()
-        if code is not None:
+        # The venv python on Windows may be a launcher: it can exit 0 while the real
+        # interpreter keeps serving, so only a non-zero launcher exit is fatal.
+        if code is not None and code != 0:
             clear_info(paths)
             raise ConfigError(f"the daemon exited with code {code}; log: {log}\n{_tail(log)}")
         time.sleep(0.2)
