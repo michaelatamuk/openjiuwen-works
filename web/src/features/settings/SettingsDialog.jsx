@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Modal } from "../../ui/Modal.jsx";
+import { api } from "../../api/client";
 import { BuilderSection } from "./BuilderSection.jsx";
 import { buildSavePayload } from "./payload.js";
 import {
@@ -62,6 +63,35 @@ export function SettingsDialog({
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [devices, setDevices] = useState([]);
+  const [pairing, setPairing] = useState(null);
+  const [deviceError, setDeviceError] = useState("");
+
+  useEffect(() => {
+    if (!writable) return;
+    api.devices()
+      .then((body) => setDevices(body.devices || []))
+      .catch((err) => setDeviceError(err.message));
+  }, [writable]);
+
+  async function pairDevice() {
+    setDeviceError("");
+    try {
+      setPairing(await api.pairStart("device"));
+    } catch (err) {
+      setDeviceError(err.message);
+    }
+  }
+
+  async function revokeDevice(deviceId) {
+    try {
+      await api.revokeDevice(deviceId);
+      const body = await api.devices();
+      setDevices(body.devices || []);
+    } catch (err) {
+      setDeviceError(err.message);
+    }
+  }
 
   const openjiuwen = runtime === "openjiuwen";
   const plannerModes = builder?.planner?.modes || PLANNER_MODES_FALLBACK;
@@ -323,6 +353,49 @@ export function SettingsDialog({
           </label>
           <p className="settings-note">Live updates arrive over SSE; fallback refresh is used only if the stream drops.</p>
         </section>
+
+        {writable ? (
+          <section className="settings-section">
+            <div className="settings-section-head">
+              <div>
+                <h3>Devices</h3>
+                <p>Pair a phone or another computer; revoke a device you no longer use.</p>
+              </div>
+              <span className="settings-credential">{devices.length} paired</span>
+            </div>
+            <div className="device-list">
+              {devices.map((device) => (
+                <div className="device-row" key={device.id}>
+                  <div>
+                    <strong>{device.label}</strong>
+                    <p className="small muted mono">{device.id}</p>
+                    <p className="small muted">
+                      Last seen {new Date(device.last_seen * 1000).toLocaleString()}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn ghost"
+                    onClick={() => revokeDevice(device.id)}
+                  >
+                    Revoke
+                  </button>
+                </div>
+              ))}
+              {!devices.length ? <p className="muted small">No devices paired.</p> : null}
+            </div>
+            <button type="button" className="btn" onClick={pairDevice}>
+              Pair a phone
+            </button>
+            {pairing ? (
+              <p className="settings-note">
+                Code <b className="mono">{pairing.code}</b> expires in {pairing.expires_in}s.
+                Enter it on the device.
+              </p>
+            ) : null}
+            {deviceError ? <p className="settings-error">{deviceError}</p> : null}
+          </section>
+        ) : null}
 
         {error ? <p className="settings-error" role="alert">{error}</p> : null}
         <div className="dialog-actions">

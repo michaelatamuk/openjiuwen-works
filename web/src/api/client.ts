@@ -59,6 +59,21 @@ export interface CreateTaskResponse extends Json {
   task: TaskDetail["task"];
 }
 
+export interface Device {
+  id: string;
+  label: string;
+  created_at: number;
+  last_seen: number;
+  expires_at?: number;
+}
+
+export interface Pairing {
+  ok: boolean;
+  code: string;
+  label: string;
+  expires_in: number;
+}
+
 export class ApiError extends Error {
   readonly status: number;
   readonly code: string;
@@ -171,6 +186,14 @@ export const api = {
       body,
       idempotencyKey: newIdempotencyKey(),
     }),
+  devices: () => request<{ ok: boolean; devices: Device[] }>("/admin/devices"),
+  pairStart: (label = "device") =>
+    request<Pairing>("/admin/pair", { method: "POST", body: { label } }),
+  revokeDevice: (deviceId: string) =>
+    request<{ ok: boolean; revoked: boolean }>(
+      `/admin/devices/${encodeURIComponent(deviceId)}`,
+      { method: "DELETE" },
+    ),
   products: () => request<Json>("/products"),
   detectors: (refresh = false) => request<Json>(`/detectors?refresh=${refresh ? "1" : "0"}`),
   metrics: () => request<Json>("/metrics"),

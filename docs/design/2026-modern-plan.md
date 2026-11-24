@@ -152,9 +152,9 @@ the primary Windows lifecycle path going untested.
 **Prevents:** a LAN bind that leaks reads or cannot revoke a lost phone.  
 **Proof:** non-loopback pairing/revoke E2E and a threat-model ADR that maps to tests.
 
-- [ ] **M4.1** Settings/CLI device management: list, last seen, revoke, rotate all. (Pairing itself
+- [x] **M4.1** Settings/CLI device management: list, last seen, revoke, rotate all. (Pairing itself
   lands in M0; this is the surface around it.)
-- [ ] **M4.2** Security headers: CSP compatible with Vite assets/SSE, `X-Content-Type-Options`,
+- [x] **M4.2** Security headers: CSP compatible with Vite assets/SSE, `X-Content-Type-Options`,
   `Referrer-Policy`, `Permissions-Policy`.
 - [ ] **M4.3** Threat model: trusted hosts, auth-on-read, pairing, token theft/lost device, replay,
   LAN MITM, `chmod` on Windows. Record it in an ADR.
