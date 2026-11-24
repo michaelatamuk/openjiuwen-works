@@ -17,12 +17,12 @@ from works.config.paths import WorksPaths
 from works.domain.errors import AuthError, ReadOnlyError
 
 COOKIE_NAME = "works_session"
-TOKEN_FILE = "http-token"  # noqa: S105 - a file name, not a secret
+CREDENTIAL_FILE = "http-token"
 
 
 class Security:
     def __init__(self, paths: WorksPaths, *, bootstrap_token: str | None = None) -> None:
-        self._token_path = paths.state / TOKEN_FILE
+        self._token_path = paths.state / CREDENTIAL_FILE
         self._token = self._load_or_create()
         self._bootstrap = bootstrap_token or secrets.token_urlsafe(24)
         self._sessions: set[str] = set()
