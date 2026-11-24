@@ -92,13 +92,6 @@ export function stateLabel(value) {
   return stateHuman[value] || String(value || "unknown").replaceAll("_", " ");
 }
 
-export function stateTone(value) {
-  if (["proved", "released"].includes(value)) return "green";
-  if (["blocked", "reverted"].includes(value)) return "red";
-  if (["waiting_review", "waiting_ci", "waiting_deploy"].includes(value)) return "amber";
-  return "";
-}
-
 export function riskLabel(value) {
   return { low: "Low risk", medium: "Medium risk", high: "High risk" }[value] || value;
 }
