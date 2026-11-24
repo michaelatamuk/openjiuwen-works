@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 from fastapi.testclient import TestClient
 
@@ -17,6 +18,33 @@ def fixture(name: str) -> object:
 
 def canon(payload: object, home: Path) -> object:
     return canonicalize(payload, home=home, repo=home / "repo")
+
+
+def first_diff(actual: Any, expected: Any, path: str = "") -> str:
+    if type(actual) is not type(expected):
+        return f"{path}: type {type(actual).__name__} != {type(expected).__name__}"
+    if isinstance(actual, dict):
+        for key in sorted(set(actual) | set(expected)):
+            if key not in actual:
+                return f"{path}/{key}: missing in actual"
+            if key not in expected:
+                return f"{path}/{key}: extra in actual"
+            if actual[key] != expected[key]:
+                return first_diff(actual[key], expected[key], f"{path}/{key}")
+        return f"{path}: equal"
+    if isinstance(actual, list):
+        if len(actual) != len(expected):
+            return f"{path}: length {len(actual)} != {len(expected)}"
+        for index, (left, right) in enumerate(zip(actual, expected, strict=True)):
+            if left != right:
+                return first_diff(left, right, f"{path}[{index}]")
+        return f"{path}: equal"
+    return f"{path}: {actual!r} != {expected!r}"
+
+
+def assert_canonical(actual: Any, expected: Any, name: str) -> None:
+    if actual != expected:
+        raise AssertionError(f"{name}: {first_diff(actual, expected)}")
 
 
 def slug(ref: str) -> str:
@@ -38,13 +66,13 @@ def stable_health(payload: dict[str, object]) -> dict[str, object]:
 
 def test_health_matches_the_recorded_subset(client: TestClient, seeded_home: Path) -> None:
     body = client.get(f"{BASE}/health").json()
-    assert canon(stable_health(body), seeded_home) == fixture("health")
+    assert_canonical(canon(stable_health(body), seeded_home), fixture("health"), "health")
 
 
 def test_task_list_matches(client: TestClient, seeded_home: Path) -> None:
     response = client.get(f"{BASE}/tasks", params={"limit": 200})
     assert response.status_code == 200
-    assert canon(response.json(), seeded_home) == fixture("tasks")
+    assert_canonical(canon(response.json(), seeded_home), fixture("tasks"), "tasks")
 
 
 def test_every_task_detail_and_run_list_matches(client: TestClient, seeded_home: Path) -> None:
@@ -53,11 +81,11 @@ def test_every_task_detail_and_run_list_matches(client: TestClient, seeded_home:
         name = slug(str(task["source"]).split(":", 1)[-1])
         detail = client.get(f"{BASE}/tasks/{task['id']}")
         assert detail.status_code == 200, name
-        assert canon(detail.json(), seeded_home) == fixture(f"task-{name}"), name
+        assert_canonical(canon(detail.json(), seeded_home), fixture(f"task-{name}"), name)
 
         runs = client.get(f"{BASE}/tasks/{task['id']}/runs")
         assert runs.status_code == 200, name
-        assert canon(runs.json(), seeded_home) == fixture(f"runs-{name}"), name
+        assert_canonical(canon(runs.json(), seeded_home), fixture(f"runs-{name}"), f"runs-{name}")
 
 
 def test_maps_metrics_and_ledger_match(client: TestClient, seeded_home: Path) -> None:
@@ -69,7 +97,7 @@ def test_maps_metrics_and_ledger_match(client: TestClient, seeded_home: Path) ->
     ):
         response = client.get(f"{BASE}{path}")
         assert response.status_code == 200, path
-        assert canon(response.json(), seeded_home) == fixture(name), path
+        assert_canonical(canon(response.json(), seeded_home), fixture(name), name)
 
 
 def test_export_download_and_traversal(client: TestClient) -> None:
