@@ -404,6 +404,25 @@ that survives an edit or a week of waiting.
 - [x] **M14.7** Nine unit tests cover the three outcomes, agent refusal, stale hash, expiry, quorum
   and the non-planning refusal; `docs/reference/gates.md` and ADR 022 record the semantics.
 
+### M15 ? Build 2026 (stage 5, in progress)
+
+**Prevents:** an engine that spends past the daily ceiling, an invisible turn, and a failure with no
+next step.
+
+- [x] **M15.1** The daily ceiling is checked before the engine starts, not only after the turn; the
+  per-run tokens/USD/wall checks stay after it.
+- [x] **M15.2** `build.started`/`build.finished` events bracket the turn, and a file outside the
+  plan's named write scope is a `plan.deviation` (tested).
+- [x] **M15.3** Conformance tests for the harness contract: provider/model/version/harness, costs,
+  stop handling and the abstain path.
+- [x] **M15.4** The run exposes the turn's progress and Cancel kills the whole tree (Job Object /
+  `PR_SET_PDEATHSIG`); this pass adds the events around the turn.
+- [x] **M15.5** `transcript.json` records model, provider, adapter version, prompt hash, cost, notes
+  and trace as an evidence artifact; `evidence.md` adds a typed **Next step** line.
+- [ ] **M15.6** A bounded repair loop (N attempts with a recorded reason) instead of one builder turn.
+- [ ] **M15.7** Network isolation for build commands (needs an OS sandbox; paths and commands are
+  already constrained, the network claim is not made).
+
 ## 4. Sequencing and gates
 
 ### Phase 0 — Land the safety floor (week 1)

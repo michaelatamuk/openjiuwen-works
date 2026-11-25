@@ -7,13 +7,27 @@
       "sha256": "",
       "size": 17,
       "url": "/api/tasks/<task-id>/artifacts/screenshot.txt"
+    },
+    {
+      "kind": "transcript",
+      "name": "transcript.json",
+      "path": "transcript.json",
+      "sha256": "<sha256>",
+      "url": "/api/tasks/<task-id>/artifacts/transcript.json"
     }
   ],
   "confirmation": null,
   "delivery": null,
   "deployment": null,
   "evidence": {
-    "artifacts": [],
+    "artifacts": [
+      {
+        "description": "the builder turn: model, prompt hash, notes and trace",
+        "kind": "transcript",
+        "path": "transcript.json",
+        "sha256": "<sha256>"
+      }
+    ],
     "base_commit": "<commit>",
     "builder_tokens": 1200,
     "builder_usd": 0.012,
@@ -488,6 +502,14 @@
         "data": {
           "attempt": 1
         },
+        "stage": "signal",
+        "type": "build.started"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "attempt": 1
+        },
         "stage": "build",
         "type": "attempt.started"
       },
@@ -523,6 +545,16 @@
         },
         "stage": "proof",
         "type": "risk.rated"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "files": 1,
+          "tokens": 1200,
+          "usd": 0.012
+        },
+        "stage": "signal",
+        "type": "build.finished"
       },
       {
         "at": "<timestamp>",
@@ -1479,7 +1511,7 @@
       "generated": false,
       "generated_label": "",
       "role": "builder",
-      "seq": 15,
+      "seq": 16,
       "stance": "",
       "title": "Build attempt 1 started",
       "tone": "",
@@ -1495,7 +1527,7 @@
       "generated": false,
       "generated_label": "",
       "role": "builder",
-      "seq": 16,
+      "seq": 17,
       "stance": "",
       "title": "Proposal received",
       "tone": "",
@@ -1511,7 +1543,7 @@
       "generated": false,
       "generated_label": "",
       "role": "verifier",
-      "seq": 17,
+      "seq": 18,
       "stance": "",
       "title": "Risk: low",
       "tone": "",
@@ -1527,7 +1559,7 @@
       "generated": false,
       "generated_label": "",
       "role": "verifier",
-      "seq": 20,
+      "seq": 22,
       "stance": "",
       "title": "Tests passed",
       "tone": "ok",
@@ -1555,7 +1587,7 @@
       "generated": false,
       "generated_label": "",
       "role": "challenger",
-      "seq": 21,
+      "seq": 23,
       "stance": "",
       "title": "Independent check allowed",
       "tone": "ok",
@@ -1571,7 +1603,7 @@
       "generated": false,
       "generated_label": "",
       "role": "verifier",
-      "seq": 23,
+      "seq": 25,
       "stance": "",
       "title": "Decision: act",
       "tone": "",
@@ -1585,7 +1617,7 @@
       "generated": false,
       "generated_label": "",
       "role": "system",
-      "seq": 24,
+      "seq": 26,
       "stance": "",
       "title": "Note",
       "tone": "",
@@ -1849,6 +1881,14 @@
       },
       "seq": 15,
       "ts": "<timestamp>",
+      "type": "build.started"
+    },
+    {
+      "data": {
+        "attempt": 1
+      },
+      "seq": 16,
+      "ts": "<timestamp>",
       "type": "attempt.started"
     },
     {
@@ -1862,7 +1902,7 @@
         "tokens": 1200,
         "usd": 0.012
       },
-      "seq": 16,
+      "seq": 17,
       "ts": "<timestamp>",
       "type": "note"
     },
@@ -1880,9 +1920,19 @@
         "rounded_up": false,
         "schema_version": 1
       },
-      "seq": 17,
+      "seq": 18,
       "ts": "<timestamp>",
       "type": "risk.rated"
+    },
+    {
+      "data": {
+        "files": 1,
+        "tokens": 1200,
+        "usd": 0.012
+      },
+      "seq": 19,
+      "ts": "<timestamp>",
+      "type": "build.finished"
     },
     {
       "data": {
@@ -1890,7 +1940,7 @@
         "reason": "",
         "to": "checking"
       },
-      "seq": 18,
+      "seq": 20,
       "ts": "<timestamp>",
       "type": "state.changed"
     },
@@ -1898,7 +1948,7 @@
       "data": {
         "step": "test"
       },
-      "seq": 19,
+      "seq": 21,
       "ts": "<timestamp>",
       "type": "step.started"
     },
@@ -1907,7 +1957,7 @@
         "exit_code": 0,
         "step": "test"
       },
-      "seq": 20,
+      "seq": 22,
       "ts": "<timestamp>",
       "type": "step.finished"
     },
@@ -1925,7 +1975,7 @@
         "usd": 0.0,
         "version": "fixture-1"
       },
-      "seq": 21,
+      "seq": 23,
       "ts": "<timestamp>",
       "type": "challenge.decided"
     },
@@ -1935,7 +1985,7 @@
         "reason": "",
         "to": "proved"
       },
-      "seq": 22,
+      "seq": 24,
       "ts": "<timestamp>",
       "type": "state.changed"
     },
@@ -1955,7 +2005,7 @@
         "trace_id": "",
         "verb": "act"
       },
-      "seq": 23,
+      "seq": 25,
       "ts": "<timestamp>",
       "type": "decision.made"
     },
@@ -1963,7 +2013,7 @@
       "data": {
         "message": "proof is ready; gate 2 is the next step"
       },
-      "seq": 24,
+      "seq": 26,
       "ts": "<timestamp>",
       "type": "note"
     }

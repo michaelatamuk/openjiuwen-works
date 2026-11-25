@@ -171,11 +171,14 @@ files comes from the codebase itself, not from the engine’s summary. If it goe
 area, runs out of time or money, or stops without a change, the task stops visibly with a reason.
 
 ```mermaid
-flowchart LR
-    P[Approved plan] --> W[Clean copy]
-    E[Engine + model] --> W
-    W --> C[Changes and commands recorded]
-```
+flowchart TD
+    A["Approved plan and valid approval"] --> B["Check today's budget<br/>and the run clock"]
+    B --> C["Engine works inside<br/>the untouched copy"]
+    C --> D["Changed files come from the code<br/>commands and a transcript are recorded"]
+    D --> E{"Any change?"}
+    E -->|"yes"| F["Continue to the checks"]
+    E -->|"no"| G["Stop: nothing was changed"]
+
 
 ## 6. Check — prove the change works
 

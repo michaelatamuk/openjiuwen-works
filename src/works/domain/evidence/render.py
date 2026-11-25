@@ -4,6 +4,23 @@ from __future__ import annotations
 
 from works.domain.evidence.models import MAX_DIFF_CHARS, Evidence
 
+NEXT_STEP = {
+    "not_reproducible": (
+        "the check passed; add a failing test that shows the bug before planning again"
+    ),
+    "harness_failed": "read the harness notes, fix the engine or its credentials, then rerun",
+    "policy_violation": "review the denied paths and rebuild inside the agreed scope",
+    "tests_failed": "fix the failing command, then rerun the checks",
+    "challenge_failed": "answer the reviewer's concerns or change the approach",
+    "verdict_failed": "a must-pass check failed; reproduce it locally and fix it",
+    "budget_exceeded": "raise the run or daily budget, or reduce the scope",
+    "flaky_test": "make the test deterministic before trusting a proof",
+    "conflict": "refresh the base commit and re-plan",
+    "config_error": "fix the configuration or missing dependency named above",
+    "needs_plan_approval": "a person must approve the current plan",
+    "internal_error": "read the run log and report a bug with the run id",
+}
+
 
 def _cell(value: object) -> str:
     return str(value).replace("|", "\\|").replace("\n", " ")
@@ -24,6 +41,8 @@ def render_markdown(evidence: Evidence) -> str:
         f"**Source** `{evidence.source}` · **Base commit** `{evidence.base_commit or '—'}`",
         "",
         f"**Task kind** `{evidence.task_kind}`",
+        "",
+        f"**Next step** {NEXT_STEP.get(evidence.stop_reason.value, 'read the run log')}",
         "",
         *(
             [f"**Reproduction hint** {evidence.reproduction_hint}", ""]

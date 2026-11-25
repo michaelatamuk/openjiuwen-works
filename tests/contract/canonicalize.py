@@ -47,7 +47,9 @@ SHA_KEYS = frozenset(
 )
 COMMIT_KEYS = frozenset({"commit", "base_commit", "evidence_commit"})
 TASK_ID_KEYS = frozenset({"task_id", "previous_task_id"})
-DURATION_KEYS = frozenset({"duration_ms", "median_duration_ms", "wall", "elapsed_ms"})
+DURATION_KEYS = frozenset(
+    {"duration_ms", "median_duration_ms", "wall", "elapsed_ms", "waiting_ms"}
+)
 OUTPUT_KEYS = frozenset({"stdout_tail", "output_tail", "stdout", "stderr"})
 TEXT_BLOB_KEYS = frozenset({"proof_md"})
 RUN_ID_KEYS = frozenset({"run_id"})

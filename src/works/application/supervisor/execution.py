@@ -35,6 +35,39 @@ from works.domain.risk import rate_risk
 from works.domain.trusted import is_check_path
 
 
+def _write_transcript(ctx: RunContext, proposal: Proposal) -> None:
+    """Keep what the engine said and did, so a proof can be re-read later."""
+    import hashlib
+    import json
+
+    payload = {
+        "model": proposal.model,
+        "provider": proposal.provider,
+        "harness": proposal.harness,
+        "version": proposal.version,
+        "prompt_name": proposal.prompt_name,
+        "prompt_sha256": proposal.prompt_sha256,
+        "tokens": proposal.tokens,
+        "usd": proposal.usd,
+        "stop": proposal.stop,
+        "notes": proposal.notes,
+        "trace": proposal.trace,
+    }
+    text = json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    path = ctx.run_dir / "transcript.json"
+    path.write_text(text, encoding="utf-8", newline="\n")
+    from works.domain.evidence import Artifact
+
+    ctx.artifacts.append(
+        Artifact(
+            kind="transcript",
+            path=path.name,
+            sha256=hashlib.sha256(text.encode("utf-8")).hexdigest(),
+            description="the builder turn: model, prompt hash, notes and trace",
+        )
+    )
+
+
 def _approval_current(sup: Supervisor, ctx: RunContext) -> bool:
     from works.application.approvals.gates import approval_expired
 
@@ -209,17 +242,22 @@ async def _build(sup: Supervisor, ctx: RunContext, repo: GitRepo) -> list[str] |
         )
         return None
     sup._move(ctx, TaskState.BUILDING)
+    from works.application.limits import check as check_daily
+
+    # The daily ceiling is checked before the engine spends anything, not after the turn.
+    check_daily(sup._paths)
+    sup._queue.append(task.id, "build.started", {"attempt": 1})
     proposal = await sup._propose(ctx)
     if proposal is None:
         return None
     ctx.proposal = proposal
+    _write_transcript(ctx, proposal)
     if proposal.tokens > task.budget.tokens or proposal.usd > task.budget.usd:
         sup._stop(ctx, StopReason.BUDGET_EXCEEDED)
         return None
     if sup._over_wall(ctx):
         sup._stop(ctx, StopReason.BUDGET_EXCEEDED, detail="wall-clock budget")
         return None
-    from works.application.limits import check as check_daily
     from works.domain.errors import BudgetError
 
     try:
@@ -262,6 +300,15 @@ async def _build(sup: Supervisor, ctx: RunContext, repo: GitRepo) -> list[str] |
             "risk",
             [f"{ctx.risk.level.value} risk would require {ctx.risk.required_reviewers} reviewers"],
         )
+    sup._queue.append(
+        task.id,
+        "build.finished",
+        {
+            "files": len(touched),
+            "tokens": ctx.proposal.tokens if ctx.proposal else 0,
+            "usd": ctx.proposal.usd if ctx.proposal else 0.0,
+        },
+    )
     return touched
 
 

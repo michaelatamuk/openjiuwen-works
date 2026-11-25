@@ -6,6 +6,8 @@
 
 **Task kind** `fix`
 
+**Next step** read the run log
+
 **Checks SHA-256** `—`
 
 **State** `proved` · **Stop reason** `completed`
