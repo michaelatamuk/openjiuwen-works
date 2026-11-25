@@ -188,6 +188,7 @@ def build_record(
         decision_id=last_decision.decision_id if last_decision is not None else None,
         model=proposal.model if proposal else None,
         provider=proposal.provider if proposal else None,
+        prompt_sha256=proposal.prompt_sha256 if proposal else None,
         plan_id=ctx.plan.get("plan_id"),
         plan_hash=ctx.plan.get("hash"),
         planner_mode=provenance.get("mode"),

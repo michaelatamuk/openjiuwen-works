@@ -57,6 +57,16 @@ Or on Windows: `powershell -ExecutionPolicy Bypass -File scripts/check.ps1`.
   `bad_response` and a named field, not a blank screen.
 - Before a PR: `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`, `npm run e2e`.
 
+## Async boundary and renderer
+
+- Every HTTP operation has a class in `src/works/interfaces/api/route_classes.py`; `make routes`
+  checks it and the table in `docs/reference/http-api.md`. Blocking handlers stay `def` and run in
+  FastAPI's thread pool; do not rewrite a git or subprocess route as `async def` for style.
+- Jobs run on one bounded executor owned by `JobRunner` (ADR 019). Do not start an anonymous thread;
+  the queue bound and the shutdown path depend on that single owner.
+- The frontend is a client-side SPA. React Server Components, Next.js and Server Actions are
+  deliberately rejected (ADR 020); streaming is SSE from the daemon.
+
 ## Reporting a bug in Works itself
 
 Open an issue with the task id, the run id, the stop reason and the proof page. That is exactly the

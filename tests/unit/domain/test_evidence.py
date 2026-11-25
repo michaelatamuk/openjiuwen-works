@@ -217,3 +217,10 @@ def test_golden_page(factory_root: Path) -> None:
         golden.write_text(rendered, encoding="utf-8", newline="\n")
     assert golden.exists(), "run with UPDATE_GOLDEN=1 once to record the page"
     assert rendered == golden.read_text(encoding="utf-8")
+
+
+def test_the_page_records_both_prompt_hashes() -> None:
+    page = render_markdown(fixed_evidence())
+    assert "prompt: `build`" in page
+    assert "f" * 64 in page
+    assert "e" * 64 in page

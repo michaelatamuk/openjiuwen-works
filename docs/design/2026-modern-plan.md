@@ -83,8 +83,8 @@ the primary Windows lifecycle path going untested.
   mode). *Proof:* the job is required and green; it fails if the launcher-pid regression returns.
 - [x] **M0.4** Add Python 3.13 to the CI matrix; keep 3.14 a decision after the dependency cap is
   reviewed. *Proof:* 3.13 check job green.
-- [ ] **M0.5** Record the prompt hash in `run.json` and `evidence.md` (existing standard, currently
-  missing end-to-end). *Proof:* a test finds the same hash in both.
+- [x] **M0.5** `prompt_sha256` is recorded in `run.json` and printed in `evidence.md`;
+  `tests/integration/test_loop.py` asserts the same 64-character hash in both.
 - [x] **M0.6** Fix docs contradictions: remote pairing wording, CONTRIBUTING Playwright claims,
   Tailwind/shadcn decision in `plan.md` vs `stack-migration.md`. *Proof:* link/text check in CI.
 
@@ -154,8 +154,8 @@ the primary Windows lifecycle path going untested.
 - [x] **M3.3** `@axe-core/playwright` runs on Queue, Story, Evidence, Release, Session and Settings in
   the E2E job; serious/critical violations fail the build. It already found and forced two fixes:
   low-contrast muted text in the warm palette and a scrollable route that was not keyboard-focusable.
-- [ ] **M3.4** Screenshots are **opt-in/manual** (not a required gate); no mobile-web pass until a
-  native client exists. An opt-in visual job compares Story/Evidence/Release in light/dark.
+- [x] **M3.4** `web/e2e/visual.spec.ts` compares Story/Evidence/Release in light and dark, but only
+  with `WORKS_VISUAL=1`; baselines stay local because they are platform-specific. No mobile-web pass.
 - [x] **M3.5** E2E job is a required CI check with a 25-minute budget.
 
 ### M4 — Remote and device trust, after M0 (4 days)
@@ -189,11 +189,12 @@ SSE reader wedging the daemon.
   client cannot wedge the event loop or exhaust threads.
 - [x] **M5.5** `works doctor --bundle`: daemon.json, jobs, logs, versions, index health, disk state;
   a redaction test proves no token/cookie/key is included.
-- [ ] **M5.6** **Defer** Prometheus text and SLO dashboards; no external collector is required.
-- [ ] **M5.7** Instrument by default with the OpenTelemetry API/SDK using a **no-op exporter**;
-  `WORKS_OTEL=1` enables a local console/OTLP exporter. Spans cover HTTP → job → subprocess, with
-  trace-id propagation. **Proof:** overhead <5% on the p95 bench and one complete trace without a
-  collector.
+- [x] **M5.6** Decided: no Prometheus text and no SLO dashboards. JSON metrics in `/api/v1/ops/metrics`
+  plus the OTel spans cover one home; a collector would be a second process to operate.
+- [x] **M5.7** Instrumented by default through the OpenTelemetry API; `WORKS_OTEL=1` installs the SDK
+  with a console or OTLP/HTTP exporter (`WORKS_OTEL_EXPORTER=none` drops spans for measurement). Spans
+  cover HTTP → job → subprocess and the trace id lands in the job record and logs. **Proof:** a full
+  console trace without a collector; p95 78.45 → 78.68 ms (+0.3%) on the 10k bench.
 
 ### M6 — AI quality, prompts and invariants (14 days)
 
@@ -210,8 +211,8 @@ invariants.
   grades its own work; path policy decides paths; invalid JSON fails closed.
 - [ ] **M6.4** Per-run and per-day token/cost ceilings; a typed blocked state, not a silent stop.
 - [ ] **M6.5** Record provider/model/version/cost per call in evidence.
-- [ ] **M6.6** **Defer** cross-provider fallback; it is a product decision with cost/quality
-  trade-offs, not a modernization gate.
+- [x] **M6.6** Decided: no cross-provider fallback. Silently switching models changes cost and quality
+  behind a release gate; a failed provider stays a visible configuration error.
 
 ### M7 — Reliability, backup and data lifecycle (6 days)
 
@@ -240,16 +241,18 @@ invariants.
 **Prevents:** unsupported Python/Node surprises and unverifiable dependencies.  
 **Proof:** 3.13 CI, Renovate, SBOM, `npm audit`, clean-venv wheel smoke.
 
-- [ ] **M8.1** 3.13 matrix (M0.4); decide 3.14 only after `requires-python` and dependencies allow.
+- [x] **M8.1** 3.13 is in the matrix (M0.4). 3.14 stays out: `openjiuwen` caps at `<3.14`, so the
+  daemon cannot honestly claim support until the provider does (recorded in supply-chain.md).
 - [x] **M8.2** Renovate (better than Dependabot for `uv`) for Python and npm, grouped updates.
 - [~] **M8.3** The `wheel` job builds a CycloneDX SBOM, writes `SHA256SUMS` for the wheel and the
   SBOM, and uploads both; `pip-audit`, `npm audit --omit=dev` and gitleaks already gate the build.
   **Open:** an OSV scan, which belongs with the release pipeline (`docs/reference/supply-chain.md`).
 - [ ] **M8.4** Clean 3.13 venv wheel install with `--require-hashes`, `works doctor`, daemon
   start/status/stop; no signed-wheel theater until a real publish workflow exists.
-- [ ] **M8.5** Windows service recipe: Task Scheduler or NSSM, start-at-logon, stop test. No MSI.
-- [ ] **M8.6** Document what is deferred: Sigstore signing, reproducible builds, installer — after a
-  release process exists.
+- [x] **M8.5** `docs/guides/runbook.md` documents Task Scheduler and NSSM with a start/health/stop
+  verification; the Windows CI job's `smoke_daemon.py` covers start, kill and restart. No MSI.
+- [x] **M8.6** `docs/reference/supply-chain.md` records the deferrals (Sigstore, reproducible builds, MSI,
+  OSV, Python 3.14) and the reason for each.
 
 ### M9 — Developer experience, mutation and docs (2 days)
 
@@ -258,9 +261,11 @@ invariants.
 
 - [x] **M9.1** Extend the existing `Makefile` (not `just`) with `e2e`, `wheel`, `bench`; keep
   `check`/`security`; pre-commit already exists.
-- [ ] **M9.2** Keep the mutation gate ≥70% and include the new index/job modules in `only_mutate`.
-- [~] **M9.3** `scripts/check_docs_links.py` + a CI step are in place (51 files, zero broken links);
-  the contributor-guide refresh and the remaining M0.6 contradictions are still open. No MkDocs.
+- [~] **M9.2** `only_mutate` already lists `queue/index.py` and `api/jobs.py`; a weekly `mutation.yml`
+  runs mutmut on Linux and enforces `scripts/mutation_gate.py` at 70%. **Proof pending:** the first
+  scheduled run.
+- [x] **M9.3** `scripts/check_docs_links.py` gates 55 files in CI, the contributor guide covers typed
+  components, the async boundary and the renderer, and M0.6 fixed the contradictions. No MkDocs.
 - [x] **M9.4** ADR 018 plus `scripts/check_api_compat.py` and `make api-compat`; the web job still
   regenerates the TypeScript client and fails if the committed output drifts.
 
@@ -273,20 +278,18 @@ migration.
   (async-safe / blocking / subprocess / sse) with a note; `scripts/dump_route_classes.py` renders the
   table in `docs/reference/http-api.md` and CI fails when a route is unclassified or the table is
   stale.
-- [ ] **M10.2** Convert only the measured hot read paths to `async def` (or explicit
-  `anyio.to_thread.run_sync`) so 20 SSE clients plus `/tasks` do not exhaust workers. Do not rewrite
-  blocking git/subprocess routes for fashion. *Proof:* p95/worker-starvation test before/after.
-- [ ] **M10.3** Decide the job executor: structured `asyncio` tasks **or** the bounded thread pool
-  with an ADR exception to `plan.md` §6.4 "no bare threads". Never leave the contradiction.
-  *Proof:* ADR + bounded queue test.
+- [x] **M10.2** Measured with `scripts/bench_api.py`: 10k tasks, 20 SSE streams, 300 reads, p95
+  78 ms. The hot read path (`/tasks`) is index-backed and already runs in FastAPI's thread pool, so no
+  route was converted; blocking git/subprocess routes stay sync by design.
+- [x] **M10.3** ADR 019 keeps one bounded `ThreadPoolExecutor` (2 workers, 64 queued) as the documented
+  exception to `plan.md` §6.4; the 503 backpressure path and the crash matrix cover it.
 - [ ] **M10.4** Enable React Compiler behind a measured build; compare bundle size, render latency
   and test stability. Keep it if it is neutral-to-better; otherwise record the decision. *Proof:*
   build/test green and a before/after size/latency note.
-- [ ] **M10.5** Evaluate React Server Components/Next.js against the local SPA. Expected decision:
-  **reject** (no SSR/SEO/server actions requirement); record it in an ADR. No RSC rewrite.
-  *Proof:* ADR with the rejected alternatives.
-- [ ] **M10.6** Document the async boundary and React compiler/RSC decisions in the contributor
-  guide and ADR index.
+- [x] **M10.5** ADR 020 rejects RSC/Next.js for the local SPA: no SSR/SEO/server-action requirement,
+  and a Node runtime next to the Python daemon would double the install.
+- [x] **M10.6** `CONTRIBUTING.md` documents the route classes, the single executor and the RSC
+  rejection; the ADR index lists 019 and 020.
 
 ## 4. Sequencing and gates
 

@@ -75,6 +75,7 @@ class RunRecord(BaseModel):
     decision_id: str | None = None
     model: str | None = None
     provider: str | None = None
+    prompt_sha256: str | None = None
     plan_id: str | None = None
     plan_hash: str | None = None
     planner_mode: str | None = None

@@ -11,7 +11,8 @@
     "test": "vitest run",
     "generate:api": "openapi-typescript ../docs/reference/openapi.json -o src/api/generated/schema.ts",
     "e2e": "playwright test",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "e2e:visual": "playwright test e2e/visual.spec.ts"
   },
   "dependencies": {
     "react": "^19.1.0",

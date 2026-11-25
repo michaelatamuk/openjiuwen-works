@@ -540,20 +540,28 @@ def stop_daemon(paths: WorksPaths, *, timeout: float = STOP_TIMEOUT) -> DaemonIn
     info = current_daemon(paths)
     if info is None:
         raise NotFoundError(f"no daemon is running for {paths.root}")
-    if _still_serving(info) and not _post_shutdown(info, read_token(info)):
+    # An in-process server (tests, `works ui` in this interpreter) shares our pid: never kill it.
+    self_hosted = info.pid == os.getpid()
+    if (
+        not self_hosted
+        and _still_serving(info)
+        and not _post_shutdown(info, read_token(info))
+    ):
         _signal_stop(info.pid)
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         if not _still_serving(info):
             # The socket is closed, but Uvicorn can still be draining SSE clients and holding
             # `.works/state/daemon.lock`. Wait for the process, then force it.
-            if not _wait_gone(info, 5.0):
+            if not self_hosted and not _wait_gone(info, 5.0):
                 _force_stop(info.pid)
                 if not _wait_gone(info, 5.0):
                     raise ConfigError(f"the daemon (pid {info.pid}) is still holding the home")
             clear_info(paths)
             return info
         time.sleep(0.1)
+    if self_hosted:
+        raise ConfigError(f"the in-process daemon (pid {info.pid}) did not stop")
     _force_stop(info.pid)
     if not _wait_gone(info, 5.0):
         raise ConfigError(f"the daemon (pid {info.pid}) did not stop")

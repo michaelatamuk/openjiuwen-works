@@ -1,4 +1,4 @@
-.PHONY: check lint format type test unit integration cov bench wheel security gitleaks demo docs-links sbom api-compat routes
+.PHONY: check lint format type test unit integration cov bench wheel security gitleaks demo docs-links sbom api-compat routes mutation
 
 check: lint format type cov
 
@@ -16,6 +16,10 @@ routes:
 
 api-compat:
 	uv run python scripts/check_api_compat.py docs/reference/openapi.baseline.json docs/reference/openapi.json
+
+mutation:
+	uv run mutmut run || true
+	uv run python scripts/mutation_gate.py
 
 sbom:
 	mkdir -p dist

@@ -165,7 +165,7 @@ def _fake_clock(monkeypatch) -> dict[str, float]:
 
 
 def test_stop_waits_for_a_hung_process_to_release_the_home(paths, monkeypatch) -> None:
-    info = make_info(paths)
+    info = make_info(paths, pid=999_999_999)
     daemon.write_info(paths, info)
     monkeypatch.setattr(daemon, "current_daemon", lambda _paths: info)
     monkeypatch.setattr(daemon, "_still_serving", lambda _info: False)
@@ -187,7 +187,7 @@ def test_stop_waits_for_a_hung_process_to_release_the_home(paths, monkeypatch) -
 
 
 def test_stop_forces_a_process_that_never_exits(paths, monkeypatch) -> None:
-    info = make_info(paths)
+    info = make_info(paths, pid=999_999_999)
     daemon.write_info(paths, info)
     monkeypatch.setattr(daemon, "current_daemon", lambda _paths: info)
     monkeypatch.setattr(daemon, "_still_serving", lambda _info: False)
@@ -203,4 +203,25 @@ def test_stop_forces_a_process_that_never_exits(paths, monkeypatch) -> None:
 
     assert daemon.stop_daemon(paths) == info
     assert state["killed"] is True
+    assert not daemon.info_path(paths).exists()
+
+
+def test_stop_never_kills_the_process_that_hosts_the_server(paths, monkeypatch) -> None:
+    info = make_info(paths)  # pid is this pytest process
+    daemon.write_info(paths, info)
+    monkeypatch.setattr(daemon, "current_daemon", lambda _paths: info)
+    _fake_clock(monkeypatch)
+    calls = {"serving": 0, "killed": 0}
+
+    def serving(_info) -> bool:
+        calls["serving"] += 1
+        return calls["serving"] < 2
+
+    monkeypatch.setattr(daemon, "_still_serving", serving)
+    monkeypatch.setattr(
+        daemon, "_force_stop", lambda pid: calls.__setitem__("killed", calls["killed"] + 1)
+    )
+
+    assert daemon.stop_daemon(paths) == info
+    assert calls["killed"] == 0
     assert not daemon.info_path(paths).exists()

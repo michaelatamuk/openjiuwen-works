@@ -185,11 +185,32 @@ remote state. See `docs/reference/reliability.md`.
 
 ## Start the daemon at logon on Windows
 
-Use Task Scheduler (or a service wrapper) with the venv Python:
+Two supported recipes; pick one and verify it survives a reboot.
+
+**Task Scheduler** (no extra software):
 
 ```text
-schtasks /Create /SC ONLOGON /TN "openJiuwen Works" /TR ""C:\path	o\.venv\Scripts\python.exe" -m works --home C:\path	o\workspace daemon start --write --port 8765"
+schtasks /Create /SC ONLOGON /TN "openJiuwen Works" /TR ""C:\path\to\.venv\Scripts\python.exe" -m works --home C:\path\to\workspace daemon start --write --port 8765"
 ```
 
-Run it once, verify with `works daemon status`, then reboot and verify the same pid/URL. A remote
-bind additionally needs `--allow-remote --trusted-host` and private ACLs on `.works/state`.
+**NSSM** (a real Windows service, restart on crash):
+
+```text
+nssm install openJiuwenWorks "C:\path\to\.venv\Scripts\python.exe"
+nssm set openJiuwenWorks AppParameters "-m works --home C:\path\to\workspace daemon start --write --port 8765"
+nssm set openJiuwenWorks AppDirectory "C:\path\to\workspace"
+nssm set openJiuwenWorks Start SERVICE_AUTO_START
+nssm start openJiuwenWorks
+```
+
+Verify start, health and stop before trusting it:
+
+```powershell
+works --home C:\path\to\workspace daemon status --json   # running + the URL another machine can open
+Invoke-WebRequest http://127.0.0.1:8765/api/v1/health/live | Select-Object StatusCode
+works --home C:\path\to\workspace daemon stop --json      # waits for the pid, not just the socket
+```
+
+A remote bind additionally needs `--allow-remote --trusted-host` and private ACLs on `.works/state`.
+The Windows CI job runs `scripts/smoke_daemon.py`, which covers start → dispatch → kill mid-run →
+restart reconciliation → graceful stop.

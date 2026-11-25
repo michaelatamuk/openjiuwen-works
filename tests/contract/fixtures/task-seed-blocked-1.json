@@ -767,12 +767,12 @@
       {
         "href": "",
         "label": "Branch",
-        "value": "—"
+        "value": "\u2014"
       },
       {
         "href": "",
         "label": "Pull request",
-        "value": "—"
+        "value": "\u2014"
       },
       {
         "href": "",
@@ -960,6 +960,7 @@
     "planner_provider": null,
     "planner_tokens": 0,
     "planner_usd": 0.0,
+    "prompt_sha256": null,
     "provider": "fixture",
     "provider_split": false,
     "risk_level": "low",
