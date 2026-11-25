@@ -486,6 +486,25 @@ an approval that outlives the proof.
 - [x] **M18.7** The Release page shows the packet and offers Approve/Hold/Reject with a comment;
   delivery and confirmation keep their visible status on the same page.
 
+### M19 ? Deliver 2026 (stage 9, complete)
+
+**Prevents:** shipping a commit that is not the approved one, a push before the token is known good,
+and a partial delivery that looks complete.
+
+- [x] **M19.1** Preflight checks that the delivered commit descends from the approved base and that the
+  proof still matches; force-push and merge are never used.
+- [x] **M19.2** The change request body carries the proof summary, verdict, risk, passed/failed check
+  count and `not_tested`, not just a link.
+- [x] **M19.3** A step journal (commit, branch, preflight, push, request, comment) is written as the
+  delivery progresses and a retry continues from the recorded state; `completed` is only set at the
+  end, so a partial record is not reused as finished.
+- [x] **M19.4** A forge without a token is refused before the push; the failure and step are recorded.
+- [x] **M19.5** Markers and the recorded commit/provider/tracker keep retries idempotent; a changed
+  provider is a new delivery, not a silent reuse.
+- [x] **M19.6** The journal records the failing step and message; a partial delivery stays visible.
+- [x] **M19.7** The Release page lists the delivery steps; dry-run, missing token and crash recovery
+  are covered by API tests.
+
 ## 4. Sequencing and gates
 
 ### Phase 0 — Land the safety floor (week 1)

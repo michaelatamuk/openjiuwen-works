@@ -182,6 +182,12 @@ class GitRepo:
         output = self._git("ls-remote", remote, f"refs/heads/{branch}", timeout_s=60).stdout.strip()
         return output.split()[0] if output else None
 
+    def is_ancestor(self, ancestor: str, descendant: str, *, cwd: Path | None = None) -> bool:
+        result = self._git(
+            "merge-base", "--is-ancestor", ancestor, descendant, cwd=cwd, timeout_s=60
+        )
+        return result.ok
+
     def reset_hard(self, worktree: Path, commit: str) -> None:
         """Return a worktree to an exact commit and drop untracked files."""
         self._git("reset", "--hard", commit, cwd=worktree)

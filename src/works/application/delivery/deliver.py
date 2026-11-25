@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -52,6 +53,9 @@ class Delivery:
     dry_run: bool = False
     created: bool = True
     notes: list[str] = field(default_factory=list)
+    steps: list[dict[str, Any]] = field(default_factory=list)
+    failure: str | None = None
+    completed: bool = False
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -67,6 +71,9 @@ class Delivery:
             "dry_run": self.dry_run,
             "created": self.created,
             "notes": self.notes,
+            "steps": self.steps,
+            "failure": self.failure,
+            "completed": self.completed,
         }
 
 
@@ -118,6 +125,24 @@ def _load_delivery(run_dir: Path | None) -> Delivery | None:
         return Delivery(**raw)
     except (OSError, json.JSONDecodeError, TypeError):
         return None
+
+
+def _step(
+    run_dir: Path,
+    delivery: Delivery,
+    name: str,
+    status: str = "ok",
+    detail: str = "",
+) -> None:
+    delivery.steps.append(
+        {
+            "step": name,
+            "status": status,
+            "detail": detail,
+            "at": datetime.now(tz=UTC).isoformat(),
+        }
+    )
+    _write_delivery(run_dir, delivery)
 
 
 def _write_delivery(run_dir: Path, delivery: Delivery) -> None:
@@ -218,7 +243,8 @@ def deliver(
     ):
         commit = existing.commit
         if (
-            not existing.dry_run
+            existing.completed
+            and not existing.dry_run
             and existing.provider == provider
             and existing.tracker == effective_tracker
             and (provider == "none" or existing.pr_url)
@@ -247,13 +273,20 @@ def deliver(
         dry_run=dry_run,
         notes=notes,
     )
+    _step(run_dir, delivery, "commit", detail=commit)
+    _step(run_dir, delivery, "branch", detail=branch)
     if dry_run:
         delivery.notes.append("dry run: no push and no pull request")
+        delivery.completed = True
         _write_delivery(run_dir, delivery)
         queue.append(task.id, "delivery.finished", delivery.as_dict())
         return delivery
     if not repo.has_remote(remote):
         raise ConfigError(f"the repository has no remote {remote!r}; nothing to push")
+    base = record.base_commit
+    if base and not repo.is_ancestor(base, commit):
+        raise ConfigError("the delivered commit does not descend from the approved base")
+    _step(run_dir, delivery, "preflight", detail=f"{base or '-'}..{commit}")
     forger: Forge | None = None
     slug: str | None = None
     if provider != "none":
@@ -272,8 +305,18 @@ def deliver(
             f"tracker {effective_tracker}: {task.source.ref} is not handled; comment skipped"
         )
         tracker_obj = None
-    repo.push(remote, branch)
+    if forger is not None and not bool(getattr(forger, "has_token", True)):
+        delivery.failure = "the forge has no token"
+        _step(run_dir, delivery, "auth", "failed", delivery.failure)
+        raise ConfigError("delivery needs a token for the chosen forge; nothing was pushed")
+    try:
+        repo.push(remote, branch)
+    except Exception as exc:
+        delivery.failure = str(exc)
+        _step(run_dir, delivery, "push", "failed", str(exc))
+        raise
     delivery.pushed = True
+    _step(run_dir, delivery, "push", detail=branch)
     if forger is not None and slug is not None:
         delivery.pr_url = forger.ensure_pull_request(
             repository=slug,
@@ -285,6 +328,7 @@ def deliver(
             ),
         )
         delivery.notes.append(f"pull request: {delivery.pr_url}")
+        _step(run_dir, delivery, "pull_request", detail=delivery.pr_url or "")
     if tracker_obj is not None:
         delivery.comment_url = tracker_obj.ensure_comment(
             ref=task.source.ref,
@@ -296,6 +340,8 @@ def deliver(
             marker=_source_marker(record.run_id),
         )
         delivery.notes.append(f"source comment: {delivery.comment_url}")
+        _step(run_dir, delivery, "comment", detail=delivery.comment_url or "")
+    delivery.completed = True
     _write_delivery(run_dir, delivery)
     queue.append(task.id, "delivery.finished", delivery.as_dict())
     return delivery

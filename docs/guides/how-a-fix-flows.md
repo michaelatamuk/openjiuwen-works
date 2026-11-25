@@ -255,19 +255,28 @@ flowchart TD
 
 ## 9. Deliver — send it back where it came from
 
-Works creates a change branch, opens a change request, and can leave one comment on the original
-report. Before sending, it checks that the code still matches the approved proof, so nobody ships a
-different change than the one that was approved.
+Before anything leaves the machine, Works checks that the delivered commit really descends from the
+approved base and that the proof still matches; a mismatch stops the delivery. It never force-pushes
+and never merges.
 
-There is also a rehearsal mode that prepares everything but sends nothing. Repeating delivery is safe:
-the same change request and the same comment are found instead of being created twice.
+It then creates a branch, pushes it, opens a change request and leaves one comment on the original
+report. The request carries the proof summary, the verdict, the risk, which checks passed and what was
+not tested ? not just a link. A rehearsal mode prepares the branch and the text but sends nothing.
+
+Delivery writes a step-by-step journal (branch, commit, preflight, push, change request, comment). A
+crash after the change request does not create a second one: the journal says where it stopped, and a
+retry continues from there. A missing token is refused before any network write, and a partial
+delivery is shown as partial, never as success.
 
 ```mermaid
-flowchart LR
-    R[Released change] --> B[Change branch]
-    B --> P[Sent for review]
-    P --> PR[Change request + one comment]
-    B -.->|rehearsal| L[Nothing leaves the machine]
+flowchart TD
+    R["Released commit + proof"] --> P{"Preflight: descends<br/>from the approved base?"}
+    P -->|"no"| X["Stop: proof mismatch"]
+    P -->|"yes"| B["Branch + journal"]
+    B --> U["Push (never force)"]
+    U --> C["Change request with proof summary"]
+    C --> M["One comment on the report"]
+    B -.->|"rehearsal"| L["Nothing leaves the machine"]
 ```
 
 ## 10. Confirm — check the real thing afterwards

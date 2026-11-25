@@ -31,6 +31,9 @@ export type ReleaseDelivery = {
   dry_run?: boolean;
   provider?: string;
   tracker?: string | null;
+  steps?: { step: string; status: string; detail?: string }[];
+  failure?: string | null;
+  completed?: boolean;
 };
 
 export type ReleaseDeploymentStatus = "deployed" | "failed" | "dry_run";
@@ -225,12 +228,24 @@ export function Release({ detail, onAction, onShowRuns, onShowRun, onToast }: Re
 
         <Card title="Delivery" actions={detail.delivery ? <Pill tone={detail.delivery.dry_run ? "amber" : "green"}>{detail.delivery.dry_run ? "dry run" : "delivered"}</Pill> : null}>
           {detail.delivery ? (
-            <dl className="kv">
-              <dt>Commit</dt><dd className="mono">{shortSha(detail.delivery.commit)}</dd>
-              <dt>Branch</dt><dd className="mono">{detail.delivery.branch || "—"}</dd>
-              <dt>Pull request</dt><dd>{detail.delivery.pr_url ? <a href={detail.delivery.pr_url} target="_blank" rel="noopener noreferrer">{detail.delivery.pr_url}</a> : "—"}</dd>
-              <dt>Comment</dt><dd>{detail.delivery.comment_url ? <a href={detail.delivery.comment_url} target="_blank" rel="noopener noreferrer">open</a> : "—"}</dd>
-            </dl>
+            <>
+              <dl className="kv">
+                <dt>Commit</dt><dd className="mono">{shortSha(detail.delivery.commit)}</dd>
+                <dt>Branch</dt><dd className="mono">{detail.delivery.branch || "—"}</dd>
+                <dt>Pull request</dt><dd>{detail.delivery.pr_url ? <a href={detail.delivery.pr_url} target="_blank" rel="noopener noreferrer">{detail.delivery.pr_url}</a> : "—"}</dd>
+                <dt>Comment</dt><dd>{detail.delivery.comment_url ? <a href={detail.delivery.comment_url} target="_blank" rel="noopener noreferrer">open</a> : "—"}</dd>
+              </dl>
+              {detail.delivery.steps?.length ? (
+                <ul className="bullets">
+                  {detail.delivery.steps.map((step) => (
+                    <li key={step.step}>
+                      {step.step}: {step.status}
+                      {step.detail ? ` — ${step.detail}` : ""}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </>
           ) : (
             <>
               <div className="form-row">

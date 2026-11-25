@@ -4,7 +4,7 @@
     "--disallow-any-explicit",
     "--warn-return-any"
   ],
-  "total": 347,
+  "total": 349,
   "files": {
     "src/works/adapters/daemon.py": 4,
     "src/works/adapters/harness/base.py": 1,
@@ -32,7 +32,7 @@
     "src/works/application/assistant/context.py": 3,
     "src/works/application/assistant/runtime.py": 1,
     "src/works/application/delivery/confirm.py": 4,
-    "src/works/application/delivery/deliver.py": 1,
+    "src/works/application/delivery/deliver.py": 3,
     "src/works/application/delivery/deploy.py": 2,
     "src/works/application/delivery/forge.py": 2,
     "src/works/application/delivery/release.py": 5,

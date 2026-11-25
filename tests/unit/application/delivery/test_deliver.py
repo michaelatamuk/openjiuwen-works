@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import json
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -327,7 +328,10 @@ def test_a_crash_after_the_pull_request_does_not_create_a_second(
             tracker="jira",
             tracker_client=_CrashingTracker(),
         )
-    assert not (paths.runs / "r-deliver" / "delivery.json").exists()
+    journal = json.loads((paths.runs / "r-deliver" / "delivery.json").read_text(encoding="utf-8"))
+    names = [step["step"] for step in journal["steps"]]
+    assert "pull_request" in names
+    assert "comment" not in names
 
     tracker = FakeTracker()
     second = deliver(
@@ -372,3 +376,53 @@ def test_a_crash_before_the_record_is_written_is_recovered(
     assert (paths.runs / "r-deliver" / "delivery.json").exists()
     events = [e for e in Queue(paths).events(task.id) if e.type == "delivery.finished"]
     assert len(events) == 1
+
+
+def test_a_missing_forge_token_stops_before_the_push(paths, repo, tmp_path, monkeypatch) -> None:
+    monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+    monkeypatch.setattr("works.application.delivery.deliver.repository_slug", lambda url: "o/r")
+    task, _, _ = _released(paths, repo)
+    _remote(tmp_path, repo)
+
+    with pytest.raises(ConfigError, match="needs a token"):
+        deliver(paths, task.id, provider="github")
+
+    assert repo.remote_commit("origin", branch_name(task.id)) is None
+    record = json.loads((paths.runs / "r-deliver" / "delivery.json").read_text(encoding="utf-8"))
+    assert record["failure"] == "the forge has no token"
+    assert any(step["step"] == "auth" and step["status"] == "failed" for step in record["steps"])
+
+
+def test_the_delivery_journal_lists_its_steps(paths, repo, tmp_path) -> None:
+    task, _, _ = _released(paths, repo)
+    _remote(tmp_path, repo)
+
+    delivery = deliver(paths, task.id)
+
+    names = [step["step"] for step in delivery.steps]
+    assert names[:2] == ["commit", "branch"]
+    assert "preflight" in names
+    assert names[-1] == "push"
+
+
+def test_a_dry_run_stops_before_the_preflight(paths, repo) -> None:
+    task, _, _ = _released(paths, repo)
+
+    delivery = deliver(paths, task.id, dry_run=True)
+
+    names = [step["step"] for step in delivery.steps]
+    assert names == ["commit", "branch"]
+
+
+def test_a_new_provider_is_not_reused(paths, repo, tmp_path, monkeypatch) -> None:
+    task, _, _ = _released(paths, repo)
+    _remote(tmp_path, repo)
+    first = deliver(paths, task.id)
+    monkeypatch.setattr("works.application.delivery.deliver.repository_slug", lambda url: "o/r")
+    forge = _IdempotentForge()
+
+    second = deliver(paths, task.id, provider="github", forge=forge)
+
+    assert second.created is True
+    assert second.commit == first.commit
+    assert forge.created == 1

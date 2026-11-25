@@ -82,6 +82,10 @@ class GitHubForge:
         self._token = token or os.environ.get("GITHUB_TOKEN")
         self._transport = transport
 
+    @property
+    def has_token(self) -> bool:
+        return bool(self._token)
+
     def _headers(self) -> dict[str, str]:
         if not self._token:
             raise ConfigError("GitHub delivery needs GITHUB_TOKEN")
@@ -130,8 +134,13 @@ class GitLabForge:
         transport: Transport = request,
     ) -> None:
         self._token = token or os.environ.get("GITLAB_TOKEN")
+
         self._base = (base_url or os.environ.get("GITLAB_URL") or "https://gitlab.com").rstrip("/")
         self._transport = transport
+
+    @property
+    def has_token(self) -> bool:
+        return bool(self._token)
 
     def _headers(self) -> dict[str, str]:
         if not self._token:
