@@ -164,9 +164,21 @@ the Evidence readiness panel run `works readiness` through a local POST.
 - Writes need the persistent bearer token from `.works/state/http-token` or the one-time bootstrap
   URL; reads are open on loopback. Do not bind the UI to a non-loopback address. A LAN/phone client
   needs the authenticated remote daemon described in `docs/guides/remote.md`.
-- React 19 + Vite, built into `src/works/interfaces/ui/static/dist`; no Tailwind or shadcn yet, and Playwright
-  is not wired into CI.
+- React 19 + Vite, built into `src/works/interfaces/ui/static/dist`; no Tailwind or shadcn yet. The
+  Playwright journeys run in CI against a seeded daemon on port 8791.
 
 Tests: `pytest tests/unit/interfaces/api tests/contract` for the API and parity fixtures;
 `cd web && npm test` for the screen matrix. The daemon lifecycle gate is
 `python scripts/smoke_daemon.py`.
+
+Two journeys need a secret and are therefore opt-in, not required checks:
+
+```bash
+cd web
+WORKS_E2E_GITHUB=1 npx playwright test e2e/opt-in.spec.ts -g "GitHub issue"   # gh auth token
+WORKS_E2E_ASK=1    npx playwright test e2e/opt-in.spec.ts -g "streams"       # model key
+```
+
+The first imports an open issue from `WORKS_E2E_GITHUB_REPO` (default
+`michaelatamuk/works-calc-demo`) and asserts a tracker task appeared. The second asks a question over
+`POST /api/v1/ask/stream` and asserts the SSE stream ends with a `done` event and no `error`.

@@ -165,7 +165,7 @@ only_mutate = [
   "src/works/adapters/queue/index.py",
   "src/works/interfaces/api/jobs.py",
 ]
-pytest_add_cli_args_test_selection = ["tests", "--ignore=tests/integration"]
+pytest_add_cli_args_test_selection = ["tests/unit", "-x", "--tb=no", "-q"]
 also_copy = ["flows", "fixtures"]
 
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -281,3 +282,93 @@ def test_delivery_exposes_a_stable_record(paths, repo, tmp_path) -> None:
     delivery = deliver(paths, task.id)
 
     assert Delivery(**delivery.as_dict()).commit == delivery.commit
+
+
+class _IdempotentForge:
+    """A forge that finds its own pull request by head, like the real one does by marker."""
+
+    def __init__(self) -> None:
+        self.pulls: dict[str, str] = {}
+        self.created = 0
+
+    def ensure_pull_request(self, *, repository, head, base, title, body):
+        if head not in self.pulls:
+            self.created += 1
+            self.pulls[head] = f"https://github.com/{repository}/pull/{self.created}"
+        return self.pulls[head]
+
+
+class _CrashingTracker:
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def ensure_comment(self, *, ref, body, marker):
+        self.calls += 1
+        raise RuntimeError("the daemon died before the comment was recorded")
+
+    def close(self, *, ref) -> None:
+        pass
+
+
+def test_a_crash_after_the_pull_request_does_not_create_a_second(
+    paths, repo, tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    task, _, _ = _released(paths, repo, ref="FIRE-3")
+    _remote(tmp_path, repo)
+    monkeypatch.setattr("works.application.delivery.deliver.repository_slug", lambda url: "o/r")
+    forge = _IdempotentForge()
+
+    with pytest.raises(RuntimeError, match="died before the comment"):
+        deliver(
+            paths,
+            task.id,
+            provider="github",
+            forge=forge,
+            tracker="jira",
+            tracker_client=_CrashingTracker(),
+        )
+    assert not (paths.runs / "r-deliver" / "delivery.json").exists()
+
+    tracker = FakeTracker()
+    second = deliver(
+        paths,
+        task.id,
+        provider="github",
+        forge=forge,
+        tracker="jira",
+        tracker_client=tracker,
+    )
+
+    assert forge.created == 1
+    assert list(forge.pulls.values()) == [second.pr_url]
+    assert len(tracker.comments) == 1
+    events = [e for e in Queue(paths).events(task.id) if e.type == "delivery.finished"]
+    assert len(events) == 1
+
+
+def test_a_crash_before_the_record_is_written_is_recovered(
+    paths, repo, tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    task, _, _ = _released(paths, repo)
+    _remote(tmp_path, repo)
+    real_write = importlib.import_module("works.application.delivery.deliver")._write_delivery
+    calls = {"n": 0}
+
+    def flaky(run_dir, delivery):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise RuntimeError("the daemon died before the record was written")
+        real_write(run_dir, delivery)
+
+    monkeypatch.setattr("works.application.delivery.deliver._write_delivery", flaky)
+
+    with pytest.raises(RuntimeError, match="died before the record"):
+        deliver(paths, task.id)
+    assert not (paths.runs / "r-deliver" / "delivery.json").exists()
+
+    second = deliver(paths, task.id)
+
+    assert second.created is True
+    assert (paths.runs / "r-deliver" / "delivery.json").exists()
+    events = [e for e in Queue(paths).events(task.id) if e.type == "delivery.finished"]
+    assert len(events) == 1

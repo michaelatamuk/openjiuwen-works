@@ -11,6 +11,7 @@ import subprocess  # nosec B404
 import sys
 import threading
 import time
+from collections.abc import Callable
 from contextvars import ContextVar
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -108,6 +109,29 @@ def _kill_tree(process: subprocess.Popen[str]) -> None:
         process.kill()
 
 
+def _pdeathsig_hook() -> Callable[[], None] | None:
+    """Linux: kill the command when the daemon dies, even by `SIGKILL`.
+
+    `PR_SET_PDEATHSIG` is delivered to the direct child, which is the command Works started.
+    macOS has no equivalent, so that platform keeps the documented gap.
+    """
+    if not sys.platform.startswith("linux"):
+        return None
+    import ctypes
+    import signal
+
+    libc = ctypes.CDLL(None, use_errno=True)
+    parent = os.getpid()
+
+    def hook() -> None:
+        # Runs in the forked child before exec; keep it to one syscall.
+        libc.prctl(1, signal.SIGKILL, 0, 0, 0)  # PR_SET_PDEATHSIG
+        if os.getppid() != parent:  # the daemon died before prctl took effect
+            os.kill(os.getpid(), signal.SIGKILL)
+
+    return hook
+
+
 class SubprocessRunner:
     def __init__(self, *, extra_env: dict[str, str] | None = None) -> None:
         self._extra_env = dict(extra_env or {})
@@ -138,6 +162,10 @@ class SubprocessRunner:
             kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
         else:
             kwargs["start_new_session"] = True
+            hook = _pdeathsig_hook()
+            if hook is not None:
+                # The child dies with the daemon even if the daemon is SIGKILLed.
+                kwargs["preexec_fn"] = hook
         process = subprocess.Popen(  # nosec B603
             argv,
             cwd=str(cwd),

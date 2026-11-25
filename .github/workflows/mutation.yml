@@ -1,6 +1,8 @@
 name: mutation
 
 # Mutmut does not run natively on Windows, so this gate lives on Linux and is not part of every PR.
+# The selection is `tests/unit -x --tb=no`: a killed mutant stops at its first failure, while a
+# survivor still runs the whole unit suite, so the 70% score keeps its meaning.
 on:
   workflow_dispatch:
   schedule:
@@ -19,6 +21,6 @@ jobs:
         with:
           enable-cache: true
       - run: uv python install 3.12
-      - run: uv sync --frozen --extra dev
+      - run: uv sync --frozen --extra dev --extra server
       - name: Mutation gate at 70% killed
         run: uv run python scripts/mutation_gate.py

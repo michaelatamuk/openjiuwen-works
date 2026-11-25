@@ -16,8 +16,17 @@ const PYTHON =
     process.platform === "win32" ? "Scripts/python.exe" : "bin/python",
   );
 
-export default async function globalSetup() {
-  const home = mkdtempSync(path.join(tmpdir(), "works-e2e-"));
+function daemonEnv(): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = { ...process.env };
+  // The import journey is opt-in; without this the GitHub API sees an anonymous client and a
+  // private repository looks empty.
+  if (process.env.WORKS_E2E_GITHUB === "1" && !env.GITHUB_TOKEN) {
+    env.GITHUB_TOKEN = execFileSync("gh", ["auth", "token"], { encoding: "utf8" }).trim();
+  }
+  return env;
+}
+
+export default async function globalSetup() {  const home = mkdtempSync(path.join(tmpdir(), "works-e2e-"));
   execFileSync(
     PYTHON,
     [path.join(ROOT, "scripts", "seed_home.py"), "--root", home, "--force"],
@@ -36,12 +45,12 @@ export default async function globalSetup() {
       "--write",
       "--no-open",
     ],
-    { cwd: ROOT, stdio: "ignore", detached: process.platform !== "win32" },
+    { cwd: ROOT, stdio: "ignore", detached: process.platform !== "win32", env: daemonEnv() },
   );
   const readonly = spawn(
     PYTHON,
     ["-m", "works", "--home", home, "ui", "--port", String(PORT + 1), "--no-open"],
-    { cwd: ROOT, stdio: "ignore", detached: process.platform !== "win32" },
+    { cwd: ROOT, stdio: "ignore", detached: process.platform !== "win32", env: daemonEnv() },
   );
   const statePath = path.join(HERE, "..", ".e2e-state.json");
   writeFileSync(

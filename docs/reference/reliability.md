@@ -52,9 +52,10 @@ usage and log tails (no tokens) for a bug report.
 ### Child processes
 
 On Windows every command is assigned to a Job Object with `KILL_ON_JOB_CLOSE`: killing Works hard
-closes the handle and the whole process tree dies with it. On POSIX a command starts in its own session
-and cancellation/timeout kills the group; a hard `SIGKILL` of the daemon can still leave a child
-running, which is the known gap in this section.
+closes the handle and the whole process tree dies with it. On Linux the child asks the kernel for
+`PR_SET_PDEATHSIG` (`SIGKILL`), so it dies with the daemon even when the daemon itself is `SIGKILLed`
+(`tests/unit/adapters/processes/test_orphan.py`). On macOS there is no equivalent; a hard kill of the
+daemon can leave a command running, which is the remaining gap in this section.
 
 ## Phase idempotency
 
@@ -67,7 +68,8 @@ when their own key or marker exists.
 | `plan` | yes | a new plan version is written and hashed |
 | `build` | yes | works in a fresh worktree |
 | `deliver` | only with a delivery marker | the marker makes a repeat a no-op instead of a second PR/comment |
-| `deploy`, `confirm` | only with the provider's own idempotency key | external systems own the side effect |
+| `deploy` | only with an explicit `--force` after a crash | a `running` record is written before the command, so an interrupted deploy is refused instead of silently repeated |
+| `confirm` | yes | it only observes the target and writes a new confirmation record |
 
 ## Heartbeats
 

@@ -149,8 +149,11 @@ the primary Windows lifecycle path going untested.
 
 - [x] **M3.1** Playwright fixture starts/stops a real `works daemon start --write`, resets a temp
   home, and exposes traces/video on failure.
-- [~] **M3.2** Queue → Story → Evidence → Release and Settings pairing are covered. New task,
-  import, add-context, ask stream, revoke and read-only remain.
+- [~] **M3.2** Queue → Story → Evidence → Release, Settings pairing, add-context, new task (mobile
+  composer), revoke and read-only mode are covered by required journeys. `web/e2e/opt-in.spec.ts` adds
+  the two journeys that need a secret: a real GitHub issue becomes a tracker task (`WORKS_E2E_GITHUB=1`,
+  uses `gh auth token`) and Ask Mira streams an SSE answer (`WORKS_E2E_ASK=1`, needs a model key).
+  Both skip in CI, so they are proven on a laptop rather than gated.
 - [x] **M3.3** `@axe-core/playwright` runs on Queue, Story, Evidence, Release, Session and Settings in
   the E2E job; serious/critical violations fail the build. It already found and forced two fixes:
   low-contrast muted text in the warm palette and a scrollable route that was not keyboard-focusable.
@@ -226,9 +229,13 @@ invariants.
   valid/truncated/empty/unknown-field/non-object) plus a leftover `atomic_write` temp file, an abrupt
   `os._exit` and an externally killed process (`TerminateProcess`/`SIGKILL`). Each asserts the terminal
   state, the readable restart explanation, the released task owner and idempotent re-reconcile.
-  **Windows:** each command runs in a Job Object with `KILL_ON_JOB_CLOSE`, so a hard parent kill
-takes the tree with it (`tests/unit/adapters/processes/test_job.py`). **Still open:** the POSIX
-orphan case after `SIGKILL`, and an exactly-once crash test for delivery/comment/deploy.
+  **Process tree:** on Windows each command runs in a Job Object with `KILL_ON_JOB_CLOSE`
+  (`tests/unit/adapters/processes/test_job.py`); on Linux `PR_SET_PDEATHSIG` kills the command with the
+  daemon even after `SIGKILL` (`tests/unit/adapters/processes/test_orphan.py`). **Exactly-once:** crash
+  tests in `tests/unit/application/delivery/test_deliver.py` kill the delivery after the pull request was
+  opened and before the record was written, then prove a retry creates no second PR or comment and one
+  `delivery.finished` event. Deploy writes a `running` record before the command starts and refuses to
+  repeat an interrupted command without `--force` (`test_deploy.py`).
 - [x] **M7.3** `works backup`/`works restore`: a home archive (events, runs, ledger, settings) and a
   restore test that preserves evidence and task state.
 - [x] **M7.4** Retention: prune terminal jobs while keeping a summary; compact/rotate per-task event

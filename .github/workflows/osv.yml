@@ -2,6 +2,7 @@ name: osv
 
 # Full OSV.dev scan: covers transitive dependencies in uv.lock and web/package-lock.json,
 # which pip-audit and npm audit do not aggregate. Results also land in Security > Code scanning.
+# osv-scanner.toml records the one upstream pin that blocks a fix (filelock, via openjiuwen).
 on:
   push:
     branches: [main]
@@ -17,3 +18,8 @@ permissions:
 jobs:
   scan:
     uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.7.1
+    with:
+      scan-args: |-
+        --config=./osv-scanner.toml
+        -r
+        ./

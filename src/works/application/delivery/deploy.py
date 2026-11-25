@@ -6,8 +6,9 @@ either passed explicitly or read from the product map. A dry run records the int
 touching the target.
 
 The deployment record is idempotent per task, run, commit and environment. A failed deployment is
-never reported as deployed; a retry is a new record and must be requested explicitly with
-`--force` only when the previous record is already successful.
+never reported as deployed. A `running` record is written before the command starts: if Works dies
+mid-deploy, the next attempt refuses to repeat the command until an operator passes `--force`,
+because only they can see what the target actually did.
 """
 
 from __future__ import annotations
@@ -29,7 +30,7 @@ from works.config.paths import WorksPaths
 from works.domain.errors import ConfigError
 from works.domain.records import TaskState
 
-STATUS = Literal["deployed", "failed", "dry_run"]
+STATUS = Literal["deployed", "failed", "dry_run", "running"]
 
 _DELIVERY_FILE = "delivery.json"
 _DEPLOY_FILE = "deployment.json"
@@ -164,6 +165,17 @@ def deploy(
         )
 
     previous = _existing(run_dir)
+    if (
+        previous is not None
+        and previous.status == "running"
+        and previous.commit == commit
+        and previous.environment == environment
+        and not force
+    ):
+        raise ConfigError(
+            "the previous deploy started but never recorded a result; check the target, "
+            "then rerun with --force if it is safe to repeat"
+        )
     already_done = previous is not None and (
         previous.status == "deployed" or (previous.status == "dry_run" and dry_run)
     )
@@ -205,6 +217,11 @@ def deploy(
         )
         return deployment
 
+    # The intent goes to disk before the command runs: a crash from here on leaves a `running`
+    # record, which the next attempt refuses to repeat without --force.
+    deployment.status = "running"
+    deployment.notes.append("started; no result recorded yet")
+    _write(run_dir, deployment)
     command_runner = runner or SubprocessRunner()
     result = command_runner.run(
         argv,
@@ -215,6 +232,8 @@ def deploy(
     deployment.exit_code = result.exit_code
     deployment.output_tail = result.output[-4000:]
     deployment.status = "deployed" if result.ok else "failed"
+    if deployment.notes and deployment.notes[-1] == "started; no result recorded yet":
+        deployment.notes.pop()
     deployment.finished_at = datetime.now(tz=UTC)
     _write(run_dir, deployment)
     queue.append(

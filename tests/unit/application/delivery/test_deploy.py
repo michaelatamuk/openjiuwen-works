@@ -147,3 +147,27 @@ def test_deployment_round_trips_through_json() -> None:
     )
 
     assert Deployment.model_validate_json(deployment.model_dump_json()).as_dict()["commit"] == "abc"
+
+
+class _CrashingRunner:
+    def run(self, *args, **kwargs):
+        raise RuntimeError("the daemon died during the deploy command")
+
+
+def test_a_crash_during_the_command_is_not_repeated_silently(paths, repo, tmp_path) -> None:
+    task, delivery = _delivered(paths, repo, tmp_path)
+    command = [sys.executable, "-c", "print('deployed')"]
+
+    with pytest.raises(RuntimeError, match="died during the deploy"):
+        deploy(paths, task.id, command=command, runner=_CrashingRunner())
+
+    record = paths.runs / delivery.run_id / "deployment.json"
+    assert json.loads(record.read_text(encoding="utf-8"))["status"] == "running"
+
+    with pytest.raises(ConfigError, match="never recorded a result"):
+        deploy(paths, task.id, command=command)
+
+    forced = deploy(paths, task.id, command=command, force=True)
+
+    assert forced.status == "deployed"
+    assert json.loads(record.read_text(encoding="utf-8"))["status"] == "deployed"
