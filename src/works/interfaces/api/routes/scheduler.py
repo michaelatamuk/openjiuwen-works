@@ -32,7 +32,10 @@ def _state(request: Request) -> AppState:
 
 @router.get("/scheduler")
 def scheduler_status(request: Request) -> dict[str, object]:
-    return Scheduler(_state(request).paths).status()
+    state = _state(request)
+    payload = Scheduler(state.paths).status()
+    payload["jobs"] = state.jobs.metrics()
+    return payload
 
 
 @router.post("/scheduler/pause", dependencies=[Depends(require_write)])

@@ -253,6 +253,8 @@ class Scheduler:
                     {
                         "owner": self._owner,
                         "level": candidate.level,
+                        "trigger": "scheduler",
+                        "attempt": candidate.task.attempts + 1,
                         "estimate": {
                             "p50_min": candidate.estimate.p50_min,
                             "p90_min": candidate.estimate.p90_min,
@@ -270,9 +272,15 @@ class Scheduler:
                 try:
                     execute(candidate.task.id)
                     result.executed.append({"task_id": candidate.task.id, "result": "ok"})
-                except WorksError as exc:
+                except Exception as exc:
+                    code = getattr(exc, "code", "internal_error")
+                    self._queue.append(
+                        candidate.task.id,
+                        "scheduler.failed",
+                        {"code": str(code), "error": str(exc)},
+                    )
                     result.executed.append(
-                        {"task_id": candidate.task.id, "result": f"{exc.code}: {exc}"}
+                        {"task_id": candidate.task.id, "result": f"{code}: {exc}"}
                     )
                 finally:
                     lease.release(self._paths, candidate.task.id, owner=self._owner)

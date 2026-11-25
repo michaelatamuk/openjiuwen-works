@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 import threading
 
+from works.adapters.queue.store import Queue
 from works.application.scheduling.lease import release
 from works.application.scheduling.loop import Scheduler
 from works.application.scheduling.policy import load_policy
@@ -62,6 +63,13 @@ def _submit(state: AppState, scheduler: Scheduler, task_id: str) -> None:
         try:
             ctx.check()
             return run_task(state, options, task_id)
+        except Exception as exc:
+            Queue(state.paths).append(
+                task_id,
+                "scheduler.failed",
+                {"code": str(getattr(exc, "code", "internal_error")), "error": str(exc)},
+            )
+            raise
         finally:
             release(state.paths, task_id, owner=scheduler.owner)
 

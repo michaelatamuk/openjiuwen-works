@@ -24,6 +24,7 @@ def test_scheduler_is_off_by_default(seeded_client: TestClient) -> None:
     assert body["enabled"] is False
     assert body["paused"] is False
     assert body["limits"]["global"] == 2
+    assert isinstance(body["jobs"], dict)
 
 
 def test_pause_and_resume_are_persisted(seeded_client: TestClient, auth: dict[str, str]) -> None:

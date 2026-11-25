@@ -56,7 +56,7 @@ Exit codes: `0` on success, `EXIT_BLOCKED` when an executed task returns an erro
 
 | method | path | meaning |
 |---|---|---|
-| GET | `/api/v1/scheduler` | state, slots, budget, eligible tasks and the waiting reasons |
+| GET | `/api/v1/scheduler` | state, slots, budget, eligible tasks, waiting reasons and job counters |
 | POST | `/api/v1/scheduler/pause` | `{"reason": "..."}`; the queue is kept |
 | POST | `/api/v1/scheduler/resume` | resume claiming |
 | POST | `/api/v1/scheduler/tick` | submit a job that selects and runs sequentially; answers `202` |

@@ -7,6 +7,7 @@ from works.application.scheduling import lease
 from works.application.scheduling.loop import Scheduler
 from works.application.scheduling.policy import POLICY_PATH
 from works.domain.enums import TaskState
+from works.domain.errors import ConfigError
 from works.domain.records import Source, SourceKind
 
 NOW = datetime(2026, 11, 25, 12, 0, tzinfo=UTC)
@@ -65,6 +66,8 @@ def test_a_tick_claims_and_executes_one_task(paths) -> None:
     events = [item for item in Queue(paths).events(first) if item.type == "scheduler.claimed"]
     assert len(events) == 1
     assert events[0].data["owner"].startswith("scheduler:")
+    assert events[0].data["trigger"] == "scheduler"
+    assert events[0].data["attempt"] == 1
 
 
 def test_pause_stops_claiming_and_resume_restores_it(paths) -> None:
@@ -219,3 +222,30 @@ def test_a_held_tick_keeps_the_lease_for_the_job(paths) -> None:
 
     assert result.claimed == [task_id]
     assert [item.task_id for item in lease.active_leases(paths, NOW)] == [task_id]
+
+
+def test_a_failed_execution_consumes_an_attempt(paths) -> None:
+    _write_policy(
+        paths,
+        """
+enabled: true
+allow:
+  manual: true
+queue:
+  max_attempts: 1
+""",
+    )
+    task_id = _task(paths)
+
+    def execute(_: str) -> None:
+        raise ConfigError("the builder is not configured")
+
+    first = Scheduler(paths, now=lambda: NOW).tick(execute=execute)
+    assert task_id in first.claimed
+    assert Queue(paths).load(task_id).attempts == 1
+    types = [event.type for event in Queue(paths).events(task_id)]
+    assert "scheduler.failed" in types
+
+    second = Scheduler(paths, now=lambda: NOW).tick(execute=execute)
+    assert task_id not in second.claimed
+    assert second.skipped[task_id] == "attempts_exhausted"

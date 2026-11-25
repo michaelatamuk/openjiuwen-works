@@ -45,7 +45,7 @@ def _apply(task: Task | None, event: Event) -> Task:
         require_transition(task.state, target_state)
         return task.model_copy(update={"state": target_state, "updated_at": event.ts})
 
-    if event.type == "attempt.started":
+    if event.type in ("attempt.started", "scheduler.failed"):
         return task.model_copy(update={"attempts": task.attempts + 1, "updated_at": event.ts})
 
     if event.type == "wait.started":
