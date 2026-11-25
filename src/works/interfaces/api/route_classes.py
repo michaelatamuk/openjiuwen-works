@@ -1,9 +1,10 @@
 """How every HTTP route is allowed to run.
 
-The plan (M10) forbids "async-first" churn: a route is classified here, `scripts/dump_route_classes.py`
-renders the table in `docs/reference/http-api.md`, and CI fails when a new route is unclassified or a
-class disappears. A blocking route stays sync and runs in the thread pool; it is not rewritten for
-fashion.
+The plan (M10) forbids "async-first" churn: a route is classified here,
+`scripts/dump_route_classes.py` renders the table in `docs/reference/http-api.md`, and CI fails when
+a new route is unclassified or a class disappears.
+
+A blocking route stays sync and runs in the thread pool; it is not rewritten for fashion.
 """
 
 from __future__ import annotations
