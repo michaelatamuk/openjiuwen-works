@@ -1,7 +1,8 @@
 """Fail when the current OpenAPI schema removes or narrows something the baseline promised.
 
 Usage:
-    python scripts/check_api_compat.py docs/reference/openapi.baseline.json docs/reference/openapi.json
+    python scripts/check_api_compat.py \
+        docs/reference/openapi.baseline.json docs/reference/openapi.json
 
 `--update` copies the current schema over the baseline. Do that only when a breaking change is
 deliberate and the ADR records it.

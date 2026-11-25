@@ -269,9 +269,10 @@ invariants.
 **Prevents:** thread-pool starvation hidden behind "async-first" slogans; unmeasured compiler/RSC
 migration.
 
-- [ ] **M10.1** Audit every FastAPI route and classify it: light async-safe I/O, blocking file/git,
-  subprocess, or SSE. Document the table in `docs/reference/http-api.md`.
-  *Proof:* every route has a class and a note on where it runs.
+- [x] **M10.1** All 33 operations are classified in `src/works/interfaces/api/route_classes.py`
+  (async-safe / blocking / subprocess / sse) with a note; `scripts/dump_route_classes.py` renders the
+  table in `docs/reference/http-api.md` and CI fails when a route is unclassified or the table is
+  stale.
 - [ ] **M10.2** Convert only the measured hot read paths to `async def` (or explicit
   `anyio.to_thread.run_sync`) so 20 SSE clients plus `/tasks` do not exhaust workers. Do not rewrite
   blocking git/subprocess routes for fashion. *Proof:* p95/worker-starvation test before/after.
