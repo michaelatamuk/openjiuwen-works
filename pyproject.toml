@@ -166,7 +166,7 @@ only_mutate = [
   "src/works/interfaces/api/jobs.py",
 ]
 pytest_add_cli_args_test_selection = ["tests/unit", "-x", "--tb=no", "-q"]
-also_copy = ["flows", "fixtures"]
+also_copy = ["flows", "fixtures", "scripts"]
 
 
 [tool.bandit]
