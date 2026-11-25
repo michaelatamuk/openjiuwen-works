@@ -21,7 +21,7 @@ export const PROVIDER_FALLBACK: Record<string, ProviderMeta> = {
   codex: { label: "Codex", kind: "OpenAI Codex", available: false, missing: "Unknown" },
 };
 
-export const PROVIDER_ORDER: string[] = ["claudecode", "dsh", "native", "codex"];
+export const PROVIDER_ORDER: string[] = ["native", "claudecode", "dsh", "codex"];
 
 export const RUNTIME_FALLBACK: Record<string, RuntimeMeta> = {
   openjiuwen: {

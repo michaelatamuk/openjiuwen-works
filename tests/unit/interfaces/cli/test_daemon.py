@@ -81,9 +81,12 @@ class LiveDaemon:
         return wait_for_daemon(self.paths)
 
     def __exit__(self, *exc) -> None:
-        with contextlib.suppress(Exception):  # the test may already have stopped it
-            daemon.stop_daemon(self.paths)
+        # The server lives in this process: flip its stop flag and let Uvicorn unwind before
+        # `stop_daemon` inspects the identity file. A subprocess stop would send signals to us.
+        self.state.stop_event.set()
         self.thread.join(10)
+        with contextlib.suppress(Exception):
+            daemon.stop_daemon(self.paths)
 
 
 def make_task(paths, repo, ref: str) -> str:
