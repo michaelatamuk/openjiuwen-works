@@ -34,6 +34,19 @@ Or on Windows: `powershell -ExecutionPolicy Bypass -File scripts/check.ps1`.
 - No new TODO; an old TODO is a refactoring trigger at the next gate.
 - Refactoring is scheduled (RG0–RG4). Do not mix it with feature work.
 
+## Typed frontend
+
+- Every component is `.tsx` with an explicit exported props type; `allowJs` is off. Import helpers
+  without an extension and keep per-feature domain types in `types.ts`.
+- No `any`, `as any`, `@ts-ignore` or `@ts-expect-error` in `src/app|features|ui|api`. CI greps for
+  them; raw JSON fixtures in `src/test` are the only allowed cast boundary.
+- Narrow a loose API payload once, at the boundary (`appDetail`, `queueTask`, `appBuilder`), never
+  inside a component.
+- The HTTP boundary is validated with Zod in `src/api/schemas.ts`. Keep the contracts minimal
+  (identity + state, plus the fields the screens require); a mismatch is an `ApiError` with
+  `bad_response` and a named field, not a blank screen.
+- Before a PR: `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`, `npm run e2e`.
+
 ## Reporting a bug in Works itself
 
 Open an issue with the task id, the run id, the stop reason and the proof page. That is exactly the

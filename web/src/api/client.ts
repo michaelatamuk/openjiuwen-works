@@ -1,4 +1,13 @@
+import type { ZodType } from "zod";
+
 import type { components } from "./generated/schema";
+import {
+  healthSchema,
+  jobSchema,
+  settingsSchema,
+  taskDetailSchema,
+  taskListSchema,
+} from "./schemas";
 
 export type Health = components["schemas"]["Health"];
 export type TaskSummary = components["schemas"]["TaskSummary"];
@@ -266,10 +275,26 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   return data as T;
 }
 
+export function parseResponse<T>(schema: ZodType, data: unknown, label: string): T {
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    const issue = result.error.issues[0];
+    const detail = issue ? `${issue.path.join(".") || "payload"}: ${issue.message}` : "invalid";
+    throw new ApiError(`unexpected ${label} payload (${detail})`, 502, "bad_response");
+  }
+  return result.data as T;
+}
+
 export const api = {
-  health: () => request<Health>("/health"),
-  tasks: (limit = 200) => request<TaskList>(`/tasks?limit=${limit}`),
-  task: (taskId: string) => request<TaskDetail>(`/tasks/${encodeURIComponent(taskId)}`),
+  health: async () => parseResponse<Health>(healthSchema, await request("/health"), "health"),
+  tasks: async (limit = 200) =>
+    parseResponse<TaskList>(taskListSchema, await request(`/tasks?limit=${limit}`), "task list"),
+  task: async (taskId: string) =>
+    parseResponse<TaskDetail>(
+      taskDetailSchema,
+      await request(`/tasks/${encodeURIComponent(taskId)}`),
+      "task",
+    ),
   createTask: (body: CreateTaskRequest) =>
     request<CreateTaskResponse>("/tasks", {
       method: "POST",
@@ -282,7 +307,8 @@ export const api = {
       body,
       idempotencyKey: newIdempotencyKey(),
     }),
-  job: (jobId: string) => request<Job>(`/jobs/${encodeURIComponent(jobId)}`),
+  job: async (jobId: string) =>
+    parseResponse<Job>(jobSchema, await request(`/jobs/${encodeURIComponent(jobId)}`), "job"),
   cancelJob: (jobId: string) =>
     request<Job>(`/jobs/${encodeURIComponent(jobId)}`, { method: "DELETE" }),
   readiness: (body: { repo?: string; task_id?: string }) =>
@@ -305,7 +331,12 @@ export const api = {
   detectors: (refresh = false) => request<Json>(`/detectors?refresh=${refresh ? "1" : "0"}`),
   metrics: () => request<Json>("/metrics"),
   ledger: () => request<Json>("/ledger"),
-  settings: () => request<{ ok: boolean; builder: Json }>("/settings/builder"),
+  settings: async () =>
+    parseResponse<{ ok: boolean; builder: Json }>(
+      settingsSchema,
+      await request("/settings/builder"),
+      "settings",
+    ),
   saveSettings: (body: Json) =>
     request<{ ok: boolean; builder: Json }>("/settings/builder", { method: "POST", body }),
 };

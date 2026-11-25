@@ -105,8 +105,9 @@ the primary Windows lifecycle path going untested.
   `settings/options`, `settings/payload`) converted to typed `.ts`, and `vitest.setup.ts` typechecked;
   only `vite.config.js` stays JS because Vite loads it before TypeScript. `tsc`, Vitest and the bundle
   are green. The committed `dist` gate stays on.
-- [ ] **M1.4** Add Zod validation at the HTTP boundary for tasks, detail, health, jobs and settings;
-  move `zod` to runtime dependencies if it ships in the bundle.
+- [x] **M1.4** Zod contracts in `web/src/api/schemas.ts` validate tasks, task detail, health, jobs and
+  settings; a mismatch is `ApiError` 502 `bad_response` naming the field. `zod` moved to runtime
+  dependencies (the bundle grew ~26 KB minified).
 - [x] **M1.5** ESLint 9 flat config with `typescript-eslint`, `react-hooks` and `jsx-a11y`, wired into
   CI (`npm run lint`). The first run fixed a conditional `useState`, four unassociated form labels,
   a click-only milestone (now a keyboard-operable button) and evidence media without a captions
@@ -114,7 +115,8 @@ the primary Windows lifecycle path going untested.
 - [x] **M1.6** CI greps `web/src` (excluding `src/test/` raw-JSON fixtures) for `: any`, `as any`,
   `@ts-ignore` and `@ts-expect-error` and fails on any hit; every exported component has an explicit
   props type.
-- [ ] **M1.7** Document the typed-component pattern in `CONTRIBUTING.md`.
+- [x] **M1.7** `CONTRIBUTING.md` documents the typed-component pattern, the single narrowing point,
+  the grep gate and the Zod boundary contract.
 
 ### M2 — Read API at 10k tasks (5 days)
 
