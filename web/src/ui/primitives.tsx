@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { aiText } from "../lib/format.js";
+import { aiText } from "../lib/format";
 
 export type PillProps = {
   tone?: string;

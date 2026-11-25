@@ -101,14 +101,17 @@ the primary Windows lifecycle path going untested.
 - [x] **M1.2b** Session, Settings, `app/*`, dialogs, `ui/*` and every test are typed `.tsx`; there is
   **no `.jsx` under `web/src`**. `tsc`, Vitest (35 tests) and the bundle are green; helpers such as
   `format.js`/`options.js` stay JS behind typed boundaries until M1.3.
-- [ ] **M1.3** Turn on `checkJs`, then `allowJs: false`; include `vite.config.js`/`vitest.setup.js`
-  only when they are migrated. Keep the committed `dist` gate green at every step.
+- [x] **M1.3** `allowJs: false` with every helper (`format`, `copy`, `route-geometry`, `session/model`,
+  `settings/options`, `settings/payload`) converted to typed `.ts`, and `vitest.setup.ts` typechecked;
+  only `vite.config.js` stays JS because Vite loads it before TypeScript. `tsc`, Vitest and the bundle
+  are green. The committed `dist` gate stays on.
 - [ ] **M1.4** Add Zod validation at the HTTP boundary for tasks, detail, health, jobs and settings;
   move `zod` to runtime dependencies if it ships in the bundle.
 - [ ] **M1.5** Add ESLint 9 flat config (`typescript-eslint`, `react-hooks`, `jsx-a11y`, import
   rules) and a CI `npm run lint`.
-- [ ] **M1.6** Add a CI grep gate for `as any`, `: any`, `@ts-ignore`, `@ts-expect-error` under
-  `web/src/app|features|ui`; every exported component has an explicit props type.
+- [x] **M1.6** CI greps `web/src` (excluding `src/test/` raw-JSON fixtures) for `: any`, `as any`,
+  `@ts-ignore` and `@ts-expect-error` and fails on any hit; every exported component has an explicit
+  props type.
 - [ ] **M1.7** Document the typed-component pattern in `CONTRIBUTING.md`.
 
 ### M2 — Read API at 10k tasks (5 days)

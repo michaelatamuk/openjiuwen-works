@@ -1,6 +1,6 @@
 import type { ChangeEvent } from "react";
 
-import { MODEL_SUGGESTIONS, PROVIDER_FALLBACK, PROVIDER_LETTERS } from "./options.js";
+import { MODEL_SUGGESTIONS, PROVIDER_FALLBACK, PROVIDER_LETTERS } from "./options";
 import type { PlannerModeMeta, ProviderCatalog, ProviderMeta, RuntimeMeta } from "./types";
 
 export type ProviderCardProps = {

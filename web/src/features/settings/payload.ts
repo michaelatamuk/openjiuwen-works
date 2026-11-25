@@ -1,3 +1,23 @@
+import type { SettingsSavePayload } from "./types";
+
+export type SavePayloadInput = {
+  theme: string;
+  density: string;
+  pollMs: string | number;
+  repo: string;
+  runtime: string;
+  provider: string;
+  separateVerifier: boolean;
+  verifier: string;
+  model: string;
+  verifierModel: string;
+  plannerMode: string;
+  plannerProvider: string;
+  plannerModel: string;
+  plannerCriticProvider: string;
+  plannerCriticModel: string;
+};
+
 export function buildSavePayload({
   theme,
   density,
@@ -14,8 +34,9 @@ export function buildSavePayload({
   plannerModel,
   plannerCriticProvider,
   plannerCriticModel,
-}) {
+}: SavePayloadInput): SettingsSavePayload {
   const plannerOpen = plannerMode !== "deterministic";
+  const deep = plannerMode === "deep";
   return {
     theme,
     density,
@@ -30,8 +51,8 @@ export function buildSavePayload({
       planner_mode: plannerMode,
       planner_provider: plannerMode === "deterministic" ? null : plannerProvider,
       planner_model: plannerOpen ? plannerModel.trim() || null : null,
-      planner_critic_provider: plannerMode === "deep" ? plannerCriticProvider : null,
-      planner_critic_model: plannerMode === "deep" ? plannerCriticModel.trim() || null : null,
+      planner_critic_provider: deep ? plannerCriticProvider : null,
+      planner_critic_model: deep ? plannerCriticModel.trim() || null : null,
     },
   };
 }

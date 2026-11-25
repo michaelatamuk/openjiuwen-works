@@ -20,7 +20,7 @@ import { Thread } from "../features/session/Thread";
 import { Toast } from "../ui/primitives";
 import { AppHeader } from "./AppHeader";
 import { MainHead } from "./MainHead";
-import { stateLabel, timeAgo } from "../lib/format.js";
+import { stateLabel, timeAgo } from "../lib/format";
 import { crumbFor, isViewId, parseHash, taskHash } from "./routing";
 import type { ViewId } from "./routing";
 

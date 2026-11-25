@@ -1,5 +1,5 @@
 import { shortSha, stateLabel, timelineLabel } from "../../lib/format.js";
-import { decisionFor } from "./model.js";
+import { decisionFor } from "./model";
 import type { SessionDetail } from "./types";
 
 export type RailProps = {

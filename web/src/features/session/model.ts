@@ -1,13 +1,18 @@
-export const REVIEW_TYPES = new Set(["thread.commentary", "thread.discussion"]);
+import type { Phase, PhaseId, SessionDecision, ThreadBlock, ThreadMessage } from "./types";
 
-export const PHASES = [
+export const REVIEW_TYPES: ReadonlySet<string> = new Set([
+  "thread.commentary",
+  "thread.discussion",
+]);
+
+export const PHASES: Phase[] = [
   { id: "plan", label: "Plan" },
   { id: "build", label: "Build" },
   { id: "check", label: "Check" },
   { id: "release", label: "Release" },
 ];
 
-export function phaseFor(message) {
+export function phaseFor(message: ThreadMessage): PhaseId | null {
   const type = message.type;
   if (type === "task.created" || type?.startsWith("memory.")) return null;
   if (type === "team.verified" || type === "decision.made") return null;
@@ -26,14 +31,16 @@ export function phaseFor(message) {
   return "release";
 }
 
-export function currentPhase(state) {
+export function currentPhase(state: string): PhaseId {
   if (["queued", "reproducing", "reproduced", "planning"].includes(state)) return "plan";
   if (["plan_approved", "building"].includes(state)) return "build";
   if (state === "checking") return "check";
   return "release";
 }
 
-export function phaseState(phase, currentId, taskState) {
+export type PhaseState = "done" | "blocked" | "current" | "pending";
+
+export function phaseState(phase: string, currentId: string, taskState: string): PhaseState {
   if (["released", "reverted"].includes(taskState)) return "done";
   const order = ["plan", "build", "check", "release"];
   const index = order.indexOf(phase);
@@ -43,12 +50,23 @@ export function phaseState(phase, currentId, taskState) {
   return "pending";
 }
 
-export function phaseSummary(id, detail, items) {
+export type SummaryDetail = {
+  task: { state: string };
+  evidence?: {
+    files_changed?: unknown[] | null;
+    verdict?: { outcomes?: Array<{ passed?: boolean }> | null } | null;
+  } | null;
+  release?: { released?: boolean } | null;
+  pipeline?: { blocked?: { why?: string } | null } | null;
+};
+
+export function phaseSummary(id: string, detail: SummaryDetail, items: ThreadMessage[]): string {
   if (!items.length) return "Not started";
   if (id === "plan") {
     const plan = items.find((item) => item.type === "plan.drafted");
     const rows = plan?.card?.rows || [];
-    return rows[0]?.[1] ? `${rows[0][1]} scenarios` : "Plan drafted";
+    const first = rows[0];
+    return first?.[1] ? `${first[1]} scenarios` : "Plan drafted";
   }
   if (id === "build") {
     const files = detail.evidence?.files_changed?.length || 0;
@@ -65,12 +83,12 @@ export function phaseSummary(id, detail, items) {
   return "Waiting";
 }
 
-export function groupItems(items) {
-  const out = [];
+export function groupItems(items: ThreadMessage[]): ThreadBlock[] {
+  const out: ThreadBlock[] = [];
   for (const message of items) {
     if (REVIEW_TYPES.has(message.type)) {
       const last = out[out.length - 1];
-      if (last?.review) last.review.push(message);
+      if (last && "review" in last) last.review.push(message);
       else out.push({ key: `review-${message.seq}`, review: [message] });
     } else {
       out.push({ key: message.seq, message });
@@ -79,7 +97,7 @@ export function groupItems(items) {
   return out;
 }
 
-export function sourceUrl(task) {
+export function sourceUrl(task?: { source?: { ref?: string } } | null): string {
   const ref = String(task?.source?.ref || "");
   if (/^https?:\/\//.test(ref)) return ref;
   const match = ref.match(/^([^/]+)\/([^#]+)#(\d+)$/);
@@ -87,7 +105,7 @@ export function sourceUrl(task) {
   return "";
 }
 
-export function decisionFor(detail) {
+export function decisionFor(detail: SummaryDetail): SessionDecision | null {
   const state = detail.task.state;
   const release = detail.release || {};
   if (state === "planning") {

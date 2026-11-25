@@ -4,7 +4,7 @@ import { Modal } from "../../ui/Modal";
 import { api } from "../../api/client";
 import type { Device, Pairing } from "../../api/client";
 import { BuilderSection } from "./BuilderSection";
-import { buildSavePayload } from "./payload.js";
+import { buildSavePayload } from "./payload";
 import {
   ModelInput,
   PlannerModeCard,
@@ -20,7 +20,7 @@ import {
   RUNTIME_FALLBACK,
   RUNTIME_ORDER,
   credentialLabel,
-} from "./options.js";
+} from "./options";
 import type {
   BuilderSettings,
   PlannerModeMeta,

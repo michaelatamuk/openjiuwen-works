@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { timeAgo } from "../../lib/format.js";
-import { milestoneCopy } from "./copy.js";
-import { ROUTE_X0, ROUTE_X1, lengthAtX, routeYAt, smoothPath } from "./route-geometry.js";
+import { milestoneCopy } from "./copy";
+import { ROUTE_X0, ROUTE_X1, lengthAtX, routeYAt, smoothPath } from "./route-geometry";
 import type { StoryDetail, StoryStage } from "./Story";
 
 export type RoutePoint = { x: number; y: number };

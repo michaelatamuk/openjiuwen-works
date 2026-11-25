@@ -4,7 +4,7 @@ import {
   PROVIDER_ORDER,
   RUNTIME_FALLBACK,
   RUNTIME_ORDER,
-} from "./options.js";
+} from "./options";
 import type { ProviderCatalog, ProviderMeta, RuntimeCatalog, SwarmMeta } from "./types";
 
 export type BuilderSectionProps = {

@@ -18,7 +18,7 @@ import {
   phaseState,
   phaseSummary,
   sourceUrl,
-} from "./model.js";
+} from "./model";
 import type {
   ComposerMode,
   Phase,

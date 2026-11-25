@@ -4,7 +4,7 @@ import { eventSummary, fmtMs, stateLabel, timeAgo } from "../../lib/format.js";
 import { Card } from "../../ui/primitives";
 import { Receipt } from "./Receipt";
 import { Route } from "./Route";
-import { headline, lede } from "./copy.js";
+import { headline, lede } from "./copy";
 
 export type StoryStage = {
   id: string;

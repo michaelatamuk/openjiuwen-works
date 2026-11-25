@@ -112,6 +112,16 @@ jobs:
         working-directory: web
       - name: Built bundle is committed
         run: git diff --ignore-cr-at-eol --exit-code -- src/works/interfaces/ui/static/dist
+      - name: No type escapes in production code
+        working-directory: web
+        run: |
+          matches=$(grep -RnE '(:[[:space:]]*any\b|as any\b|@ts-ignore|@ts-expect-error)' src \
+            --include='*.ts' --include='*.tsx' | grep -v '^src/test/' || true)
+          if [ -n "$matches" ]; then
+            echo "$matches"
+            echo "Remove any/@ts-ignore from web/src (only src/test fixtures may cast raw JSON)."
+            exit 1
+          fi
 
   e2e:
     runs-on: ubuntu-latest

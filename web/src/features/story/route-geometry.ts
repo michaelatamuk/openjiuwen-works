@@ -1,11 +1,13 @@
 // Geometry for the fix route: a calm curve from intake to delivery.
 
-const ROUTE_X0 = 160;
-const ROUTE_X1 = 1040;
-// A calm route: a small rise, a dip, then a gradual climb that ends higher than it started.
-const ROUTE_KNOTS = [270, 242, 275, 212, 166, 175];
+export type Point = { x: number; y: number };
 
-function routeYAt(index, count) {
+export const ROUTE_X0 = 160;
+export const ROUTE_X1 = 1040;
+// A calm route: a small rise, a dip, then a gradual climb that ends higher than it started.
+export const ROUTE_KNOTS: readonly number[] = [270, 242, 275, 212, 166, 175];
+
+export function routeYAt(index: number, count: number): number {
   if (count === ROUTE_KNOTS.length) return ROUTE_KNOTS[index];
   if (count <= 1) return ROUTE_KNOTS[0];
   const position = (index / (count - 1)) * (ROUTE_KNOTS.length - 1);
@@ -15,7 +17,7 @@ function routeYAt(index, count) {
   return ROUTE_KNOTS[low] + (ROUTE_KNOTS[high] - ROUTE_KNOTS[low]) * fraction;
 }
 
-function smoothPath(points) {
+export function smoothPath(points: Point[]): string {
   if (!points.length) return "";
   if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
   const parts = [`M ${points[0].x} ${points[0].y}`];
@@ -33,7 +35,7 @@ function smoothPath(points) {
   return parts.join(" ");
 }
 
-function lengthAtX(path, x) {
+export function lengthAtX(path: SVGPathElement, x: number): number {
   let low = 0;
   let high = path.getTotalLength();
   for (let step = 0; step < 24; step += 1) {
@@ -43,5 +45,3 @@ function lengthAtX(path, x) {
   }
   return (low + high) / 2;
 }
-
-export { ROUTE_KNOTS, ROUTE_X0, ROUTE_X1, lengthAtX, routeYAt, smoothPath };

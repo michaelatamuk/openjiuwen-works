@@ -1,4 +1,4 @@
-export const stateHuman = {
+export const stateHuman: Record<string, string> = {
   queued: "Waiting in queue",
   reproducing: "Confirming the problem",
   reproduced: "Problem confirmed",
@@ -19,7 +19,7 @@ export const stateHuman = {
   pending: "Not yet",
 };
 
-export const timelines = {
+export const timelines: Record<string, string> = {
   "task.created": "Reported",
   "state.changed": "Stage changed",
   "plan.drafted": "Plan drafted",
@@ -30,7 +30,7 @@ export const timelines = {
   "decision.shadow": "Shadow comparison",
   "risk.rated": "Risk assessed",
   "challenge.decided": "Independent check",
-  "note": "Run finished",
+  note: "Run finished",
   finding: "Finding recorded",
   "memory.reported": "PPMA memory",
   "memory.failed": "PPMA memory failed",
@@ -49,14 +49,14 @@ export const timelines = {
   "wait.expired": "Wait expired",
 };
 
-export const groups = [
+export const groups: Array<[string, string, string[]]> = [
   ["needs", "Needs you", ["blocked", "waiting_review", "waiting_ci", "waiting_deploy", "proved"]],
   ["working", "In progress", ["reproducing", "reproduced", "planning", "plan_approved", "building", "checking", "releasing"]],
   ["queued", "Queued", ["queued"]],
   ["done", "Done", ["released", "reverted"]],
 ];
 
-export const roleLabel = {
+export const roleLabel: Record<string, string> = {
   person: "Person",
   builder: "Builder",
   verifier: "Verifier",
@@ -72,7 +72,7 @@ export const roleLabel = {
   reporter: "Reporter",
 };
 
-export const roleLetter = {
+export const roleLetter: Record<string, string> = {
   person: "P",
   builder: "B",
   verifier: "V",
@@ -88,35 +88,45 @@ export const roleLetter = {
   reporter: "R",
 };
 
-export function stateLabel(value) {
-  return stateHuman[value] || String(value || "unknown").replaceAll("_", " ");
+function text(value: unknown): string {
+  return value == null ? "" : String(value);
 }
 
-export function riskLabel(value) {
-  return { low: "Low risk", medium: "Medium risk", high: "High risk" }[value] || value;
+function list(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
 }
 
-export function riskTone(value) {
-  return { high: "red", medium: "amber", low: "green" }[value] || "";
+export function stateLabel(value: string | null | undefined): string {
+  return stateHuman[value ?? ""] || String(value || "unknown").replaceAll("_", " ");
 }
 
-export function timelineLabel(type) {
-  return timelines[type] || String(type || "").replaceAll("_", " ");
+export function riskLabel(value: string | null | undefined): string {
+  return (
+    { low: "Low risk", medium: "Medium risk", high: "High risk" }[value ?? ""] ?? value ?? ""
+  );
 }
 
-export function fmtUsd(value) {
+export function riskTone(value: string | null | undefined): string {
+  return { high: "red", medium: "amber", low: "green" }[value ?? ""] || "";
+}
+
+export function timelineLabel(type: string | null | undefined): string {
+  return timelines[type ?? ""] || String(type || "").replaceAll("_", " ");
+}
+
+export function fmtUsd(value: unknown): string {
   const number = Number(value ?? 0);
   return `$${number.toFixed(number >= 10 ? 2 : 4)}`;
 }
 
-export function fmtMs(value) {
+export function fmtMs(value: unknown): string {
   const number = Number(value ?? 0);
   if (number < 1000) return `${number} ms`;
   if (number < 60_000) return `${(number / 1000).toFixed(1)} s`;
   return `${Math.round(number / 60_000)} min`;
 }
 
-export function timeAgo(iso) {
+export function timeAgo(iso?: string | null): string {
   if (!iso) return "—";
   const then = new Date(iso).getTime();
   if (Number.isNaN(then)) return "—";
@@ -127,31 +137,46 @@ export function timeAgo(iso) {
   return `${Math.round(seconds / 86_400)}d ago`;
 }
 
-export function shortSha(value) {
+export function shortSha(value?: unknown): string {
   return String(value || "").slice(0, 12) || "—";
 }
 
-export function eventSummary(event) {
+export type SummaryEvent = {
+  type?: string;
+  data?: Record<string, unknown>;
+};
+
+export function eventSummary(event?: SummaryEvent | null): string {
   const data = event?.data || {};
-  if (event?.type === "state.changed") return stateLabel(data.to);
-  if (event?.type === "gate.decided") return `${data.gate} gate: ${data.decision}`;
-  if (event?.type === "step.started") return `step ${data.step}`;
-  if (event?.type === "step.finished") return `${data.step} exit ${data.exit_code}`;
-  if (event?.type === "decision.made") return `${data.verb} · ${data.reason_code || ""}`;
-  if (event?.type === "risk.rated") return `${data.level} risk`;
-  if (event?.type === "team.verified") return `${data.verdict} · ${(data.blockers || []).length} blocker(s)`;
-  if (event?.type === "thread.agent") return String(data.question || "").slice(0, 80);
-  if (event?.type === "note") return String(data.message || "").slice(0, 90);
-  if (event?.type === "memory.reported") return `via ${data.via || "run"}`;
-  if (event?.type === "plan.drafted") return `${(data.scenario_ids || []).length} scenario(s)`;
+  if (event?.type === "state.changed") return stateLabel(text(data.to));
+  if (event?.type === "gate.decided") return `${text(data.gate)} gate: ${text(data.decision)}`;
+  if (event?.type === "step.started") return `step ${text(data.step)}`;
+  if (event?.type === "step.finished") return `${text(data.step)} exit ${text(data.exit_code)}`;
+  if (event?.type === "decision.made") {
+    return `${text(data.verb)} · ${text(data.reason_code || "")}`;
+  }
+  if (event?.type === "risk.rated") return `${text(data.level)} risk`;
+  if (event?.type === "team.verified") {
+    return `${text(data.verdict)} · ${list(data.blockers).length} blocker(s)`;
+  }
+  if (event?.type === "thread.agent") return text(data.question).slice(0, 80);
+  if (event?.type === "note") return text(data.message).slice(0, 90);
+  if (event?.type === "memory.reported") return `via ${text(data.via || "run")}`;
+  if (event?.type === "plan.drafted") return `${list(data.scenario_ids).length} scenario(s)`;
   return Object.entries(data)
     .slice(0, 2)
     .map(([key, value]) => `${key}=${String(value).slice(0, 40)}`)
     .join(" · ");
 }
 
-export function aiText(text) {
-  const value = String(text || "");
+export type AiSegment = {
+  type: "strong" | "code" | "text";
+  value: string;
+  key: number;
+};
+
+export function aiText(input?: string | null): AiSegment[] {
+  const value = String(input || "");
   const parts = value.split(/(\*\*[^*\n]+\*\*|`[^`\n]+`)/g);
   return parts.map((part, index) => {
     if (part.startsWith("**") && part.endsWith("**")) {
