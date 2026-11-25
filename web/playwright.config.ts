@@ -10,6 +10,8 @@ export default defineConfig({
   globalTeardown: "./e2e/global-teardown.ts",
   use: {
     baseURL: process.env.WORKS_E2E_URL || `http://127.0.0.1:${PORT}`,
+    // Deterministic rendering: arrival animations fade elements and would skew axe contrast checks.
+    reducedMotion: "reduce",
     trace: "retain-on-failure",
     video: "retain-on-failure",
   },

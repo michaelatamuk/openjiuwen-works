@@ -14,6 +14,7 @@ function appPath(): string {
 }
 
 async function expectNoSeriousViolations(page: Page, screen: string): Promise<void> {
+  await page.waitForTimeout(150);
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
   const blockers = results.violations.filter(
     (violation) => violation.impact === "serious" || violation.impact === "critical",

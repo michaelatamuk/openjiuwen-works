@@ -915,6 +915,12 @@ html::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--line-strong
   .cl-msg, .cl-user-turn, .cl-review { animation: clArrive 160ms ease-out; }
   @keyframes clArrive { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .cl-msg, .cl-user-turn, .cl-review { animation: none; }
+  .cl-working span, .cl-cursor { animation: none; }
+  * { scroll-behavior: auto !important; }
+}
 .cl-thread { height: calc(100dvh - 164px); }
 
 /* Full-screen shell: queue at the edge, readable session centered, rail at the edge */
