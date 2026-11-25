@@ -4,7 +4,7 @@
     "--disallow-any-explicit",
     "--warn-return-any"
   ],
-  "total": 344,
+  "total": 346,
   "files": {
     "src/works/adapters/daemon.py": 4,
     "src/works/adapters/harness/base.py": 1,
@@ -49,6 +49,7 @@
     "src/works/application/planning/context.py": 3,
     "src/works/application/planning/eval.py": 2,
     "src/works/application/planning/memory.py": 4,
+    "src/works/application/proof/verify.py": 2,
     "src/works/application/run_context.py": 2,
     "src/works/application/schema.py": 1,
     "src/works/application/settings.py": 4,
