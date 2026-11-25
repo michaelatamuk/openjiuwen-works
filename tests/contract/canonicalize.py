@@ -96,6 +96,8 @@ def _canon_string(text: str, home: Path | None, repo: Path | None) -> str:
 
 
 def _canon_field(key: str, value: Any, home: Path | None, repo: Path | None) -> Any:
+    if key == "runtime" and isinstance(value, dict):
+        return {str(name): "<runtime>" for name in value}
     if key == "reproduction_env" and isinstance(value, dict):
         masked = {}
         for name, item in value.items():

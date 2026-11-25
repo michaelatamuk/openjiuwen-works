@@ -167,10 +167,10 @@
     },
     "run_id": "<run-id>",
     "runtime": {
-      "engine": "fixture-1",
-      "platform": "Windows-11-10.0.26200-SP0",
-      "python": "3.12.13",
-      "schema": "1"
+      "engine": "<runtime>",
+      "platform": "<runtime>",
+      "python": "<runtime>",
+      "schema": "<runtime>"
     },
     "schema_version": 1,
     "skipped_checks": [],
