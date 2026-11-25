@@ -4,7 +4,7 @@
     "--disallow-any-explicit",
     "--warn-return-any"
   ],
-  "total": 343,
+  "total": 344,
   "files": {
     "src/works/adapters/daemon.py": 4,
     "src/works/adapters/harness/base.py": 1,
@@ -82,7 +82,7 @@
     "src/works/interfaces/api/read.py": 1,
     "src/works/interfaces/api/routes/actions.py": 6,
     "src/works/interfaces/api/routes/ask.py": 1,
-    "src/works/interfaces/api/routes/inbox.py": 6,
+    "src/works/interfaces/api/routes/inbox.py": 7,
     "src/works/interfaces/api/routes/jobs.py": 2,
     "src/works/interfaces/api/routes/maps.py": 2,
     "src/works/interfaces/api/routes/observability.py": 2,

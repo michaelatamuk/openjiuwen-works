@@ -43,13 +43,22 @@ def _run_sync(state: AppState, action: str, payload: dict[str, Any]) -> dict[str
             event = state.queue.append(task_id, "thread.note", {"message": message, "by": "person"})
         return {"ok": True, "action": action, "event": event.model_dump(mode="json")}
     if action == "approve-plan":
-        from works.application.approvals.gates import approve_plan
+        from works.application.approvals.gates import decide_plan
 
+        decision = str(payload.get("decision") or "approved")
         with state.write_lock:
-            task, event = approve_plan(state.paths, task_id, by="ui")
+            task, event = decide_plan(
+                state.paths,
+                task_id,
+                decision=decision,
+                by=str(payload.get("by") or "ui"),
+                device=str(payload.get("device") or "local"),
+                comment=str(payload.get("comment") or ""),
+            )
         return {
             "ok": True,
             "action": action,
+            "decision": decision,
             "task": task.model_dump(mode="json"),
             "event": event.model_dump(mode="json"),
         }

@@ -115,6 +115,7 @@ def _apply(task: Task | None, event: Event) -> Task:
         "plan.drafted",
         "plan.deviation",
         "gate.decided",
+        "gate.approval",
         "step.started",
         "step.finished",
         "finding",

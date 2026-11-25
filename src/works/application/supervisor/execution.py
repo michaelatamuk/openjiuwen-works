@@ -34,6 +34,24 @@ from works.domain.records import (
 from works.domain.risk import rate_risk
 from works.domain.trusted import is_check_path
 
+
+def _approval_current(sup: Supervisor, ctx: RunContext) -> bool:
+    from works.application.approvals.gates import approval_expired
+
+    events = sup._queue.events(ctx.task.id)
+    approved = [
+        event
+        for event in events
+        if event.type == "gate.decided"
+        and event.data.get("gate") == "plan"
+        and event.data.get("decision") == "approved"
+    ]
+    if not approved or approval_expired(approved[-1]):
+        return False
+    plan_hash = str(ctx.plan.get("hash") or "")
+    return not plan_hash or approved[-1].data.get("plan_hash") == plan_hash
+
+
 if TYPE_CHECKING:
     from works.application.supervisor.core import Supervisor
 
@@ -152,12 +170,15 @@ def _approve_plan(sup: Supervisor, ctx: RunContext, repo: GitRepo, approve_plan:
                     by=approver,
                 )
                 PlanMemory(sup._paths).remember(approved_plan, by=approver)
+        from works.application.approvals.gates import expires_at
+
         sup._queue.append(
             ctx.task.id,
             "gate.decided",
             {
                 "gate": "plan",
                 "decision": "approved",
+                "expires_at": expires_at(),
                 "by": approver,
                 "commit": ctx.base_commit,
                 "checks_sha": ctx.checks_sha,
@@ -178,6 +199,13 @@ async def _build(sup: Supervisor, ctx: RunContext, repo: GitRepo) -> list[str] |
     """One builder turn, then risk and plan drift. None means the run stops."""
     flow = ctx.flow
     task = ctx.task
+    if task.state is TaskState.PLAN_APPROVED and not _approval_current(sup, ctx):
+        sup._stop(
+            ctx,
+            StopReason.NEEDS_PLAN_APPROVAL,
+            detail="the plan approval expired or no longer matches the plan; approve it again",
+        )
+        return None
     sup._move(ctx, TaskState.BUILDING)
     proposal = await sup._propose(ctx)
     if proposal is None:

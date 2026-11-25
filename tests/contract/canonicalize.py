@@ -31,6 +31,7 @@ TIMESTAMP_KEYS = frozenset(
         "finished_at",
         "deadline",
         "wake_deadline",
+        "expires_at",
         "date",
     }
 )

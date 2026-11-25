@@ -15,7 +15,21 @@ export type TaskList = components["schemas"]["TaskList"];
 
 export type InboxTask = { id: string; state: string; title: string; source: string };
 export type InboxGroup = { key: string; tasks: InboxTask[] };
-export type Inbox = { ok: boolean; duplicates: InboxGroup[]; groups: number };
+export type InboxGate = {
+  task_id: string;
+  title: string;
+  plan_version?: number;
+  waiting_since?: string;
+  waiting_hours?: number;
+  overdue?: boolean;
+};
+export type Inbox = {
+  ok: boolean;
+  duplicates: InboxGroup[];
+  groups: number;
+  gates?: InboxGate[];
+  reminder_hours?: number;
+};
 export type TaskDetail = components["schemas"]["TaskDetail"];
 export type RunSummary = components["schemas"]["RunSummary"];
 export type RunList = components["schemas"]["RunList"];

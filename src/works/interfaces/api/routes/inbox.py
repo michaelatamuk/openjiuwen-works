@@ -7,8 +7,10 @@ Merging records the decision and blocks the duplicate; it never deletes history.
 
 from __future__ import annotations
 
+import os
 import re
 import shlex
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends, Request
@@ -67,11 +69,42 @@ def groups(tasks: list[Any]) -> list[dict[str, Any]]:
 
 @router.get("/inbox")
 def inbox(request: Request) -> JSONResponse:
-    tasks = Queue(_state(request).paths).list_tasks()
+    queue = Queue(_state(request).paths)
+    tasks = queue.list_tasks()
     found = groups(tasks)
+    try:
+        reminder_hours = float(os.environ.get("WORKS_GATE_REMINDER_HOURS", "24"))
+    except ValueError:
+        reminder_hours = 24.0
+    now = datetime.now(tz=UTC)
+    gates: list[dict[str, Any]] = []
+    for task in tasks:
+        if task.state is not TaskState.PLANNING:
+            continue
+        drafts = [event for event in queue.events(task.id) if event.type == "plan.drafted"]
+        if not drafts:
+            continue
+        planned = drafts[-1]
+        age_hours = max(0.0, (now - planned.ts).total_seconds() / 3600)
+        gates.append(
+            {
+                "task_id": task.id,
+                "title": task.source.title or task.source.ref,
+                "plan_version": planned.data.get("version"),
+                "waiting_since": planned.ts.isoformat(),
+                "waiting_hours": round(age_hours, 1),
+                "overdue": age_hours >= reminder_hours,
+            }
+        )
     return JSONResponse(
         status_code=200,
-        content={"ok": True, "duplicates": found, "groups": len(found)},
+        content={
+            "ok": True,
+            "duplicates": found,
+            "groups": len(found),
+            "gates": gates,
+            "reminder_hours": reminder_hours,
+        },
     )
 
 

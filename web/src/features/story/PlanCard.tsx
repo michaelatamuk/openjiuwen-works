@@ -21,6 +21,11 @@ export type PlanRecord = {
   summary?: string;
   steps?: PlanStep[];
   validation?: { ok?: boolean; errors?: string[]; warnings?: string[] } | null;
+  critique?: { allow?: boolean; score?: number; concerns?: string[] } | null;
+  verification?: string[];
+  estimated_tokens?: number;
+  estimated_usd?: number;
+  estimated_minutes?: number;
   notes?: string[];
   approved_by?: string | null;
 };

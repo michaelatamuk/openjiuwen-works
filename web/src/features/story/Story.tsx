@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import { eventSummary, fmtMs, stateLabel, timeAgo } from "../../lib/format.js";
 import { Card } from "../../ui/primitives";
+import { GateCard } from "./GateCard";
 import { PlanCard, type PlanRecord } from "./PlanCard";
 import { Receipt } from "./Receipt";
 import { Route } from "./Route";
@@ -42,6 +43,7 @@ export type StoryDetail = {
     id: string;
     product: string;
     state: string;
+    budget?: { tokens?: number; usd?: number };
     created_at?: string;
     source?: { ref?: string };
   };
@@ -161,6 +163,15 @@ export function Story({ detail, onAction, onView, onToast, onShowRun }: StoryPro
           detail={detail}
         />
         <Receipt detail={detail} />
+        {detail.plan && detail.task.state === "planning" ? (
+          <GateCard
+            plan={detail.plan}
+            diff={detail.plan_diff}
+            task={detail.task}
+            risk={detail.summary?.risk}
+            onAction={onAction}
+          />
+        ) : null}
         {detail.plan ? (
           <PlanCard plan={detail.plan} diff={detail.plan_diff} onAction={onAction} />
         ) : null}
@@ -281,6 +292,15 @@ export function Story({ detail, onAction, onView, onToast, onShowRun }: StoryPro
             <h1>{headline(detail)}</h1>
             <p className="present-lede">{lede(detail)}</p>
             <Receipt detail={detail} />
+        {detail.plan && detail.task.state === "planning" ? (
+          <GateCard
+            plan={detail.plan}
+            diff={detail.plan_diff}
+            task={detail.task}
+            risk={detail.summary?.risk}
+            onAction={onAction}
+          />
+        ) : null}
         {detail.plan ? (
           <PlanCard plan={detail.plan} diff={detail.plan_diff} onAction={onAction} />
         ) : null}

@@ -129,18 +129,30 @@ flowchart TD
 
 ## 4. Plan gate — a person says “yes, this is the right plan” 🔒
 
-This is the first mandatory human moment. A person reads the plan and approves it. Works records who
-approved, when, and exactly which plan.
+This is the first mandatory human moment. The decision screen shows the plan, what changed since the
+previous version, which reported files are covered by tests and which are not, the time/cost estimate
+against the budget, the independent reviewer’s concerns and the risk. A person decides with that in
+front of them.
 
-The builder cannot approve its own plan, and an approval for an older plan no longer counts. A task
-without this yes simply cannot move to building.
+There are three answers, not one:
+
+- **Approve** — building may start.
+- **Ask for changes** — a comment is required; the task stays in planning until a new version arrives.
+- **Reject** — a reason is required; the work stops.
+
+The approver is a **named person on a device**. An AI agent cannot approve, and the same person
+cannot count twice when the optional two-person rule is on. The approval is tied to that exact plan
+fingerprint and expires after about a week; editing the plan, moving the starting version or changing
+the tests all cancel it. Works records who decided, when, from which device, and for which plan — in a
+history that cannot be edited afterwards.
 
 ```mermaid
-flowchart LR
-    P[Plan] --> H{A person reviews}
-    H -->|approve| A[Approval recorded]
-    H -->|not yet| W[Waits]
-    A --> B[Building may start]
+flowchart TD
+    A["Plan is ready"] --> B{"A named person decides"}
+    B -->|"Approve"| C["Approval recorded<br/>bound to this plan<br/>expires in ~7 days"]
+    B -->|"Ask for changes"| D["Back to planning<br/>a new version is needed"]
+    B -->|"Reject"| E["Stopped<br/>with a reason"]
+    C --> F["Building may start"]
 ```
 
 ## 5. Build — the change is made

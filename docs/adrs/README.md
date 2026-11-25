@@ -27,3 +27,5 @@ Format: context, decision, consequences, alternatives rejected.
 - [018 - API compatibility is a checked promise](018-api-compatibility.md)
 - [019 - One bounded thread pool for jobs](019-job-executor.md)
 - [020 - No React Server Components for the local SPA](020-no-rsc.md)
+- [021 - React Compiler stays opt-in until it pays for itself](021-react-compiler.md)
+- [022 - Gate decisions, identity and expiry](022-gate-identity.md)

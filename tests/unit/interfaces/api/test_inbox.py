@@ -76,3 +76,30 @@ def test_mute_turns_a_source_off(paths) -> None:
 
     assert response.status_code == 200
     assert response.json()["source"]["enabled"] is False
+
+
+def test_the_inbox_lists_a_plan_waiting_for_a_person(paths, repo, monkeypatch) -> None:
+    task = _submit(paths, repo, "GATE-INBOX", "a plan waits here")
+    queue = Queue(paths)
+    for state in (TaskState.REPRODUCING, TaskState.REPRODUCED, TaskState.PLANNING):
+        queue.transition(task.id, state)
+    queue.append(
+        task.id,
+        "plan.drafted",
+        {
+            "plan_id": f"p-{task.id}-v1",
+            "hash": "a" * 64,
+            "version": 1,
+            "base_commit": "b" * 40,
+            "checks_sha": "c" * 64,
+        },
+    )
+    monkeypatch.setenv("WORKS_GATE_REMINDER_HOURS", "0")
+    app = create_app(paths, writable=True, bootstrap_token="bootstrap")  # noqa: S106
+
+    with TestClient(app, base_url="http://127.0.0.1") as client:
+        body = client.get("/api/v1/inbox").json()
+
+    assert body["gates"][0]["task_id"] == task.id
+    assert body["gates"][0]["overdue"] is True
+    assert body["gates"][0]["plan_version"] == 1

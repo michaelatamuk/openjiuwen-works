@@ -384,6 +384,26 @@ edit.
 - [x] **M13.7** The same context produces the same plan and hash (test), and `docs/reference/planning.md`
   documents modes, impact, versions and editing.
 
+### M14 ? Plan gate 2026 (stage 4, complete)
+
+**Prevents:** an approval that does not say who decided, an agent opening a gate, and an approval
+that survives an edit or a week of waiting.
+
+- [x] **M14.1** The Story gate card shows the plan's checks, the reviewer and score, the budget
+  estimate, the risk, the impact lines and the version diff next to the decision buttons.
+- [x] **M14.2** A gate decision is `approved`, `changes_requested` (comment required, task stays in
+  planning) or `rejected` (reason required, task blocked).
+- [x] **M14.3** Identity is a name plus a device; agent/harness/model/builder identities are refused
+  server-side; `WORKS_REQUIRE_QUORUM=1` needs two distinct person/device pairs (ADR 022).
+- [x] **M14.4** Approvals expire after `WORKS_APPROVAL_TTL_HOURS` (default 168); the builder refuses
+  an expired or hash-mismatched approval with `needs_plan_approval`.
+- [x] **M14.5** `gate.decided` is an append-only audit record with decision, by, device, actor kind,
+  comment, plan id/hash/version, commit, checks, expiry and the quorum flag.
+- [x] **M14.6** `GET /inbox` lists planning tasks with a drafted plan, their waiting time and an
+  overdue flag (`WORKS_GATE_REMINDER_HOURS`, default 24); the Queue shows them under Waiting for you.
+- [x] **M14.7** Nine unit tests cover the three outcomes, agent refusal, stale hash, expiry, quorum
+  and the non-planning refusal; `docs/reference/gates.md` and ADR 022 record the semantics.
+
 ## 4. Sequencing and gates
 
 ### Phase 0 — Land the safety floor (week 1)

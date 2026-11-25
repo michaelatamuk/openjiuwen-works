@@ -131,6 +131,24 @@ export function Queue({
         </button>
       ) : null}
 
+      {inbox && inbox.gates?.length ? (
+        <section className="inbox" aria-label="Waiting for your decision">
+          <h2>Waiting for you</h2>
+          {inbox.gates.slice(0, 3).map((gate) => (
+            <div className="inbox-row" key={gate.task_id}>
+              <button className="btn ghost" type="button" onClick={() => onSelect(gate.task_id)}>
+                {gate.title}
+              </button>
+              {gate.overdue ? (
+                <Pill tone="amber">overdue</Pill>
+              ) : (
+                <span className="small muted">{gate.waiting_hours ?? 0}h</span>
+              )}
+            </div>
+          ))}
+        </section>
+      ) : null}
+
       {inbox && inbox.duplicates.length ? (
         <section className="inbox" aria-label="Possible duplicates">
           <h2>Possible duplicates</h2>
