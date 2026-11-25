@@ -24,3 +24,4 @@ deleted — a superseded decision is marked as such and points to its replacemen
 | [017](017-remote-trust.md) | Remote bind is explicit, authenticated and rate limited | accepted |
 
 Format: context, decision, consequences, alternatives rejected.
+- [018 - API compatibility is a checked promise](018-api-compatibility.md)

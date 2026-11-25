@@ -136,8 +136,9 @@ the primary Windows lifecycle path going untested.
 - [x] **M2.5** Add the 10k benchmark: `scripts/bench_api.py --tasks 10000` must seed through
   `TaskIndex.replace`, not 10k fsync submissions; 3 runs, median p95; fail above 250 ms **and**
   above 120% of the `main` baseline for two consecutive runs.
-- [ ] **M2.6** API compatibility rule documented; the generated-client compile check against the
-  previous schema is still open.
+- [x] **M2.6** ADR 018 makes the committed schema the current contract and
+  `docs/reference/openapi.baseline.json` the released one; CI fails on a removed operation,
+  parameter, schema, property, type change or a required-flag flip. Additive changes pass.
 - [x] **M2.7** **Drop** cursor pagination and ETag for now; revisit only if server-side search
   appears.
 
@@ -260,7 +261,8 @@ invariants.
 - [ ] **M9.2** Keep the mutation gate ≥70% and include the new index/job modules in `only_mutate`.
 - [~] **M9.3** `scripts/check_docs_links.py` + a CI step are in place (51 files, zero broken links);
   the contributor-guide refresh and the remaining M0.6 contradictions are still open. No MkDocs.
-- [ ] **M9.4** API compatibility ADR and generated-client compile check (M2.6).
+- [x] **M9.4** ADR 018 plus `scripts/check_api_compat.py` and `make api-compat`; the web job still
+  regenerates the TypeScript client and fails if the committed output drifts.
 
 ### M10 - Async, React platform and renderer decisions (6 days)
 
