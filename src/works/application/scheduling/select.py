@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import StrEnum
 
+from works.application.scheduling.estimates import Estimate, group_key
 from works.application.scheduling.policy import (
     DispatchPolicy,
     Level,
@@ -55,17 +56,6 @@ class SkipReason(StrEnum):
     BLACKOUT = "blackout"
 
 
-@dataclass(frozen=True)
-class Estimate:
-    p50_min: float
-    p90_min: float
-    p50_usd: float
-    p90_usd: float
-    confidence: float
-    samples: int
-    source: str
-
-
 _STATIC: dict[str, Estimate] = {
     "fix-issue": Estimate(20.0, 45.0, 1.0, 2.5, 0.1, 0, "static"),
     "check-change": Estimate(10.0, 25.0, 0.5, 1.2, 0.1, 0, "static"),
@@ -73,10 +63,17 @@ _STATIC: dict[str, Estimate] = {
 _DEFAULT_ESTIMATE = Estimate(20.0, 45.0, 1.0, 2.5, 0.1, 0, "static")
 
 
-def estimate_for(task: Task, policy: DispatchPolicy) -> Estimate:
-    """M21 ships a static prior; M22 replaces it with calibrated history."""
-    if policy.estimates.source == "static":
-        return _STATIC.get(task.flow, _DEFAULT_ESTIMATE)
+def estimate_for(
+    task: Task,
+    policy: DispatchPolicy,
+    history: dict[str, Estimate] | None = None,
+) -> Estimate:
+    """History when the policy asks for it and has enough samples; a static prior otherwise."""
+    if history is not None and policy.estimates.source == "history":
+        risk = risk_for_severity(task.source.severity)
+        found = history.get(group_key(task.flow, risk))
+        if found is not None:
+            return found
     return _STATIC.get(task.flow, _DEFAULT_ESTIMATE)
 
 
@@ -146,10 +143,15 @@ def _denied(task: Task, policy: DispatchPolicy) -> bool:
     return bool(set(policy.allow.labels_deny) & set(task.source.labels))
 
 
-def evaluate(task: Task, policy: DispatchPolicy, signals: Signals) -> SkipReason | None:
+def evaluate(
+    task: Task,
+    policy: DispatchPolicy,
+    signals: Signals,
+    history: dict[str, Estimate] | None = None,
+) -> SkipReason | None:
     source = source_name(task)
     level = level_for(policy, source)
-    estimate = estimate_for(task, policy)
+    estimate = estimate_for(task, policy, history)
 
     if task.state not in LEVEL_STATES[level]:
         return SkipReason.NOT_RUNNABLE
@@ -253,11 +255,16 @@ def order_key(
     )
 
 
-def tick_plan(tasks: list[Task], policy: DispatchPolicy, signals: Signals) -> TickPlan:
+def tick_plan(
+    tasks: list[Task],
+    policy: DispatchPolicy,
+    signals: Signals,
+    history: dict[str, Estimate] | None = None,
+) -> TickPlan:
     eligible: list[Candidate] = []
     skipped: dict[str, SkipReason] = {}
     for task in tasks:
-        reason = evaluate(task, policy, signals)
+        reason = evaluate(task, policy, signals, history)
         if reason is not None:
             skipped[task.id] = reason
             continue
@@ -265,7 +272,7 @@ def tick_plan(tasks: list[Task], policy: DispatchPolicy, signals: Signals) -> Ti
         eligible.append(
             Candidate(
                 task=task,
-                estimate=estimate_for(task, policy),
+                estimate=estimate_for(task, policy, history),
                 age_hours=age_hours(task, signals.now),
                 level=level_for(policy, source),
                 risk_rank=task_risk(task),

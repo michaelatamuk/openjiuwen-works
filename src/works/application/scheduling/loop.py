@@ -19,6 +19,7 @@ from works.adapters.queue.store import Queue
 from works.application import limits
 from works.application.approvals.gates import approval_expired
 from works.application.scheduling import lease
+from works.application.scheduling.estimates import Estimate, history_map
 from works.application.scheduling.policy import DispatchPolicy, load_policy
 from works.application.scheduling.select import Signals, TickPlan, tick_plan
 from works.config.paths import WorksPaths
@@ -159,9 +160,19 @@ class Scheduler:
             stale_approvals=stale_approvals(self._paths, moment),
         )
 
+    def _history(self, policy: DispatchPolicy) -> dict[str, Estimate] | None:
+        if policy.estimates.source != "history":
+            return None
+        return history_map(self._paths, min_samples=policy.estimates.min_samples)
+
     def plan(self, policy: DispatchPolicy | None = None) -> TickPlan:
         loaded = policy or load_policy(self._paths)
-        return tick_plan(self._queue.list_tasks(), loaded, self.signals(loaded))
+        return tick_plan(
+            self._queue.list_tasks(),
+            loaded,
+            self.signals(loaded),
+            self._history(loaded),
+        )
 
     def status(self) -> dict[str, object]:
         policy = load_policy(self._paths)
@@ -222,6 +233,7 @@ class Scheduler:
                 self._queue.list_tasks(),
                 policy,
                 self.signals(policy, now=moment),
+                self._history(policy),
             )
             active = lease.active_leases(self._paths, moment)
             free = max(0, policy.concurrency.global_slots - len(active))

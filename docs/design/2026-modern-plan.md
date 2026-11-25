@@ -544,7 +544,9 @@ admission function, leases with a dispatcher lock and stale reclaim, pause/resum
 approvals and the rule that a `scheduler` actor cannot decide a gate. A writable daemon now runs the
 loop and submits claims as run jobs; `POST /tasks` accepts `dispatch_on_import` (soft refusal with a
 reason, remote clients need `allow.remote_triggers`); failures consume a bounded attempt and the queue
-header offers **Dispatch ready (N)**. Still open: `/sources` triggers and `works task merge`.
+header offers **Dispatch ready (N)**; history estimates group evidence by flow and risk and
+`works estimate backtest` reports p90 coverage and pinball loss. Still open: `/sources` triggers,
+`works task merge`, kNN and the shadow order.
 
 - [x] **M21.1** `~/.works/config/dispatch.yaml` is the only policy: sources, allow/deny labels, flows,
   products, repos, remote triggers, levels, limits, budget, windows and pause; strict validation turns

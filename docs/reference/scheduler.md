@@ -112,6 +112,21 @@ Every refusal has a typed code, visible in `status` and `tick`:
 release approvals are checked for expiry (the release hash check lands with M21.5). `remote_trigger`
 still waits for the import path (M21.7).
 
+## Estimates
+
+When the policy sets `estimates.source: history`, the scheduler groups stored `evidence.json` by
+`flow` and `risk` and uses empirical p50/p90 minutes and dollars once a group has
+`estimates.min_samples` runs (default 5). Otherwise it falls back to a static per-flow prior. The
+estimate is used for the budget fit, the per-run cap and the size bucket; it is never shown as a
+deadline.
+
+```bash
+works estimate backtest            # leave-one-out p90 coverage and pinball loss
+works estimate backtest --json
+```
+
+The command exits non-zero when there are enough samples and p90 coverage falls below 80%.
+
 ## Order
 
 1. starvation (waited past `starvation_boost_hours`) — its own leading bucket;

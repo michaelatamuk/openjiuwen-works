@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
+from works.application.scheduling.estimates import Estimate, group_key
 from works.application.scheduling.policy import DispatchPolicy
 from works.application.scheduling.select import (
     Signals,
@@ -235,3 +236,11 @@ def test_a_stale_approval_is_refused() -> None:
         evaluate(approved, body, signals(stale_approvals=frozenset({approved.id})))
         == SkipReason.STALE_APPROVAL
     )
+
+
+def test_a_history_estimate_can_block_a_run() -> None:
+    item = task()
+    body = policy(estimates={"source": "history"}, budget={"per_run_usd": 5})
+    history = {group_key("fix-issue", "medium"): Estimate(30, 60, 4.0, 6.0, 0.8, 10, "history")}
+
+    assert evaluate(item, body, signals(), history) == SkipReason.RUN_BUDGET_CAP

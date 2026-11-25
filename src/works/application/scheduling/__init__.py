@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+from works.application.scheduling.estimates import Estimate
 from works.application.scheduling.lease import Lease
 from works.application.scheduling.loop import Scheduler, TickResult
 from works.application.scheduling.policy import DispatchPolicy, load_policy
-from works.application.scheduling.select import Estimate, SkipReason, TickPlan, tick_plan
+from works.application.scheduling.select import SkipReason, TickPlan, tick_plan
 
 __all__ = [
     "DispatchPolicy",

@@ -8,6 +8,7 @@ from pathlib import Path
 from works.interfaces.cli.commands.common import DESCRIPTION
 from works.interfaces.cli.parser.daemon import add_daemon_commands
 from works.interfaces.cli.parser.delivery import add_delivery_commands
+from works.interfaces.cli.parser.estimate import add_estimate_commands
 from works.interfaces.cli.parser.inspect import add_inspect_commands
 from works.interfaces.cli.parser.intake import add_intake_commands
 from works.interfaces.cli.parser.maintenance import add_maintenance_commands
@@ -31,6 +32,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_plan_commands(sub)
     add_run_commands(sub)
     add_scheduler_commands(sub)
+    add_estimate_commands(sub)
     add_daemon_commands(sub)
     add_delivery_commands(sub)
     add_intake_commands(sub)
