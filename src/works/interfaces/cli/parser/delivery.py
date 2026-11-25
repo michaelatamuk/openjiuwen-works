@@ -45,6 +45,18 @@ def add_delivery_commands(sub: argparse._SubParsersAction[argparse.ArgumentParse
     target.add_argument("--preview", default=None, help="Playwright preview script (YAML)")
     confirm.add_argument("--provider", choices=("none", "github", "gitlab", "jira"), default="none")
     confirm.add_argument("--tracker", choices=("none", "github", "gitlab", "jira"), default=None)
+    confirm.add_argument("--expect-status", type=int, default=None, help="Expected HTTP status")
+    confirm.add_argument(
+        "--expect-text", default=None, help="Text that must appear in the response"
+    )
+    confirm.add_argument(
+        "--expect-commit",
+        default=None,
+        help="Short commit the target must report (fails as wrong_commit)",
+    )
+    confirm.add_argument(
+        "--attempts", type=int, default=1, help="Retries for transient failures (1-3)"
+    )
     confirm.add_argument("--close", action="store_true", help="Close the source issue on success")
     confirm.add_argument("--force", action="store_true")
     confirm.add_argument("--json", action="store_true")

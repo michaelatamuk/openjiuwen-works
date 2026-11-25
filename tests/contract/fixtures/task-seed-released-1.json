@@ -24,6 +24,24 @@
     "task_id": "<task-id>",
     "url": "https://example.test/health"
   },
+  "confirmations": [
+    {
+      "command": null,
+      "comment_url": null,
+      "commit": "<commit>",
+      "created": true,
+      "duration_ms": 0,
+      "exit_code": 0,
+      "notes": [],
+      "ok": true,
+      "output_sha256": "<sha256>",
+      "run_id": "<run-id>",
+      "screenshots": [],
+      "target": "https://example.test/health",
+      "task_id": "<task-id>",
+      "url": "https://example.test/health"
+    }
+  ],
   "delivery": {
     "branch": "works/seed-delivered",
     "comment_url": "https://example.test/issues/7#comment",

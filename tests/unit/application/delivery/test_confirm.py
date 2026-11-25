@@ -62,7 +62,7 @@ def test_a_failing_command_records_a_failed_confirmation(paths, repo, tmp_path) 
 def test_the_http_target_is_used_when_given(monkeypatch, paths, repo, tmp_path) -> None:
     task, _, _ = _delivered(paths, repo, tmp_path)
     monkeypatch.setattr(
-        "works.application.delivery.confirm._http_check", lambda url: (True, 204, "")
+        "works.application.delivery.confirm._http_check", lambda url, **_: (True, "", 204, "")
     )
 
     result = confirm(paths, task.id, url="https://example.test/health")
@@ -177,3 +177,52 @@ def test_the_cli_exits_blocked_on_a_failed_confirmation(paths, repo, tmp_path) -
     assert code == 8
     assert "failed" in out.getvalue()
     assert Queue(paths).load(task.id).state is TaskState.RELEASED
+
+
+def test_a_retry_marks_the_result_unstable(paths, repo, tmp_path, monkeypatch) -> None:
+    task, _, _ = _delivered(paths, repo, tmp_path)
+    results = iter([(False, "target_unreachable", -1, "down"), (True, "", 200, "ok")])
+    monkeypatch.setattr(
+        "works.application.delivery.confirm._http_check",
+        lambda url, **_: next(results),
+    )
+
+    result = confirm(paths, task.id, url="https://example.test/health", attempts=2)
+
+    assert result.ok is True
+    assert result.unstable is True
+    assert result.code == "unstable"
+
+
+def test_the_expected_commit_is_checked(paths, repo, tmp_path, monkeypatch) -> None:
+    task, delivery, _ = _delivered(paths, repo, tmp_path)
+    monkeypatch.setattr(
+        "works.application.delivery.confirm._http_check",
+        lambda url, **_: (True, "", 200, "healthy but another commit"),
+    )
+
+    result = confirm(
+        paths, task.id, url="https://example.test/health", expect_commit=delivery.commit
+    )
+
+    assert result.ok is False
+    assert result.code == "wrong_commit"
+
+
+def test_a_failing_command_names_the_code(paths, repo, tmp_path) -> None:
+    task, _, _ = _delivered(paths, repo, tmp_path)
+
+    result = confirm(paths, task.id, command=[sys.executable, "-c", "raise SystemExit(4)"])
+
+    assert result.code == "command_failed"
+
+
+def test_the_deployment_record_is_linked(paths, repo, tmp_path) -> None:
+    task, delivery, _ = _delivered(paths, repo, tmp_path)
+    (paths.runs / delivery.run_id / "deployment.json").write_text(
+        '{"status": "deployed", "environment": "staging"}', encoding="utf-8"
+    )
+
+    result = confirm(paths, task.id, command=[sys.executable, "-c", "print(1)"])
+
+    assert result.deployment_status == "deployed"

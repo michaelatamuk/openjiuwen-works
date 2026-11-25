@@ -1,6 +1,7 @@
 # Gates (stage 4 and stage 8)
 
-A gate is a recorded human decision bound to an artefact, not a chat reply.
+A gate is a recorded human decision bound to an artefact, not a chat reply. This page covers the shared
+mechanics; the release-specific packet and blockers are on `release-gate.md`.
 
 ## Decisions
 

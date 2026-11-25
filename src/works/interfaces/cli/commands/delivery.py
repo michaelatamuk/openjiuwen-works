@@ -112,12 +112,19 @@ def cmd_confirm(args: argparse.Namespace) -> int:
         tracker=args.tracker,
         close_issue=args.close,
         force=args.force,
+        expect_status=args.expect_status,
+        expect_text=args.expect_text,
+        expect_commit=args.expect_commit,
+        attempts=args.attempts,
     )
     if args.json:
         _emit(result.as_dict())
     else:
         verdict = "confirmed" if result.ok else "failed"
-        print(f"{verdict}: {result.task_id} at {result.commit} ({result.target})")
+        if result.unstable:
+            verdict = "confirmed (unstable)"
+        suffix = f" [{result.code}]" if result.code else ""
+        print(f"{verdict}: {result.task_id} at {result.commit} ({result.target}){suffix}")
         for note in result.notes:
             print(f"  {note}")
         if result.comment_url:

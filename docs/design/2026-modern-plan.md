@@ -505,6 +505,27 @@ and a partial delivery that looks complete.
 - [x] **M19.7** The Release page lists the delivery steps; dry-run, missing token and crash recovery
   are covered by API tests.
 
+### M20 — Confirm 2026 (stage 10, complete)
+
+**Prevents:** a confirmation that checks nothing, a green result from a different commit, a flaky
+check reported as a pass, and a deploy failure hidden behind a local check.
+
+- [x] **M20.1** The target is explicit: `url` with `expect_status`/`expect_text`, a `command` in a
+  fresh worktree at the released commit, a preview script, or the plan's scenario set; no target is a
+  blocker, not a pass.
+- [x] **M20.2** `expect_commit` binds the result to the released commit; a different version fails as
+  `wrong_commit`.
+- [x] **M20.3** `attempts` (1–3) retries transient failures; a result that changed between attempts is
+  recorded as `unstable`, never as a silent green.
+- [x] **M20.4** `deployment.json` status is linked onto the confirmation; a failed deploy is visible
+  and there is no automatic rollback.
+- [x] **M20.5** One marker comment on the source report after a pass; closing the issue is opt-in
+  (`close`) and repeats do not duplicate.
+- [x] **M20.6** Typed outcomes (`target_unreachable`, `wrong_status`, `content_mismatch`,
+  `wrong_commit`, `command_failed`, `check_failed`, `unstable`) are stored and shown.
+- [x] **M20.7** The Release page shows target, code, stability, deployment link and recent
+  confirmation history; the CLI prints the code.
+
 ## 4. Sequencing and gates
 
 ### Phase 0 — Land the safety floor (week 1)

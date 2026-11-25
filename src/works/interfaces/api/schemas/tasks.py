@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class TaskSummary(BaseModel):
@@ -67,6 +67,7 @@ class TaskDetail(BaseModel):
     delivery: dict[str, Any] | None = None
     deployment: dict[str, Any] | None = None
     confirmation: dict[str, Any] | None = None
+    confirmations: list[dict[str, object]] = Field(default_factory=list)
     team: dict[str, Any]
     laix: list[dict[str, Any]]
     verifier: dict[str, Any]

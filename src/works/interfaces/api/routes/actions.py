@@ -116,6 +116,10 @@ def _run_job(state: AppState, action: str, payload: dict[str, Any]) -> Any:
             tracker=payload.get("tracker") or None,
             close_issue=bool(payload.get("close")),
             force=bool(payload.get("force")),
+            expect_status=int(payload["expect_status"]) if payload.get("expect_status") else None,
+            expect_text=str(payload.get("expect_text") or "") or None,
+            expect_commit=str(payload.get("expect_commit") or "") or None,
+            attempts=int(payload.get("attempts") or 1),
         )
         return {"ok": result.ok, "confirmation": result.as_dict()}
     if action == "team-verify":

@@ -539,6 +539,14 @@
             ],
             "title": "Confirmation"
           },
+          "confirmations": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Confirmations",
+            "type": "array"
+          },
           "delivery": {
             "anyOf": [
               {

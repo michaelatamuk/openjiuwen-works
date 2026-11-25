@@ -16,9 +16,11 @@ import json
 import os
 import shlex
 import sys
+import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -51,6 +53,10 @@ class Confirmation:
     notes: list[str] = field(default_factory=list)
     comment_url: str | None = None
     created: bool = True
+    code: str = ""
+    unstable: bool = False
+    deployment_status: str | None = None
+    at: str = ""
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -68,7 +74,22 @@ class Confirmation:
             "notes": self.notes,
             "comment_url": self.comment_url,
             "created": self.created,
+            "code": self.code,
+            "unstable": self.unstable,
+            "deployment_status": self.deployment_status,
+            "at": self.at,
         }
+
+
+def _deployment_status(run_dir: Path) -> str | None:
+    path = run_dir / "deployment.json"
+    if not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return str(payload.get("status") or "") or None
 
 
 def _load(run_dir: Path | None) -> dict[str, Any] | None:
@@ -84,20 +105,35 @@ def _load(run_dir: Path | None) -> dict[str, Any] | None:
     return raw if isinstance(raw, dict) else None
 
 
-def _http_check(url: str) -> tuple[bool, int, str]:
+def _http_check(
+    url: str,
+    *,
+    expect_status: int | None = None,
+    expect_text: str | None = None,
+) -> tuple[bool, str, int, str]:
+    """Return (ok, code, status, body). Codes name the failure, not just false."""
     request = urllib.request.Request(url, headers={"User-Agent": "openjiuwen-works"})  # noqa: S310  # nosec B310
     try:
         with urllib.request.urlopen(request, timeout=30) as response:  # noqa: S310  # nosec B310
-            body = response.read()
-            return (
-                200 <= response.status < 300,
-                response.status,
-                body.decode("utf-8", errors="replace"),
-            )
+            body = response.read().decode("utf-8", errors="replace")
+            status = response.status
     except urllib.error.HTTPError as exc:
-        return False, exc.code, exc.read().decode("utf-8", errors="replace")
+        body = exc.read().decode("utf-8", errors="replace")
+        status = exc.code
     except OSError as exc:
-        return False, -1, str(exc)
+        return False, "target_unreachable", -1, str(exc)
+    if expect_status is not None and status != expect_status:
+        return False, "wrong_status", status, body
+    if not 200 <= status < 300:
+        return False, "wrong_status" if status >= 400 else "target_unreachable", status, body
+    if expect_text and expect_text not in body:
+        return False, "content_mismatch", status, body
+    return True, "", status, body
+
+
+def _http_check_legacy(url: str) -> tuple[bool, int, str]:
+    ok, _code, status, body = _http_check(url)
+    return ok, status, body
 
 
 def _scenario_result(
@@ -131,6 +167,10 @@ def confirm(
     *,
     url: str | None = None,
     command: str | list[str] | None = None,
+    expect_status: int | None = None,
+    expect_text: str | None = None,
+    expect_commit: str | None = None,
+    attempts: int = 1,
     preview: PreviewScript | None = None,
     preview_runner: Preview | None = None,
     provider: str = "none",
@@ -179,6 +219,8 @@ def confirm(
     output = ""
     target = "scenario set"
     exit_code = 0
+    code = ""
+    unstable = False
     command_argv: list[str] | None = None
     if preview is not None:
         preview_result = (preview_runner or PlaywrightPreview()).run(preview, run_dir)
@@ -190,7 +232,25 @@ def confirm(
         screenshots.extend(preview_result.screenshots)
     elif url is not None:
         target = f"http {url}"
-        ok, exit_code, output = _http_check(url)
+        tries = max(1, min(3, attempts))
+        first_failed = False
+        ok, code, exit_code, output = False, "", -1, ""
+        for index in range(tries):
+            ok, code, exit_code, output = _http_check(
+                url, expect_status=expect_status, expect_text=expect_text
+            )
+            if ok:
+                break
+            first_failed = True
+            transient = code == "target_unreachable" or exit_code >= 500
+            if not transient or index + 1 >= tries:
+                break
+            time.sleep(0.2)
+        if ok and first_failed:
+            code = "unstable"
+            unstable = True
+        if ok and expect_commit and expect_commit[:7] not in output:
+            ok, code = False, "wrong_commit"
     elif command is not None:
         target = f"command {command}"
         argv = command if isinstance(command, list) else shlex.split(command, posix=os.name != "nt")
@@ -199,6 +259,7 @@ def confirm(
             argv, worktree, env={"PYTHONPATH": str(worktree)}, timeout_s=600
         )
         ok, exit_code, output = result.ok, result.exit_code, result.output
+        code = "" if ok else "command_failed"
     else:
         plan: dict[str, Any] = {}
         for event in queue.events(task_id):
@@ -209,6 +270,7 @@ def confirm(
         target = f"scenario set ({len(scenario_notes)})"
         if not scenario_notes:
             notes.append("no scenarios ran")
+        code = "" if ok else "check_failed"
     confirmation = Confirmation(
         task_id=task_id,
         run_id=str(delivery.get("run_id") or ""),
@@ -221,6 +283,10 @@ def confirm(
         command=command_argv,
         screenshots=screenshots,
         notes=notes,
+        code=code,
+        unstable=unstable,
+        deployment_status=_deployment_status(run_dir),
+        at=datetime.now(tz=UTC).isoformat(),
     )
     if effective_tracker != "none":
         tracker_obj = tracker_client or build_tracker(effective_tracker)
@@ -229,7 +295,10 @@ def confirm(
         if not tracker_accepts(effective_tracker, task.source.ref):
             raise ConfigError(f"tracker {effective_tracker!r} cannot return to {task.source.ref!r}")
         body = (
-            f"Confirmed `{commit}` with `{target}`: {'pass' if ok else 'fail'}\n\n"
+            f"Confirmed `{commit}` with `{target}`: {'pass' if ok else 'fail'}"
+            + (f" ({code})" if code else "")
+            + (" (unstable)" if unstable else "")
+            + "\n\n"
             f"{_source_marker(confirmation.run_id)}"
         )
         confirmation.comment_url = tracker_obj.ensure_comment(

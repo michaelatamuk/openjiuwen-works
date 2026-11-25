@@ -56,6 +56,18 @@ and the no-auto-resume rule are in `docs/reference/reliability.md`.
 Sync: `add-context`, `approve-plan`, `release`. Jobs: `commentary`, `discussion`, `deliver`,
 `confirm`, `team-verify`, `deploy`. `ask` is refused here; use `/ask/stream`.
 
+The three decisions take extra fields:
+
+| action | fields |
+|---|---|
+| `approve-plan` | `decision` (`approved`/`changes_requested`/`rejected`), `comment`, `by`, `device` |
+| `release` | `decision` (`approved`/`changes_requested`/`rejected`), `comment`, `by`, `device` |
+| `deliver` | `provider`, `tracker`, `remote`, `dry_run` |
+| `confirm` | `url`, `command`, `expect_status`, `expect_text`, `expect_commit`, `attempts`, `close`, `force` |
+
+A refused gate answers `400 config_error` with the typed blockers in the message; nothing is written
+except the audit record of the decision.
+
 ## Live events
 
 `GET /events` sends named events with `id` and JSON `data`:

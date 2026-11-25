@@ -4,8 +4,11 @@
   runbook, UI, remote clients, live harness, Swarm, readiness, release, intake, memory, decisions,
   verification and waiting.
 - `design/` - the product plan, the planner design and the stack migration plan.
-- `reference/` - the layout map, HTTP API, reliability and delivery semantics, supply chain,
-  prompts and golden evals, typing, signal intake, reproduce, build, check, gates, proof, release gate, deliver, feature map and the agent-core boundary.
+- `reference/` - the facts, one page per area:
+  - stages: `signal-intake`, `reproduce`, `planning`, `build`, `check`, `proof`, `gates`,
+    `release-gate`, `deliver`, `confirm`;
+  - platform: `layout`, `http-api`, `reliability`, `supply-chain`, `typing`, `prompts`,
+    `features`, `agent-core`.
 - `adrs/` - architecture decision records.
 - `brand/` and `ui/` - mascot and UI concept assets.
 - `archive/` - historical demos, proposals and reviews.

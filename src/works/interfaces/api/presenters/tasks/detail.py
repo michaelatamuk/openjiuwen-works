@@ -127,6 +127,7 @@ def _task_detail(
         plan_diff = store.diff(task_id)
     except NotFoundError:
         plan_payload = None
+    confirmations = [event.data for event in events if event.type == "confirmation.finished"][-5:]
     team_events = [event.data for event in events if event.type == "team.verified"]
     laix = [event.data for event in events if event.type == "decision.shadow"][-10:]
     verifier = {
@@ -151,6 +152,7 @@ def _task_detail(
         "pipeline": _pipeline(task, events, evidence, delivery, confirmation),
         "plan": plan_payload,
         "plan_diff": plan_diff,
+        "confirmations": confirmations,
         "readiness": readiness(Path(task.repo)),
         "features": feature_map(Path(task.repo), evidence),
         "release": release,

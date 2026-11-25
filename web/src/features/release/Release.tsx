@@ -49,6 +49,10 @@ export type ReleaseConfirmation = {
   ok?: boolean;
   target?: string | null;
   output_sha256?: string | null;
+  code?: string | null;
+  unstable?: boolean | null;
+  deployment_status?: string | null;
+  at?: string | null;
 };
 
 export type ReleaseRunSummary = {
@@ -100,6 +104,7 @@ export type ReleaseDetail = {
   delivery?: ReleaseDelivery | null;
   deployment?: ReleaseDeployment | null;
   confirmation?: ReleaseConfirmation | null;
+  confirmations?: ReleaseConfirmation[] | null;
   team?: { latest?: ReleaseTeamReview | null; history?: unknown[] } | null;
   verifier?: { name?: string; isolation?: string } | null;
   laix?: LaixComparison[] | null;
@@ -286,10 +291,40 @@ export function Release({ detail, onAction, onShowRuns, onShowRun, onToast }: Re
 
         <Card title="Confirmation" actions={detail.confirmation ? <Pill tone={detail.confirmation.ok ? "green" : "red"}>{detail.confirmation.ok ? "pass" : "fail"}</Pill> : null}>
           {detail.confirmation ? (
-            <dl className="kv">
-              <dt>Target</dt><dd>{detail.confirmation.target || "—"}</dd>
-              <dt>Output</dt><dd className="mono">{shortSha(detail.confirmation.output_sha256)}</dd>
-            </dl>
+            <>
+              <dl className="kv">
+                <dt>Target</dt><dd>{detail.confirmation.target || "—"}</dd>
+                {detail.confirmation.code ? (
+                  <>
+                    <dt>Code</dt>
+                    <dd>{detail.confirmation.code}</dd>
+                  </>
+                ) : null}
+                {detail.confirmation.unstable ? (
+                  <>
+                    <dt>Stability</dt>
+                    <dd>unstable — retry changed the result</dd>
+                  </>
+                ) : null}
+                {detail.confirmation.deployment_status ? (
+                  <>
+                    <dt>Deployment</dt>
+                    <dd>{detail.confirmation.deployment_status}</dd>
+                  </>
+                ) : null}
+                <dt>Output</dt><dd className="mono">{shortSha(detail.confirmation.output_sha256)}</dd>
+              </dl>
+              {detail.confirmations?.length ? (
+                <ul className="bullets">
+                  {detail.confirmations.map((item, index) => (
+                    <li key={`${item.at || "earlier"}-${index}`}>
+                      {item.at || "earlier"}: {item.target || "-"} — {item.ok ? "pass" : "fail"}
+                      {item.code ? ` (${item.code})` : ""}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </>
           ) : (
             <>
               <div className="form-row">
