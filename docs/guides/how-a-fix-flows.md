@@ -202,8 +202,14 @@ flowchart LR
 ## 7. Proof — write it down on one page
 
 Everything is collected on a single evidence page: what changed, what was run, the outcome, the risk,
-which model and engine did the work, and what it cost. A fingerprint ties the page together, so any
-later edit is visible.
+which model and engine did the work, and what it cost. A fingerprint ties the page together, and the
+page can be **re-checked**: the diff, every attachment and the event history are recomputed, so an edit
+after the fact is visible instead of being trusted.
+
+The page also says what it could not show: skipped checks, redacted credentials, the exact versions it
+ran with, and ? when the checks ran on the original version ? the comparison. It can be exported as an
+offline bundle with hashes, and two proofs can be compared. There is no signing or blockchain: those
+need a real publish process, and a signature nobody checks proves nothing.
 
 This page is what a person reads before deciding to ship. It is also what makes two pieces of work
 comparable: same layout, same units, whether a test fixture or a live model produced it.

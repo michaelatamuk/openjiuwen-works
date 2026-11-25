@@ -72,6 +72,8 @@
       }
     ],
     "duration_ms": 0,
+    "event_root": "<sha256>",
+    "event_seq": 26,
     "features": [],
     "files_changed": [
       "calc/core.py"
@@ -124,6 +126,7 @@
     "proof_sha256": "<sha256>",
     "provider": "fixture",
     "provider_split": false,
+    "redactions": [],
     "reproduce": {
       "argv": [
         "<python>",
@@ -163,6 +166,12 @@
       "schema_version": 1
     },
     "run_id": "<run-id>",
+    "runtime": {
+      "engine": "fixture-1",
+      "platform": "Windows-11-10.0.26200-SP0",
+      "python": "3.12.13",
+      "schema": "1"
+    },
     "schema_version": 1,
     "skipped_checks": [],
     "source": "manual:SEED-PROVED-1",

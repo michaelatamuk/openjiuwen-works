@@ -106,6 +106,10 @@ class Evidence(BaseModel):
     baseline_exit: int | None = None
     baseline_output_sha256: str | None = None
     skipped_checks: list[str] = Field(default_factory=list)
+    event_root: str | None = None
+    event_seq: int | None = None
+    redactions: list[str] = Field(default_factory=list)
+    runtime: dict[str, str] = Field(default_factory=dict)
     files_changed: list[str] = Field(default_factory=list)
     diff_stat: list[DiffStatRow] = Field(default_factory=list)
     policy: PolicyReport = Field(default_factory=lambda: PolicyReport(ok=True))

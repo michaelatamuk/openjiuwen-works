@@ -89,3 +89,24 @@ def test_the_page_names_the_next_step_on_a_blocked_run() -> None:
 
     assert "**Next step**" in page
     assert "add a failing test" in page
+
+
+def test_the_transcript_redacts_credentials(tmp_path) -> None:
+    ctx = _context(tmp_path)
+    proposal = Proposal(
+        patch="x",
+        model="m",
+        provider="p",
+        version="1",
+        harness="native",
+        tokens=1,
+        usd=0.0,
+        trace=["export TOKEN=ghp_abcdefghijklmnopqrstuvwxyz"],
+        notes=["used sk-abcdefghijklmnop"],
+    )
+
+    _write_transcript(ctx, proposal)
+
+    text = (tmp_path / "transcript.json").read_text(encoding="utf-8")
+    assert "ghp_" not in text and "sk-" not in text
+    assert "[redacted]" in text

@@ -445,6 +445,26 @@ failure, and a high-risk self-review passing as independent.
 - [x] **M16.7** Evidence and the Proof page show the base-commit check; a **Re-check** button on a
   released task re-runs confirmation without a new build.
 
+### M17 ? Proof 2026 (stage 7, complete)
+
+**Prevents:** a page that only looks provable, an event log nobody can check, and a secret copied into
+a transcript.
+
+- [x] **M17.1** `works proof verify <run>` recomputes the diff hash, the proof fingerprint, every
+  artifact hash and the event root; a tampered page fails with the check named.
+- [x] **M17.2** `event_root` is a rolling hash over the run's events up to `event_seq`; removing or
+  editing an event is detected.
+- [x] **M17.3** The full diff stays in `evidence.json`; the markdown truncates it with a visible note,
+  and binary/rename lines are preserved.
+- [x] **M17.4** Command tails and the builder transcript are scanned for credential shapes and
+  redacted, with the count recorded on the page.
+- [x] **M17.5** The page records Python version, platform, adapter version and schema; old pages load
+  with defaults.
+- [x] **M17.6** Schema fields are additive and a page without them still validates; `docs/reference/proof.md`
+  describes the contract.
+- [x] **M17.7** `works proof export` writes a tarball with a hash manifest, and `works proof diff`
+  reports verdict, risk, cost, changed files and fingerprint movement.
+
 ## 4. Sequencing and gates
 
 ### Phase 0 — Land the safety floor (week 1)

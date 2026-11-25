@@ -285,6 +285,21 @@ def render_markdown(evidence: Evidence) -> str:
         ),
         *(
             [
+                f"- runtime: python `{evidence.runtime.get('python', '-')}` ? "
+                f"platform `{evidence.runtime.get('platform', '-')}` ? "
+                f"engine `{evidence.runtime.get('engine', '-')}`"
+            ]
+            if evidence.runtime
+            else []
+        ),
+        *(
+            [f"- event root: `{evidence.event_root[:16]}?` (seq {evidence.event_seq})"]
+            if evidence.event_root
+            else []
+        ),
+        *([f"- redactions: `{len(evidence.redactions)}`"] if evidence.redactions else []),
+        *(
+            [
                 f"- plan estimate: `{evidence.plan_estimated_tokens}` tokens / "
                 f"`${evidence.plan_estimated_usd:.4f}` / "
                 f"`{evidence.plan_estimated_minutes} min`"

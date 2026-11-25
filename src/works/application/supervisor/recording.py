@@ -43,6 +43,7 @@ def _finish(sup: Supervisor, ctx: RunContext, repo: GitRepo) -> RunRecord:
         diff=diff,
         verifier_name=verifier_name,
         verifier_isolation=verifier_isolation,
+        paths=sup._paths,
     )
     from works.application.observability.features import feature_summary
 

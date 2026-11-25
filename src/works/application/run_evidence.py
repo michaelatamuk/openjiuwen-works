@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import logging
+import platform
+import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -12,11 +14,15 @@ from pydantic import ValidationError
 from works.adapters.git.repo import GitRepo
 from works.adapters.processes.runner import CommandRunner
 from works.adapters.queue.store import Queue
+from works.application.proof.chain import event_root
+from works.application.proof.redact import redact
 from works.application.run_context import RunContext
+from works.config.paths import WorksPaths
 from works.domain.errors import WorksError
 from works.domain.evidence import DiffStatRow, Evidence
 from works.domain.evidence.models import ModelCall
-from works.domain.records import Finding, RunRecord, TaskState
+from works.domain.flow import GateMode
+from works.domain.records import CommandRecord, Finding, RunRecord, TaskState
 
 LOG = logging.getLogger("works.run")
 
@@ -142,9 +148,27 @@ def build_evidence(
     diff: str,
     verifier_name: str,
     verifier_isolation: str,
+    paths: WorksPaths | None = None,
 ) -> Evidence:
     proposal = ctx.proposal
     provenance = ctx.plan.get("provenance") or {}
+    commands: list[CommandRecord] = []
+    redactions: list[str] = []
+    for command in ctx.commands:
+        clean_out, hits_out = redact(command.stdout_tail)
+        clean_err, hits_err = redact(command.stderr_tail)
+        if hits_out or hits_err:
+            redactions.append(f"command:{command.step}")
+        commands.append(
+            command.model_copy(update={"stdout_tail": clean_out, "stderr_tail": clean_err})
+        )
+    root = None
+    seq = None
+    if paths is not None:
+        events = Queue(paths).events(ctx.task.id)
+        if events:
+            root = event_root(events)
+            seq = events[-1].seq
     return Evidence(
         run_id=ctx.run_id,
         task_id=ctx.task.id,
@@ -203,6 +227,16 @@ def build_evidence(
         attempts=ctx.attempt,
         baseline_exit=ctx.baseline.exit_code if ctx.baseline else None,
         baseline_output_sha256=(ctx.baseline.output_sha256 if ctx.baseline else None),
+        skipped_checks=[node.id for node in ctx.flow.nodes if node.mode is GateMode.OFF],
+        event_root=root,
+        event_seq=seq,
+        redactions=redactions,
+        runtime={
+            "python": " ".join(sys.version.split()[:1]),
+            "platform": platform.platform(),
+            "engine": proposal.version if proposal is not None else "unknown",
+            "schema": "1",
+        },
         files_changed=files_changed,
         diff_stat=stats,
         policy=ctx.policy,

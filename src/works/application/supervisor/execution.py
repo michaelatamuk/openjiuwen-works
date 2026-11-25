@@ -41,6 +41,8 @@ def _write_transcript(ctx: RunContext, proposal: Proposal) -> None:
     import hashlib
     import json
 
+    from works.application.proof.redact import redact
+
     payload = {
         "model": proposal.model,
         "provider": proposal.provider,
@@ -51,8 +53,8 @@ def _write_transcript(ctx: RunContext, proposal: Proposal) -> None:
         "tokens": proposal.tokens,
         "usd": proposal.usd,
         "stop": proposal.stop,
-        "notes": proposal.notes,
-        "trace": proposal.trace,
+        "notes": [redact(item)[0] for item in proposal.notes],
+        "trace": [redact(item)[0] for item in proposal.trace],
     }
     text = json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
     path = ctx.run_dir / "transcript.json"
