@@ -269,6 +269,7 @@ def render_markdown(evidence: Evidence) -> str:
         f"- tokens: `{evidence.tokens}`",
         f"- usd: `{evidence.usd:.4f}`",
         f"- wall: `{evidence.duration_ms} ms`",
+        f"- build attempts: `{evidence.attempts}`",
         *(
             [
                 f"- plan estimate: `{evidence.plan_estimated_tokens}` tokens / "

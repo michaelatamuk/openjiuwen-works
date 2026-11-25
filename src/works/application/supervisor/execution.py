@@ -102,15 +102,29 @@ async def _execute(
         return
     if not sup._approve_plan(ctx, repo, approve_plan):
         return
-    touched = await sup._build(ctx, repo)
-    if touched is None:
-        return
-    proposal = _required(ctx.proposal, "proposal")
-    if not sup._enforce_policy(ctx, repo, proposal, touched):
-        return
-    if not await sup._verify(ctx, proposal):
-        return
-    sup._prove(ctx)
+    attempts = max(1, min(3, ctx.flow.repair.attempts))
+    for attempt in range(1, attempts + 1):
+        ctx.attempt = attempt
+        ctx.retry_requested = False
+        if attempt > 1:
+            repo.reset_hard(
+                _required(ctx.worktree, "worktree"), _required(ctx.base_commit, "base commit")
+            )
+            ctx.proposal = None
+            ctx.test = None
+            ctx.challenge = None
+            ctx.verdict = None
+        touched = await sup._build(ctx, repo)
+        if touched is None:
+            return
+        proposal = _required(ctx.proposal, "proposal")
+        if not sup._enforce_policy(ctx, repo, proposal, touched):
+            return
+        if await sup._verify(ctx, proposal, attempt=attempt, attempts=attempts):
+            sup._prove(ctx)
+            return
+        if not ctx.retry_requested:
+            return
 
 
 async def _prepare(
@@ -246,7 +260,7 @@ async def _build(sup: Supervisor, ctx: RunContext, repo: GitRepo) -> list[str] |
 
     # The daily ceiling is checked before the engine spends anything, not after the turn.
     check_daily(sup._paths)
-    sup._queue.append(task.id, "build.started", {"attempt": 1})
+    sup._queue.append(task.id, "build.started", {"attempt": ctx.attempt})
     proposal = await sup._propose(ctx)
     if proposal is None:
         return None
@@ -349,8 +363,36 @@ def _enforce_policy(
     return True
 
 
-async def _verify(sup: Supervisor, ctx: RunContext, proposal: Proposal) -> bool:
-    """Preview, test, challenge and judge the change. False stops the run."""
+def _retry_or_stop(
+    sup: Supervisor,
+    ctx: RunContext,
+    reason: StopReason,
+    *,
+    detail: str,
+    attempt: int,
+    attempts: int,
+) -> bool:
+    if attempt < attempts:
+        ctx.retry_requested = True
+        sup._queue.append(
+            ctx.task.id,
+            "build.retry",
+            {"attempt": attempt + 1, "reason": detail or reason.value},
+        )
+        return False
+    sup._stop(ctx, reason, detail=detail or None)
+    return False
+
+
+async def _verify(
+    sup: Supervisor,
+    ctx: RunContext,
+    proposal: Proposal,
+    *,
+    attempt: int = 1,
+    attempts: int = 1,
+) -> bool:
+    """Preview, test, challenge and judge the change. False stops or asks for a retry."""
     flow = ctx.flow
     sup._move(ctx, TaskState.CHECKING)
     if any(node.id == "preview" for node in flow.nodes):
@@ -362,8 +404,14 @@ async def _verify(sup: Supervisor, ctx: RunContext, proposal: Proposal) -> bool:
                 if preview_node.mode is GateMode.OBSERVE:
                     sup._observe(ctx, "preview", [f"exit {preview.exit_code}"])
                 else:
-                    sup._stop(ctx, StopReason.TESTS_FAILED, detail="preview failed")
-                    return False
+                    return _retry_or_stop(
+                        sup,
+                        ctx,
+                        StopReason.TESTS_FAILED,
+                        detail="preview failed",
+                        attempt=attempt,
+                        attempts=attempts,
+                    )
     if any(node.id == "preview" for node in flow.nodes) and ctx.worktree is not None:
         ctx.artifacts = collect_artifacts(
             ctx.worktree / ".works" / "artifacts",
@@ -378,8 +426,14 @@ async def _verify(sup: Supervisor, ctx: RunContext, proposal: Proposal) -> bool:
                 if test_node.mode is GateMode.OBSERVE:
                     sup._observe(ctx, "test", [f"exit {test.exit_code}"])
                 else:
-                    sup._stop(ctx, StopReason.TESTS_FAILED)
-                    return False
+                    return _retry_or_stop(
+                        sup,
+                        ctx,
+                        StopReason.TESTS_FAILED,
+                        detail="the test command failed",
+                        attempt=attempt,
+                        attempts=attempts,
+                    )
             if sup._over_wall(ctx):
                 sup._stop(ctx, StopReason.BUDGET_EXCEEDED, detail="wall-clock budget")
                 return False
@@ -402,8 +456,14 @@ async def _verify(sup: Supervisor, ctx: RunContext, proposal: Proposal) -> bool:
         verdict.model_dump_json(indent=2) + "\n", encoding="utf-8", newline="\n"
     )
     if not verdict.allow:
-        sup._stop(ctx, StopReason.VERDICT_FAILED)
-        return False
+        return _retry_or_stop(
+            sup,
+            ctx,
+            StopReason.VERDICT_FAILED,
+            detail="a must-pass check failed",
+            attempt=attempt,
+            attempts=attempts,
+        )
     return True
 
 

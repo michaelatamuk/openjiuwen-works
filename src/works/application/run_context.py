@@ -42,6 +42,8 @@ class RunContext:
     reproduce: CommandRecord | None = None
     reproduction: Detection | None = None
     reproduction_attempts: int = 1
+    attempt: int = 1
+    retry_requested: bool = False
     reproduction_stable: bool = True
     reproduction_env: dict[str, str] = field(default_factory=dict)
     test: CommandRecord | None = None

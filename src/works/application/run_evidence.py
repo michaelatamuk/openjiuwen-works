@@ -200,6 +200,7 @@ def build_evidence(
         model_calls=_model_calls(ctx),
         verification_share=totals.verification_share,
         duration_ms=duration_ms,
+        attempts=ctx.attempt,
         files_changed=files_changed,
         diff_stat=stats,
         policy=ctx.policy,

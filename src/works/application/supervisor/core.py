@@ -317,8 +317,15 @@ class Supervisor:
     ) -> bool:
         return execution._enforce_policy(self, ctx, repo, proposal, touched)
 
-    async def _verify(self, ctx: RunContext, proposal: Proposal) -> bool:
-        return await execution._verify(self, ctx, proposal)
+    async def _verify(
+        self,
+        ctx: RunContext,
+        proposal: Proposal,
+        *,
+        attempt: int = 1,
+        attempts: int = 1,
+    ) -> bool:
+        return await execution._verify(self, ctx, proposal, attempt=attempt, attempts=attempts)
 
     def _prove(self, ctx: RunContext) -> None:
         return execution._prove(self, ctx)

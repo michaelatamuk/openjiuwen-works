@@ -144,6 +144,7 @@ def _apply(task: Task | None, event: Event) -> Task:
         "task.merged",
         "build.started",
         "build.finished",
+        "build.retry",
     ):
         return task.model_copy(update={"updated_at": event.ts})
 

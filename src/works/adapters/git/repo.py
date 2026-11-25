@@ -182,6 +182,11 @@ class GitRepo:
         output = self._git("ls-remote", remote, f"refs/heads/{branch}", timeout_s=60).stdout.strip()
         return output.split()[0] if output else None
 
+    def reset_hard(self, worktree: Path, commit: str) -> None:
+        """Return a worktree to an exact commit and drop untracked files."""
+        self._git("reset", "--hard", commit, cwd=worktree)
+        self._git("clean", "-fd", cwd=worktree)
+
     def push(self, remote: str, branch: str, *, cwd: Path | None = None) -> CommandResult:
         return self._git(
             "push",

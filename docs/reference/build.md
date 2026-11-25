@@ -27,10 +27,16 @@ The touched paths are collected from git, diffed and rated; policy and plan devi
 against the approved plan. A file outside the plan's named write scope becomes a `plan.deviation`
 event; a denied path is a `policy_violation`.
 
+## Repair attempts
+
+`repair.attempts` in the flow is the total number of build attempts (capped at 3, default 1). Only a
+failing test/preview or a failed verdict is retryable; a challenge failure, policy violation, flake,
+harness error or budget stop ends the run at once. Each retry starts from the approved base commit:
+the worktree is reset and untracked files are removed, so a half-applied patch is never inherited. The
+last attempt stops with the usual `tests_failed`/`verdict_failed`, and evidence records `attempts`.
+
 ## Not in this pass
 
-- **Retry loop.** One bounded builder turn per run; a failed check stops with a typed reason and a
-  person decides whether to run again. A repair loop needs its own crash and convergence tests.
 - **Network isolation.** Paths and commands are constrained, but denying network access to the
   engine needs an OS sandbox (container or firewall); until then that remains a deployment control,
   not a claim.

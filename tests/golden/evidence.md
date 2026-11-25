@@ -12,7 +12,7 @@
 
 **State** `proved` · **Stop reason** `completed`
 
-**Proof SHA-256** `ead90c9289553da72bea1005855c864037fe1ddaecb45e09e489f0f905dd06f3`
+**Proof SHA-256** `8f3723277c035cfb6965808bb1a6b1aaafce5e18b37a5e0896d8fefa7dbaeaab`
 
 ## Verdict
 
@@ -82,6 +82,7 @@ No violations.
 - tokens: `1200`
 - usd: `0.0120`
 - wall: `4321 ms`
+- build attempts: `1`
 - model: `fake-builder-1` · provider: `fixture`
 - engine: `native`
 - prompt: `build` · sha256: `ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff`

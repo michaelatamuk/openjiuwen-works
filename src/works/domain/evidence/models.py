@@ -102,6 +102,7 @@ class Evidence(BaseModel):
     model_calls: list[ModelCall] = Field(default_factory=list)
     verification_share: float = 0.0
     duration_ms: int = 0
+    attempts: int = 1
     files_changed: list[str] = Field(default_factory=list)
     diff_stat: list[DiffStatRow] = Field(default_factory=list)
     policy: PolicyReport = Field(default_factory=lambda: PolicyReport(ok=True))

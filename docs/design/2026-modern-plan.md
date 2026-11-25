@@ -419,7 +419,9 @@ next step.
   `PR_SET_PDEATHSIG`); this pass adds the events around the turn.
 - [x] **M15.5** `transcript.json` records model, provider, adapter version, prompt hash, cost, notes
   and trace as an evidence artifact; `evidence.md` adds a typed **Next step** line.
-- [ ] **M15.6** A bounded repair loop (N attempts with a recorded reason) instead of one builder turn.
+- [x] **M15.6** A bounded repair loop: `repair.attempts` (capped at 3, default 1) allows an extra
+  builder turn only for a failing test/preview or verdict; each retry resets the worktree to the
+  approved base, `build.retry` records the reason and evidence records the attempts (ADR 023).
 - [ ] **M15.7** Network isolation for build commands (needs an OS sandbox; paths and commands are
   already constrained, the network claim is not made).
 

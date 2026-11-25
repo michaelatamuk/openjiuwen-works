@@ -14,7 +14,7 @@ ALLOWED: dict[TaskState, frozenset[TaskState]] = {
     S.PLANNING: frozenset({S.PLAN_APPROVED, S.BLOCKED}),
     S.PLAN_APPROVED: frozenset({S.BUILDING, S.BLOCKED}),
     S.BUILDING: frozenset({S.CHECKING, S.BLOCKED}),
-    S.CHECKING: frozenset({S.PROVED, S.BLOCKED}),
+    S.CHECKING: frozenset({S.PROVED, S.BLOCKED, S.BUILDING}),
     S.PROVED: frozenset({S.RELEASING, S.WAITING_REVIEW, S.BLOCKED}),
     S.WAITING_REVIEW: frozenset({S.RELEASING, S.BLOCKED}),
     S.RELEASING: frozenset({S.RELEASED, S.WAITING_CI, S.BLOCKED}),

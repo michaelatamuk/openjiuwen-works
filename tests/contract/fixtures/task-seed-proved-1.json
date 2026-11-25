@@ -28,6 +28,7 @@
         "sha256": "<sha256>"
       }
     ],
+    "attempts": 1,
     "base_commit": "<commit>",
     "builder_tokens": 1200,
     "builder_usd": 0.012,
