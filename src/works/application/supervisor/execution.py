@@ -49,7 +49,9 @@ def _approval_current(sup: Supervisor, ctx: RunContext) -> bool:
     if not approved or approval_expired(approved[-1]):
         return False
     plan_hash = str(ctx.plan.get("hash") or "")
-    return not plan_hash or approved[-1].data.get("plan_hash") == plan_hash
+    recorded = str(approved[-1].data.get("plan_hash") or "")
+    # Legacy or pre-approved plans carry no hash; only a mismatching pair is stale.
+    return not plan_hash or not recorded or recorded == plan_hash
 
 
 if TYPE_CHECKING:
