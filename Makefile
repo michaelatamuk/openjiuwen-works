@@ -1,6 +1,6 @@
-.PHONY: check lint format type test unit integration cov bench wheel security gitleaks demo docs-links sbom api-compat routes mutation prompts evals
+.PHONY: check lint format type test unit integration cov bench wheel security gitleaks demo docs-links sbom api-compat routes mutation prompts evals typing-ratchet
 
-check: lint format type prompts evals cov
+check: lint format type typing-ratchet prompts evals cov
 
 lint:
 	uv run ruff check src tests
@@ -33,6 +33,9 @@ sbom:
 
 type:
 	uv run mypy
+
+typing-ratchet:
+	uv run python scripts/check_typing_ratchet.py
 
 test:
 	uv run pytest tests -q -m "not slow"

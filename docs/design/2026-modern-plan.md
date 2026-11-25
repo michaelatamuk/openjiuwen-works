@@ -93,9 +93,11 @@ the primary Windows lifecycle path going untested.
 **Prevents:** untyped API payloads and UI props silently diverging from the contract.  
 **Proof:** strict `tsc`, mypy flags, ESLint and a grep gate.
 
-- [ ] **M1.1** Add `py.typed` and keep `mypy --strict`; add `disallow_any_explicit = true` and
-  `warn_return_any = true`. Remove `Any` from public interfaces. **Do not add a second type
-  checker** (pyright/ty) just to duplicate mypy.
+- [ ] **M1.1** `py.typed` ships and mypy runs `--strict`. A ratchet
+  (`scripts/check_typing_ratchet.py`) runs mypy with `--disallow-any-explicit --warn-return-any`
+  against `docs/reference/typing-baseline.json` (317 errors in 93 files): no file and no total may
+  grow, and new files start at zero. Removing every boundary `Any` in one change is deliberately not
+  done; the baseline only shrinks. No second type checker.
 - [x] **M1.2a** Queue, Story, Evidence and Release are typed `.tsx`; `tsc`, Vitest and the bundle
   are green.
 - [x] **M1.2b** Session, Settings, `app/*`, dialogs, `ui/*` and every test are typed `.tsx`; there is
