@@ -3,13 +3,19 @@ from __future__ import annotations
 import io
 import json
 from contextlib import redirect_stderr, redirect_stdout
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
 from tests.unit.domain.test_evidence import fixed_evidence
 from works.adapters.queue.store import Queue
-from works.application.delivery.release import approve_release, release_packet
+from works.application.delivery.release import (
+    _expired,
+    approve_release,
+    decide_release,
+    owner_approved,
+    release_packet,
+)
 from works.config import WorksPaths
 from works.domain.errors import ConfigError
 from works.domain.evidence import write_evidence
@@ -265,3 +271,91 @@ def test_the_cli_is_idempotent_on_gate_two(paths) -> None:
 
     assert code == 0, err
     assert "already released" in out
+
+
+def _ready(paths) -> Task:
+    task = _proved(paths)
+    _run(paths, task)
+    queue = Queue(paths)
+    queue.append(task.id, "gate.decided", {"gate": "plan", "by": "cli", "commit": "abc1234"})
+    return queue.load(task.id)
+
+
+def test_a_hold_needs_a_comment_and_keeps_the_task_proved(paths) -> None:
+    task = _ready(paths)
+
+    with pytest.raises(ConfigError, match="needs a comment"):
+        decide_release(paths, task.id, decision="changes_requested")
+
+    held, _packet, created = decide_release(
+        paths, task.id, decision="changes_requested", comment="show the deploy target", by="michael"
+    )
+
+    assert held.state is TaskState.PROVED
+    assert created is False
+    events = [event for event in Queue(paths).events(task.id) if event.type == "gate.decided"]
+    assert events[-1].data["decision"] == "changes_requested"
+    assert events[-1].data["comment"] == "show the deploy target"
+
+
+def test_a_reject_blocks_the_task(paths) -> None:
+    task = _ready(paths)
+
+    with pytest.raises(ConfigError, match="needs a comment"):
+        decide_release(paths, task.id, decision="rejected")
+
+    rejected, _packet, _created = decide_release(
+        paths, task.id, decision="rejected", comment="wrong release window", by="michael"
+    )
+
+    assert rejected.state is TaskState.BLOCKED
+
+
+def test_an_agent_cannot_release(paths) -> None:
+    task = _ready(paths)
+
+    with pytest.raises(ConfigError, match="agent cannot"):
+        decide_release(paths, task.id, by="builder")
+
+
+def test_quorum_needs_a_second_person(paths, monkeypatch) -> None:
+    monkeypatch.setenv("WORKS_REQUIRE_QUORUM", "1")
+    task = _ready(paths)
+
+    first, _packet, created = decide_release(paths, task.id, by="michael", device="laptop")
+    assert first.state is TaskState.PROVED
+    assert created is False
+
+    second, _packet, created = decide_release(paths, task.id, by="michael", device="phone")
+    assert second.state is TaskState.RELEASED
+    assert created is True
+
+
+def test_a_blocked_packet_names_its_codes(paths) -> None:
+    task = _proved(paths)
+    _run(paths, task)
+
+    packet = release_packet(paths, task.id)
+
+    codes = {item["code"] for item in packet.blocker_codes}
+    assert "plan_gate_missing" in codes
+    assert "release_gate_missing" in codes
+
+
+def test_high_risk_owner_approval_is_opt_in(monkeypatch) -> None:
+    monkeypatch.delenv("WORKS_REQUIRE_OWNER_APPROVAL", raising=False)
+    assert owner_approved("high", ["michael"], "someone") is True
+
+    monkeypatch.setenv("WORKS_REQUIRE_OWNER_APPROVAL", "1")
+    assert owner_approved("low", ["michael"], "someone") is True
+    assert owner_approved("high", ["michael"], "michael") is True
+    assert owner_approved("high", ["michael"], "someone") is False
+
+
+def test_a_release_approval_expires() -> None:
+    past = (datetime.now(tz=UTC) - timedelta(hours=1)).isoformat()
+    future = (datetime.now(tz=UTC) + timedelta(hours=1)).isoformat()
+
+    assert _expired({"expires_at": past}) is True
+    assert _expired({"expires_at": future}) is False
+    assert _expired({}) is False

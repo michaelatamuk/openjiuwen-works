@@ -153,6 +153,7 @@ export function Release({ detail, onAction, onShowRuns, onShowRun, onToast }: Re
   const [dryRun, setDryRun] = useState(false);
   const [url, setUrl] = useState("");
   const [command, setCommand] = useState("");
+  const [comment, setComment] = useState("");
 
   async function deliver() {
     try {
@@ -188,9 +189,38 @@ export function Release({ detail, onAction, onShowRuns, onShowRun, onToast }: Re
           {release.blockers?.length ? (
             <ul className="bullets">{release.blockers.map((item) => <li key={item}>{item}</li>)}</ul>
           ) : <p className="good small">No release blockers.</p>}
-          <button type="button" className="btn" disabled={!release.ready || release.released} onClick={() => onAction("release")}>
-            {release.released ? "Released" : "Approve release"}
-          </button>
+          <div className="export-row">
+            <input
+              aria-label="Release comment"
+              placeholder="Why? (required for hold or reject)"
+              value={comment}
+              onChange={(event) => setComment(event.target.value)}
+            />
+            <button
+              type="button"
+              className="btn"
+              disabled={!release.ready || release.released}
+              onClick={() => onAction("release", { decision: "approved", comment })}
+            >
+              {release.released ? "Released" : "Approve release"}
+            </button>
+            <button
+              type="button"
+              className="btn ghost"
+              disabled={!release.ready || release.released || !comment.trim()}
+              onClick={() => onAction("release", { decision: "changes_requested", comment })}
+            >
+              Hold
+            </button>
+            <button
+              type="button"
+              className="btn ghost"
+              disabled={release.released || !comment.trim()}
+              onClick={() => onAction("release", { decision: "rejected", comment })}
+            >
+              Reject
+            </button>
+          </div>
         </Card>
 
         <Card title="Delivery" actions={detail.delivery ? <Pill tone={detail.delivery.dry_run ? "amber" : "green"}>{detail.delivery.dry_run ? "dry run" : "delivered"}</Pill> : null}>

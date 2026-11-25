@@ -114,7 +114,7 @@
     ],
     "duration_ms": 0,
     "event_root": "<sha256>",
-    "event_seq": 26,
+    "event_seq": 32,
     "features": [],
     "files_changed": [
       "calc/core.py"
@@ -716,11 +716,17 @@
       {
         "at": "<timestamp>",
         "data": {
+          "actor_kind": "person",
           "by": "cli",
+          "comment": "",
           "commit": "<commit>",
           "decision": "approved",
+          "device": "local",
+          "expires_at": "<timestamp>",
           "gate": "release",
+          "packet_hash": "<sha256>",
           "proof_sha256": "<sha256>",
+          "quorum": false,
           "released_at": "<timestamp>",
           "run_id": "<run-id>"
         },
@@ -1349,10 +1355,22 @@
     "unknown_suppressions": []
   },
   "release": {
+    "blocker_codes": [
+      {
+        "code": "stale_release",
+        "detail": "release approval is bound to another proof"
+      }
+    ],
     "blockers": [
       "release approval is bound to another proof"
     ],
+    "challenge_allow": true,
     "commit": "<commit>",
+    "delivery_configured": true,
+    "estimated_tokens": 0,
+    "estimated_usd": 0.0,
+    "not_tested": [],
+    "owners": [],
     "plan_gate": {
       "by": "cli",
       "checks_sha": "<sha256>",
@@ -1367,19 +1385,31 @@
       "risk": null
     },
     "proof_sha256": "<sha256>",
+    "proof_verified": true,
     "ready": false,
     "release_gate": {
+      "actor_kind": "person",
       "by": "cli",
+      "comment": "",
       "commit": "<commit>",
       "decision": "approved",
+      "device": "local",
+      "expires_at": "<timestamp>",
       "gate": "release",
+      "packet_hash": "<sha256>",
       "proof_sha256": "<sha256>",
+      "quorum": false,
       "released_at": "<timestamp>",
       "run_id": "<run-id>"
     },
     "released": true,
+    "risk": "low",
+    "rollback": "discard the worktree; delivery never rewrites history",
     "run_id": "<run-id>",
-    "task_id": "<task-id>"
+    "task_id": "<task-id>",
+    "tokens": 1200,
+    "usd": 0.012,
+    "verdict_allow": true
   },
   "run": {
     "attempts": 1,
@@ -2361,11 +2391,17 @@
     },
     {
       "data": {
+        "actor_kind": "person",
         "by": "cli",
+        "comment": "",
         "commit": "<commit>",
         "decision": "approved",
+        "device": "local",
+        "expires_at": "<timestamp>",
         "gate": "release",
+        "packet_hash": "<sha256>",
         "proof_sha256": "<sha256>",
+        "quorum": false,
         "released_at": "<timestamp>",
         "run_id": "<run-id>"
       },

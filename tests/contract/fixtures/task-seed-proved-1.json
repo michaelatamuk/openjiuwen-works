@@ -1203,10 +1203,22 @@
     "unknown_suppressions": []
   },
   "release": {
+    "blocker_codes": [
+      {
+        "code": "release_gate_missing",
+        "detail": "release gate has no human approval"
+      }
+    ],
     "blockers": [
       "release gate has no human approval"
     ],
+    "challenge_allow": true,
     "commit": "<commit>",
+    "delivery_configured": true,
+    "estimated_tokens": 0,
+    "estimated_usd": 0.0,
+    "not_tested": [],
+    "owners": [],
     "plan_gate": {
       "by": "cli",
       "checks_sha": "<sha256>",
@@ -1221,11 +1233,17 @@
       "risk": null
     },
     "proof_sha256": "<sha256>",
+    "proof_verified": true,
     "ready": false,
     "release_gate": null,
     "released": false,
+    "risk": "low",
+    "rollback": "discard the worktree; delivery never rewrites history",
     "run_id": "<run-id>",
-    "task_id": "<task-id>"
+    "task_id": "<task-id>",
+    "tokens": 1200,
+    "usd": 0.012,
+    "verdict_allow": true
   },
   "run": {
     "attempts": 1,

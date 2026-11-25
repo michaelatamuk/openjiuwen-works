@@ -225,18 +225,32 @@ flowchart LR
 
 ## 8. Release gate — a person says “yes, ship it” 🔒
 
-This is the second mandatory human moment. A person reviews the release packet: the saved version, the
-fingerprint and any blockers. Approving it marks the task released.
+This is the second mandatory human moment. The release packet gathers what the decision needs: what
+exactly ships, the proof and whether it still **verifies**, the risk and the owners of the touched
+areas, the verdict and the checks that were not run, the cost estimate against the actual, the
+delivery target and the rollback.
 
-Works refuses this gate when the work is not proved, when a must-pass check failed, when a rule was
-broken, or when no person has approved it. This is the last moment before code leaves the machine, and
-it belongs to a person on purpose.
+There are three answers, not one:
+
+- **Approve** ? the task becomes released, and delivery may run.
+- **Hold** ? a comment is required; the task stays proved until the packet changes.
+- **Reject** ? a reason is required; the work stops.
+
+The approver is a **named person on a device**; an AI agent cannot release. For risky areas the
+approval must come from one of the named owners, and an optional two-person rule can require a second
+person on another device. The approval expires after about three days, and any new proof or commit
+invalidates it. Works refuses the gate while any blocker remains: not proved, a failing must-pass
+check, a policy violation, a blocked review, a proof that no longer verifies, a stale approval, or no
+delivery target. Every decision is written to an append-only history.
 
 ```mermaid
-flowchart LR
-    P[Proved work] --> K{Release packet}
-    K -->|ready + person approves| R[Released]
-    K -->|not proved / blockers| X[Refused with reasons]
+flowchart TD
+    A["Proved work + verified proof"] --> B{"Release packet"}
+    B -->|"blockers remain"| X["Refused with typed reasons"]
+    B -->|"a person approves"| R["Released"]
+    B -->|"a person holds"| H["Stays proved<br/>needs a comment"]
+    B -->|"a person rejects"| J["Stopped<br/>with a reason"]
+    R --> D["Delivery may run"]
 ```
 
 ## 9. Deliver — send it back where it came from

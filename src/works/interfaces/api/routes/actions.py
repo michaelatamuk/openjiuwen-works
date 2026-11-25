@@ -62,13 +62,22 @@ def _run_sync(state: AppState, action: str, payload: dict[str, Any]) -> dict[str
             "task": task.model_dump(mode="json"),
             "event": event.model_dump(mode="json"),
         }
-    from works.application.delivery.release import approve_release
+    from works.application.delivery.release import decide_release
 
+    decision = str(payload.get("decision") or "approved")
     with state.write_lock:
-        task, packet, created = approve_release(state.paths, task_id)
+        task, packet, created = decide_release(
+            state.paths,
+            task_id,
+            decision=decision,
+            by=str(payload.get("by") or "ui"),
+            device=str(payload.get("device") or "local"),
+            comment=str(payload.get("comment") or ""),
+        )
     return {
         "ok": True,
         "action": action,
+        "decision": decision,
         "created": created,
         "task": task.model_dump(mode="json"),
         "release": packet.as_dict(),

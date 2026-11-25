@@ -304,7 +304,29 @@ def seed(root: Path, *, now: datetime = DEFAULT_NOW) -> WorksPaths:
 
     if queued.state is not TaskState.QUEUED:
         raise SystemExit(f"queued task is {queued.state.value}")
+    _bind_event_roots(paths, queue)
     return paths
+
+
+def _bind_event_roots(paths, queue) -> None:
+    """Seed a page whose event root matches the events that exist in this home."""
+    from works.application.proof.chain import event_root
+    from works.domain.records import RunRecord
+
+    for run_file in paths.runs.glob("*/run.json"):
+        try:
+            record = RunRecord.model_validate_json(run_file.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        events = queue.events(record.task_id)
+        evidence_path = run_file.parent / "evidence.json"
+        if not events or not evidence_path.exists():
+            continue
+        evidence = Evidence.model_validate_json(evidence_path.read_text(encoding="utf-8"))
+        updated = evidence.model_copy(
+            update={"event_root": event_root(events), "event_seq": events[-1].seq}
+        ).bind()
+        write_evidence(run_file.parent, updated)
 
 
 def _clean(root: Path) -> None:

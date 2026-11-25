@@ -465,6 +465,27 @@ a transcript.
 - [x] **M17.7** `works proof export` writes a tarball with a hash manifest, and `works proof diff`
   reports verdict, risk, cost, changed files and fingerprint movement.
 
+### M18 ? Release gate 2026 (stage 8, complete)
+
+**Prevents:** a release packet that cannot show its proof still verifies, an agent shipping code, and
+an approval that outlives the proof.
+
+- [x] **M18.1** The packet carries risk, owners, residual `not_tested`, verdict/challenge, tokens/USD,
+  plan estimate, `proof_verified`, `delivery_configured` and rollback; the proof is re-verified.
+- [x] **M18.2** A release decision is approved, changes_requested (comment required, stays proved) or
+  rejected (reason required, blocked); the UI exposes all three.
+- [x] **M18.3** A named person on a device is required; agent/harness identities are refused;
+  `WORKS_REQUIRE_OWNER_APPROVAL=1` requires a risk owner for high risk and `WORKS_REQUIRE_QUORUM=1`
+  needs two distinct person/device pairs.
+- [x] **M18.4** Approvals expire after `WORKS_RELEASE_TTL_HOURS` (default 72) and a new proof or commit
+  makes them stale; delivery refuses an expired release.
+- [x] **M18.5** Blockers are typed (`proof_mismatch`, `must_pass_failed`, `stale_release`, ?) and
+  listed in both `blockers` and `blocker_codes`.
+- [x] **M18.6** The release event is append-only with the packet hash, device, comment, commit, proof
+  hash, expiry and quorum flag, mirrored into `release.json`.
+- [x] **M18.7** The Release page shows the packet and offers Approve/Hold/Reject with a comment;
+  delivery and confirmation keep their visible status on the same page.
+
 ## 4. Sequencing and gates
 
 ### Phase 0 — Land the safety floor (week 1)

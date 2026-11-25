@@ -64,7 +64,7 @@ describe("Release", () => {
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: "Approve release" }));
-    expect(onAction).toHaveBeenCalledWith("release");
+    expect(onAction).toHaveBeenCalledWith("release", { decision: "approved", comment: "" });
     unmount();
 
     render(

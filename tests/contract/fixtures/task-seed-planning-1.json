@@ -555,20 +555,50 @@
     "unknown_suppressions": []
   },
   "release": {
+    "blocker_codes": [
+      {
+        "code": "not_proved",
+        "detail": "task is planning, not proved"
+      },
+      {
+        "code": "plan_gate_missing",
+        "detail": "plan gate has no human approval"
+      },
+      {
+        "code": "release_gate_missing",
+        "detail": "release gate has no human approval"
+      },
+      {
+        "code": "no_run",
+        "detail": "no finished run"
+      }
+    ],
     "blockers": [
       "task is planning, not proved",
       "plan gate has no human approval",
       "release gate has no human approval",
       "no finished run"
     ],
+    "challenge_allow": null,
     "commit": null,
+    "delivery_configured": false,
+    "estimated_tokens": 0,
+    "estimated_usd": 0.0,
+    "not_tested": [],
+    "owners": [],
     "plan_gate": null,
     "proof_sha256": null,
+    "proof_verified": false,
     "ready": false,
     "release_gate": null,
     "released": false,
+    "risk": null,
+    "rollback": "discard the worktree; delivery never rewrites history",
     "run_id": null,
-    "task_id": "<task-id>"
+    "task_id": "<task-id>",
+    "tokens": 0,
+    "usd": 0.0,
+    "verdict_allow": null
   },
   "run": null,
   "runs": [],

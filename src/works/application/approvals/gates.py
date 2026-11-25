@@ -68,6 +68,9 @@ def _check_actor(by: str, actor_kind: str) -> str:
     return actor
 
 
+check_actor = _check_actor
+
+
 def decide_plan(
     paths: WorksPaths,
     task_id: str,
