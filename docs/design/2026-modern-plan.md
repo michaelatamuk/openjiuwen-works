@@ -265,7 +265,7 @@ invariants.
   job scans `uv.lock` and `web/package-lock.json` on push and weekly (run 45596833850 is green); the
   only findings are filelock advisories blocked by openjiuwen's `<4` pin, recorded with an expiry in
   `osv-scanner.toml` and explained in `docs/reference/supply-chain.md`.
-- [ ] **M8.4** The `clean-install` CI job downloads the built wheel, exports `uv.lock` as hashed
+- [x] **M8.4** The `clean-install` CI job downloads the built wheel, exports `uv.lock` as hashed
   requirements, installs them with `pip install --require-hashes` into a clean Python 3.13 venv,
   installs the wheel with `--no-deps`, then runs `works doctor --json` and the daemon
   `start`/`status`/`stop` cycle on a fresh home.

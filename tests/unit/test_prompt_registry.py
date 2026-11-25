@@ -52,3 +52,13 @@ def test_update_preserves_owner_and_changelog(tmp_path, monkeypatch) -> None:
     saved = json.loads(check_prompts.REGISTRY.read_text(encoding="utf-8"))["prompts"][0]
     assert saved["owner"] == "mira-team"
     assert len(saved["changelog"]) == 2
+
+
+def test_a_crlf_checkout_hashes_like_an_lf_checkout(tmp_path, monkeypatch) -> None:
+    flows = _workspace(tmp_path, monkeypatch)
+    (flows / "build.md").write_bytes(b"Work on $title for $ref.\r\n")
+    check_prompts.update()
+
+    (flows / "build.md").write_bytes(b"Work on $title for $ref.\n")
+
+    assert check_prompts.problems() == []

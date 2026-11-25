@@ -22,7 +22,9 @@ def prompts() -> list[Path]:
 
 
 def digest(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    """Hash the logical prompt: a CRLF checkout and an LF checkout are the same prompt."""
+    text = path.read_text(encoding="utf-8").replace("\r\n", "\n")
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 def load() -> dict[str, Any]:

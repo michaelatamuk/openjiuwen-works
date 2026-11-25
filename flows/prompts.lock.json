@@ -4,7 +4,7 @@
     {
       "name": "fix-issue/prompts/build.md",
       "path": "flows/fix-issue/prompts/build.md",
-      "sha256": "c2d00b627bae641bff1114f63623a4e15e6cb3b7b52bbd6289437756268ff051",
+      "sha256": "1b4805d2b87c24b1688ab8d107660109ca1a217064268d10f2f99e07026a349a",
       "owner": "platform",
       "changelog": [
         {
@@ -43,7 +43,7 @@
     {
       "name": "fix-issue/prompts/plan-spec.md",
       "path": "flows/fix-issue/prompts/plan-spec.md",
-      "sha256": "113f612f7f689ea90924ad0a046dbdfc8eb145d6de74dae6a3e3629d1ad67cff",
+      "sha256": "949da6bd3fd0800082fb58bd40962d281888a62571ca74775bea2bcb4802d480",
       "owner": "platform",
       "changelog": [
         {
@@ -56,7 +56,7 @@
     {
       "name": "fix-issue/prompts/plan.md",
       "path": "flows/fix-issue/prompts/plan.md",
-      "sha256": "bf1330340c0765ea8f23b54dc1589da0d8ce46b0ba1c410f73da393c3745738e",
+      "sha256": "1200d627b2dc369bd1b406825f820e2c0d658c065bcfabd54d28eec8288eb18f",
       "owner": "platform",
       "changelog": [
         {
