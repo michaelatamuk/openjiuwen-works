@@ -153,3 +153,54 @@ def test_open_lan_is_forwarded_to_the_child(paths) -> None:
         open_lan=True,
     )
     assert "--open-lan" in command
+
+
+def _fake_clock(monkeypatch) -> dict[str, float]:
+    clock = {"now": 0.0}
+    monkeypatch.setattr(daemon.time, "monotonic", lambda: clock["now"])
+    monkeypatch.setattr(
+        daemon.time, "sleep", lambda seconds: clock.__setitem__("now", clock["now"] + seconds)
+    )
+    return clock
+
+
+def test_stop_waits_for_a_hung_process_to_release_the_home(paths, monkeypatch) -> None:
+    info = make_info(paths)
+    daemon.write_info(paths, info)
+    monkeypatch.setattr(daemon, "current_daemon", lambda _paths: info)
+    monkeypatch.setattr(daemon, "_still_serving", lambda _info: False)
+    _fake_clock(monkeypatch)
+    checks = {"count": 0, "killed": 0}
+
+    def is_daemon(_info) -> bool:
+        checks["count"] += 1
+        return checks["count"] < 10
+
+    monkeypatch.setattr(daemon, "_pid_is_the_daemon", is_daemon)
+    monkeypatch.setattr(
+        daemon, "_force_stop", lambda pid: checks.__setitem__("killed", checks["killed"] + 1)
+    )
+
+    assert daemon.stop_daemon(paths) == info
+    assert checks["killed"] == 0
+    assert not daemon.info_path(paths).exists()
+
+
+def test_stop_forces_a_process_that_never_exits(paths, monkeypatch) -> None:
+    info = make_info(paths)
+    daemon.write_info(paths, info)
+    monkeypatch.setattr(daemon, "current_daemon", lambda _paths: info)
+    monkeypatch.setattr(daemon, "_still_serving", lambda _info: False)
+    _fake_clock(monkeypatch)
+    state = {"killed": False}
+
+    monkeypatch.setattr(daemon, "_pid_is_the_daemon", lambda _info: not state["killed"])
+
+    def force(pid: int) -> None:
+        state["killed"] = True
+
+    monkeypatch.setattr(daemon, "_force_stop", force)
+
+    assert daemon.stop_daemon(paths) == info
+    assert state["killed"] is True
+    assert not daemon.info_path(paths).exists()

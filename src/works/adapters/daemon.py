@@ -526,6 +526,16 @@ def _still_serving(info: DaemonInfo) -> bool:
     return _health_matches(info)
 
 
+def _wait_gone(info: DaemonInfo, timeout: float) -> bool:
+    """Wait for the process itself, not just its socket: a hung server keeps the home lock."""
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if not _pid_is_the_daemon(info):
+            return True
+        time.sleep(0.1)
+    return not _pid_is_the_daemon(info)
+
+
 def stop_daemon(paths: WorksPaths, *, timeout: float = STOP_TIMEOUT) -> DaemonInfo:
     info = current_daemon(paths)
     if info is None:
@@ -535,17 +545,17 @@ def stop_daemon(paths: WorksPaths, *, timeout: float = STOP_TIMEOUT) -> DaemonIn
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         if not _still_serving(info):
+            # The socket is closed, but Uvicorn can still be draining SSE clients and holding
+            # `.works/state/daemon.lock`. Wait for the process, then force it.
+            if not _wait_gone(info, 5.0):
+                _force_stop(info.pid)
+                if not _wait_gone(info, 5.0):
+                    raise ConfigError(f"the daemon (pid {info.pid}) is still holding the home")
             clear_info(paths)
             return info
         time.sleep(0.1)
-    if _still_serving(info):
-        _force_stop(info.pid)
-        deadline = time.monotonic() + 5.0
-        while time.monotonic() < deadline:
-            if not _still_serving(info):
-                clear_info(paths)
-                return info
-            time.sleep(0.1)
+    _force_stop(info.pid)
+    if not _wait_gone(info, 5.0):
         raise ConfigError(f"the daemon (pid {info.pid}) did not stop")
     clear_info(paths)
     return info

@@ -11,6 +11,16 @@ uv run works --help
 uv run pre-commit install
 ```
 
+`uv sync` makes the venv match `uv.lock` for the extras you name, and removes anything else as
+extraneous. If you also want the live providers, name them in the same command:
+
+```bash
+uv sync --extra dev --extra server --extra providers   # native + dsh + codex + claude
+```
+
+Do not mix `pip install` with `uv sync` in the same environment: the next sync treats pip-installed
+packages as extraneous and removes them.
+
 ## Before a PR
 
 ```bash
