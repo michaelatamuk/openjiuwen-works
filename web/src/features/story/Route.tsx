@@ -83,6 +83,8 @@ function Route({ stages, selected, onSelect, taskState, detail }: RouteProps) {
           <span><i className="legend-dot blocked" />Stopped</span>
         </span>
       </div>
+      {/* Scrollable by design; axe requires the scroll container itself to be focusable. */}
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
       <div className="route-scroll" tabIndex={0} role="region" aria-label="Fix route">
         <div className="route-wrap">
           <svg className="route-svg" viewBox="0 0 1200 380" preserveAspectRatio="none" aria-hidden="true">
@@ -90,18 +92,25 @@ function Route({ stages, selected, onSelect, taskState, detail }: RouteProps) {
             <path className="route-intake" d={intakeD} />
             <path ref={progressRef} className="route-progress" d={routeD} />
           </svg>
-          <div className="route-points" role="list" aria-label="Fix milestones">
-            {points.map(({ stage, display, side, point }, index) => {
+          <div className="route-points" role="group" aria-label="Fix milestones">
+            {points.map(({ stage, display, side, point }) => {
               const copy = display === "source" ? "Reported" : milestoneCopy(stage, display, detail);
               return (
                 <div
                   key={stage.id}
                   className={`milestone ${display} ${side}${stage.kind === "gate" ? " gate" : ""}${stage.id === selected ? " selected" : ""}`}
                   style={{ left: `${(point.x / 1200) * 100}%`, top: `${(point.y / 380) * 100}%` }}
-                  role="listitem"
+                  role="button"
+                  tabIndex={0}
                   aria-label={`${copy}, ${display === "source" ? "origin" : display}${stage.at ? `, ${timeAgo(stage.at)}` : ""}`}
                   aria-current={display === "active" ? "step" : undefined}
                   onClick={() => onSelect(stage.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      onSelect(stage.id);
+                    }
+                  }}
                 >
                   <span className="m-node" aria-hidden="true">{node(display, stage.kind)}</span>
                   <span className="m-copy">

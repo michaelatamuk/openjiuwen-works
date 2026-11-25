@@ -107,8 +107,10 @@ the primary Windows lifecycle path going untested.
   are green. The committed `dist` gate stays on.
 - [ ] **M1.4** Add Zod validation at the HTTP boundary for tasks, detail, health, jobs and settings;
   move `zod` to runtime dependencies if it ships in the bundle.
-- [ ] **M1.5** Add ESLint 9 flat config (`typescript-eslint`, `react-hooks`, `jsx-a11y`, import
-  rules) and a CI `npm run lint`.
+- [x] **M1.5** ESLint 9 flat config with `typescript-eslint`, `react-hooks` and `jsx-a11y`, wired into
+  CI (`npm run lint`). The first run fixed a conditional `useState`, four unassociated form labels,
+  a click-only milestone (now a keyboard-operable button) and evidence media without a captions
+  exception; 7 advisory warnings remain, 0 errors.
 - [x] **M1.6** CI greps `web/src` (excluding `src/test/` raw-JSON fixtures) for `: any`, `as any`,
   `@ts-ignore` and `@ts-expect-error` and fails on any hit; every exported component has an explicit
   props type.

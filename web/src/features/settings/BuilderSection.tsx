@@ -87,7 +87,7 @@ export function BuilderSection({
               ))}
             </div>
             <ProviderSetup ids={PROVIDER_ORDER} providers={providers} />
-            <label className="settings-field">
+            <label className="settings-field" htmlFor="builder-model">
               <span>Model <em>{builderMeta.label} default</em></span>
               <ModelInput
                 id="builder-model"

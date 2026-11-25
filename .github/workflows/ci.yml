@@ -101,6 +101,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
         working-directory: web
+      - name: Lint
+        run: npm run lint
+        working-directory: web
       - name: Unit tests
         run: npm test
         working-directory: web

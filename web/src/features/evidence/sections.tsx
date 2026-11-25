@@ -187,11 +187,11 @@ export type ArtifactsProps = {
 };
 
 function Artifacts({ artifacts, onLightbox }: ArtifactsProps) {
+  const [position, setPosition] = useState(50);
   if (!artifacts?.length) return null;
   const images = artifacts.filter((item) => item.kind === "image");
   const before = images.find((item) => /before/i.test(item.name || item.path || ""));
   const after = images.find((item) => /after/i.test(item.name || item.path || ""));
-  const [position, setPosition] = useState(50);
   return (
     <Card title="Runtime artifacts" actions={artifacts.length}>
       {before && after ? (
@@ -212,6 +212,8 @@ function Artifacts({ artifacts, onLightbox }: ArtifactsProps) {
               <img className="artifact-thumb" src={item.url} alt={item.name} loading="lazy" />
             </button>
           ) : item.kind === "video" ? (
+            // Evidence recordings are screen captures without speech, so there is no track to add.
+            // eslint-disable-next-line jsx-a11y/media-has-caption
             <video className="artifact-video" controls preload="metadata" src={item.url} />
           ) : (
             <a href={item.url} target="_blank" rel="noopener noreferrer">open</a>

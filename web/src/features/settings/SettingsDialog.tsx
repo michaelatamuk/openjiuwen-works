@@ -10,7 +10,6 @@ import {
   PlannerModeCard,
   ProviderCard,
   ProviderSetup,
-  RuntimeCard,
 } from "./cards";
 import {
   PLANNER_MODES_FALLBACK,
@@ -18,7 +17,6 @@ import {
   PROVIDER_FALLBACK,
   PROVIDER_ORDER,
   RUNTIME_FALLBACK,
-  RUNTIME_ORDER,
   credentialLabel,
 } from "./options";
 import type {
@@ -249,7 +247,7 @@ export function SettingsDialog({
                 ))}
               </div>
               <ProviderSetup ids={PLANNER_PROVIDER_ORDER} providers={providers} />
-              <label className="settings-field">
+              <label className="settings-field" htmlFor="planner-model">
                 <span>Planner model <em>{plannerProviderMeta.label} default</em></span>
                 <ModelInput
                   id="planner-model"
@@ -275,7 +273,7 @@ export function SettingsDialog({
                     ))}
                   </div>
                   <ProviderSetup ids={PLANNER_PROVIDER_ORDER} providers={providers} />
-                  <label className="settings-field">
+                  <label className="settings-field" htmlFor="critic-model">
                     <span>Critic model <em>{plannerCriticMeta.label} default</em></span>
                     <ModelInput
                       id="critic-model"
@@ -335,7 +333,7 @@ export function SettingsDialog({
                   ))}
                 </div>
                 <ProviderSetup ids={PROVIDER_ORDER} providers={providers} />
-                <label className="settings-field">
+                <label className="settings-field" htmlFor="verifier-model">
                   <span>Verifier model <em>{verifierMeta.label} default</em></span>
                   <ModelInput
                     id="verifier-model"
