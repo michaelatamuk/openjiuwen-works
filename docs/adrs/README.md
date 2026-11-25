@@ -31,3 +31,4 @@ Format: context, decision, consequences, alternatives rejected.
 - [022 - Gate decisions, identity and expiry](022-gate-identity.md)
 - [023 - Bounded repair attempts](023-repair-attempts.md)
 - [024 - The scheduler runs, never decides](024-scheduler-actor.md)
+- [025 - Ordering is a cost model; a learned ranker must earn it in shadow](025-ordering-cost-model.md)
