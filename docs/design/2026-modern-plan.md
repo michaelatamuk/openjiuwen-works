@@ -149,11 +149,12 @@ the primary Windows lifecycle path going untested.
 
 - [x] **M3.1** Playwright fixture starts/stops a real `works daemon start --write`, resets a temp
   home, and exposes traces/video on failure.
-- [~] **M3.2** Queue → Story → Evidence → Release, Settings pairing, add-context, new task (mobile
+- [x] **M3.2** Queue → Story → Evidence → Release, Settings pairing, add-context, new task (mobile
   composer), revoke and read-only mode are covered by required journeys. `web/e2e/opt-in.spec.ts` adds
   the two journeys that need a secret: a real GitHub issue becomes a tracker task (`WORKS_E2E_GITHUB=1`,
   uses `gh auth token`) and Ask Mira streams an SSE answer (`WORKS_E2E_ASK=1`, needs a model key).
-  Both skip in CI, so they are proven on a laptop rather than gated.
+  Both skip in CI and were proven locally: import passed against issue #1 of the demo repository, and
+  the ask stream ended with `done` and no `error`.
 - [x] **M3.3** `@axe-core/playwright` runs on Queue, Story, Evidence, Release, Session and Settings in
   the E2E job; serious/critical violations fail the build. It already found and forced two fixes:
   low-contrast muted text in the warm palette and a scrollable route that was not keyboard-focusable.
@@ -225,7 +226,7 @@ invariants.
 - [x] **M7.1** Jobs record `heartbeat_at`, `pid`, `daemon_id` (refreshed every 5s while queued or
   running); a bounded queue (`WORKS_MAX_PENDING_JOBS`, default 64) answers `503` with
   `Retry-After: 5`, and a per-task conflict stays `409`. JSON job files are kept; no SQLite yet.
-- [~] **M7.2** `tests/integration/test_crash_matrix.py` covers 30 persisted-job points (five statuses ×
+- [x] **M7.2** `tests/integration/test_crash_matrix.py` covers 30 persisted-job points (five statuses ×
   valid/truncated/empty/unknown-field/non-object) plus a leftover `atomic_write` temp file, an abrupt
   `os._exit` and an externally killed process (`TerminateProcess`/`SIGKILL`). Each asserts the terminal
   state, the readable restart explanation, the released task owner and idempotent re-reconcile.
@@ -252,9 +253,11 @@ invariants.
 - [x] **M8.1** 3.13 is in the matrix (M0.4). 3.14 stays out: `openjiuwen` caps at `<3.14`, so the
   daemon cannot honestly claim support until the provider does (recorded in supply-chain.md).
 - [x] **M8.2** Renovate (better than Dependabot for `uv`) for Python and npm, grouped updates.
-- [~] **M8.3** The `wheel` job builds a CycloneDX SBOM, writes `SHA256SUMS` for the wheel and the
-  SBOM, and uploads both; `pip-audit`, `npm audit --omit=dev` and gitleaks already gate the build.
-  **Open:** an OSV scan, which belongs with the release pipeline (`docs/reference/supply-chain.md`).
+- [x] **M8.3** The `wheel` job builds a CycloneDX SBOM, writes `SHA256SUMS` for the wheel and the
+  SBOM, and uploads both; `pip-audit`, `npm audit --omit=dev` and gitleaks gate the build. The `osv`
+  job scans `uv.lock` and `web/package-lock.json` on push and weekly (run 45596833850 is green); the
+  only findings are filelock advisories blocked by openjiuwen's `<4` pin, recorded with an expiry in
+  `osv-scanner.toml` and explained in `docs/reference/supply-chain.md`.
 - [ ] **M8.4** Clean 3.13 venv wheel install with `--require-hashes`, `works doctor`, daemon
   start/status/stop; no signed-wheel theater until a real publish workflow exists.
 - [x] **M8.5** `docs/guides/runbook.md` documents Task Scheduler and NSSM with a start/health/stop
@@ -272,7 +275,7 @@ invariants.
 - [~] **M9.2** `only_mutate` already lists `queue/index.py` and `api/jobs.py`; a weekly `mutation.yml`
   runs mutmut on Linux and enforces `scripts/mutation_gate.py` at 70%. **Proof pending:** the first
   scheduled run.
-- [x] **M9.3** `scripts/check_docs_links.py` gates 55 files in CI, the contributor guide covers typed
+- [x] **M9.3** `scripts/check_docs_links.py` gates 56 files in CI, the contributor guide covers typed
   components, the async boundary and the renderer, and M0.6 fixed the contradictions. No MkDocs.
 - [x] **M9.4** ADR 018 plus `scripts/check_api_compat.py` and `make api-compat`; the web job still
   regenerates the TypeScript client and fails if the committed output drifts.
