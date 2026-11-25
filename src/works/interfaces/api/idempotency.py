@@ -19,7 +19,13 @@ Send = Callable[[Message], Awaitable[None]]
 Receive = Callable[[], Awaitable[Message]]
 
 TTL_SECONDS = 24 * 60 * 60
-EXCLUDED = ("/api/v1/pair", "/api/v1/session", "/api/v1/admin/", "/api/v1/ask/")
+EXCLUDED = (
+    "/api/v1/pair",
+    "/api/v1/session",
+    "/api/v1/admin/",
+    "/api/v1/ask/",
+    "/api/v1/hooks/",
+)
 
 
 class IdempotencyStore:

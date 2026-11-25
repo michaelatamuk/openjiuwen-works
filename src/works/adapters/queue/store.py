@@ -103,7 +103,7 @@ class Queue:
         task_kind: TaskKind = TaskKind.FIX,
     ) -> tuple[Task, bool]:
         """Return (task, created). A duplicate source returns the existing task."""
-        task_id = make_task_id(source.kind.value, source.ref)
+        task_id = make_task_id(source.kind.value, source.identity)
         with self._root_lock():
             if self.exists(task_id):
                 return self.load(task_id), False

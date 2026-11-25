@@ -20,7 +20,7 @@ version:
   backup/restore, retention, liveness/readiness, SSE limits, prompt provenance and a mutation gate;
 - reconciles the plan with the existing standard in [`plan.md`](plan.md) §6.4, which is stricter
   than v1 in mutation score, circuit breaking, prompt hashes and “no bare threads”;
-- fixes the arithmetic: **69 engineer-days + 20% ≈ 76 days**, not 57 days in 8 weeks.
+- fixes the arithmetic: **81 engineer-days + 20% ≈ 97 days**, not 57 days in 8 weeks.
 
 ## 1. Baseline: done, in flight, new
 
@@ -317,6 +317,28 @@ migration.
   and a Node runtime next to the Python daemon would double the install.
 - [x] **M10.6** `CONTRIBUTING.md` documents the route classes, the single executor and the RSC
   rejection; the ADR index lists 019 and 020.
+
+### M11 — Signal intake 2026 (stage 1, complete)
+
+**Prevents:** a signal that is just a title, arrivals that are polled instead of pushed, and a queue
+where the same problem appears five times.
+
+- [x] **M11.1** `Source` carries severity, labels, links, author, channel, `reproduction_hint`,
+  `received_at` and an explicit `dedupe_key`; the queue dedupes on `dedupe_key or ref`, and old tasks
+  load unchanged.
+- [x] **M11.2** `POST /api/v1/hooks/{source}` verifies HMAC over the raw body, rejects a replayed
+  delivery id, applies a per-source rate limit (`429`), writes an audit line and metrics, and returns
+  `202` only when a task was created. A missing secret is `503`; a bad signature is `401`.
+- [x] **M11.3** `python -m works.mcp_server` speaks MCP over stdio with `submit_signal`, `list_tasks`,
+  `get_task`, `get_evidence` and `get_release_packet`. There is no gate or release tool; a test fails
+  if one appears.
+- [x] **M11.4** `GET /api/v1/inbox` groups tasks by a normalised title; `POST /tasks/{id}/merge`
+  records `task.merged` and blocks the duplicate; the Queue sidebar shows possible duplicates with a
+  Merge button; `POST /inbox/mute` disables a source.
+- [x] **M11.5** `.works/sources.json` is the source registry (enabled, product, repo, secret env,
+  limit); `works sources list|enable|disable` and `GET /api/v1/sources` expose it with metrics.
+- [x] **M11.6** The reproduction hint is stored on the task, copied into evidence and rendered in
+  `evidence.md`; stage 2 sees it as advice and never executes it blindly.
 
 ## 4. Sequencing and gates
 

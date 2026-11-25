@@ -123,6 +123,9 @@ design (M10): only a measured hot read path moves to `async def`.
 | GET | `/api/v1/health` | blocking | kept for compatibility; builder/provider diagnostics |
 | GET | `/api/v1/health/live` | async-safe | no file or model access; cheap liveness |
 | GET | `/api/v1/health/ready` | blocking | probes builder and provider readiness |
+| POST | `/api/v1/hooks/{source}` | blocking | verifies HMAC, writes the task, the audit line and the metrics |
+| GET | `/api/v1/inbox` | blocking | reads tasks and groups possible duplicates |
+| POST | `/api/v1/inbox/mute` | blocking | rewrites the source registry |
 | DELETE | `/api/v1/jobs/{job_id}` | async-safe | sets the in-memory cancel flag |
 | GET | `/api/v1/jobs/{job_id}` | async-safe | reads the in-memory job record |
 | GET | `/api/v1/ledger` | blocking | reads the append-only ledger |
@@ -136,12 +139,14 @@ design (M10): only a measured hot read path moves to `async def`.
 | POST | `/api/v1/session` | async-safe | compares a token against in-memory sessions |
 | GET | `/api/v1/settings/builder` | blocking | reads the builder settings file |
 | POST | `/api/v1/settings/builder` | blocking | writes the builder settings file |
+| GET | `/api/v1/sources` | blocking | reads the source registry and its metrics |
 | POST | `/api/v1/sources` | blocking | submits an import job; the job calls the forge API |
 | GET | `/api/v1/tasks` | async-safe | index page ids then hydrated summaries; no full scan |
 | POST | `/api/v1/tasks` | blocking | writes a task and its event |
 | GET | `/api/v1/tasks/{task_id}` | blocking | reads events, runs and artifacts |
 | GET | `/api/v1/tasks/{task_id}/artifacts/{name:path}` | blocking | streams a file from the run dir |
 | GET | `/api/v1/tasks/{task_id}/export/{kind}` | blocking | builds and streams an export |
+| POST | `/api/v1/tasks/{task_id}/merge` | blocking | records the merge event and transitions the duplicate |
 | GET | `/api/v1/tasks/{task_id}/runs` | blocking | reads run summaries |
 <!-- route-classes:end -->
 

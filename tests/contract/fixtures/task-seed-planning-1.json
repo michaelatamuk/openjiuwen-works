@@ -40,8 +40,16 @@
               "paths_deny": []
             },
             "source": {
+              "author": null,
+              "channel": null,
+              "dedupe_key": null,
               "kind": "manual",
+              "labels": [],
+              "links": [],
+              "received_at": null,
               "ref": "SEED-PLANNING-1",
+              "reproduction_hint": null,
+              "severity": null,
               "title": "A plan waiting for approval"
             },
             "state": "queued",
@@ -592,8 +600,16 @@
       "paths_deny": []
     },
     "source": {
+      "author": null,
+      "channel": null,
+      "dedupe_key": null,
       "kind": "manual",
+      "labels": [],
+      "links": [],
+      "received_at": null,
       "ref": "SEED-PLANNING-1",
+      "reproduction_hint": null,
+      "severity": null,
       "title": "A plan waiting for approval"
     },
     "state": "planning",
@@ -731,8 +747,16 @@
             "paths_deny": []
           },
           "source": {
+            "author": null,
+            "channel": null,
+            "dedupe_key": null,
             "kind": "manual",
+            "labels": [],
+            "links": [],
+            "received_at": null,
             "ref": "SEED-PLANNING-1",
+            "reproduction_hint": null,
+            "severity": null,
             "title": "A plan waiting for approval"
           },
           "state": "queued",

@@ -1,218 +1,211 @@
-# How a fix flows through Works
+# How a fix gets made
 
-Works is a small factory that lives on your computer. A problem goes in, a checked and documented fix
-comes out, and two human approvals sit in the middle. This page walks through the ten stages in plain
-English; the two that need a person are marked **gate**.
+This is the short version of what happens between “a problem was reported” and “the fix is live and
+confirmed”. It is written for product people: no internal names, no code.
+
+There are ten steps and **two moments where a person must say yes**. Nothing ships without those two
+yeses, and the AI cannot give them to itself.
 
 ```mermaid
 flowchart LR
     S1[1 Signal] --> S2[2 Reproduce]
     S2 --> S3[3 Plan]
-    S3 --> G1{4 Plan gate<br/>person}
+    S3 --> G1{4 Plan gate<br/>a person decides}
     G1 --> S5[5 Build]
     S5 --> S6[6 Check]
     S6 --> S7[7 Proof]
-    S7 --> G2{8 Release gate<br/>person}
+    S7 --> G2{8 Release gate<br/>a person decides}
     G2 --> S9[9 Deliver]
     S9 --> S10[10 Confirm]
 ```
 
-The builder never opens a gate. A person does, and the approval is written into the run's history with
-the commit and the proof fingerprint, so it cannot be replayed or forged later.
+## 1. Signal — someone reports a problem
 
-## 1. Signal — read the signal
+A problem can arrive in five ways: a person types it into the app, an issue is pulled in from a
+tracker, monitoring raises it, a source sends it automatically through a signed webhook, or an AI
+assistant tool hands it in.
 
-A problem arrives from one of three places: a person types it in the interface, a tracker issue is
-imported, or monitoring notices something. Works turns it into a task with a title, a source reference,
-a product, a repository and a flow (the recipe for this kind of work). The same source reference is not
-turned into a second task: submitting it twice returns the task that already exists.
+A good signal is more than a sentence. It says how serious it is, who reported it, where it came
+from, links to the original report, and — when possible — how the reporter thinks it can be
+reproduced. Automatic senders prove they are genuine, cannot replay the same message twice, and are
+slowed down if they get noisy.
 
-The task starts in `queued` and appears in the queue, grouped by what it needs from a person. Nothing
-has been read from the repository yet; the signal is only a claim until the next stage confirms it.
+If the same problem arrives twice, it is not silently added again. It is grouped with the existing
+one, and a person can merge it, ignore the source, or turn it into work.
+
+Nothing has been looked at in the code yet. At this point we have a claim, its context, and a hint
+about how to check it. The next step is automatic; a person is only needed if the report is ambiguous
+or looks like a duplicate.
 
 ```mermaid
 flowchart LR
-    A[Person] --> D[New task]
-    B[Tracker issue] --> D
+    A[Person] --> D[Incoming problem]
+    B[Tracker] --> D
     C[Monitoring] --> D
-    D --> Q[Queued in the home]
-    Q --> E[task.created recorded]
+    W[Automatic sender] --> D
+    M[AI assistant] --> D
+    D --> G[Grouped with<br/>similar reports]
+    G --> Q[Task waits in the queue]
 ```
 
-## 2. Reproduce — see the problem happen
+## 2. Reproduce — see the problem actually happen
 
-Works makes a clean copy of the repository (a “worktree”), so the fix will never be written on top of
-somebody's unfinished work. In that copy it runs the command that should demonstrate the bug, usually a
-test. The command's exit code, a short slice of its output and a hash of the full output are stored.
+Works makes a clean copy of the codebase, so the fix is never written on top of somebody’s unfinished
+work. In that copy it runs the check that is supposed to show the bug.
 
-If the command fails, the problem is confirmed and the failure becomes evidence: the fix will have to
-make exactly this check pass. If the command passes, Works stops and marks the task
-`not_reproducible`; building a fix for a problem nobody can see would produce a proof that proves
-nothing.
+- If the check **fails**, the problem is confirmed and that failure is saved as evidence. The fix will
+  have to make exactly that check pass.
+- If the check **passes**, the work stops and the task is marked “could not reproduce”. A fix for a
+  problem nobody can see would produce a proof that proves nothing.
+
+The hint from the report is used as advice here, never executed blindly — the reporter may be wrong
+or the text may be malicious.
 
 ```mermaid
 flowchart LR
-    T[Task] --> W[Clean copy at the base commit]
-    W --> R[Run the reproduce command]
-    R -->|fails| OK[Problem confirmed]
-    R -->|passes| NO[not_reproducible, stop]
+    T[Task] --> C[Clean copy of the code]
+    C --> R[Run the check]
+    R -->|fails| OK[Confirmed]
+    R -->|passes| NO[Cannot reproduce<br/>stop]
 ```
 
-## 3. Plan — decide what will change
+## 3. Plan — agree what will change
 
-Works writes a short, reviewable plan: the scenarios that must pass, the files it expects to touch, the
-base commit, and a hash of the checks themselves. By default the plan is deterministic — the same flow
-and the same scenarios always produce the same plan — so you can compare two plans without guessing
-what the model felt like doing that day.
+Works writes a short plan: which checks must pass, which parts of the product may change, which saved
+version it starts from. By default the plan is mechanical: the same input gives the same plan, so two
+people can compare plans without guessing.
 
-There are also model-assisted modes (a proposal beside the plan, a merged proposal, an independent
-critic), but they all end in the same artefact. A plan is tied to a specific base commit and check set;
-if either moves, the plan is stale and has to be redone rather than silently reused.
+The plan is tied to that exact starting version and to that exact set of checks. If either moves, the
+plan is out of date and has to be redone instead of quietly reused.
 
 ```mermaid
 flowchart LR
-    F[Flow + scenario set] --> P[Plan vN]
-    H[Base commit + checks hash] --> P
-    P --> J[plan.json and plan.md]
-    J --> K[Plan hash for approval]
+    F[Recipe for this kind of work] --> P[Plan]
+    H[Starting version + checks] --> P
+    P --> J[Readable plan for a person]
 ```
 
-## 4. Plan gate — a person says go (**gate**)
+## 4. Plan gate — a person says “yes, this is the right plan” 🔒
 
-A person reads the plan and approves it. Works records who approved, when, the commit, the checks hash
-and the plan hash. That record is part of the task's history, not a checkbox in the interface.
+This is the first mandatory human moment. A person reads the plan and approves it. Works records who
+approved, when, and exactly which plan.
 
-This is the first of the two places where a human is mandatory. The builder, the planner and any
-reviewer model can propose, but none of them can approve. A task without this approval simply cannot
-reach the build stage, and an approval for an older plan no longer matches the hash.
+The builder cannot approve its own plan, and an approval for an older plan no longer counts. A task
+without this yes simply cannot move to building.
 
 ```mermaid
 flowchart LR
-    P[Plan hash] --> H{Person reviews}
-    H -->|approve| A[gate.decided: plan]
-    H -->|no| W[Task waits]
-    A --> B[Build may start]
+    P[Plan] --> H{A person reviews}
+    H -->|approve| A[Approval recorded]
+    H -->|not yet| W[Waits]
+    A --> B[Building may start]
 ```
 
-## 5. Build — make the change
+## 5. Build — the change is made
 
-The chosen engine now works inside the clean copy. The engine is one of Jiuwen native, DeepSeek
-Harness, OpenAI Codex or Claude Code; the model behind it is a separate choice, and both are written
-into the run record so a proof always says what produced it. The engine edits files, runs commands and
-iterates until the plan's checks look satisfied.
+The chosen engine works inside the clean copy: Jiuwen native, DeepSeek, Codex or Claude Code. It edits
+files, runs commands and iterates until the plan’s checks look satisfied.
 
-Works watches the worktree, not the engine's imagination: the changed files are collected from git,
-not from the model's summary. Paths outside the allowed scope, a missing model key, a run over its time
-or token budget, or an engine that stops without a change all end as a visible `blocked` state with a
-reason — never as a quiet success.
+The engine can propose and edit; it cannot approve, release or touch the evidence. The list of changed
+files comes from the codebase itself, not from the engine’s summary. If it goes outside the agreed
+area, runs out of time or money, or stops without a change, the task stops visibly with a reason.
 
 ```mermaid
 flowchart LR
-    P[Approved plan] --> W[Worktree]
+    P[Approved plan] --> W[Clean copy]
     E[Engine + model] --> W
-    W --> C[Commands recorded]
-    C --> D[Changed files collected]
-    D --> N[Attempt finished]
+    W --> C[Changes and commands recorded]
 ```
 
 ## 6. Check — prove the change works
 
-Works runs the scenario scripts from the plan — small, independent programs that assert user-visible
-behaviour — and applies the policy rules (protected paths, forbidden edits). The highest-priority
-scenarios decide the verdict: one failing must-pass scenario blocks the release instead of being
-explained away.
+Works runs the checks from the plan and applies the product’s rules (for example: tests must not be
+edited to make a build pass). The most important checks decide the outcome: one failing must-pass
+check blocks the release instead of being explained away.
 
-A separate reviewer can also challenge the change, ideally with its own model credential, so the same
-mind does not grade its own homework. All outcomes are stored with exit codes and output hashes; the
-summary is a plain ALLOW or BLOCK, not a paragraph of adjectives.
+A separate reviewer can challenge the change, ideally with its own credentials, so the same mind does
+not grade its own homework. The result is a clear allow or block, not a paragraph of adjectives.
 
 ```mermaid
 flowchart LR
-    W[Worktree] --> S[Scenario scripts]
-    W --> P[Policy rules]
+    W[Change] --> S[Must-pass checks]
+    W --> P[Product rules]
     W --> R[Independent reviewer]
-    S --> V{Verdict}
+    S --> V{Allow or block}
     P --> V
     R --> V
-    V -->|all must-pass pass| A[ALLOW]
-    V -->|any must-pass fails| B[BLOCK]
 ```
 
-## 7. Proof — write it down
+## 7. Proof — write it down on one page
 
-Everything is collected on one evidence page: the diff, the file list, command outputs, the verdict,
-the risk level, the decision, the model, the engine, the prompt hash and the cost in tokens and money.
-A fingerprint (SHA-256) is calculated over the bound page, so any later edit is visible.
+Everything is collected on a single evidence page: what changed, what was run, the outcome, the risk,
+which model and engine did the work, and what it cost. A fingerprint ties the page together, so any
+later edit is visible.
 
-The proof is what a person reads at the release gate. It is also what makes two runs comparable: the
-same schema, the same hashes, the same units, whether a fake trace or a live model produced the work.
-The task sits at `proved` at the end of this stage — done, but deliberately not shipped.
+This page is what a person reads before deciding to ship. It is also what makes two pieces of work
+comparable: same layout, same units, whether a test fixture or a live model produced it.
 
 ```mermaid
 flowchart LR
-    D[Diff] --> E[Evidence page]
-    C[Command results] --> E
-    V[Verdict + risk] --> E
-    E --> H[proof_sha256]
-    H --> P[Task proved]
+    D[Changes] --> E[Evidence page]
+    C[Checks] --> E
+    V[Outcome + risk] --> E
+    E --> F[Fingerprint]
+    F --> P[Ready for a person]
 ```
 
-## 8. Release gate — a person says ship (**gate**)
+## 8. Release gate — a person says “yes, ship it” 🔒
 
-A person reviews the release packet: the commit, the proof fingerprint and any blockers. Approving it
-marks the task `released` and records the same kind of history entry as the plan gate.
+This is the second mandatory human moment. A person reviews the release packet: the saved version, the
+fingerprint and any blockers. Approving it marks the task released.
 
-Works refuses to open this gate when the task is not proved, when a must-pass check failed, when the
-policy was violated, or when the gate has no human approval yet. The point is not ceremony: this is the
-last moment before code leaves the machine, and it is deliberately owned by a person.
+Works refuses this gate when the work is not proved, when a must-pass check failed, when a rule was
+broken, or when no person has approved it. This is the last moment before code leaves the machine, and
+it belongs to a person on purpose.
 
 ```mermaid
 flowchart LR
-    P[Proved run] --> K{Release packet}
+    P[Proved work] --> K{Release packet}
     K -->|ready + person approves| R[Released]
-    K -->|not proved / blockers| X[Refuse with reasons]
+    K -->|not proved / blockers| X[Refused with reasons]
 ```
 
-## 9. Deliver — send it back
+## 9. Deliver — send it back where it came from
 
-Works pushes the branch and opens a pull request, and can leave one comment on the original issue.
-Before pushing it checks that the worktree still matches the proof, so nobody delivers a different
-change than the one that was approved. A dry run prepares the branch and the commit but touches
-neither the network nor the forge.
+Works creates a change branch, opens a change request, and can leave one comment on the original
+report. Before sending, it checks that the code still matches the approved proof, so nobody ships a
+different change than the one that was approved.
 
-Repeating the step is safe: the pull request and the comment are found by their marker instead of being
-created twice, and a recorded delivery is reused when the commit has not changed. No token, cookie or
-secret is copied into the output.
+There is also a rehearsal mode that prepares everything but sends nothing. Repeating delivery is safe:
+the same change request and the same comment are found instead of being created twice.
 
 ```mermaid
 flowchart LR
-    R[Released commit] --> B[Branch]
-    B --> P[Push]
-    P --> PR[Pull request]
-    PR --> T[One tracker comment]
-    B -.->|dry run| L[Local commit only]
+    R[Released change] --> B[Change branch]
+    B --> P[Sent for review]
+    P --> PR[Change request + one comment]
+    B -.->|rehearsal| L[Nothing leaves the machine]
 ```
 
-## 10. Confirm — check the result after delivery
+## 10. Confirm — check the real thing afterwards
 
-After the fix is delivered — and optionally deployed by the owner's own command — Works checks the real
-thing: an HTTP endpoint, a command in a fresh copy of the released commit, or the deploy script itself.
-The check is recorded with its exit code and a hash of its output.
+After delivery — and optionally after the owner’s own deployment — Works checks the real result: a
+live address, a command against a fresh copy, or the deployment script itself. The result is stored
+next to the evidence.
 
-A confirmation that fails is not hidden: it is stored beside the evidence and the task says so. When
-everything passes, the story ends with “delivered and confirmed”, which is a very different statement
-from “pushed and hopefully fine”.
+A failed confirmation is not hidden: it is visible beside the proof. When it passes, the story ends
+with “delivered and confirmed”, which is very different from “sent and hopefully fine”.
 
 ```mermaid
 flowchart LR
-    D[Delivered commit] --> C{Confirm}
-    C -->|URL / command / deploy| R[Result recorded]
-    R -->|pass| OK[Closed loop]
+    D[Delivered change] --> C{Confirm}
+    C -->|live check / command / deploy| R[Result recorded]
+    R -->|pass| OK[Delivered and confirmed]
     R -->|fail| B[Visible failure]
 ```
 
 ## The two gates in one sentence
 
-**Plan gate** asks “is this the right plan?” and **release gate** asks “is this proof good enough to
-ship?” — both are answered by a person, both are recorded with the commit and the proof fingerprint,
-and neither can be bypassed by the builder.
+**Plan gate:** “is this the right plan?” **Release gate:** “is this proof good enough to ship?” Both
+are answered by a person, both are recorded with the exact version and proof, and neither can be
+bypassed by the builder.

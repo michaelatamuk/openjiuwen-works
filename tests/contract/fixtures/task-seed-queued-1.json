@@ -40,8 +40,16 @@
               "paths_deny": []
             },
             "source": {
+              "author": null,
+              "channel": null,
+              "dedupe_key": null,
               "kind": "manual",
+              "labels": [],
+              "links": [],
+              "received_at": null,
               "ref": "SEED-QUEUED-1",
+              "reproduction_hint": null,
+              "severity": null,
               "title": "A queued report"
             },
             "state": "queued",
@@ -506,8 +514,16 @@
       "paths_deny": []
     },
     "source": {
+      "author": null,
+      "channel": null,
+      "dedupe_key": null,
       "kind": "manual",
+      "labels": [],
+      "links": [],
+      "received_at": null,
       "ref": "SEED-QUEUED-1",
+      "reproduction_hint": null,
+      "severity": null,
       "title": "A queued report"
     },
     "state": "queued",
@@ -564,8 +580,16 @@
             "paths_deny": []
           },
           "source": {
+            "author": null,
+            "channel": null,
+            "dedupe_key": null,
             "kind": "manual",
+            "labels": [],
+            "links": [],
+            "received_at": null,
             "ref": "SEED-QUEUED-1",
+            "reproduction_hint": null,
+            "severity": null,
             "title": "A queued report"
           },
           "state": "queued",

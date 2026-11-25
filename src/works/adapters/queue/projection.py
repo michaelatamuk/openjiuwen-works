@@ -130,6 +130,7 @@ def _apply(task: Task | None, event: Event) -> Task:
         "thread.agent",
         "thread.commentary",
         "thread.discussion",
+        "task.merged",
     ):
         return task.model_copy(update={"updated_at": event.ts})
 

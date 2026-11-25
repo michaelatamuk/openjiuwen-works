@@ -36,6 +36,8 @@ function renderQueue(overrides: Partial<QueueProps> = {}) {
     query: "",
     onQuery: vi.fn(),
     writable: true,
+    inbox: null,
+    onMerge: vi.fn(),
     onNew: vi.fn(),
     ...overrides,
   };

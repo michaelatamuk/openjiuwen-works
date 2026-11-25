@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, isUnauthorized, waitForJob } from "../api/client";
-import type { Health, Job, TaskDetail, TaskSummary } from "../api/client";
+import type { Health, Inbox, Job, TaskDetail, TaskSummary } from "../api/client";
 import type { BuilderSettings } from "../features/settings/types";
 import type { EvidenceDetail, EvidenceTimelineEvent } from "../features/evidence/Evidence";
 import type { QueueTask } from "../features/queue/Queue";
@@ -174,6 +174,7 @@ function queueTask(task: TaskSummary): QueueTask {
 export default function App() {
   const [health, setHealth] = useState<AppHealth | null>(null);
   const [tasks, setTasks] = useState<TaskSummary[]>([]);
+  const [inbox, setInbox] = useState<Inbox | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [detail, setDetail] = useState<AppDetail | null>(null);
   const [view, setView] = useState<ViewId>(() => {
@@ -211,6 +212,7 @@ export default function App() {
     try {
       const data = await api.tasks(200);
       setTasks(data.tasks || []);
+      api.inbox().then(setInbox).catch(() => setInbox(null));
     } catch (error) {
       if (isUnauthorized(error)) {
         setAuthNeeded(true);
@@ -219,6 +221,19 @@ export default function App() {
       notify(`Queue unavailable: ${errorMessage(error)}`);
     }
   }, [notify]);
+
+  const mergeTask = useCallback(
+    async (taskId: string, into: string) => {
+      try {
+        await api.mergeTask(taskId, into);
+        notify("Merged the duplicate into the older task.");
+        await loadTasks();
+      } catch (error) {
+        notify(`Merge failed: ${errorMessage(error)}`);
+      }
+    },
+    [loadTasks, notify],
+  );
 
   const loadDetail = useCallback(async (id: string | null) => {
     if (!id) return;
@@ -437,6 +452,8 @@ export default function App() {
         query={query}
         onQuery={setQuery}
         writable={Boolean(health?.write)}
+        inbox={inbox}
+        onMerge={mergeTask}
         onNew={() => setDialog("new")}
       />
       <main className="main">

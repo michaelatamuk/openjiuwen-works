@@ -47,3 +47,30 @@
 .signin-error {
   color: var(--red);
 }
+
+.inbox {
+  margin: 10px 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line, #d9d2c5);
+  border-radius: 10px;
+  background: var(--panel, #fffdf8);
+}
+.inbox h2 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.inbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+.inbox-row span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+

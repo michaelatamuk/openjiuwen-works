@@ -121,6 +121,7 @@
       "step": "reproduce",
       "timed_out": false
     },
+    "reproduction_hint": null,
     "risk": {
       "deeper_verification": false,
       "files": 1,
@@ -245,8 +246,16 @@
               "paths_deny": []
             },
             "source": {
+              "author": null,
+              "channel": null,
+              "dedupe_key": null,
               "kind": "manual",
+              "labels": [],
+              "links": [],
+              "received_at": null,
               "ref": "SEED-PROVED-1",
+              "reproduction_hint": null,
+              "severity": null,
               "title": "A proved fix"
             },
             "state": "queued",
@@ -1089,8 +1098,16 @@
       "paths_deny": []
     },
     "source": {
+      "author": null,
+      "channel": null,
+      "dedupe_key": null,
       "kind": "manual",
+      "labels": [],
+      "links": [],
+      "received_at": null,
       "ref": "SEED-PROVED-1",
+      "reproduction_hint": null,
+      "severity": null,
       "title": "A proved fix"
     },
     "state": "proved",
@@ -1394,8 +1411,16 @@
             "paths_deny": []
           },
           "source": {
+            "author": null,
+            "channel": null,
+            "dedupe_key": null,
             "kind": "manual",
+            "labels": [],
+            "links": [],
+            "received_at": null,
             "ref": "SEED-PROVED-1",
+            "reproduction_hint": null,
+            "severity": null,
             "title": "A proved fix"
           },
           "state": "queued",

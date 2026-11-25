@@ -25,6 +25,11 @@ def render_markdown(evidence: Evidence) -> str:
         "",
         f"**Task kind** `{evidence.task_kind}`",
         "",
+        *(
+            [f"**Reproduction hint** {evidence.reproduction_hint}", ""]
+            if evidence.reproduction_hint
+            else []
+        ),
         f"**Checks SHA-256** `{evidence.checks_sha or '—'}`",
         "",
         f"**State** `{evidence.state.value}` · **Stop reason** `{evidence.stop_reason.value}`",

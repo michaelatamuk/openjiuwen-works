@@ -17,6 +17,24 @@ from works.domain.records import Source, SourceKind, TaskKind
 Result = tuple[HTTPStatus, dict[str, Any]]
 
 
+def _string_list(value: object, name: str, *, limit: int, max_len: int) -> list[str]:
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        raise ValueError(f"{name} must be a list of strings")
+    if len(value) > limit:
+        raise ValueError(f"{name} has more than {limit} items")
+    items: list[str] = []
+    for item in value:
+        text = str(item).strip()
+        if not text:
+            continue
+        if len(text) > max_len:
+            raise ValueError(f"{name} item is longer than {max_len} characters")
+        items.append(text)
+    return items
+
+
 def create_task(paths: WorksPaths, payload: dict[str, Any], lock: threading.Lock) -> Result:
     repo_raw = str(payload.get("repo") or "").strip()
     ref = str(payload.get("ref") or "").strip()
@@ -49,10 +67,31 @@ def create_task(paths: WorksPaths, payload: dict[str, Any], lock: threading.Lock
         task_kind = TaskKind(str(payload.get("task_kind") or "fix"))
     except ValueError as exc:
         raise ValueError("task_kind must be fix or check-change") from exc
+    severity = payload.get("severity")
+    if severity is not None:
+        severity = str(severity).strip().upper()
+        if severity not in ("S1", "S2", "S3", "S4"):
+            raise ValueError("severity must be S1, S2, S3 or S4")
+    labels = _string_list(payload.get("labels"), "labels", limit=20, max_len=40)
+    links = _string_list(payload.get("links"), "links", limit=10, max_len=500)
+    dedupe_key = str(payload.get("dedupe_key") or "").strip() or None
+    if dedupe_key is not None and len(dedupe_key) > 200:
+        raise ValueError("dedupe_key is longer than 200 characters")
     queue = Queue(paths)
     with lock:
         task, created = queue.submit(
-            source=Source(kind=source_kind, ref=ref, title=title),
+            source=Source(
+                kind=source_kind,
+                ref=ref,
+                title=title,
+                severity=severity,
+                labels=labels,
+                links=links,
+                author=str(payload.get("author") or "").strip() or None,
+                channel=str(payload.get("channel") or "").strip() or None,
+                reproduction_hint=str(payload.get("reproduction_hint") or "").strip() or None,
+                dedupe_key=dedupe_key,
+            ),
             flow=flow,
             product=product,
             repo=str(repo),

@@ -59,6 +59,7 @@ class Evidence(BaseModel):
     flow: str
     product: str
     source: str
+    reproduction_hint: str | None = None
     task_kind: str = "fix"
     base_commit: str | None = None
     checks_sha: str | None = None

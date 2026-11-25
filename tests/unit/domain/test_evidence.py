@@ -251,3 +251,12 @@ def test_model_calls_are_part_of_the_proof() -> None:
     assert with_calls.proof_sha256 != without.proof_sha256
     page = render_markdown(with_calls)
     assert "| build | `deepseek` | `deepseek-chat` | `1.2.3` | 1200 | 0.0042 |" in page
+
+
+def test_the_page_shows_the_reproduction_hint() -> None:
+    evidence = fixed_evidence().model_copy(
+        update={"reproduction_hint": "pytest -q tests/test_core.py"}
+    )
+    page = render_markdown(evidence)
+    assert "Reproduction hint" in page
+    assert "pytest -q tests/test_core.py" in page

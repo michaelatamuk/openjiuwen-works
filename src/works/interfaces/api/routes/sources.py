@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from fastapi import APIRouter, Depends, Request
@@ -39,4 +40,28 @@ def import_sources(request: Request, payload: dict[str, Any]) -> JSONResponse:
     return JSONResponse(
         status_code=202,
         content={"ok": True, "action": "sources", "job": job.as_dict()},
+    )
+
+
+@router.get("/sources")
+def list_sources(request: Request) -> JSONResponse:
+    state = _state(request)
+    from works.application import webhooks
+
+    metrics = webhooks.read_metrics(state.paths)
+    entries = webhooks.load_registry(state.paths)
+    return JSONResponse(
+        status_code=200,
+        content={
+            "ok": True,
+            "sources": [
+                {
+                    **config.model_dump(exclude={"secret_env"}),
+                    "secret_env": config.secret_env,
+                    "secret_set": bool(os.environ.get(config.secret_env)),
+                    "metrics": metrics.get(name, {}),
+                }
+                for name, config in entries.items()
+            ],
+        },
     )

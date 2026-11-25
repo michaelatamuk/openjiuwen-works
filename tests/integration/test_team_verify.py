@@ -14,6 +14,10 @@ AGENT_PYTHON = Path(
 AGENT_CORE = Path(os.environ.get("WORKS_AGENT_CORE") or r"C:\Workspace\openjiuwen\agent-core")
 ROOT = Path(__file__).resolve().parents[2]
 
+# The real agent-core runtime is a heavyweight external checkout. Its handshake is an opt-in
+# integration (`pytest -m slow`), not part of the default suite; agent-core tests itself.
+pytestmark = pytest.mark.slow
+
 
 @pytest.mark.skipif(not AGENT_PYTHON.exists(), reason="agent-core checkout is not available")
 def test_agent_core_team_returns_a_deterministic_verdict(tmp_path) -> None:

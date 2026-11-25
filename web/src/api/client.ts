@@ -12,6 +12,10 @@ import {
 export type Health = components["schemas"]["Health"];
 export type TaskSummary = components["schemas"]["TaskSummary"];
 export type TaskList = components["schemas"]["TaskList"];
+
+export type InboxTask = { id: string; state: string; title: string; source: string };
+export type InboxGroup = { key: string; tasks: InboxTask[] };
+export type Inbox = { ok: boolean; duplicates: InboxGroup[]; groups: number };
 export type TaskDetail = components["schemas"]["TaskDetail"];
 export type RunSummary = components["schemas"]["RunSummary"];
 export type RunList = components["schemas"]["RunList"];
@@ -317,6 +321,18 @@ export const api = {
     request<JobEnvelope>("/sources", {
       method: "POST",
       body,
+      idempotencyKey: newIdempotencyKey(),
+    }),
+  inbox: () => request<Inbox>("/inbox"),
+  mergeTask: (taskId: string, into: string) =>
+    request<{ ok: boolean; merged: string; into: string }>(
+      `/tasks/${encodeURIComponent(taskId)}/merge`,
+      { method: "POST", body: { into }, idempotencyKey: newIdempotencyKey() },
+    ),
+  muteSource: (source: string) =>
+    request<{ ok: boolean; source: { name: string; enabled: boolean } }>("/inbox/mute", {
+      method: "POST",
+      body: { source },
       idempotencyKey: newIdempotencyKey(),
     }),
   devices: () => request<{ ok: boolean; devices: Device[] }>("/admin/devices"),

@@ -1,6 +1,7 @@
 import type { ChangeEvent } from "react";
 
 import { groups, riskLabel, riskTone, stateLabel, timeAgo } from "../../lib/format.js";
+import type { Inbox } from "../../api/client";
 import { Pill } from "../../ui/primitives";
 
 export type QueueTask = {
@@ -27,6 +28,8 @@ export type QueueProps = {
   query: string;
   onQuery: (value: string) => void;
   writable: boolean;
+  inbox: Inbox | null;
+  onMerge: (taskId: string, into: string) => void;
   onNew: () => void;
 };
 
@@ -45,6 +48,8 @@ export function Queue({
   query,
   onQuery,
   writable,
+  inbox,
+  onMerge,
   onNew,
 }: QueueProps) {
   const products = [...new Set(tasks.map((task) => task.product).filter(Boolean))].sort();
@@ -124,6 +129,27 @@ export function Queue({
         <button className="btn report-btn" type="button" onClick={onNew}>
           + New task
         </button>
+      ) : null}
+
+      {inbox && inbox.duplicates.length ? (
+        <section className="inbox" aria-label="Possible duplicates">
+          <h2>Possible duplicates</h2>
+          {inbox.duplicates.slice(0, 3).map((group) => (
+            <div className="inbox-row" key={group.key}>
+              <span className="small" title={group.tasks[0].title}>
+                {group.tasks[0].title}
+              </span>
+              <button
+                className="btn"
+                type="button"
+                disabled={!writable}
+                onClick={() => onMerge(group.tasks[1].id, group.tasks[0].id)}
+              >
+                Merge
+              </button>
+            </div>
+          ))}
+        </section>
       ) : null}
 
       <div className="task-list" aria-live="polite">

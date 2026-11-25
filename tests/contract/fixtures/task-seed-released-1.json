@@ -161,6 +161,7 @@
       "step": "reproduce",
       "timed_out": false
     },
+    "reproduction_hint": null,
     "risk": {
       "deeper_verification": false,
       "files": 1,
@@ -285,8 +286,16 @@
               "paths_deny": []
             },
             "source": {
+              "author": null,
+              "channel": null,
+              "dedupe_key": null,
               "kind": "manual",
+              "labels": [],
+              "links": [],
+              "received_at": null,
               "ref": "SEED-RELEASED-1",
+              "reproduction_hint": null,
+              "severity": null,
               "title": "A released and delivered fix"
             },
             "state": "queued",
@@ -1242,8 +1251,16 @@
       "paths_deny": []
     },
     "source": {
+      "author": null,
+      "channel": null,
+      "dedupe_key": null,
       "kind": "manual",
+      "labels": [],
+      "links": [],
+      "received_at": null,
       "ref": "SEED-RELEASED-1",
+      "reproduction_hint": null,
+      "severity": null,
       "title": "A released and delivered fix"
     },
     "state": "released",
@@ -1701,8 +1718,16 @@
             "paths_deny": []
           },
           "source": {
+            "author": null,
+            "channel": null,
+            "dedupe_key": null,
             "kind": "manual",
+            "labels": [],
+            "links": [],
+            "received_at": null,
             "ref": "SEED-RELEASED-1",
+            "reproduction_hint": null,
+            "severity": null,
             "title": "A released and delivered fix"
           },
           "state": "queued",
