@@ -468,6 +468,8 @@ async def _verify(
         verdict.model_dump_json(indent=2) + "\n", encoding="utf-8", newline="\n"
     )
     if not verdict.allow:
+        if ctx.stop_reason is StopReason.FLAKY_TEST:
+            return False
         return _retry_or_stop(
             sup,
             ctx,

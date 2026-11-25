@@ -279,6 +279,11 @@ def render_markdown(evidence: Evidence) -> str:
             else []
         ),
         *(
+            [f"- skipped checks: `{', '.join(evidence.skipped_checks)}`"]
+            if evidence.skipped_checks
+            else []
+        ),
+        *(
             [
                 f"- plan estimate: `{evidence.plan_estimated_tokens}` tokens / "
                 f"`${evidence.plan_estimated_usd:.4f}` / "

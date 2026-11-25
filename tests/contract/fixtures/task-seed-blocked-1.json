@@ -156,6 +156,7 @@
     },
     "run_id": "<run-id>",
     "schema_version": 1,
+    "skipped_checks": [],
     "source": "manual:SEED-BLOCKED-1",
     "state": "blocked",
     "stop_reason": "verdict_failed",

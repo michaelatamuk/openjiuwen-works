@@ -291,7 +291,18 @@ export function Evidence({ detail, onShowRun, onAction, onLightbox, onOpenEvent 
         <Pipeline stages={stages} />
         <Card
           title="Run metadata"
-          actions={<button type="button" className="btn ghost" onClick={onShowRun}>Open run</button>}
+          actions={
+            <>
+              <button type="button" className="btn ghost" onClick={onShowRun}>
+                Open run
+              </button>
+              {task.state === "released" ? (
+                <button type="button" className="btn ghost" onClick={() => onAction("confirm")}>
+                  Re-check
+                </button>
+              ) : null}
+            </>
+          }
         >
           <dl className="kv">
             <dt>Run</dt><dd className="mono">{detail.run?.run_id || "—"}</dd>

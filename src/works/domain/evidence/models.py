@@ -105,6 +105,7 @@ class Evidence(BaseModel):
     attempts: int = 1
     baseline_exit: int | None = None
     baseline_output_sha256: str | None = None
+    skipped_checks: list[str] = Field(default_factory=list)
     files_changed: list[str] = Field(default_factory=list)
     diff_stat: list[DiffStatRow] = Field(default_factory=list)
     policy: PolicyReport = Field(default_factory=lambda: PolicyReport(ok=True))

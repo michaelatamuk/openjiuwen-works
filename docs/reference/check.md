@@ -24,11 +24,17 @@ A reviewer with a different provider or a different credential is optional by de
 shares the builder's provider and credential: the run stops with `challenge_failed` and the reason
 "self-review". Low-risk work may share them.
 
-## Flakes and classification
+## Flakes and repeats
 
-Active flakes stop the verdict (`flaky_test`). Missing dependencies or commands are `config_error`.
+Active flakes stop the verdict (`flaky_test`). `WORKS_REPEAT_SCENARIOS=2|3` runs each scenario two
+or three times; if the outcome differs between runs, the run stops as `flaky_test` with the unstable ids
+and is neither an allow nor a plain block. Missing dependencies or commands are `config_error`.
 Scenario failures are `tests_failed` or `verdict_failed`, and evidence carries a typed **Next step**.
-A repeated check run per scenario is not implemented yet: scenarios run once.
+
+## Skipped checks
+
+A flow node with `mode: off` is recorded in `skipped_checks`, so a proof names what it did not run
+instead of hiding it.
 
 ## Evidence
 

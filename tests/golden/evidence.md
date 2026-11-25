@@ -12,7 +12,7 @@
 
 **State** `proved` · **Stop reason** `completed`
 
-**Proof SHA-256** `4f4f4d426fb2ae7ee7be73d80eb835a59fc2bd7ab2cf80643f24d52caaaefef8`
+**Proof SHA-256** `5911e8406c25b83839c05cbbd642a2b6ee14971c656138b38e3e7b9b1b0c267f`
 
 ## Verdict
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from typing import TYPE_CHECKING
 
 from works.adapters.harness.base import Proposal, ProposalRequest
@@ -100,15 +101,41 @@ async def _challenge(sup: Supervisor, ctx: RunContext, proposal: Proposal) -> Ch
     return challenge
 
 
+def repeats() -> int:
+    raw = os.environ.get("WORKS_REPEAT_SCENARIOS", "1")
+    try:
+        value = int(raw)
+    except ValueError:
+        return 1
+    return max(1, min(3, value))
+
+
 async def _judge(sup: Supervisor, ctx: RunContext) -> Verdict:
     scenario_set = _required(ctx.scenario_set, "scenario set")
     _required(ctx.scenario_dir, "scenario directory")
     _required(ctx.worktree, "worktree")
-    tasks: list[tuple[Scenario, asyncio.Task[ScenarioOutcome]]] = []
+    count = repeats()
+
+    async def once(scenario: Scenario) -> tuple[ScenarioOutcome, bool]:
+        results = [await sup._run_scenario(ctx, scenario) for _ in range(count)]
+        mixed = any(result.passed != results[0].passed for result in results)
+        if mixed:
+            failed = results[0].model_copy(update={"passed": False, "exit_code": -1})
+            return failed, True
+        return results[0], False
+
+    tasks: list[tuple[Scenario, asyncio.Task[tuple[ScenarioOutcome, bool]]]] = []
     async with asyncio.TaskGroup() as group:
         for scenario in scenario_set.scenarios:
-            tasks.append((scenario, group.create_task(sup._run_scenario(ctx, scenario))))
-    outcomes = [task.result() for _, task in tasks]
+            tasks.append((scenario, group.create_task(once(scenario))))
+    outcomes = [task.result()[0] for _, task in tasks]
+    unstable = [scenario.id for scenario, task in tasks if task.result()[1]]
+    if unstable:
+        sup._stop(
+            ctx,
+            StopReason.FLAKY_TEST,
+            detail=f"unstable scenario(s) across {count} runs: {', '.join(unstable)}",
+        )
     return judge(outcomes, run_id=ctx.run_id)
 
 

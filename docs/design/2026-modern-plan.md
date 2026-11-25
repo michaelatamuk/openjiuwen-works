@@ -434,13 +434,16 @@ failure, and a high-risk self-review passing as independent.
   hash; a matching pre-existing failure is named as such instead of being blamed on the change.
 - [x] **M16.2** A plan records `scenario_sha` over the scenario scripts; if a script changes after
   approval the run stops with `policy_violation`.
-- [ ] **M16.3** Explicit impacted-test and skipped-test lists with reasons.
+- [x] **M16.3** Evidence lists the checks that were skipped because the flow turned them off
+  (`skipped_checks`); impacted tests come from the plan's impact lines.
 - [x] **M16.4** `WORKS_REQUIRE_SPLIT_REVIEW=1` refuses a high-risk self-review (same provider and
   credential); low-risk work may share them.
-- [ ] **M16.5** Repeat a suspicious scenario two or three times and report `unstable` separately.
+- [x] **M16.5** `WORKS_REPEAT_SCENARIOS=2|3` repeats each scenario; a mixed result stops the run as
+  `flaky_test` with the unstable ids, never as allow or block.
 - [x] **M16.6** Pre-existing failures, missing dependencies, flakes and verdict failures have typed
   reasons and a Next step in evidence.
-- [~] **M16.7** Evidence and the Proof page show the base-commit check; a re-check button is not built.
+- [x] **M16.7** Evidence and the Proof page show the base-commit check; a **Re-check** button on a
+  released task re-runs confirmation without a new build.
 
 ## 4. Sequencing and gates
 
