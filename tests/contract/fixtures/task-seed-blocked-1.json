@@ -112,7 +112,14 @@
       "step": "reproduce",
       "timed_out": false
     },
+    "reproduction_attempts": 2,
+    "reproduction_command": [],
+    "reproduction_env": {
+      "python": "3.12.13"
+    },
     "reproduction_hint": null,
+    "reproduction_source": null,
+    "reproduction_stable": true,
     "risk": {
       "deeper_verification": false,
       "files": 1,
@@ -238,6 +245,10 @@
             "kind": "fix",
             "product": "Fixture",
             "repo": "<repo>",
+            "repo_ref": null,
+            "repo_url": null,
+            "reproduction_command": [],
+            "reproduction_source": null,
             "schema_version": 1,
             "scope": {
               "paths_allow": [],
@@ -286,6 +297,23 @@
         },
         "stage": "signal",
         "type": "step.started"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "step": "reproduce"
+        },
+        "stage": "reproduce",
+        "type": "step.started"
+      },
+      {
+        "at": "<timestamp>",
+        "data": {
+          "exit_code": 1,
+          "step": "reproduce"
+        },
+        "stage": "reproduce",
+        "type": "step.finished"
       },
       {
         "at": "<timestamp>",
@@ -1063,6 +1091,10 @@
     "kind": "fix",
     "product": "Fixture",
     "repo": "<repo>",
+    "repo_ref": null,
+    "repo_url": null,
+    "reproduction_command": [],
+    "reproduction_source": null,
     "schema_version": 1,
     "scope": {
       "paths_allow": [],
@@ -1129,6 +1161,22 @@
     },
     {
       "at": "<timestamp>",
+      "body": "The failing check failed on the base commit, as expected.",
+      "card": null,
+      "facts": [
+        "reproduce"
+      ],
+      "generated": false,
+      "generated_label": "",
+      "role": "verifier",
+      "seq": 7,
+      "stance": "",
+      "title": "Reproduction confirmed",
+      "tone": "ok",
+      "type": "step.finished"
+    },
+    {
+      "at": "<timestamp>",
       "body": "Deterministic plan for fix-issue on Fixture: 4 flow nodes and 3 scenarios.",
       "card": {
         "kind": "question",
@@ -1180,7 +1228,7 @@
       "generated": false,
       "generated_label": "",
       "role": "builder",
-      "seq": 8,
+      "seq": 10,
       "stance": "",
       "title": "Plan drafted",
       "tone": "",
@@ -1196,7 +1244,7 @@
       "generated": false,
       "generated_label": "",
       "role": "verifier",
-      "seq": 9,
+      "seq": 11,
       "stance": "",
       "title": "Decision: ask",
       "tone": "",
@@ -1232,7 +1280,7 @@
       "generated": false,
       "generated_label": "",
       "role": "person",
-      "seq": 11,
+      "seq": 13,
       "stance": "",
       "title": "Plan approved",
       "tone": "ok",
@@ -1246,7 +1294,7 @@
       "generated": false,
       "generated_label": "",
       "role": "builder",
-      "seq": 13,
+      "seq": 15,
       "stance": "",
       "title": "Build attempt 1 started",
       "tone": "",
@@ -1262,7 +1310,7 @@
       "generated": false,
       "generated_label": "",
       "role": "builder",
-      "seq": 14,
+      "seq": 16,
       "stance": "",
       "title": "Proposal received",
       "tone": "",
@@ -1278,7 +1326,7 @@
       "generated": false,
       "generated_label": "",
       "role": "verifier",
-      "seq": 15,
+      "seq": 17,
       "stance": "",
       "title": "Risk: low",
       "tone": "",
@@ -1294,7 +1342,7 @@
       "generated": false,
       "generated_label": "",
       "role": "verifier",
-      "seq": 18,
+      "seq": 20,
       "stance": "",
       "title": "Tests passed",
       "tone": "ok",
@@ -1322,7 +1370,7 @@
       "generated": false,
       "generated_label": "",
       "role": "challenger",
-      "seq": 19,
+      "seq": 21,
       "stance": "",
       "title": "Independent check allowed",
       "tone": "ok",
@@ -1336,7 +1384,7 @@
       "generated": false,
       "generated_label": "",
       "role": "system",
-      "seq": 20,
+      "seq": 22,
       "stance": "",
       "title": "State: blocked",
       "tone": "bad",
@@ -1360,6 +1408,10 @@
           "kind": "fix",
           "product": "Fixture",
           "repo": "<repo>",
+          "repo_ref": null,
+          "repo_url": null,
+          "reproduction_command": [],
+          "reproduction_source": null,
           "schema_version": 1,
           "scope": {
             "paths_allow": [],
@@ -1429,11 +1481,28 @@
     },
     {
       "data": {
+        "step": "reproduce"
+      },
+      "seq": 6,
+      "ts": "<timestamp>",
+      "type": "step.started"
+    },
+    {
+      "data": {
+        "exit_code": 1,
+        "step": "reproduce"
+      },
+      "seq": 7,
+      "ts": "<timestamp>",
+      "type": "step.finished"
+    },
+    {
+      "data": {
         "from": "reproducing",
         "reason": "",
         "to": "reproduced"
       },
-      "seq": 6,
+      "seq": 8,
       "ts": "<timestamp>",
       "type": "state.changed"
     },
@@ -1443,7 +1512,7 @@
         "reason": "",
         "to": "planning"
       },
-      "seq": 7,
+      "seq": 9,
       "ts": "<timestamp>",
       "type": "state.changed"
     },
@@ -1510,7 +1579,7 @@
         },
         "version": 1
       },
-      "seq": 8,
+      "seq": 10,
       "ts": "<timestamp>",
       "type": "plan.drafted"
     },
@@ -1530,7 +1599,7 @@
         "trace_id": "",
         "verb": "ask"
       },
-      "seq": 9,
+      "seq": 11,
       "ts": "<timestamp>",
       "type": "decision.made"
     },
@@ -1540,7 +1609,7 @@
         "reason": "",
         "to": "plan_approved"
       },
-      "seq": 10,
+      "seq": 12,
       "ts": "<timestamp>",
       "type": "state.changed"
     },
@@ -1557,7 +1626,7 @@
         "required_reviewers": 1,
         "risk": null
       },
-      "seq": 11,
+      "seq": 13,
       "ts": "<timestamp>",
       "type": "gate.decided"
     },
@@ -1567,7 +1636,7 @@
         "reason": "",
         "to": "building"
       },
-      "seq": 12,
+      "seq": 14,
       "ts": "<timestamp>",
       "type": "state.changed"
     },
@@ -1575,7 +1644,7 @@
       "data": {
         "attempt": 1
       },
-      "seq": 13,
+      "seq": 15,
       "ts": "<timestamp>",
       "type": "attempt.started"
     },
@@ -1590,7 +1659,7 @@
         "tokens": 1300,
         "usd": 0.013
       },
-      "seq": 14,
+      "seq": 16,
       "ts": "<timestamp>",
       "type": "note"
     },
@@ -1608,7 +1677,7 @@
         "rounded_up": false,
         "schema_version": 1
       },
-      "seq": 15,
+      "seq": 17,
       "ts": "<timestamp>",
       "type": "risk.rated"
     },
@@ -1618,7 +1687,7 @@
         "reason": "",
         "to": "checking"
       },
-      "seq": 16,
+      "seq": 18,
       "ts": "<timestamp>",
       "type": "state.changed"
     },
@@ -1626,7 +1695,7 @@
       "data": {
         "step": "test"
       },
-      "seq": 17,
+      "seq": 19,
       "ts": "<timestamp>",
       "type": "step.started"
     },
@@ -1635,7 +1704,7 @@
         "exit_code": 0,
         "step": "test"
       },
-      "seq": 18,
+      "seq": 20,
       "ts": "<timestamp>",
       "type": "step.finished"
     },
@@ -1653,7 +1722,7 @@
         "usd": 0.0,
         "version": "fixture-1"
       },
-      "seq": 19,
+      "seq": 21,
       "ts": "<timestamp>",
       "type": "challenge.decided"
     },
@@ -1663,7 +1732,7 @@
         "reason": "",
         "to": "blocked"
       },
-      "seq": 20,
+      "seq": 22,
       "ts": "<timestamp>",
       "type": "state.changed"
     }

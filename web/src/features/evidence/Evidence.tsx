@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import { fmtMs, fmtUsd, shortSha } from "../../lib/format.js";
 import { Card, EmptyProof, Pill } from "../../ui/primitives";
@@ -101,6 +101,12 @@ export type EvidencePayload = {
   challenge?: EvidenceChallenge | null;
   verdict?: EvidenceVerdict | null;
   reproduce?: EvidenceCommandResult | null;
+  reproduction_command?: string[];
+  reproduction_source?: string | null;
+  reproduction_attempts?: number;
+  reproduction_stable?: boolean;
+  reproduction_env?: Record<string, string>;
+  reproduction_hint?: string | null;
   test?: EvidenceCommandResult | null;
   preview?: EvidenceCommandResult | null;
   diff?: string | null;
@@ -205,6 +211,60 @@ export type EvidenceProps = {
 
 type ExportLink = [label: string, kind: string];
 
+function ReproductionCard({
+  evidence,
+  onAction,
+}: {
+  evidence?: EvidencePayload | null;
+  onAction: (action: string, body?: Record<string, unknown>) => unknown;
+}) {
+  const [command, setCommand] = useState("");
+  const current = evidence?.reproduction_command || [];
+  return (
+    <Card
+      title="How to reproduce"
+      actions={
+        <Pill tone={evidence?.reproduction_stable === false ? "amber" : "green"}>
+          {evidence?.reproduction_source || "not recorded"}
+        </Pill>
+      }
+    >
+      <dl className="kv">
+        <dt>Command</dt>
+        <dd className="mono">{current.length ? current.join(" ") : "?"}</dd>
+        <dt>Attempts</dt>
+        <dd>{evidence?.reproduction_attempts ?? 1}</dd>
+        <dt>Stable</dt>
+        <dd>{evidence?.reproduction_stable === false ? "no ? rerun changed the result" : "yes"}</dd>
+        <dt>Reporter hint</dt>
+        <dd>{evidence?.reproduction_hint || "?"}</dd>
+        <dt>Environment</dt>
+        <dd className="mono">
+          {evidence?.reproduction_env
+            ? Object.entries(evidence.reproduction_env).map(([key, value]) => `${key}=${value}`).join(", ")
+            : "?"}
+        </dd>
+      </dl>
+      <div className="export-row">
+        <input
+          aria-label="Reproduction command"
+          placeholder={current.join(" ") || "python -m pytest -q"}
+          value={command}
+          onChange={(event) => setCommand(event.target.value)}
+        />
+        <button
+          className="btn"
+          type="button"
+          disabled={!command.trim()}
+          onClick={() => onAction("set-reproduction", { command })}
+        >
+          Save command
+        </button>
+      </div>
+    </Card>
+  );
+}
+
 export function Evidence({ detail, onShowRun, onAction, onLightbox, onOpenEvent }: EvidenceProps) {
   const evidence = detail.evidence;
   const task = detail.task;
@@ -254,6 +314,7 @@ export function Evidence({ detail, onShowRun, onAction, onLightbox, onOpenEvent 
         <Findings findings={evidence?.findings} />
         <ChallengeCard challenge={evidence?.challenge} />
         <Commands evidence={evidence} />
+        <ReproductionCard evidence={evidence} onAction={onAction} />
         <Change evidence={evidence} />
         <Readiness readiness={detail.readiness} onRun={() => onAction("run-readiness")} />
         <Features features={detail.features} />

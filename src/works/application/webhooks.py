@@ -261,7 +261,12 @@ def handle(
         return 422, {"ok": False, "error": str(exc)}
 
     task, created = (queue or Queue(paths)).submit(
-        source=source, flow="fix-issue", product=product, repo=str(repo)
+        source=source,
+        flow="fix-issue",
+        product=product,
+        repo=str(repo),
+        repo_url=str(payload.get("repo_url") or "").strip() or None,
+        repo_ref=str(payload.get("repo_ref") or "").strip() or None,
     )
     if delivery:
         remember_delivery(paths, delivery)

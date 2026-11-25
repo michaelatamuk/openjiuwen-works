@@ -60,6 +60,11 @@ class Evidence(BaseModel):
     product: str
     source: str
     reproduction_hint: str | None = None
+    reproduction_command: list[str] = Field(default_factory=list)
+    reproduction_source: str | None = None
+    reproduction_attempts: int = 1
+    reproduction_stable: bool = True
+    reproduction_env: dict[str, str] = Field(default_factory=dict)
     task_kind: str = "fix"
     base_commit: str | None = None
     checks_sha: str | None = None

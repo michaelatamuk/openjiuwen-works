@@ -226,6 +226,23 @@ def render_markdown(evidence: Evidence) -> str:
         lines += ["| Path | Reason |", "|---|---|"]
         for violation in evidence.policy.violations:
             lines.append(f"| `{_cell(violation.path)}` | {_cell(violation.reason)} |")
+    if evidence.reproduction_command or evidence.reproduction_hint:
+        lines.append("")
+        lines.append("## Reproduce")
+        lines.append("")
+        if evidence.reproduction_command:
+            lines.append(f"- command: `{' '.join(evidence.reproduction_command)}`")
+        if evidence.reproduction_source:
+            lines.append(f"- source: `{_cell(evidence.reproduction_source)}`")
+        lines.append(f"- attempts: `{evidence.reproduction_attempts}`")
+        lines.append(f"- stable: `{'yes' if evidence.reproduction_stable else 'no'}`")
+        if evidence.reproduction_env:
+            pairs = (f"{key}={value}" for key, value in evidence.reproduction_env.items())
+            env_text = ", ".join(pairs)
+            lines.append(f"- environment: `{_cell(env_text)}`")
+        if evidence.reproduction_hint:
+            lines.append(f"- reporter hint: {evidence.reproduction_hint}")
+        lines.append("")
     lines.append("")
     lines += [
         "## Cost",

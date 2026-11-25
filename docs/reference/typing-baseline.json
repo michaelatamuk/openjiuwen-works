@@ -4,7 +4,7 @@
     "--disallow-any-explicit",
     "--warn-return-any"
   ],
-  "total": 337,
+  "total": 341,
   "files": {
     "src/works/adapters/daemon.py": 4,
     "src/works/adapters/harness/base.py": 1,
@@ -82,7 +82,7 @@
     "src/works/interfaces/api/read.py": 1,
     "src/works/interfaces/api/routes/actions.py": 6,
     "src/works/interfaces/api/routes/ask.py": 1,
-    "src/works/interfaces/api/routes/inbox.py": 5,
+    "src/works/interfaces/api/routes/inbox.py": 6,
     "src/works/interfaces/api/routes/jobs.py": 2,
     "src/works/interfaces/api/routes/maps.py": 2,
     "src/works/interfaces/api/routes/observability.py": 2,
@@ -98,6 +98,7 @@
     "src/works/interfaces/cli/commands/common.py": 1,
     "src/works/interfaces/cli/commands/gates.py": 1,
     "src/works/interfaces/cli/commands/maintenance.py": 3,
+    "src/works/interfaces/cli/commands/reproduce.py": 3,
     "src/works/interfaces/cli/commands/run.py": 7,
     "src/works/interfaces/cli/commands/sources.py": 2,
     "src/works/interfaces/cli/commands/wiring.py": 2,

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import shlex
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -15,13 +16,15 @@ from works.application.planning.memory import PlanMemory
 from works.application.planning.service import (
     plan_deviations,
 )
+from works.application.reproduce import detect, env
+from works.application.reproduce.classify import is_setup_failure
 from works.application.run_context import RunContext, _required
 from works.domain.errors import (
     ConfigError,
     NotFoundError,
     StateError,
 )
-from works.domain.flow import GateMode, Node
+from works.domain.flow import GateMode, Node, NodeKind
 from works.domain.policy import PolicyReport, Violation, check_patch, check_paths, paths_from_patch
 from works.domain.records import (
     StopReason,
@@ -67,7 +70,39 @@ async def _prepare(
         sup._move(ctx, TaskState.REPRODUCING)
         ctx.base_commit = ctx.base_commit or repo.head()
         ctx.worktree = sup._prepare_worktree(ctx, repo, ctx.base_commit)
-        reproduce = await sup._run_node(ctx, "reproduce", flow.node("reproduce"))
+        ctx.reproduction = detect.choose(
+            Path(task.repo or repo.path), task.source.reproduction_hint
+        )
+        ctx.reproduction_env = env.fingerprint(sup._paths, repo.path)
+        node = flow.node("reproduce")
+        if task.reproduction_command:
+            node = node.model_copy(
+                update={
+                    "cmd": shlex.join(task.reproduction_command),
+                    "kind": NodeKind.DETERMINISTIC,
+                }
+            )
+        reproduce = await sup._run_node(ctx, "reproduce", node)
+        if not reproduce.ok:
+            if is_setup_failure(reproduce.output):
+                ctx.reproduction_stable = False
+                sup._stop(
+                    ctx,
+                    StopReason.CONFIG_ERROR,
+                    detail="the reproduction failed on missing dependencies or a missing command",
+                )
+                return False
+            again = await sup._run_node(ctx, "reproduce", node)
+            ctx.reproduction_attempts = 2
+            if again.ok:
+                ctx.reproduction_stable = False
+                sup._stop(
+                    ctx,
+                    StopReason.FLAKY_TEST,
+                    detail="the reproduction failed once and passed on a second run",
+                )
+                return False
+            reproduce = again
         ctx.reproduce = reproduce.record("reproduce")
         if reproduce.ok:
             ctx.state = TaskState.REPRODUCING

@@ -147,6 +147,7 @@ design (M10): only a measured hot read path moves to `async def`.
 | GET | `/api/v1/tasks/{task_id}/artifacts/{name:path}` | blocking | streams a file from the run dir |
 | GET | `/api/v1/tasks/{task_id}/export/{kind}` | blocking | builds and streams an export |
 | POST | `/api/v1/tasks/{task_id}/merge` | blocking | records the merge event and transitions the duplicate |
+| POST | `/api/v1/tasks/{task_id}/reproduction` | blocking | records a person's reproduction command on the task |
 | GET | `/api/v1/tasks/{task_id}/runs` | blocking | reads run summaries |
 <!-- route-classes:end -->
 

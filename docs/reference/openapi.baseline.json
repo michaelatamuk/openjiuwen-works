@@ -1963,6 +1963,55 @@
         "summary": "Merge"
       }
     },
+    "/api/v1/tasks/{task_id}/reproduction": {
+      "post": {
+        "operationId": "set_reproduction_api_v1_tasks__task_id__reproduction_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "task_id",
+            "required": true,
+            "schema": {
+              "title": "Task Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Payload",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Reproduction"
+      }
+    },
     "/api/v1/tasks/{task_id}/runs": {
       "get": {
         "operationId": "task_runs_api_v1_tasks__task_id__runs_get",

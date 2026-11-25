@@ -29,6 +29,7 @@ from works.application.planning.service import (
     PlannerContext,
     PlanStore,
 )
+from works.application.reproduce import resolver
 from works.application.run_context import RunContext, new_run_id
 from works.application.supervisor import execution, planning, recording, verification
 from works.config.logging import get_logger
@@ -125,11 +126,11 @@ class Supervisor:
             raise StateError(
                 f"task {task_id} is {task.state.value}; resume from this state lands in M1"
             )
-        repo = self._repo(task)
+        repo, checkout_base = self._checkout(task)
         plan = self._latest_plan(task.id) if task.state is not TaskState.QUEUED else None
         if task.state is not TaskState.QUEUED and plan is None:
             raise StateError(f"cannot resume {task.state.value} without a plan")
-        current_base = repo.head()
+        current_base = checkout_base or repo.head()
         base = str(plan["base_commit"]) if plan is not None else current_base
         trusted = load_trusted_flow(repo, base, task.flow, self._flows_dir)
         flow = trusted.flow
@@ -188,11 +189,20 @@ class Supervisor:
                 self._queue.release(task_id, run_id)
         return record
 
-    def _repo(self, task: Task) -> GitRepo:
+    def _checkout(self, task: Task) -> tuple[GitRepo, str | None]:
+        """A local clone as before, or a managed clone resolved to the requested ref."""
+        if task.repo_url:
+            found = resolver.checkout(
+                self._paths, task.repo_url, task.repo_ref, runner=self._runner
+            )
+            return resolver.open_checkout(found.path), found.commit
         repo = GitRepo(Path(task.repo).expanduser().resolve(), self._runner)
         if not repo.is_repo():
             raise ConfigError(f"not a git repository: {repo.path}")
-        return repo
+        return repo, None
+
+    def _repo(self, task: Task) -> GitRepo:
+        return self._checkout(task)[0]
 
     def _apply_quarantine(self, flow: FlowSpec, path: Path, repo: GitRepo) -> FlowSpec:
         quarantine = load_quarantine(path, repo.path)

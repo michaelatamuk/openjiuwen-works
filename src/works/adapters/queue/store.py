@@ -101,6 +101,8 @@ class Queue:
         budget: Budget | None = None,
         scope: Scope | None = None,
         task_kind: TaskKind = TaskKind.FIX,
+        repo_url: str | None = None,
+        repo_ref: str | None = None,
     ) -> tuple[Task, bool]:
         """Return (task, created). A duplicate source returns the existing task."""
         task_id = make_task_id(source.kind.value, source.identity)
@@ -115,6 +117,8 @@ class Queue:
                 flow=flow,
                 product=product,
                 repo=repo,
+                repo_url=repo_url,
+                repo_ref=repo_ref,
                 source=source,
                 kind=task_kind,
                 budget=budget or Budget(),

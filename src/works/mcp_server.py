@@ -33,6 +33,8 @@ TOOLS = [
                 "kind": {"type": "string", "enum": ["manual", "tracker", "detector"]},
                 "product": {"type": "string"},
                 "repo": {"type": "string"},
+                "repo_url": {"type": "string"},
+                "repo_ref": {"type": "string"},
                 "severity": {"type": "string", "enum": ["S1", "S2", "S3", "S4"]},
                 "labels": {"type": "array", "items": {"type": "string"}},
                 "links": {"type": "array", "items": {"type": "string"}},
@@ -86,9 +88,15 @@ def _tool_submit(paths: WorksPaths, arguments: dict[str, Any]) -> dict[str, Any]
 
     product = str(arguments.get("product") or "openjiuwen").strip()
     repo_raw = str(arguments.get("repo") or "").strip()
+    repo_url = str(arguments.get("repo_url") or "").strip() or None
+    repo_ref = str(arguments.get("repo_ref") or "").strip() or None
     from pathlib import Path
 
-    repo = Path(repo_raw).expanduser().resolve() if repo_raw else resolve_repo(paths, product)
+    repo = (
+        Path(repo_raw).expanduser().resolve()
+        if repo_raw
+        else (Path() if repo_url else resolve_repo(paths, product))
+    )
     source = Source(
         kind=SourceKind(str(arguments.get("kind") or "manual")),
         ref=str(arguments["ref"]),
@@ -102,7 +110,12 @@ def _tool_submit(paths: WorksPaths, arguments: dict[str, Any]) -> dict[str, Any]
         dedupe_key=arguments.get("dedupe_key"),
     )
     task, created = Queue(paths).submit(
-        source=source, flow="fix-issue", product=product, repo=str(repo)
+        source=source,
+        flow="fix-issue",
+        product=product,
+        repo=str(repo) if repo_url is None else "",
+        repo_url=repo_url,
+        repo_ref=repo_ref,
     )
     return {"task": task.id, "created": created, "state": task.state.value}
 

@@ -34,6 +34,10 @@
             "kind": "fix",
             "product": "Fixture",
             "repo": "<repo>",
+            "repo_ref": null,
+            "repo_url": null,
+            "reproduction_command": [],
+            "reproduction_source": null,
             "schema_version": 1,
             "scope": {
               "paths_allow": [],
@@ -508,6 +512,10 @@
     "kind": "fix",
     "product": "Fixture",
     "repo": "<repo>",
+    "repo_ref": null,
+    "repo_url": null,
+    "reproduction_command": [],
+    "reproduction_source": null,
     "schema_version": 1,
     "scope": {
       "paths_allow": [],
@@ -574,6 +582,10 @@
           "kind": "fix",
           "product": "Fixture",
           "repo": "<repo>",
+          "repo_ref": null,
+          "repo_url": null,
+          "reproduction_command": [],
+          "reproduction_source": null,
           "schema_version": 1,
           "scope": {
             "paths_allow": [],

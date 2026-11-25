@@ -53,6 +53,10 @@ ROUTE_CLASSES: dict[str, tuple[RouteClass, str]] = {
     "POST /api/v1/settings/builder": ("blocking", "writes the builder settings file"),
     "POST /api/v1/sources": ("blocking", "submits an import job; the job calls the forge API"),
     "GET /api/v1/tasks": ("async-safe", "index page ids then hydrated summaries; no full scan"),
+    "POST /api/v1/tasks/{task_id}/reproduction": (
+        "blocking",
+        "records a person's reproduction command on the task",
+    ),
     "POST /api/v1/tasks/{task_id}/merge": (
         "blocking",
         "records the merge event and transitions the duplicate",

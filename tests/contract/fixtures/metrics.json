@@ -13,7 +13,7 @@
         "task_id": "<task-id>",
         "tokens": 1200,
         "usd": 0.012,
-        "waiting_ms": 514285
+        "waiting_ms": 469565
       },
       {
         "duration_ms": 0,
@@ -23,7 +23,7 @@
         "task_id": "<task-id>",
         "tokens": 1200,
         "usd": 0.012,
-        "waiting_ms": 466666
+        "waiting_ms": 434482
       },
       {
         "duration_ms": 0,
@@ -33,7 +33,7 @@
         "task_id": "<task-id>",
         "tokens": 1300,
         "usd": 0.013,
-        "waiting_ms": 189473
+        "waiting_ms": 171428
       },
       {
         "duration_ms": 0,
@@ -63,6 +63,6 @@
     "tasks": 5,
     "tokens": 3700,
     "usd": 0.037,
-    "waiting_ms": 1170424
+    "waiting_ms": 1075475
   }
 }

@@ -72,6 +72,10 @@ class Task(BaseModel):
     source: Source
     kind: TaskKind = TaskKind.FIX
     state: TaskState = TaskState.QUEUED
+    repo_url: str | None = None
+    repo_ref: str | None = None
+    reproduction_command: list[str] = Field(default_factory=list)
+    reproduction_source: str | None = None
     budget: Budget = Field(default_factory=Budget)
     scope: Scope = Field(default_factory=Scope)
     created_at: datetime = Field(default_factory=utcnow)

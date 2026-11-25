@@ -100,6 +100,16 @@ def _apply(task: Task | None, event: Event) -> Task:
             }
         )
 
+    if event.type == "reproduction.set":
+        command = [str(item) for item in event.data.get("command") or []]
+        return task.model_copy(
+            update={
+                "reproduction_command": command,
+                "reproduction_source": str(event.data.get("source") or "person"),
+                "updated_at": event.ts,
+            }
+        )
+
     if event.type in (
         "note",
         "plan.drafted",

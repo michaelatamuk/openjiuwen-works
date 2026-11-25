@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shlex
 import threading
 from http import HTTPStatus
 from pathlib import Path
@@ -37,13 +38,21 @@ def _string_list(value: object, name: str, *, limit: int, max_len: int) -> list[
 
 def create_task(paths: WorksPaths, payload: dict[str, Any], lock: threading.Lock) -> Result:
     repo_raw = str(payload.get("repo") or "").strip()
+    repo_url = str(payload.get("repo_url") or "").strip() or None
+    repo_ref = str(payload.get("repo_ref") or "").strip() or None
+    if repo_url is not None and len(repo_url) > 500:
+        raise ValueError("repo_url is longer than 500 characters")
+    if repo_ref is not None and len(repo_ref) > 200:
+        raise ValueError("repo_ref is longer than 200 characters")
     ref = str(payload.get("ref") or "").strip()
     title = str(payload.get("title") or "").strip()
     product = str(payload.get("product") or "openjiuwen").strip()
     flow = str(payload.get("flow") or "fix-issue").strip()
     if not product:
         raise ValueError("product is required")
-    if repo_raw:
+    if repo_url is not None:
+        repo = Path(repo_raw) if repo_raw else Path()
+    elif repo_raw:
         repo = Path(repo_raw).expanduser()
         repo = (Path.cwd() / repo).resolve() if not repo.is_absolute() else repo.resolve()
     else:
@@ -51,10 +60,11 @@ def create_task(paths: WorksPaths, payload: dict[str, Any], lock: threading.Lock
             repo = resolve_repo(paths, product)
         except ConfigError as exc:
             raise ValueError(str(exc)) from exc
-    if not repo.is_dir():
-        raise ValueError(f"repository does not exist: {repo}")
-    if not (repo / ".git").exists():
-        raise ValueError(f"not a git repository: {repo}")
+    if repo_url is None:
+        if not repo.is_dir():
+            raise ValueError(f"repository does not exist: {repo}")
+        if not (repo / ".git").exists():
+            raise ValueError(f"not a git repository: {repo}")
     if not ref or not title:
         raise ValueError("reference and title are required")
     if len(ref) > 120 or len(title) > 240:
@@ -94,8 +104,10 @@ def create_task(paths: WorksPaths, payload: dict[str, Any], lock: threading.Lock
             ),
             flow=flow,
             product=product,
-            repo=str(repo),
+            repo=str(repo) if repo_url is None else "",
             task_kind=task_kind,
+            repo_url=repo_url,
+            repo_ref=repo_ref,
         )
     return (
         HTTPStatus.CREATED if created else HTTPStatus.OK,
@@ -142,6 +154,28 @@ def run_action(paths: WorksPaths, payload: dict[str, Any], lock: threading.Lock)
             question = str(payload.get("question") or "").strip()
             answer = ask_mira(paths, task_id, question)
             return HTTPStatus.OK, {"ok": True, "action": action, "answer": answer}
+        if action == "set-reproduction":
+            raw = payload.get("command")
+            if isinstance(raw, str):
+                command = shlex.split(raw, posix=True)
+            elif isinstance(raw, list):
+                command = [str(item) for item in raw]
+            else:
+                raise ValueError("command must be a list of strings or a quoted string")
+            if not command or len(command) > 20 or any(len(item) > 200 for item in command):
+                raise ValueError("command must have 1-20 non-empty parts")
+            event = queue.append(
+                task_id, "reproduction.set", {"command": command, "source": "person"}
+            )
+            return (
+                HTTPStatus.OK,
+                {
+                    "ok": True,
+                    "action": action,
+                    "command": command,
+                    "event": event.model_dump(mode="json"),
+                },
+            )
         if action == "commentary":
             from works.application.assistant.chat import generate_commentary
 

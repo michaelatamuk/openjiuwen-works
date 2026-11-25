@@ -11,6 +11,7 @@ from typing import Any
 from works.adapters.harness.base import Proposal
 from works.application.approvals.decisions import GateVerdict
 from works.application.execution.scenarios import ScenarioSet
+from works.application.reproduce.detect import Detection
 from works.domain.errors import StateError
 from works.domain.evidence import Artifact
 from works.domain.flow import FlowSpec
@@ -39,6 +40,10 @@ class RunContext:
     started_at: datetime = field(default_factory=lambda: datetime.now(tz=UTC))
     commands: list[CommandRecord] = field(default_factory=list)
     reproduce: CommandRecord | None = None
+    reproduction: Detection | None = None
+    reproduction_attempts: int = 1
+    reproduction_stable: bool = True
+    reproduction_env: dict[str, str] = field(default_factory=dict)
     test: CommandRecord | None = None
     preview: CommandRecord | None = None
     artifacts: list[Artifact] = field(default_factory=list)

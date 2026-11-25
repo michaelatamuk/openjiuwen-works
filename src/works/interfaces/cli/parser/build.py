@@ -13,6 +13,7 @@ from works.interfaces.cli.parser.intake import add_intake_commands
 from works.interfaces.cli.parser.maintenance import add_maintenance_commands
 from works.interfaces.cli.parser.memory import add_memory_commands
 from works.interfaces.cli.parser.plan import add_plan_commands
+from works.interfaces.cli.parser.reproduce import add_reproduce_commands
 from works.interfaces.cli.parser.run import add_run_commands
 from works.interfaces.cli.parser.sources import add_sources_commands
 from works.interfaces.cli.parser.tasks import add_tasks_commands
@@ -30,6 +31,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_daemon_commands(sub)
     add_delivery_commands(sub)
     add_intake_commands(sub)
+    add_reproduce_commands(sub)
     add_sources_commands(sub)
     add_inspect_commands(sub)
     add_memory_commands(sub)

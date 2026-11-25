@@ -50,23 +50,47 @@ flowchart LR
 
 ## 2. Reproduce — see the problem actually happen
 
-Works makes a clean copy of the codebase, so the fix is never written on top of somebody’s unfinished
-work. In that copy it runs the check that is supposed to show the bug.
+Works gets the right code first. A report can point at a link to the repository plus a specific
+branch, saved version or proposed change (a pull request); Works keeps its own copy and checks out
+exactly what was asked for. If that version does not exist, the task stops with a clear reason
+instead of quietly using the main branch. A local folder still works for offline use.
 
-- If the check **fails**, the problem is confirmed and that failure is saved as evidence. The fix will
-  have to make exactly that check pass.
-- If the check **passes**, the work stops and the task is marked “could not reproduce”. A fix for a
-  problem nobody can see would produce a proof that proves nothing.
+It then takes an untouched copy of exactly that version: nobody’s uncommitted changes, no other
+branch mixed in. The fix will be written there, never in the folder where people are working.
 
-The hint from the report is used as advice here, never executed blindly — the reporter may be wrong
-or the text may be malicious.
+Next it decides **how to test the problem**, in this order:
+
+1. the repository’s own instruction, when the team provided one;
+2. the failing test named in the report, if the report names one;
+3. the standard test command for that kind of project (Python, Node, Go, Rust, Java).
+
+It records which of the three it used, so the proof says whether a person chose the test or Works
+picked a default.
+
+The test runs with that project’s own dependencies, prepared separately, so it does not matter what
+is installed on your machine. Works never downloads dependencies silently during a run; a person
+prepares the environment once.
+
+- **fails on both runs** — the problem is confirmed, and that failure becomes the evidence the fix must satisfy;
+- **fails once, passes on a second try** — “flaky”: not confirmed, because the proof would be built on luck;
+- **fails because something is missing** — a setup problem with a clear reason, not a bug;
+- **passes** — the test does not show the problem; the work stops as “could not reproduce”.
+
+The person can see the command on the Proof page (“How to reproduce”) and replace it when they know a
+better one. The reporter’s hint is shown as advice and never executed blindly.
 
 ```mermaid
-flowchart LR
-    T[Task] --> C[Clean copy of the code]
-    C --> R[Run the check]
-    R -->|fails| OK[Confirmed]
-    R -->|passes| NO[Cannot reproduce<br/>stop]
+flowchart TD
+    A["Report with a repository link and an exact version<br/>(branch, pull-request number or commit)"] --> B["Separate copy of exactly that version<br/>no local edits, no other branch mixed in"]
+    B --> C{"How is the test chosen?"}
+    C -->|"1. Repository's own instruction"| D["Run that test twice"]
+    C -->|"2. Failing test named in the report"| D
+    C -->|"3. Standard test for this project type"| D
+    D --> E{"What happened?"}
+    E -->|"Fails both times"| OK["Bug confirmed<br/>continue"]
+    E -->|"Passes both times"| NO["Cannot reproduce<br/>stop"]
+    E -->|"Fails once, passes once"| FL["Flaky test<br/>stop: the proof would be luck"]
+    E -->|"Dependency or command missing"| S["Setup problem<br/>stop with the reason"]
 ```
 
 ## 3. Plan — agree what will change
@@ -103,7 +127,7 @@ flowchart LR
 
 ## 5. Build — the change is made
 
-The chosen engine works inside the clean copy: Jiuwen native, DeepSeek, Codex or Claude Code. It edits
+The chosen engine works inside that untouched copy: Jiuwen native, DeepSeek, Codex or Claude Code. It edits
 files, runs commands and iterates until the plan’s checks look satisfied.
 
 The engine can propose and edit; it cannot approve, release or touch the evidence. The list of changed

@@ -340,6 +340,29 @@ where the same problem appears five times.
 - [x] **M11.6** The reproduction hint is stored on the task, copied into evidence and rendered in
   `evidence.md`; stage 2 sees it as advice and never executes it blindly.
 
+### M12 ? Reproduce 2026 (stage 2, complete)
+
+**Prevents:** a reproduction that depends on whatever happens to be cloned and installed on the
+laptop, and a "bug" that is really a missing dependency or a flaky test.
+
+- [x] **M12.1** A task can name `repo_url` and `repo_ref` (branch, tag, SHA, `pull/<n>`); managed
+  clones live under `<home>/repos/<slug>`, fetch instead of recloning, resolve the ref or fail with a
+  configuration error, and support an offline cache (`works reproduce checkout`).
+- [x] **M12.2** `works reproduce detect` chooses `.works/reproduce.yaml`, then a narrowed signal, then
+  the ecosystem manifest (Python, Node, Go, Rust, Java) and records why. The proof names the source.
+- [x] **M12.3** `works reproduce prepare` builds a per-repository environment (venv + requirements, or
+  `npm ci`/`npm install`), records the runtime and lockfile fingerprint, and never installs silently
+  during a run.
+- [x] **M12.4** A failing test node or quoted command in the report narrows the check; free text does
+  not invent one.
+- [x] **M12.5** A failed reproduction is retried once: a flaky result stops as `flaky_test`, a missing
+  module or command stops as `config_error`, and a check that passes is `not_reproducible`.
+- [x] **M12.6** Evidence records the reproduction command, its source, attempts, stability and
+  environment; `evidence.md` renders a **Reproduce** section.
+- [x] **M12.7** The Evidence page has a **How to reproduce** card (command, source, attempts,
+  stability, environment, reporter hint) and a field that saves a person's command through
+  `POST /tasks/{id}/reproduction`.
+
 ## 4. Sequencing and gates
 
 ### Phase 0 — Land the safety floor (week 1)
@@ -380,7 +403,7 @@ decision; RSC ADR; OTel no-op trace and <5% overhead.
 
 ### Effort
 
-M0 6 + M1 11 + M2 5 + M3 8 + M4 4 + M5 4 + M6 14 + M7 6 + M8 4 + M9 2 + M10 6 =
+M0 6 + M1 11 + M2 5 + M3 8 + M4 4 + M5 4 + M6 14 + M7 6 + M8 4 + M9 2 + M10 6 + M11 12 + M12 14 =
 **69 engineer-days**, **~83 with 20% contingency**. That is **13–16 weeks for one engineer**, or
 **9–10 weeks with two** (one backend/data, one web/reliability). The v1 8-week/57-day schedule was
 arithmetically impossible.

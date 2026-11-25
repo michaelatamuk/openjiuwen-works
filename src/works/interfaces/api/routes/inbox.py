@@ -8,6 +8,7 @@ Merging records the decision and blocks the duplicate; it never deletes history.
 from __future__ import annotations
 
 import re
+import shlex
 from typing import Any
 
 from fastapi import APIRouter, Depends, Request
@@ -111,3 +112,22 @@ def mute(request: Request, payload: dict[str, Any]) -> JSONResponse:
     with state.write_lock:
         webhooks.save_registry(state.paths, entries)
     return JSONResponse(status_code=200, content={"ok": True, "source": config.model_dump()})
+
+
+@router.post("/tasks/{task_id}/reproduction", dependencies=[Depends(require_write)])
+def set_reproduction(task_id: str, request: Request, payload: dict[str, Any]) -> JSONResponse:
+    state = _state(request)
+    raw = payload.get("command")
+    if isinstance(raw, str):
+        command = shlex.split(raw, posix=True)
+    elif isinstance(raw, list):
+        command = [str(item) for item in raw]
+    else:
+        raise ConfigError("command must be a list of strings or a quoted string")
+    if not command or len(command) > 20 or any(len(item) > 200 for item in command):
+        raise ConfigError("command must have 1-20 non-empty parts")
+    queue = Queue(state.paths)
+    with state.write_lock:
+        queue.load(task_id)
+        queue.append(task_id, "reproduction.set", {"command": command, "source": "person"})
+    return JSONResponse(status_code=200, content={"ok": True, "command": command})

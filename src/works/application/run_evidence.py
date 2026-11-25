@@ -152,6 +152,17 @@ def build_evidence(
         product=ctx.flow.product,
         source=f"{ctx.task.source.kind.value}:{ctx.task.source.ref}",
         reproduction_hint=ctx.task.source.reproduction_hint,
+        reproduction_command=(
+            ctx.task.reproduction_command
+            or (ctx.reproduction.command if ctx.reproduction is not None else [])
+        ),
+        reproduction_source=(
+            ctx.task.reproduction_source
+            or (ctx.reproduction.source if ctx.reproduction is not None else None)
+        ),
+        reproduction_attempts=ctx.reproduction_attempts,
+        reproduction_stable=ctx.reproduction_stable,
+        reproduction_env=dict(ctx.reproduction_env),
         task_kind=ctx.task.kind.value,
         base_commit=ctx.base_commit,
         checks_sha=ctx.checks_sha,
