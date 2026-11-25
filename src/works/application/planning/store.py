@@ -16,6 +16,7 @@ from works.domain.plan import (
     PlanProposal,
     PlanProvenance,
     PlanStatus,
+    PlanStep,
     PlanValidation,
     PlanVersion,
     plan_hash,
@@ -204,3 +205,81 @@ class PlanStore:
 
     def all(self, task_id: str) -> list[PlanVersion]:
         return [self.load(task_id, version) for version in self.versions(task_id)]
+
+    def diff(self, task_id: str) -> str:
+        """A human-readable change list between the last two versions."""
+        versions = self.versions(task_id)
+        if len(versions) < 2:
+            return "no previous version"
+        before = self.load(task_id, versions[-2])
+        after = self.load(task_id, versions[-1])
+        old = {step.id or step.node: step for step in before.steps}
+        new = {step.id or step.node: step for step in after.steps}
+        lines = [f"v{before.version} -> v{after.version}"]
+        for key in sorted(set(old) | set(new)):
+            if key not in old:
+                lines.append(f"+ {key}")
+            elif key not in new:
+                lines.append(f"- {key}")
+            elif old[key] != new[key]:
+                lines.append(f"~ {key}")
+        for name, field in (("summary", "summary"), ("rollback", "rollback")):
+            if getattr(before, field) != getattr(after, field):
+                lines.append(f"~ {name}")
+        if before.verification != after.verification:
+            lines.append("~ verification")
+        return "\n".join(lines) if len(lines) > 1 else "no changes"
+
+    def revise(
+        self,
+        task_id: str,
+        steps: list[PlanStep],
+        *,
+        comment: str = "",
+        by: str = "person",
+    ) -> PlanVersion:
+        """A person's edit is a new draft version; the previous approval is superseded."""
+        latest = self.load(task_id)
+        if not steps:
+            raise ConfigError("a plan needs at least one step")
+        allowed = set(latest.nodes)
+        for step in steps:
+            if step.node not in allowed:
+                raise ConfigError(
+                    f"step {step.id or step.node!r} uses node {step.node!r}; "
+                    f"a person edit may only rework the existing nodes: {sorted(allowed)}"
+                )
+            if not step.done_when.strip():
+                raise ConfigError(f"step {step.id or step.node!r} needs done_when")
+            if len(step.commands) > 16 or any(len(item) > 400 for item in step.commands):
+                raise ConfigError(
+                    f"step {step.id or step.node!r} has too many or too long commands"
+                )
+            for path in step.files:
+                if path.startswith(("/", "\\", "~")) or ".." in Path(path).parts:
+                    raise ConfigError(f"step {step.id or step.node!r} has an unsafe path {path!r}")
+        notes = list(latest.notes)
+        suffix = f"edited by {by}" + (f": {comment.strip()}" if comment.strip() else "")
+        notes.append(suffix)
+        version = self.next_version(task_id)
+        revised = latest.model_copy(
+            update={
+                "plan_id": f"p-{task_id}-v{version}",
+                "version": version,
+                "status": PlanStatus.DRAFT,
+                "steps": steps,
+                "notes": notes,
+                "validation": PlanValidation(
+                    ok=True,
+                    checks=["person-edit"],
+                    warnings=["edited by a person; the generated lint was not re-run"],
+                ),
+                "hash": "",
+                "approved_by": None,
+                "approved_at": None,
+            }
+        )
+        revised = revised.model_copy(update={"hash": plan_hash(revised)})
+        self.mark_superseded(task_id, latest.plan_id)
+        self.save(revised)
+        return revised

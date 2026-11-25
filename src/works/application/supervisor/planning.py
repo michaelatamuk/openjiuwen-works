@@ -190,6 +190,14 @@ def _planner_context(
         task_kind=ctx.task.kind.value,
         source_ref=ctx.task.source.ref,
         source_title=ctx.task.source.title,
+        source_text=" ".join(
+            item
+            for item in (
+                ctx.task.source.title,
+                ctx.task.source.reproduction_hint or "",
+            )
+            if item
+        ),
         flow=ctx.flow,
         base_commit=repo.head(),
         checks_sha=ctx.checks_sha or "",

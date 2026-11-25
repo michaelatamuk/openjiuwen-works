@@ -15,7 +15,7 @@ test("queue → story → evidence → release", async ({ page }) => {
   await page.goto(appPath());
   await expect(page.getByRole("complementary", { name: "Queue" })).toBeVisible();
   await page.getByRole("button", { name: /A proved fix/ }).click();
-  await expect(page.getByRole("heading", { level: 2 })).toContainText("Ready for release");
+  await expect(page.getByRole("heading", { name: "Ready for release" })).toBeVisible();
 
   await page.getByRole("tab", { name: "Evidence" }).click();
   await expect(page.getByText("Run metadata")).toBeVisible();

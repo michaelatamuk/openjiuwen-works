@@ -35,6 +35,7 @@ class PlannerContext:
     file_tree: tuple[str, ...] = ()
     manifests: tuple[tuple[str, str], ...] = ()
     readme: str = ""
+    source_text: str = ""
 
     @property
     def p0_ids(self) -> list[str]:
@@ -56,6 +57,7 @@ class RepositoryContext:
     file_tree: tuple[str, ...] = ()
     manifests: tuple[tuple[str, str], ...] = ()
     readme: str = ""
+    source_text: str = ""
 
 
 _SKIP_DIRS = frozenset(

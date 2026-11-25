@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import { eventSummary, fmtMs, stateLabel, timeAgo } from "../../lib/format.js";
 import { Card } from "../../ui/primitives";
+import { PlanCard, type PlanRecord } from "./PlanCard";
 import { Receipt } from "./Receipt";
 import { Route } from "./Route";
 import { headline, lede } from "./copy";
@@ -53,16 +54,19 @@ export type StoryDetail = {
   summary?: { risk?: string | null };
   run?: { run_id: string; duration_ms: number };
   evidence?: StoryEvidence | null;
+  plan?: PlanRecord | null;
+  plan_diff?: string | null;
 };
 
 export type StoryProps = {
   detail: StoryDetail;
+  onAction: (action: string, body?: Record<string, unknown>) => unknown;
   onView: (view: string) => void;
   onToast: (message: string) => void;
   onShowRun: () => void;
 };
 
-export function Story({ detail, onView, onToast, onShowRun }: StoryProps) {
+export function Story({ detail, onAction, onView, onToast, onShowRun }: StoryProps) {
   const stages = detail.pipeline?.story || [];
   const [selected, setSelected] = useState(
     stages.find((stage) => stage.state === "active")?.id || "",
@@ -157,6 +161,9 @@ export function Story({ detail, onView, onToast, onShowRun }: StoryProps) {
           detail={detail}
         />
         <Receipt detail={detail} />
+        {detail.plan ? (
+          <PlanCard plan={detail.plan} diff={detail.plan_diff} onAction={onAction} />
+        ) : null}
 
         {detail.pipeline?.blocked ? (
           <div className="blocked-callout">
@@ -274,6 +281,9 @@ export function Story({ detail, onView, onToast, onShowRun }: StoryProps) {
             <h1>{headline(detail)}</h1>
             <p className="present-lede">{lede(detail)}</p>
             <Receipt detail={detail} />
+        {detail.plan ? (
+          <PlanCard plan={detail.plan} diff={detail.plan_diff} onAction={onAction} />
+        ) : null}
             <div className="present-actions">
               <button type="button" className="btn" onClick={() => setPresent(false)}>
                 Exit · Esc

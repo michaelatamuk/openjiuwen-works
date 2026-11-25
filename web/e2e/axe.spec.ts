@@ -39,7 +39,7 @@ test("story, evidence, release, session and settings have no serious axe violati
   await expectNoSeriousViolations(page, "queue");
 
   await page.getByRole("button", { name: /A proved fix/ }).click();
-  await expect(page.getByRole("heading", { level: 2 })).toContainText("Ready for release");
+  await expect(page.getByRole("heading", { name: "Ready for release" })).toBeVisible();
   await expectNoSeriousViolations(page, "story");
 
   await page.getByRole("tab", { name: "Evidence" }).click();

@@ -4,7 +4,7 @@
     "--disallow-any-explicit",
     "--warn-return-any"
   ],
-  "total": 341,
+  "total": 343,
   "files": {
     "src/works/adapters/daemon.py": 4,
     "src/works/adapters/harness/base.py": 1,
@@ -70,7 +70,7 @@
     "src/works/interfaces/api/live.py": 7,
     "src/works/interfaces/api/presenters/story/pipeline.py": 15,
     "src/works/interfaces/api/presenters/tasks/artifacts.py": 2,
-    "src/works/interfaces/api/presenters/tasks/detail.py": 8,
+    "src/works/interfaces/api/presenters/tasks/detail.py": 9,
     "src/works/interfaces/api/presenters/tasks/files.py": 3,
     "src/works/interfaces/api/presenters/tasks/maps.py": 5,
     "src/works/interfaces/api/presenters/thread/conversation.py": 2,
@@ -92,7 +92,7 @@
     "src/works/interfaces/api/routes/sources.py": 2,
     "src/works/interfaces/api/routes/tasks.py": 1,
     "src/works/interfaces/api/schemas/health.py": 2,
-    "src/works/interfaces/api/schemas/tasks.py": 17,
+    "src/works/interfaces/api/schemas/tasks.py": 18,
     "src/works/interfaces/api/security.py": 9,
     "src/works/interfaces/api/write.py": 6,
     "src/works/interfaces/cli/commands/common.py": 1,

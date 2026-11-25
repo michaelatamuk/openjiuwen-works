@@ -12,6 +12,7 @@ describe("Story", () => {
     render(
       <Story
         detail={provedDetail}
+        onAction={vi.fn()}
         onView={onView}
         onToast={onToast}
         onShowRun={onShowRun}
@@ -38,6 +39,7 @@ describe("Story", () => {
     const { unmount } = render(
       <Story
         detail={provedDetail}
+        onAction={vi.fn()}
         onView={vi.fn()}
         onToast={vi.fn()}
         onShowRun={vi.fn()}
@@ -53,6 +55,7 @@ describe("Story", () => {
     render(
       <Story
         detail={blockedDetail}
+        onAction={vi.fn()}
         onView={vi.fn()}
         onToast={vi.fn()}
         onShowRun={vi.fn()}

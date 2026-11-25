@@ -10,6 +10,7 @@ from typing import Any
 from works.adapters.queue.files import INDEX_FILE
 from works.adapters.queue.index import TaskIndex
 from works.adapters.queue.store import Queue
+from works.application.planning.store import PlanStore
 from works.config.paths import WorksPaths
 from works.domain.records import Event, Task
 from works.interfaces.api.presenters.story import _pipeline
@@ -116,6 +117,16 @@ def _task_detail(
     delivery = _read_json(run_dir / "delivery.json") if run_dir is not None else None
     deployment = _read_json(run_dir / "deployment.json") if run_dir is not None else None
     confirmation = _read_json(run_dir / "confirmation.json") if run_dir is not None else None
+    from works.domain.errors import NotFoundError
+
+    plan_payload: dict[str, Any] | None = None
+    plan_diff: str | None = None
+    try:
+        store = PlanStore(paths)
+        plan_payload = store.load(task_id).model_dump(mode="json")
+        plan_diff = store.diff(task_id)
+    except NotFoundError:
+        plan_payload = None
     team_events = [event.data for event in events if event.type == "team.verified"]
     laix = [event.data for event in events if event.type == "decision.shadow"][-10:]
     verifier = {
@@ -138,6 +149,8 @@ def _task_detail(
         "proof_md": proof_md,
         "timeline": timeline,
         "pipeline": _pipeline(task, events, evidence, delivery, confirmation),
+        "plan": plan_payload,
+        "plan_diff": plan_diff,
         "readiness": readiness(Path(task.repo)),
         "features": feature_map(Path(task.repo), evidence),
         "release": release,

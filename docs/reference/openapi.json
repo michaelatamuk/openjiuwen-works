@@ -593,6 +593,29 @@
             "title": "Pipeline",
             "type": "object"
           },
+          "plan": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan"
+          },
+          "plan_diff": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Diff"
+          },
           "proof_md": {
             "default": "",
             "title": "Proof Md",

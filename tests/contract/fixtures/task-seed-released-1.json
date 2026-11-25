@@ -124,6 +124,9 @@
     ],
     "not_tested": [],
     "plan_deviations": [],
+    "plan_estimated_minutes": 0,
+    "plan_estimated_tokens": 0,
+    "plan_estimated_usd": 0.0,
     "plan_hash": "<sha256>",
     "plan_id": "p-<task-id>-v1",
     "plan_summary": "Deterministic plan for fix-issue on Fixture: 4 flow nodes and 3 scenarios.",
@@ -445,6 +448,7 @@
               "step-detail",
               "scenario-coverage",
               "paths",
+              "preflight",
               "commands",
               "budget",
               "rollback",
@@ -932,6 +936,156 @@
       }
     ]
   },
+  "plan": {
+    "approved_at": "<timestamp>",
+    "approved_by": "cli",
+    "assumptions": [
+      "The flow nodes and the scenario set are the source of truth.",
+      "The builder works in an isolated worktree and does not commit."
+    ],
+    "base_commit": "<commit>",
+    "checks_sha": "<sha256>",
+    "checks_source": "workspace:<home>/flows/fix-issue.yaml",
+    "created_at": "<timestamp>",
+    "critique": null,
+    "design_md": "",
+    "estimated_minutes": 0,
+    "estimated_tokens": 0,
+    "estimated_usd": 0.0,
+    "flow": "fix-issue",
+    "hash": "<sha256>",
+    "notes": [
+      "Deterministic mode: no model planned this version."
+    ],
+    "open_questions": [],
+    "plan_id": "p-<task-id>-v1",
+    "product": "Fixture",
+    "provenance": {
+      "duration_ms": 0,
+      "error": null,
+      "fallback": false,
+      "mode": "deterministic",
+      "model": null,
+      "planner": "deterministic",
+      "prompt_sha256": null,
+      "provider": null,
+      "schema_version": 1,
+      "tokens": 0,
+      "usd": 0.0
+    },
+    "requirements_md": "",
+    "risks": [
+      "This plan is a contract skeleton; file-level detail is chosen during the build turn."
+    ],
+    "rollback": "Discard the worktree; the builder does not commit.",
+    "scenario_ids": [
+      "add-positive",
+      "add-negative",
+      "mul-positive"
+    ],
+    "scenario_set": "<home>/scenarios/fix-add.yaml",
+    "schema_version": 1,
+    "status": "approved",
+    "steps": [
+      {
+        "commands": [
+          "{python} -m pytest -q"
+        ],
+        "depends_on": [],
+        "done_when": "the reproduction fails on the base commit",
+        "files": [],
+        "id": "det-1-reproduce",
+        "intent": "Reproduce the reported behaviour and capture the failing check.",
+        "node": "reproduce",
+        "reads": [],
+        "reversible": true,
+        "risk": "low",
+        "schema_version": 1,
+        "title": "reproduce: deterministic command"
+      },
+      {
+        "commands": [],
+        "depends_on": [
+          "det-1-reproduce"
+        ],
+        "done_when": "the reproduction and tests pass",
+        "files": [],
+        "id": "det-2-build",
+        "intent": "Edit the minimum production code needed to make the reproduction pass.",
+        "node": "build",
+        "reads": [],
+        "reversible": true,
+        "risk": "low",
+        "schema_version": 1,
+        "title": "build: agent turn"
+      },
+      {
+        "commands": [
+          "{python} -m pytest -q"
+        ],
+        "depends_on": [
+          "det-2-build"
+        ],
+        "done_when": "the tests and scenarios pass",
+        "files": [],
+        "id": "det-3-test",
+        "intent": "Run the repository tests and the declared scenarios.",
+        "node": "test",
+        "reads": [],
+        "reversible": true,
+        "risk": "low",
+        "schema_version": 1,
+        "title": "test: deterministic command"
+      },
+      {
+        "commands": [],
+        "depends_on": [
+          "det-3-test"
+        ],
+        "done_when": "the challenger returns allow",
+        "files": [],
+        "id": "det-4-challenge",
+        "intent": "Review the diff independently and return a verdict.",
+        "node": "challenge",
+        "reads": [],
+        "reversible": true,
+        "risk": "low",
+        "schema_version": 1,
+        "title": "challenge: agent turn"
+      }
+    ],
+    "summary": "Deterministic plan for fix-issue on Fixture: 4 flow nodes and 3 scenarios.",
+    "task_id": "<task-id>",
+    "tasks_md": "",
+    "validation": {
+      "checks": [
+        "summary",
+        "steps",
+        "node-coverage",
+        "step-detail",
+        "scenario-coverage",
+        "paths",
+        "preflight",
+        "commands",
+        "budget",
+        "rollback",
+        "spec",
+        "open-questions"
+      ],
+      "errors": [],
+      "ok": true,
+      "schema_version": 1,
+      "warnings": []
+    },
+    "verification": [
+      "Run the flow test node.",
+      "P0 scenarios: add-positive, add-negative.",
+      "P1 scenarios: mul-positive.",
+      "Run the independent challenge node."
+    ],
+    "version": 1
+  },
+  "plan_diff": "no previous version",
   "proof_md": "<markdown>",
   "rail": {
     "agents": [
@@ -1918,6 +2072,7 @@
             "step-detail",
             "scenario-coverage",
             "paths",
+            "preflight",
             "commands",
             "budget",
             "rollback",

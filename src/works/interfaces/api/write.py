@@ -154,6 +154,34 @@ def run_action(paths: WorksPaths, payload: dict[str, Any], lock: threading.Lock)
             question = str(payload.get("question") or "").strip()
             answer = ask_mira(paths, task_id, question)
             return HTTPStatus.OK, {"ok": True, "action": action, "answer": answer}
+        if action == "set-plan":
+            from works.application.planning.store import PlanStore
+            from works.domain.plan import PlanStep
+
+            raw_steps = payload.get("steps")
+            if not isinstance(raw_steps, list) or not raw_steps:
+                raise ValueError("steps must be a non-empty list")
+            if len(raw_steps) > 40:
+                raise ValueError("a plan may have at most 40 steps")
+            steps = [PlanStep.model_validate(item) for item in raw_steps if isinstance(item, dict)]
+            if len(steps) != len(raw_steps):
+                raise ValueError("every step must be an object")
+            store = PlanStore(paths)
+            plan = store.revise(
+                task_id,
+                steps,
+                comment=str(payload.get("comment") or ""),
+                by="person",
+            )
+            return (
+                HTTPStatus.OK,
+                {
+                    "ok": True,
+                    "action": action,
+                    "plan": plan.model_dump(mode="json"),
+                    "diff": store.diff(task_id),
+                },
+            )
         if action == "set-reproduction":
             raw = payload.get("command")
             if isinstance(raw, str):

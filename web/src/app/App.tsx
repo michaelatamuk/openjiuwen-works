@@ -515,6 +515,7 @@ export default function App() {
               <Story
                 key={detail.task.id}
                 detail={detail}
+                onAction={runAction}
                 onView={changeView}
                 onToast={notify}
                 onShowRun={() => setRunOpen(true)}

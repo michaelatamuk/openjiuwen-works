@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from works.application.planning.context import PlannerContext, PlannerOutput
+from works.application.planning.impact import describe
 from works.domain.flow import Node, NodeKind
 from works.domain.plan import PlanMode, PlanProposal, PlanProvenance, PlanStep
 
@@ -53,6 +54,11 @@ def deterministic_proposal(context: PlannerContext) -> PlanProposal:
     ]
     if any(node.id == "challenge" for node in context.flow.nodes):
         verification.append("Run the independent challenge node.")
+    impact_lines, gaps = describe(context.repo, context.source_text)
+    verification.extend(impact_lines)
+    notes = ["Deterministic mode: no model planned this version."]
+    if gaps:
+        notes.append(f"Not covered by a test found in the repository: {', '.join(gaps)}")
     return PlanProposal(
         summary=(
             f"Deterministic plan for {context.flow.flow} on {context.product}: "
@@ -69,7 +75,7 @@ def deterministic_proposal(context: PlannerContext) -> PlanProposal:
         ],
         verification=verification,
         rollback="Discard the worktree; the builder does not commit.",
-        notes=["Deterministic mode: no model planned this version."],
+        notes=notes,
     )
 
 
@@ -104,10 +110,19 @@ def merge_proposal(
     merged: list[PlanStep] = []
     for node in context.flow.nodes:
         model_steps = by_node.get(node.id, [])
+        base_step = base_by_node.get(node.id)
         if model_steps:
-            merged.extend(model_steps)
-        elif node.id in base_by_node:
-            merged.append(base_by_node[node.id])
+            kept: list[PlanStep] = []
+            for step in model_steps:
+                update: dict[str, object] = {}
+                if not step.done_when.strip() and base_step is not None:
+                    update["done_when"] = base_step.done_when
+                if not step.commands and base_step is not None:
+                    update["commands"] = base_step.commands
+                kept.append(step.model_copy(update=update) if update else step)
+            merged.extend(kept)
+        elif base_step is not None:
+            merged.append(base_step)
     # Unknown nodes are intentionally kept for the linter.
     for node_id, steps in by_node.items():
         if node_id not in {node.id for node in context.flow.nodes}:

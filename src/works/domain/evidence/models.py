@@ -89,6 +89,9 @@ class Evidence(BaseModel):
     planner_model: str | None = None
     planner_tokens: int = 0
     planner_usd: float = 0.0
+    plan_estimated_tokens: int = 0
+    plan_estimated_usd: float = 0.0
+    plan_estimated_minutes: int = 0
     plan_deviations: list[str] = Field(default_factory=list)
     tokens: int = 0
     usd: float = 0.0

@@ -252,6 +252,8 @@
       }
     ]
   },
+  "plan": null,
+  "plan_diff": null,
   "proof_md": "<markdown>",
   "rail": {
     "agents": [

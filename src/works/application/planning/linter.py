@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from works.application.planning import preflight
 from works.application.planning.context import PlannerContext
 from works.domain.plan import PlanCritique, PlanProposal, PlanValidation
 from works.domain.policy import check_paths
@@ -57,7 +58,7 @@ def validate_plan(
         if not step.title.strip():
             errors.append(f"step {step.id or step.node!r} needs a title")
         if not step.done_when.strip():
-            warnings.append(f"step {step.id or step.node!r} has no done_when")
+            errors.append(f"step {step.id or step.node!r} has no done_when")
 
     checks.append("scenario-coverage")
     verification = " ".join(proposal.verification).lower()
@@ -90,6 +91,11 @@ def validate_plan(
     for raw in all_reads:
         if raw.startswith(("/", "\\", "~")) or ".." in Path(raw).parts:
             errors.append(f"read path {raw!r} must be a safe relative repository path")
+
+    checks.append("preflight")
+    preflight_errors, preflight_warnings = preflight.problems(proposal, context)
+    errors.extend(preflight_errors)
+    warnings.extend(preflight_warnings)
 
     checks.append("commands")
     for step in proposal.steps:
@@ -136,8 +142,26 @@ def validate_plan(
     return PlanValidation(ok=not errors, errors=errors, warnings=warnings, checks=checks)
 
 
+CRITIC_MIN_SCORE = 0.5
+
+
 def apply_critique(validation: PlanValidation, critique: PlanCritique | None) -> PlanValidation:
-    if critique is None or critique.allow:
+    if critique is None:
+        return validation
+    if critique.allow and critique.score and critique.score < CRITIC_MIN_SCORE:
+        return validation.model_copy(
+            update={
+                "ok": False,
+                "errors": [
+                    *validation.errors,
+                    (
+                        f"the critic scored the plan {critique.score:.2f}, "
+                        f"below {CRITIC_MIN_SCORE:.2f}"
+                    ),
+                ],
+            }
+        )
+    if critique.allow:
         return validation
     return validation.model_copy(
         update={

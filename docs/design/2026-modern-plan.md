@@ -363,6 +363,27 @@ laptop, and a "bug" that is really a missing dependency or a flaky test.
   stability, environment, reporter hint) and a field that saves a person's command through
   `POST /tasks/{id}/reproduction`.
 
+### M13 ? Plan 2026 (stage 3, complete)
+
+**Prevents:** a "plan" that is prose, a must-pass set nobody can trace, and approvals that survive an
+edit.
+
+- [x] **M13.1** Every step needs a title and `done_when`; preflight checks that commands exist and
+  scenario scripts are present without running anything.
+- [x] **M13.2** The report's paths are mapped to covering tests (`planning/impact.py`): impact lines
+  join verification and uncovered paths are recorded in the plan notes.
+- [x] **M13.3** `PlanStore.diff()` renders `+ / - / ~` between the last two versions; every draft is an
+  immutable version with its own hash.
+- [x] **M13.4** The linter rejects missing acceptance and unavailable commands, and a critic score
+  below 0.50 blocks the plan; a model proposal without `done_when` inherits it from the skeleton.
+- [x] **M13.5** Plan estimates over the task budget are a lint error before the gate, and evidence
+  records the estimate beside the actual usage.
+- [x] **M13.6** A person can rework steps in the Story plan card (edit intent/done_when, add or remove
+  a step, leave a comment) for the nodes the plan already covers; saving creates a new draft version,
+  supersedes the old approval and requires a fresh gate decision.
+- [x] **M13.7** The same context produces the same plan and hash (test), and `docs/reference/planning.md`
+  documents modes, impact, versions and editing.
+
 ## 4. Sequencing and gates
 
 ### Phase 0 — Land the safety floor (week 1)

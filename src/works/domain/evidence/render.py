@@ -250,6 +250,17 @@ def render_markdown(evidence: Evidence) -> str:
         f"- tokens: `{evidence.tokens}`",
         f"- usd: `{evidence.usd:.4f}`",
         f"- wall: `{evidence.duration_ms} ms`",
+        *(
+            [
+                f"- plan estimate: `{evidence.plan_estimated_tokens}` tokens / "
+                f"`${evidence.plan_estimated_usd:.4f}` / "
+                f"`{evidence.plan_estimated_minutes} min`"
+            ]
+            if evidence.plan_estimated_tokens
+            or evidence.plan_estimated_usd
+            or evidence.plan_estimated_minutes
+            else []
+        ),
         f"- model: `{evidence.model or '—'}` · provider: `{evidence.provider or '—'}`",
         f"- engine: `{evidence.harness or '—'}`",
         f"- prompt: `{evidence.prompt_name or '—'}` · sha256: `{evidence.prompt_sha256 or '—'}`",

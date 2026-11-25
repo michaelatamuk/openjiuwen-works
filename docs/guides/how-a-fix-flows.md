@@ -95,18 +95,36 @@ flowchart TD
 
 ## 3. Plan — agree what will change
 
-Works writes a short plan: which checks must pass, which parts of the product may change, which saved
-version it starts from. By default the plan is mechanical: the same input gives the same plan, so two
-people can compare plans without guessing.
+Works writes a short plan: which steps will be taken, what “done” means for each step, which tests
+must pass, which parts of the product may change, and which saved version it starts from. By default
+the plan is mechanical: the same inputs give the same plan and the same fingerprint, so two people can
+compare plans without guessing.
 
-The plan is tied to that exact starting version and to that exact set of checks. If either moves, the
-plan is out of date and has to be redone instead of quietly reused.
+Before a person sees it, Works runs fixed checks on the plan (no person and no AI decides here ? the rules are code):
+
+- every step has a definition of done, and every command it names actually exists;
+- the files named in the report are matched to the tests that cover them; files with no covering test
+  are listed as gaps instead of being hidden;
+- the estimated time and cost are compared with the task budget, and an over-budget plan is flagged
+  before anyone spends money;
+- optionally, a separate AI reviewer (with its own credentials, so it is not grading its own work) can challenge the plan; a low score blocks it. That reviewer is a model, not a person.
+
+A person can rework the steps — reword the intent, tighten “done when”, add or remove a step within
+the kinds of work already agreed — and leave a comment. That creates a **new version with a new
+fingerprint**; the previous approval stops counting. The plan is also tied to that exact starting
+version and test set, so if either moves, the plan is out of date and must be redone.
 
 ```mermaid
-flowchart LR
-    F[Recipe for this kind of work] --> P[Plan]
-    H[Starting version + checks] --> P
-    P --> J[Readable plan for a person]
+flowchart TD
+    A["Recipe for this work<br/>+ must-pass tests<br/>+ starting version"] --> B["Steps, each with<br/>a definition of done"]
+    A --> C["Files named in the report<br/>mapped to the tests that cover them"]
+    B --> D{"Works checks the plan"}
+    C --> D
+    D -->|"a rule fails, or the AI reviewer<br/>scores it too low"| X["Fix the plan<br/>or stop"]
+    D -->|"passes"| E["Plan v1<br/>+ fingerprint"]
+    E --> F["A person may rework the steps"]
+    F --> G["New version<br/>+ new fingerprint"]
+    G --> H["Ready for the plan gate"]
 ```
 
 ## 4. Plan gate — a person says “yes, this is the right plan” 🔒

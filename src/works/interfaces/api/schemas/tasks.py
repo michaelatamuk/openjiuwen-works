@@ -59,6 +59,8 @@ class TaskDetail(BaseModel):
     proof_md: str = ""
     timeline: list[dict[str, Any]]
     pipeline: dict[str, Any]
+    plan: dict[str, Any] | None = None
+    plan_diff: str | None = None
     readiness: dict[str, Any]
     features: dict[str, Any]
     release: dict[str, Any]

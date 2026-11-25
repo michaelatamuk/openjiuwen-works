@@ -778,6 +778,12 @@ export interface components {
             pipeline: {
                 [key: string]: unknown;
             };
+            /** Plan */
+            plan?: {
+                [key: string]: unknown;
+            } | null;
+            /** Plan Diff */
+            plan_diff?: string | null;
             /**
              * Proof Md
              * @default
