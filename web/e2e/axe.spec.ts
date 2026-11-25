@@ -50,6 +50,10 @@ test("story, evidence, release, session and settings have no serious axe violati
   await expectNoSeriousViolations(page, "release");
 
   await page.getByRole("tab", { name: "Session" }).click();
+  await expect(page.getByRole("tab", { name: "Session" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
   await expectNoSeriousViolations(page, "session");
 
   await page.getByRole("button", { name: "Settings" }).click();
