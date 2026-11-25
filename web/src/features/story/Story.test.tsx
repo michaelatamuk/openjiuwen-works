@@ -9,10 +9,11 @@ describe("Story", () => {
     const onView = vi.fn();
     const onToast = vi.fn();
     const onShowRun = vi.fn();
+    const onAction = vi.fn();
     render(
       <Story
         detail={provedDetail}
-        onAction={vi.fn()}
+        onAction={onAction}
         onView={onView}
         onToast={onToast}
         onShowRun={onShowRun}
@@ -30,6 +31,7 @@ describe("Story", () => {
     expect(onToast).toHaveBeenCalledWith("Link copied.");
 
     fireEvent.click(screen.getByRole("button", { name: "Present" }));
+    expect(onAction).not.toHaveBeenCalled();
     expect(screen.getByRole("dialog", { name: "Present mode" })).toBeInTheDocument();
     fireEvent.keyDown(window, { key: "Escape" });
     expect(screen.queryByRole("dialog", { name: "Present mode" })).not.toBeInTheDocument();
@@ -64,3 +66,25 @@ describe("Story", () => {
     expect(screen.getByText("Why it stopped")).toBeInTheDocument();
   });
 });
+
+
+  it("starts a task from the card", () => {
+    const onAction = vi.fn();
+    const queued = {
+      ...provedDetail,
+      task: { ...provedDetail.task, state: "queued" },
+    };
+    render(
+      <Story
+        detail={queued}
+        onAction={onAction}
+        onView={vi.fn()}
+        onToast={vi.fn()}
+        onShowRun={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Run" }));
+
+    expect(onAction).toHaveBeenCalledWith("run");
+  });

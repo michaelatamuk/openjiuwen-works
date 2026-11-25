@@ -279,7 +279,9 @@ export default function App() {
       const response =
         action === "run-readiness"
           ? await api.readiness({ task_id: taskId })
-          : await api.action({ action, task_id: taskId, ...body });
+          : action === "run"
+            ? await api.runTask(taskId)
+            : await api.action({ action, task_id: taskId, ...body });
       let result = actionResult(response);
       if (response.job) {
         const job: Job = await waitForJob(response.job.id);
@@ -292,6 +294,7 @@ export default function App() {
       if (action === "discussion") notify("Team review added to the conversation.");
       else if (action === "commentary") notify("Agent commentary added to the conversation.");
       else if (action === "run-readiness") notify(`Readiness: ${result.status ?? "done"}.`);
+      else if (action === "run") notify("Run started; the task moves as the job progresses.");
       else if (count) notify(`${count} ${action} message(s) added.`);
       else if (result.event?.type === "thread.note") notify("Context added to the worklog.");
       else notify(`${action} recorded.`);

@@ -63,6 +63,13 @@ Exit codes: `0` on success, `EXIT_BLOCKED` when an executed task returns an erro
 
 Writes need the local bearer token; loopback reads follow the usual auth rules.
 
+## In the UI
+
+Settings has a **Scheduler** card: state, tick interval, budget left, the next eligible tasks and the
+waiting reasons, with Pause/Resume and **Tick now**. The Story card has a **Run** button for a queued,
+reproduced or plan-approved task; it starts the same run job as `works run`, outside the scheduler's
+selection.
+
 ## Leases and slots
 
 - The scheduler writes `queue/<task>/scheduler-lease.json` with a TTL. It does **not** use

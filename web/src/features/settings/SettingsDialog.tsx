@@ -4,6 +4,7 @@ import { Modal } from "../../ui/Modal";
 import { api } from "../../api/client";
 import type { Device, Pairing } from "../../api/client";
 import { BuilderSection } from "./BuilderSection";
+import { SchedulerCard } from "./SchedulerCard";
 import { buildSavePayload } from "./payload";
 import {
   ModelInput,
@@ -197,6 +198,8 @@ export function SettingsDialog({
           builderMeta={builderMeta}
           swarm={swarm}
         />
+
+        <SchedulerCard writable={writable} />
 
         <section className="settings-section">
           <div className="settings-section-head">

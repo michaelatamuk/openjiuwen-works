@@ -35,6 +35,25 @@ export type RunSummary = components["schemas"]["RunSummary"];
 export type RunList = components["schemas"]["RunList"];
 export type Json = Record<string, unknown>;
 
+export type SchedulerStatus = {
+  enabled: boolean;
+  paused: boolean;
+  pause_reason?: string;
+  tick_seconds: number;
+  levels: { default: string; by_source: Record<string, string> };
+  limits: {
+    global: number;
+    per_repo: number;
+    per_run_usd: number;
+    remaining_usd: number | null;
+  };
+  active: { task_id: string; owner: string; expires_at: string }[];
+  eligible: string[];
+  waiting: Record<string, string>;
+  last_tick?: string | null;
+  counters?: Record<string, number>;
+};
+
 export type JobStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled";
 
 export interface Job {
@@ -323,6 +342,26 @@ export const api = {
     request<ActionResponse>("/actions", {
       method: "POST",
       body,
+      idempotencyKey: newIdempotencyKey(),
+    }),
+  runTask: (taskId: string) =>
+    request<JobEnvelope>("/runs", {
+      method: "POST",
+      body: { task_id: taskId },
+      idempotencyKey: newIdempotencyKey(),
+    }),
+  scheduler: () => request<SchedulerStatus>("/scheduler"),
+  pauseScheduler: (reason = "") =>
+    request<{ ok: boolean; paused: boolean }>("/scheduler/pause", {
+      method: "POST",
+      body: { reason },
+    }),
+  resumeScheduler: () =>
+    request<{ ok: boolean; paused: boolean }>("/scheduler/resume", { method: "POST" }),
+  tickScheduler: (limit = 1) =>
+    request<JobEnvelope>("/scheduler/tick", {
+      method: "POST",
+      body: { limit },
       idempotencyKey: newIdempotencyKey(),
     }),
   job: async (jobId: string) =>

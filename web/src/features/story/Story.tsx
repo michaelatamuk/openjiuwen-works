@@ -135,6 +135,15 @@ export function Story({ detail, onAction, onView, onToast, onShowRun }: StoryPro
               ) : null}
             </div>
             <div className="hero-actions">
+              <button
+                type="button"
+                className="btn ghost"
+                onClick={() => onAction("run")}
+                disabled={!["queued", "reproduced", "plan_approved"].includes(detail.task.state)}
+                title="Start or continue this task with the saved builder"
+              >
+                Run
+              </button>
               <button type="button" className="btn" onClick={() => onView("evidence")}>
                 Open evidence
               </button>
