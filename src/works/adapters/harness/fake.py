@@ -67,6 +67,7 @@ class FakeHarness:
             patch=patch,
             model=trace.model,
             provider=trace.provider,
+            harness="fake",
             tokens=trace.tokens,
             usd=trace.usd,
             notes=list(trace.notes),

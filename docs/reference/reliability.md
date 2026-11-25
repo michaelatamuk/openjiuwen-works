@@ -49,6 +49,13 @@ works run <task-id> ...            # an explicit, fresh attempt
 `works doctor --bundle out.tar.gz` collects the job summaries, daemon identity, index health, disk
 usage and log tails (no tokens) for a bug report.
 
+### Child processes
+
+On Windows every command is assigned to a Job Object with `KILL_ON_JOB_CLOSE`: killing Works hard
+closes the handle and the whole process tree dies with it. On POSIX a command starts in its own session
+and cancellation/timeout kills the group; a hard `SIGKILL` of the daemon can still leave a child
+running, which is the known gap in this section.
+
 ## Phase idempotency
 
 Read-only or file-local phases are safe to repeat. Phases that touch the outside world are only safe

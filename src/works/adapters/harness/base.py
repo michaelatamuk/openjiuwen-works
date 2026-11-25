@@ -28,6 +28,7 @@ class Proposal(BaseModel):
     prompt_sha256: str | None = None
     model: str = "unknown"
     provider: str = "unknown"
+    harness: str | None = None
     tokens: int = Field(default=0, ge=0)
     usd: float = Field(default=0.0, ge=0)
     notes: list[str] = Field(default_factory=list)

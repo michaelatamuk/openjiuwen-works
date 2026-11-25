@@ -8,7 +8,9 @@ from works.domain.records import StopReason, TaskState
 
 
 def test_the_run_record_keeps_the_prompt_hash() -> None:
-    proposal = SimpleNamespace(model="deepseek-chat", provider="deepseek", prompt_sha256="a" * 64)
+    proposal = SimpleNamespace(
+        model="deepseek-chat", provider="deepseek", prompt_sha256="a" * 64, harness="native"
+    )
     ctx = SimpleNamespace(
         run_id="r-20260101T000000-abcdef",
         task=SimpleNamespace(id="t-1", kind=SimpleNamespace(value="fix")),
@@ -49,4 +51,5 @@ def test_the_run_record_keeps_the_prompt_hash() -> None:
     )
 
     assert record.prompt_sha256 == "a" * 64
+    assert record.harness == "native"
     assert record.model == "deepseek-chat"

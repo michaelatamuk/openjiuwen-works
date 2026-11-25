@@ -1,7 +1,8 @@
 # Documentation
 
-- `guides/` - setup and day-to-day operation: runbook, UI, remote clients, live harness, Swarm,
-  readiness, release, intake, memory, decisions, verification and waiting.
+- `guides/` - setup and day-to-day operation: how a fix flows through the ten stages,
+  runbook, UI, remote clients, live harness, Swarm, readiness, release, intake, memory, decisions,
+  verification and waiting.
 - `design/` - the product plan, the planner design and the stack migration plan.
 - `reference/` - the layout map, HTTP API, reliability and delivery semantics, supply chain,
   feature map and the agent-core boundary.

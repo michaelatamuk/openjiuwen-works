@@ -74,9 +74,23 @@ export type EvidenceDecision = {
   source?: string | null;
 };
 
+const ENGINE_LABELS: Record<string, string> = {
+  native: "Jiuwen native",
+  dsh: "DeepSeek Harness",
+  codex: "OpenAI Codex",
+  claudecode: "Claude Code",
+  fake: "Recorded trace (fake)",
+};
+
+function engineLabel(value?: string | null): string {
+  if (!value) return "-";
+  return ENGINE_LABELS[value] || value;
+}
+
 export type EvidencePayload = {
   model?: string | null;
   provider?: string | null;
+  harness?: string | null;
   proof_sha256?: string | null;
   policy?: { ok?: boolean; violations?: EvidenceViolation[] } | null;
   risk?: { level?: string; reasons?: string[] } | null;
@@ -222,6 +236,7 @@ export function Evidence({ detail, onShowRun, onAction, onLightbox, onOpenEvent 
             <dt>Flow</dt><dd>{detail.run?.flow || task.flow}</dd>
             <dt>Model</dt><dd>{evidence?.model || "—"}</dd>
             <dt>Provider</dt><dd>{evidence?.provider || "—"}</dd>
+            <dt>Engine</dt><dd>{engineLabel(evidence?.harness)}</dd>
             <dt>Base commit</dt><dd className="mono">{shortSha(detail.run?.base_commit)}</dd>
             <dt>Checks SHA</dt><dd className="mono">{shortSha(detail.run?.checks_sha)}</dd>
             <dt>Proof SHA-256</dt><dd className="mono">{shortSha(evidence?.proof_sha256)}</dd>

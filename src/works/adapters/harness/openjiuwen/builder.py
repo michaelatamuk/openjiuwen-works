@@ -199,6 +199,7 @@ class LiveHarness:
                 prompt_sha256=self._prompt.sha256,
                 model=self._model,
                 provider=self.provider,
+                harness=self._harness_provider,
                 stop=f"harness turn ended as {terminal.kind}: {detail}",
             )
 
@@ -222,6 +223,7 @@ class LiveHarness:
             prompt_sha256=self._prompt.sha256,
             model=self._model,
             provider=self.provider,
+            harness=self._harness_provider,
             tokens=tokens,
             usd=usd,
             notes=[answer] if answer else [],

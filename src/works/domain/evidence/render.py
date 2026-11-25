@@ -229,6 +229,7 @@ def render_markdown(evidence: Evidence) -> str:
         f"- usd: `{evidence.usd:.4f}`",
         f"- wall: `{evidence.duration_ms} ms`",
         f"- model: `{evidence.model or '—'}` · provider: `{evidence.provider or '—'}`",
+        f"- engine: `{evidence.harness or '—'}`",
         f"- prompt: `{evidence.prompt_name or '—'}` · sha256: `{evidence.prompt_sha256 or '—'}`",
         "",
     ]

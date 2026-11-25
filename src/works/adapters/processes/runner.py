@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Protocol
 
+from works.adapters.processes import job
 from works.domain.records import CommandRecord
 
 # A job sets this for its worker thread; SubprocessRunner kills the child tree when it flips.
@@ -148,6 +149,7 @@ class SubprocessRunner:
             errors="replace",
             **kwargs,
         )
+        job_handle = job.attach(process)
         cancel = CURRENT_CANCEL.get()
         stop = threading.Event()
         watcher: threading.Thread | None = None
@@ -172,6 +174,7 @@ class SubprocessRunner:
             stop.set()
             if watcher is not None:
                 watcher.join(timeout=1)
+            job.release(job_handle)
         duration_ms = int((time.monotonic() - started) * 1000)
         return CommandResult(
             argv=tuple(argv),

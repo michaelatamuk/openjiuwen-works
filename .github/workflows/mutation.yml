@@ -20,7 +20,5 @@ jobs:
           enable-cache: true
       - run: uv python install 3.12
       - run: uv sync --frozen --extra dev
-      - name: Run mutmut over the core modules
-        run: uv run mutmut run || true
-      - name: Gate at 70% killed
+      - name: Mutation gate at 70% killed
         run: uv run python scripts/mutation_gate.py

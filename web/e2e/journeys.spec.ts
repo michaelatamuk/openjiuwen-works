@@ -6,7 +6,7 @@ import { expect, test } from "@playwright/test";
 
 const STATE = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", ".e2e-state.json");
 
-type E2EState = { token?: string; port: number };
+type E2EState = { token?: string; port: number; home?: string; readonlyPort?: number };
 
 function state(): E2EState {
   return JSON.parse(readFileSync(STATE, "utf8")) as E2EState;
@@ -55,4 +55,35 @@ test("a paired device can be revoked from Settings", async ({ page, request }) =
 
   await page.getByRole("button", { name: "Revoke" }).click();
   await expect(page.getByText("No devices paired.")).toBeVisible();
+});
+
+
+test("a new task can be created from the mobile composer", async ({ page }) => {
+  const { home } = state();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(appPath());
+  await expect(page.getByRole("complementary", { name: "Queue" })).toBeVisible();
+
+  await page.locator("button.mobile-new").click();
+  await expect(page.getByRole("heading", { name: "New task" })).toBeVisible();
+  await page.locator("summary").filter({ hasText: "Details" }).click();
+  await page
+    .getByPlaceholder("What should Mira work on? Paste a bug, an issue link or a few lines.")
+    .fill("A new e2e task");
+  await page.getByLabel("Product", { exact: true }).fill("Fixture");
+  await page.getByPlaceholder("C:\\path\\to\\repo").fill(`${home}/repo`);
+  await page.getByPlaceholder("GH-123, PROJ-7 or owner/repo#12").fill("E2E-1");
+  await page.getByPlaceholder("What went wrong?").fill("A new e2e task");
+
+  await page.getByRole("button", { name: "Create task" }).click();
+  await expect(page.getByRole("heading", { name: "New task" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "A new e2e task" })).toBeVisible();
+});
+
+test("a read-only daemon hides write actions", async ({ page }) => {
+  const { readonlyPort } = state();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`http://127.0.0.1:${readonlyPort}/`);
+  await expect(page.getByRole("complementary", { name: "Queue" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "+ New task" })).toHaveCount(0);
 });

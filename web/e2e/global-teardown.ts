@@ -7,7 +7,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 
 export default async function globalTeardown() {
   const statePath = path.join(HERE, "..", ".e2e-state.json");
-  let state: { home?: string; pid?: number } = {};
+  let state: { home?: string; pid?: number; readonlyPid?: number } = {};
   try {
     state = JSON.parse(readFileSync(statePath, "utf8"));
   } catch {
@@ -28,6 +28,13 @@ export default async function globalTeardown() {
       } catch {
         // already gone
       }
+    }
+  }
+  if (state.readonlyPid) {
+    try {
+      process.kill(state.readonlyPid, "SIGKILL");
+    } catch {
+      // already gone
     }
   }
   if (state.home) rmSync(state.home, { recursive: true, force: true });

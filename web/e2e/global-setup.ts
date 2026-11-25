@@ -38,8 +38,16 @@ export default async function globalSetup() {
     ],
     { cwd: ROOT, stdio: "ignore", detached: process.platform !== "win32" },
   );
+  const readonly = spawn(
+    PYTHON,
+    ["-m", "works", "--home", home, "ui", "--port", String(PORT + 1), "--no-open"],
+    { cwd: ROOT, stdio: "ignore", detached: process.platform !== "win32" },
+  );
   const statePath = path.join(HERE, "..", ".e2e-state.json");
-  writeFileSync(statePath, JSON.stringify({ home, port: PORT, pid: child.pid }));
+  writeFileSync(
+    statePath,
+    JSON.stringify({ home, port: PORT, pid: child.pid, readonlyPort: PORT + 1, readonlyPid: readonly.pid }),
+  );
   const deadline = Date.now() + 60_000;
   while (Date.now() < deadline) {
     try {
@@ -49,9 +57,26 @@ export default async function globalSetup() {
           path.join(home, ".works", "state", "http-token"),
           "utf8",
         ).trim();
+        const readonlyDeadline = Date.now() + 30_000;
+        while (Date.now() < readonlyDeadline) {
+          try {
+            const readonlyHealth = await fetch(`http://127.0.0.1:${PORT + 1}/api/v1/health`);
+            if (readonlyHealth.ok) break;
+          } catch {
+            // still starting
+          }
+          await new Promise((resolve) => setTimeout(resolve, 250));
+        }
         writeFileSync(
           statePath,
-          JSON.stringify({ home, port: PORT, pid: child.pid, token }),
+          JSON.stringify({
+            home,
+            port: PORT,
+            pid: child.pid,
+            readonlyPort: PORT + 1,
+            readonlyPid: readonly.pid,
+            token,
+          }),
         );
         return;
       }

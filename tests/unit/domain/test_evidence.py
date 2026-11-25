@@ -77,6 +77,7 @@ def fixed_evidence() -> Evidence:
         provider="fixture",
         prompt_name="build",
         prompt_sha256="f" * 64,
+        harness="native",
         tokens=1200,
         usd=0.012,
         duration_ms=4321,
@@ -221,6 +222,7 @@ def test_golden_page(factory_root: Path) -> None:
 
 def test_the_page_records_both_prompt_hashes() -> None:
     page = render_markdown(fixed_evidence())
+    assert "engine: `native`" in page
     assert "prompt: `build`" in page
     assert "f" * 64 in page
     assert "e" * 64 in page

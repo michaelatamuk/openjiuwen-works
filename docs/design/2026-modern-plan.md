@@ -226,8 +226,9 @@ invariants.
   valid/truncated/empty/unknown-field/non-object) plus a leftover `atomic_write` temp file, an abrupt
   `os._exit` and an externally killed process (`TerminateProcess`/`SIGKILL`). Each asserts the terminal
   state, the readable restart explanation, the released task owner and idempotent re-reconcile.
-  **Still open:** an orphaned child process after a hard parent kill, and exactly-once fake
-  delivery/comment/deploy across an interrupted delivery.
+  **Windows:** each command runs in a Job Object with `KILL_ON_JOB_CLOSE`, so a hard parent kill
+takes the tree with it (`tests/unit/adapters/processes/test_job.py`). **Still open:** the POSIX
+orphan case after `SIGKILL`, and an exactly-once crash test for delivery/comment/deploy.
 - [x] **M7.3** `works backup`/`works restore`: a home archive (events, runs, ledger, settings) and a
   restore test that preserves evidence and task state.
 - [x] **M7.4** Retention: prune terminal jobs while keeping a summary; compact/rotate per-task event
