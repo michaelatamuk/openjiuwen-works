@@ -175,6 +175,8 @@ export default function App() {
   const [health, setHealth] = useState<AppHealth | null>(null);
   const [tasks, setTasks] = useState<TaskSummary[]>([]);
   const [inbox, setInbox] = useState<Inbox | null>(null);
+  const [dispatchable, setDispatchable] = useState(0);
+  const [schedulerOn, setSchedulerOn] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [detail, setDetail] = useState<AppDetail | null>(null);
   const [view, setView] = useState<ViewId>(() => {
@@ -267,10 +269,34 @@ export default function App() {
     if (selectedRef.current) selectTask(selectedRef.current, next);
   }, [selectTask]);
 
+  const loadScheduler = useCallback(async () => {
+    try {
+      const status = await api.scheduler();
+      setDispatchable(status.eligible.length);
+      setSchedulerOn(status.enabled && !status.paused);
+    } catch {
+      setDispatchable(0);
+      setSchedulerOn(false);
+    }
+  }, []);
+
   const refresh = useCallback(async () => {
     await loadTasks();
+    await loadScheduler();
     if (selectedRef.current) await loadDetail(selectedRef.current);
-  }, [loadTasks, loadDetail]);
+  }, [loadTasks, loadDetail, loadScheduler]);
+
+  async function dispatchReady() {
+    try {
+      const accepted = await api.tickScheduler(2);
+      const job = await waitForJob(accepted.job.id);
+      if (job.status !== "succeeded") throw new Error(job.error || "dispatch did not finish");
+      notify("Dispatch tick finished.");
+      await refresh();
+    } catch (error) {
+      notify(`dispatch failed: ${errorMessage(error)}`);
+    }
+  }
 
   async function runAction(action: string, body: Record<string, unknown> = {}): Promise<ActionResult | null> {
     const taskId = selectedRef.current;
@@ -309,6 +335,7 @@ export default function App() {
   useEffect(() => {
     const initial = parseHash();
     if (initial.view) setView(initial.view);
+    void loadScheduler();
     Promise.all([api.health(), api.products(), api.detectors()])
       .then(([h, p, d]) => {
         setHealth(appHealth(h));
@@ -458,6 +485,8 @@ export default function App() {
         inbox={inbox}
         onMerge={mergeTask}
         onNew={() => setDialog("new")}
+        dispatchCount={dispatchable}
+        onDispatch={schedulerOn ? dispatchReady : undefined}
       />
       <main className="main">
         <MainHead

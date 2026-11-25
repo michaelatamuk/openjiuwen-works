@@ -73,9 +73,10 @@ failing tick is logged and the loop continues.
 ## In the UI
 
 Settings has a **Scheduler** card: state, tick interval, budget left, the next eligible tasks and the
-waiting reasons, with Pause/Resume and **Tick now**. The Story card has a **Run** button for a queued,
-reproduced or plan-approved task; it starts the same run job as `works run`, outside the scheduler's
-selection.
+waiting reasons, with Pause/Resume and **Tick now**. The queue header shows **Dispatch ready (N)** when
+the scheduler is enabled and not paused; it submits one tick (limit 2) as a job. The Story card has a
+**Run** button for a queued, reproduced or plan-approved task; it starts the same run job as
+`works run`, outside the scheduler's selection.
 
 ## Triggers
 

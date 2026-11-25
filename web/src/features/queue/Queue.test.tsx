@@ -110,3 +110,21 @@ describe("Queue", () => {
     expect(screen.getByText("Local / read-only")).toBeInTheDocument();
   });
 });
+
+
+describe("Queue dispatch", () => {
+  it("shows the count and calls the dispatcher", () => {
+    const onDispatch = vi.fn();
+    renderQueue({ dispatchCount: 2, onDispatch });
+
+    fireEvent.click(screen.getByRole("button", { name: "Dispatch ready (2)" }));
+
+    expect(onDispatch).toHaveBeenCalled();
+  });
+
+  it("stays hidden when the scheduler is off", () => {
+    renderQueue();
+
+    expect(screen.queryByRole("button", { name: /Dispatch ready/ })).not.toBeInTheDocument();
+  });
+});

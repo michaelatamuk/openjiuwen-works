@@ -31,6 +31,8 @@ export type QueueProps = {
   inbox: Inbox | null;
   onMerge: (taskId: string, into: string) => void;
   onNew: () => void;
+  dispatchCount?: number;
+  onDispatch?: () => void;
 };
 
 const GROUPS = groups as Array<[string, string, string[]]>;
@@ -51,6 +53,8 @@ export function Queue({
   inbox,
   onMerge,
   onNew,
+  dispatchCount = 0,
+  onDispatch,
 }: QueueProps) {
   const products = [...new Set(tasks.map((task) => task.product).filter(Boolean))].sort();
   const states: Record<string, string[]> = Object.fromEntries(
@@ -81,6 +85,12 @@ export function Queue({
         />
         <kbd>/</kbd>
       </div>
+
+      {onDispatch ? (
+        <button type="button" className="btn scheduler-dispatch" onClick={onDispatch}>
+          Dispatch ready{dispatchCount ? ` (${dispatchCount})` : ""}
+        </button>
+      ) : null}
 
       <div className="filters" role="group" aria-label="Filter tasks">
         {[
