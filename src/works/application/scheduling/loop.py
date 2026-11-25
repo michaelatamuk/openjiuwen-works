@@ -204,6 +204,7 @@ class Scheduler:
         *,
         execute: Callable[[str], None] | None = None,
         limit: int | None = None,
+        hold: bool = False,
         now: datetime | None = None,
     ) -> TickResult:
         policy = load_policy(self._paths)
@@ -263,7 +264,8 @@ class Scheduler:
                 )
                 result.claimed.append(candidate.task.id)
                 if execute is None:
-                    lease.release(self._paths, candidate.task.id, owner=self._owner)
+                    if not hold:
+                        lease.release(self._paths, candidate.task.id, owner=self._owner)
                     continue
                 try:
                     execute(candidate.task.id)

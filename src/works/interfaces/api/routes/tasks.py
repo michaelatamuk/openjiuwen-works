@@ -7,6 +7,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 
+from works.application.scheduling.triggers import request_dispatch
 from works.domain.errors import NotFoundError
 from works.interfaces.api import read, write
 from works.interfaces.api.schemas.tasks import RunList, TaskDetail, TaskList
@@ -27,10 +28,24 @@ def list_tasks(request: Request, limit: int = Query(default=200, ge=1, le=1000))
     return TaskList.model_validate(payload)
 
 
+LOOPBACK = frozenset({"127.0.0.1", "::1", "localhost"})
+
+
+def _remote(request: Request) -> bool:
+    client = request.client
+    return client is None or client.host not in LOOPBACK
+
+
 @router.post("/tasks", dependencies=[Depends(require_write)])
 def create_task(request: Request, payload: dict[str, Any]) -> JSONResponse:
     state = _state(request)
+    wants_dispatch = bool(payload.pop("dispatch_on_import", False))
     status, body = write.create_task(state.paths, payload, state.write_lock)
+    if wants_dispatch:
+        task = body.get("task")
+        task_id = str(task.get("id") if isinstance(task, dict) else "")
+        result = request_dispatch(state.paths, task_id, remote=_remote(request))
+        body["scheduler"] = result.as_dict()
     return JSONResponse(status_code=int(status), content=body)
 
 

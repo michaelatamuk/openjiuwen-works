@@ -209,3 +209,13 @@ levels:
     result = Scheduler(paths, now=lambda: NOW).tick()
 
     assert result.claimed == [task_id]
+
+
+def test_a_held_tick_keeps_the_lease_for_the_job(paths) -> None:
+    _write_policy(paths)
+    task_id = _task(paths)
+
+    result = Scheduler(paths, now=lambda: NOW).tick(hold=True)
+
+    assert result.claimed == [task_id]
+    assert [item.task_id for item in lease.active_leases(paths, NOW)] == [task_id]

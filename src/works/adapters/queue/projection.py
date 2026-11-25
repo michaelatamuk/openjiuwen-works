@@ -146,6 +146,7 @@ def _apply(task: Task | None, event: Event) -> Task:
         "build.finished",
         "build.retry",
         "scheduler.tick",
+        "scheduler.requested",
         "scheduler.claimed",
         "scheduler.skipped",
         "scheduler.paused",

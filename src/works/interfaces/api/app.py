@@ -93,6 +93,7 @@ def create_app(
     max_body_bytes: int = MAX_BODY,
     require_auth: bool = False,
     rate_limit: bool = True,
+    scheduler_loop: bool = False,
 ) -> FastAPI:
     trusted = frozenset(trusted_hosts or LOOPBACK)
 
@@ -102,9 +103,16 @@ def create_app(
         current = state or build_state(paths, writable=writable, bootstrap_token=bootstrap_token)
         application.state.works = current
         current.live.start()
+        stop_scheduler = None
+        if scheduler_loop:
+            from works.interfaces.api import scheduler_loop as scheduler_runtime
+
+            stop_scheduler = scheduler_runtime.start(current)
         try:
             yield
         finally:
+            if stop_scheduler is not None:
+                stop_scheduler.set()
             current.live.stop()
             current.jobs.shutdown()
 

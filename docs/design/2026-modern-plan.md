@@ -541,8 +541,10 @@ admission function, leases with a dispatcher lock and stale reclaim, pause/resum
 `works scheduler status|enable|disable|pause|resume|tick`; `GET /api/v1/scheduler` and
 `pause|resume|tick` (a job); a Settings card (state, waiting reasons, Pause/Resume, Tick now) and a
 **Run** button on the Story card. 44 Python unit tests and the web suite cover it, including stale plan
-approvals and the rule that a `scheduler` actor cannot decide a gate. Still open: the daemon loop,
-`dispatch_on_import`, bounded retries, **Dispatch ready (N)** and `works task merge`.
+approvals and the rule that a `scheduler` actor cannot decide a gate. A writable daemon now runs the
+loop and submits claims as run jobs; `POST /tasks` accepts `dispatch_on_import` (soft refusal with a
+reason, remote clients need `allow.remote_triggers`). Still open: `/sources` triggers, bounded retries,
+**Dispatch ready (N)** and `works task merge`.
 
 - [x] **M21.1** `~/.works/config/dispatch.yaml` is the only policy: sources, allow/deny labels, flows,
   products, repos, remote triggers, levels, limits, budget, windows and pause; strict validation turns

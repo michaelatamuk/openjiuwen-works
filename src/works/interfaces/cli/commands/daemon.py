@@ -179,6 +179,7 @@ def _foreground(args: argparse.Namespace, paths: WorksPaths) -> int:
         state=state,
         trusted_hosts=trusted,
         require_auth=_requires_read_auth(args) and not open_lan,
+        scheduler_loop=bool(args.write),
     )
     if open_lan:
         print(

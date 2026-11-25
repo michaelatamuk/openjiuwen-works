@@ -1,8 +1,8 @@
 # Scheduler (first pass)
 
-Status: core implemented (policy, selection, leases, pause, one CLI tick) and the HTTP surface
-(status, pause, resume, one tick as a job). The daemon loop, GUI controls, import triggers and bounded
-retries are planned in M21 and not built yet.
+Status: core implemented (policy, selection, leases, pause), the HTTP surface (status, pause, resume,
+one tick as a job), a daemon loop for a writable daemon, and `dispatch_on_import` on task creation.
+Bounded retries, `/sources` triggers and the remaining GUI parity are still planned.
 
 The scheduler decides **whether** a queued task may run and **whether it should run now**. It never
 runs a task itself and never decides a gate.
@@ -63,12 +63,31 @@ Exit codes: `0` on success, `EXIT_BLOCKED` when an executed task returns an erro
 
 Writes need the local bearer token; loopback reads follow the usual auth rules.
 
+## In the daemon
+
+A **writable** daemon starts the loop automatically: every `tick_seconds` it reloads the policy, and
+when the policy is enabled it claims tasks and submits each claim as the same run job the manual path
+uses. The lease is released when the job ends or when submission is refused. A broken policy or a
+failing tick is logged and the loop continues.
+
 ## In the UI
 
 Settings has a **Scheduler** card: state, tick interval, budget left, the next eligible tasks and the
 waiting reasons, with Pause/Resume and **Tick now**. The Story card has a **Run** button for a queued,
 reproduced or plan-approved task; it starts the same run job as `works run`, outside the scheduler's
 selection.
+
+## Triggers
+
+`POST /api/v1/tasks` accepts `dispatch_on_import: true`. It validates the policy and, when allowed,
+appends `scheduler.requested` to the new task; the next tick still decides. A refusal is **soft**: the
+task is created and the response carries `scheduler: {"requested": false, "reason": ...}` with a typed
+reason (`disabled`, `remote_trigger`, `manual_not_allowed`, `not_allowlisted`, `flow_not_allowed`,
+`budget_exhausted`).
+
+A client that is not on loopback is treated as remote and refused unless the policy sets
+`allow.remote_triggers: true`. The `/sources` import path does not take the flag yet; its tasks are
+found by the periodic tick like any other.
 
 ## Leases and slots
 
