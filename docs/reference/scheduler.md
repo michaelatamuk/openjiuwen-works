@@ -1,0 +1,98 @@
+# Scheduler (first pass)
+
+Status: core implemented (policy, selection, leases, pause, one CLI tick). The daemon loop, the HTTP
+surface, GUI controls, import triggers and bounded retries are planned in M21 and not built yet.
+
+The scheduler decides **whether** a queued task may run and **whether it should run now**. It never
+runs a task itself and never decides a gate.
+
+## Off by default
+
+`<home>/config/dispatch.yaml` is the only policy. A missing file means "disabled", never "run
+everything". `works scheduler enable` writes `enabled: true` and keeps the rest of the file.
+
+```yaml
+enabled: false
+tick_seconds: 10
+levels:
+  default: L1
+allow:
+  sources: [github, jira, detector]
+  labels: ["works:auto"]
+  labels_deny: ["works:hold"]
+  manual: false
+concurrency:
+  global: 2
+  per_repo: 1
+budget:
+  daily_usd: 20        # overrides WORKS_DAILY_USD when set
+  per_run_usd: 5
+queue:
+  max_age_hours: 72
+  max_attempts: 2
+  starvation_boost_hours: 24
+windows:
+  blackout: ["02:00-02:30"]
+```
+
+Unknown keys, a bad level or a bad window is a `config_error` at load.
+
+## Commands
+
+```bash
+works scheduler status            # policy, slots, budget, eligible, waiting reasons
+works scheduler status --json
+works scheduler enable | disable
+works scheduler pause --reason "deploying"
+works scheduler resume
+works scheduler tick --no-run     # plan only; claim nothing
+works scheduler tick --live       # claim and run the selected task(s) sequentially
+```
+
+Exit codes: `0` on success, `EXIT_BLOCKED` when an executed task returns an error.
+
+## Leases and slots
+
+- The scheduler writes `queue/<task>/scheduler-lease.json` with a TTL. It does **not** use
+  `queue/<task>/owner`: the supervisor claims that with the run id.
+- `reclaim_stale` removes an expired lease and appends `scheduler.reclaimed`.
+- One dispatcher per home: `state/dispatcher.lock`. A second tick in another process reports `busy`
+  and claims nothing.
+- `global` and `per_repo` slots are counted from active leases.
+
+## Why a task waits
+
+Every refusal has a typed code, visible in `status` and `tick`:
+
+`disabled`, `paused`, `not_runnable`, `not_allowlisted`, `missing_label`, `denied_label`,
+`manual_not_allowed`, `flow_not_allowed`, `stale`, `waiting_on_event`, `attempts_exhausted`,
+`backoff`, `risk_too_high`, `repo_busy`, `global_busy`, `budget_exhausted`, `run_budget_cap`,
+`system_busy`, `interactive_load`, `low_disk`, `provider_degraded`, `attention_full`, `blackout`.
+
+`stale_approval` and `remote_trigger` exist in the design but are not emitted yet: they need gate
+freshness and the import path, which land with M21.5 and M21.7.
+
+## Order
+
+1. starvation (waited past `starvation_boost_hours`) — its own leading bucket;
+2. risk (severity S1→critical … S4→low);
+3. budget fragility (p90 estimate above half the remaining daily budget);
+4. size bucket (small first);
+5. age, oldest first;
+6. task id, so the order is total and reproducible.
+
+The claimed order and the estimate are written to the task history as `scheduler.claimed`.
+
+## What is deliberately absent
+
+- no approval of a plan or a release, at any level;
+- no preemption of a started run;
+- no parallel runs in one repository;
+- no automatic merge, deploy or close;
+- estimates are static per flow until M22.
+
+## Related
+
+- `docs/design/2026-m21-scheduler.md` — full design.
+- `docs/adrs/024-scheduler-actor.md` — why the scheduler runs but never decides.
+- `docs/adrs/025-ordering-cost-model.md` — why the order is a cost model, not a learned ranker.

@@ -24,6 +24,9 @@ version:
 
 ## 1. Baseline: done, in flight, new
 
+A snapshot from the original planning pass, kept for context. The live status is the module checkboxes
+in section 3, not this table.
+
 | Area | Status | Notes |
 |---|---|---|
 | FastAPI `/api/v1`, OpenAPI, generated TS client | **done** | `src/works/interfaces/api`, `web/src/api` |
@@ -533,32 +536,44 @@ runs racing for one worktree, and a queue that cannot say why a task is not movi
 
 The design is `docs/design/2026-m21-scheduler.md`; the actor rule is ADR 024. Defaults are off.
 
-- [ ] **M21.1** `~/.works/config/dispatch.yaml` is the only policy: sources, labels, products, repos,
-  levels, limits, budget and pause; strict validation turns an unknown key or a bad level into a
-  `config_error` at load, and `enabled` defaults to false.
+**Progress (first pass):** `application/scheduling/` has the policy loader, the pure selection and
+admission function, leases with a dispatcher lock and stale reclaim, pause/resume, and a CLI
+`works scheduler status|enable|disable|pause|resume|tick`; 38 unit tests cover it. The daemon loop,
+HTTP routes, GUI and triggers are next.
+
+- [x] **M21.1** `~/.works/config/dispatch.yaml` is the only policy: sources, allow/deny labels, flows,
+  products, repos, remote triggers, levels, limits, budget, windows and pause; strict validation turns
+  an unknown key or a bad level into a `config_error` at load, and `enabled` defaults to false.
 - [ ] **M21.2** Selection is a pure function over task, queue, policy, budget and locks; every refusal
   carries a typed reason (`disabled`, `paused`, `not_allowlisted`, `missing_label`,
   `budget_exhausted`, `run_budget_cap`, `repo_busy`, `global_busy`, `stale`, `waiting_on_event`,
   `attempts_exhausted`, `backoff`, `risk_too_high`, `duplicate`, `system_busy`, `interactive_load`,
-  `low_disk`, `provider_degraded`, `attention_full`, `blackout`, `eta_unknown`).
+  `low_disk`, `provider_degraded`, `attention_full`, `blackout`, `eta_unknown`, `not_runnable`,
+  `denied_label`, `flow_not_allowed`, `manual_not_allowed`, `remote_trigger`, `stale_approval`).
 - [ ] **M21.3** One dispatcher per home: a lock with a heartbeat, and claims are leases with a TTL;
   a second dispatcher exits with `conflict` and a dead lease is reclaimed with `scheduler.reclaimed`.
 - [ ] **M21.4** The loop lives in the daemon (opt-in) and `works dispatch --watch` uses the same code,
-  so CLI and GUI never have two policies.
-- [ ] **M21.5** Autonomy levels decide only where a run stops: L1 at the plan gate, L2 at the release
-  gate, L3 delivers **after** a person approved; the new `scheduler` actor kind can start runs and is
+  so CLI and GUI never have two policies; a tick error is recorded as `scheduler.error` and the next
+  tick proceeds, and the pause flag and last tick persist in `state/scheduler.json`.
+- [ ] **M21.5** A level is a ceiling, not a one-shot: L1 claims `queued` and stops at the plan gate,
+  L2 also resumes `plan_approved` after a person approves, L3 also delivers `released` after a person
+  approved; an expired or hash-mismatched approval is refused as `stale_approval`, and nothing else is
+  claimed (a run in progress owns its lease). The new `scheduler` actor kind can start runs and is
   refused by both gates.
-- [ ] **M21.6** Budget, concurrency, priority and **admission control** are checked before a claim:
-  daily and per-run USD, `global`/`per_repo` slots, risk-then-age ordering, and the machine's own
-  state — job-pool saturation (`system_busy`), API p95 (`interactive_load`), free disk (`low_disk`),
-  provider errors (`provider_degraded`), waiting plans (`attention_full`), maintenance windows
-  (`blackout`) and the duration estimate (`eta_unknown`). The estimate comes from history (with a
-  sample count), then the plan, then a static default, and is used only to decide fit and cost; hard
-  limits are `max_wall_clock_minutes` and `per_run_usd`, with no preemption of a started run. A manual
-  run always outranks the queue.
+- [ ] **M21.6** Budget, concurrency, ordering and **admission control** are checked before a claim:
+  daily and per-run USD, `global`/`per_repo` slots, ordering by risk → budget fragility → starvation →
+  size bucket → age (the score and its components go to the ledger), and the machine's own state —
+  job-pool saturation (`system_busy`), API p95 (`interactive_load`), free disk (`low_disk`), provider
+  errors (`provider_degraded`), waiting plans (`attention_full`), maintenance windows (`blackout`) and
+  the duration estimate (`eta_unknown`). The estimate comes from history (with a sample count), then
+  the plan, then a static default, and is used only to decide fit and cost; hard limits are
+  `max_wall_clock_minutes` and `per_run_usd`, with no preemption of a started run. A manual run always
+  outranks the queue.
 - [ ] **M21.7** `dispatch_on_import` exists for imports and tasks but only enqueues a
-  `scheduler.requested` event, and only when the policy allows source, label and budget; the label is
-  evaluated by the scheduler, not by the webhook handler.
+  `scheduler.requested` event (which wakes the next tick, it does not bypass it), and only when the
+  policy allows source, label and budget; the label is evaluated by the scheduler, not by the webhook
+  handler. A task typed in the GUI is not picked up unless `allow.manual: true`; otherwise the **Run**
+  button starts it immediately.
 - [ ] **M21.8** Scheduler retries are bounded (`max_attempts`, default 2) with backoff, only for
   transient failures; a failing check or a policy violation stops and stays visible. Every attempt is
   a new run id with `trigger: scheduler` and the attempt number.
@@ -577,6 +592,37 @@ The design is `docs/design/2026-m21-scheduler.md`; the actor rule is ADR 024. De
 
 **Not in scope:** auto-merge, auto-deploy, auto-close, a cron DSL, cloud or remote workers,
 per-repository parallelism, preemption of a started run, and CPU-level scheduling.
+
+### M22 — Estimates 2026 (planned)
+
+**Prevents:** ordering by guesswork, a large run that never fits the budget, and a "smart" scheduler
+nobody can explain or trust.
+
+M21 ships with coarse grouped medians. M22 turns them into a calibrated distribution and adds the
+shadow mode that decides whether a learned order ever earns the right to run.
+
+- [ ] **M22.1** An `Estimate` carries `p50_min`, `p90_min`, `p50_usd`, `p90_usd`, `confidence`,
+  `samples` and `source`; it is recorded on the claim and in the ledger, so estimate and fact can be
+  compared later.
+- [ ] **M22.2** Pre-run features come from intake and the repository: text shape (stack traces, code
+  blocks, mentioned files), source/flow/labels, path overlap with the plan policy, and BM25 similarity
+  to past tickets. No new collection.
+- [ ] **M22.3** The estimate is recomputed after the plan (steps, files, risk, tests, migrations); a
+  planner-supplied estimate is one feature, never the answer.
+- [ ] **M22.4** `works estimate backtest` reports pinball loss, p90 coverage (expected band 85–95%),
+  tail misses and per-group results over stored runs, and fails a CI threshold so the estimator cannot
+  rot.
+- [ ] **M22.5** Similar-task k-NN (neighbour quantiles with a widened interval for small `k`) replaces
+  grouped medians once there is enough history; the sample count is shown as the explanation.
+- [ ] **M22.6** `order.mode: rule|shadow|learned`: shadow logs "would pick X, rule picked Y" and starts
+  nothing; `learned` is allowed only with ≥ 4 weeks or ≥ 50 claims of shadow evidence, no worse p95
+  wait, no new starvation, no worse `$` per `proved`, and calibration inside the band.
+- [ ] **M22.7** Docs and acceptance: `docs/design/2026-m22-estimates.md`, plus tests for cold start,
+  plan update, fit refusals, ordering by equal risk, shadow no-op, monotonicity and the promotion
+  guard.
+
+**Not in scope:** story points or per-person productivity, price or schedule forecasting, embeddings or
+a cloud model, deep learning, and estimating delivery/deploy/confirm time.
 
 ## 4. Sequencing and gates
 
@@ -618,10 +664,13 @@ decision; RSC ADR; OTel no-op trace and <5% overhead.
 
 ### Effort
 
-M0 6 + M1 11 + M2 5 + M3 8 + M4 4 + M5 4 + M6 14 + M7 6 + M8 4 + M9 2 + M10 6 + M11 12 + M12 14 =
-**69 engineer-days**, **~83 with 20% contingency**. That is **13–16 weeks for one engineer**, or
-**9–10 weeks with two** (one backend/data, one web/reliability). The v1 8-week/57-day schedule was
-arithmetically impossible.
+**Original scope:** M0 6 + M1 11 + M2 5 + M3 8 + M4 4 + M5 4 + M6 14 + M7 6 + M8 4 + M9 2 + M10 6 +
+M11 12 + M12 14 = **69 engineer-days**, **~83 with 20% contingency** — 13–16 weeks for one engineer, or
+9–10 weeks with two. The v1 8-week/57-day schedule was arithmetically impossible.
+
+**Beyond that scope:** M13–M20 (stages 3–10) were delivered as separate passes and are not re-estimated
+here. The remaining planned work is M21 **~27 days (~32)** and M22 **~11 days (~13)**, which is where
+the queue, the scheduler and the estimates live.
 
 ## 5. Acceptance metrics
 

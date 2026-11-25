@@ -16,6 +16,7 @@ from works.interfaces.cli.parser.plan import add_plan_commands
 from works.interfaces.cli.parser.proof import add_proof_commands
 from works.interfaces.cli.parser.reproduce import add_reproduce_commands
 from works.interfaces.cli.parser.run import add_run_commands
+from works.interfaces.cli.parser.scheduler import add_scheduler_commands
 from works.interfaces.cli.parser.sources import add_sources_commands
 from works.interfaces.cli.parser.tasks import add_tasks_commands
 from works.interfaces.cli.parser.ui import add_ui_commands
@@ -29,6 +30,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_tasks_commands(sub)
     add_plan_commands(sub)
     add_run_commands(sub)
+    add_scheduler_commands(sub)
     add_daemon_commands(sub)
     add_delivery_commands(sub)
     add_intake_commands(sub)

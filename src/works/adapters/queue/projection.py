@@ -145,6 +145,13 @@ def _apply(task: Task | None, event: Event) -> Task:
         "build.started",
         "build.finished",
         "build.retry",
+        "scheduler.tick",
+        "scheduler.claimed",
+        "scheduler.skipped",
+        "scheduler.paused",
+        "scheduler.resumed",
+        "scheduler.reclaimed",
+        "scheduler.error",
     ):
         return task.model_copy(update={"updated_at": event.ts})
 

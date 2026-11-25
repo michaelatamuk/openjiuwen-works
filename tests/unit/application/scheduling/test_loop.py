@@ -1,0 +1,150 @@
+from __future__ import annotations
+
+from datetime import UTC, datetime
+
+from works.adapters.queue.store import Queue
+from works.application.scheduling import lease
+from works.application.scheduling.loop import Scheduler
+from works.application.scheduling.policy import POLICY_PATH
+from works.domain.enums import TaskState
+from works.domain.records import Source, SourceKind
+
+NOW = datetime(2026, 11, 25, 12, 0, tzinfo=UTC)
+POLICY = """
+enabled: true
+allow:
+  manual: true
+concurrency:
+  global: 1
+  per_repo: 1
+"""
+
+
+def _write_policy(paths, text: str = POLICY) -> None:
+    path = paths.root / POLICY_PATH
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+
+
+def _task(paths, ref: str = "R") -> str:
+    task, _created = Queue(paths).submit(
+        source=Source(kind=SourceKind.MANUAL, ref=ref, title="t"),
+        flow="fix-issue",
+        product="P",
+        repo=str(paths.root / "repo"),
+    )
+    return task.id
+
+
+def test_a_disabled_scheduler_claims_nothing(paths) -> None:
+    _task(paths)
+
+    result = Scheduler(paths, now=lambda: NOW).tick()
+
+    assert result.status == "disabled"
+    assert result.claimed == []
+
+
+def test_a_tick_claims_and_executes_one_task(paths) -> None:
+    _write_policy(paths)
+    first = _task(paths, "A")
+    second = _task(paths, "B")
+    seen: list[str] = []
+
+    def execute(task_id: str) -> None:
+        seen.append(task_id)
+        Queue(paths).transition(task_id, TaskState.REPRODUCING)
+
+    result = Scheduler(paths, now=lambda: NOW).tick(execute=execute)
+
+    assert result.status == "ok"
+    assert result.claimed == [first]
+    assert seen == [first]
+    assert lease.active_leases(paths, NOW) == []
+    assert second in result.order
+    events = [item for item in Queue(paths).events(first) if item.type == "scheduler.claimed"]
+    assert len(events) == 1
+    assert events[0].data["owner"].startswith("scheduler:")
+
+
+def test_pause_stops_claiming_and_resume_restores_it(paths) -> None:
+    _write_policy(paths)
+    _task(paths)
+    scheduler = Scheduler(paths, now=lambda: NOW)
+
+    scheduler.pause("operator")
+    paused = scheduler.tick()
+    assert paused.status == "paused"
+
+    scheduler.resume()
+    assert scheduler.tick().status == "ok"
+
+
+def test_a_busy_slot_holds_the_second_task(paths) -> None:
+    _write_policy(paths)
+    first = _task(paths, "A")
+    second = _task(paths, "B")
+    lease.claim(paths, first, owner="scheduler:other", ttl_seconds=600, now=NOW)
+
+    result = Scheduler(paths, now=lambda: NOW).tick()
+
+    assert result.status == "ok"
+    assert result.claimed == []
+    assert result.skipped[second] == "repo_busy"
+
+
+def test_status_explains_why_a_task_waits(paths) -> None:
+    _write_policy(
+        paths,
+        """
+enabled: true
+allow:
+  manual: false
+""",
+    )
+    task_id = _task(paths)
+
+    payload = Scheduler(paths, now=lambda: NOW).status()
+
+    assert payload["enabled"] is True
+    waiting = payload["waiting"]
+    assert isinstance(waiting, dict)
+    assert waiting[task_id] == "manual_not_allowed"
+
+
+def test_a_tick_without_a_runner_releases_its_lease(paths) -> None:
+    _write_policy(paths)
+    task_id = _task(paths)
+
+    result = Scheduler(paths, now=lambda: NOW).tick()
+
+    assert result.claimed == [task_id]
+    assert lease.active_leases(paths, NOW) == []
+
+
+def test_a_second_tick_after_a_run_does_not_reclaim_the_task(paths) -> None:
+    _write_policy(paths)
+    task_id = _task(paths)
+    scheduler = Scheduler(paths, now=lambda: NOW)
+
+    def execute(item: str) -> None:
+        Queue(paths).transition(item, TaskState.REPRODUCING)
+
+    scheduler.tick(execute=execute)
+    second = scheduler.tick(execute=execute)
+
+    assert task_id not in second.claimed
+
+
+def test_the_counter_records_reasons(paths) -> None:
+    _write_policy(paths)
+    task_id = _task(paths)
+    Queue(paths).transition(task_id, TaskState.REPRODUCING)
+    scheduler = Scheduler(paths, now=lambda: NOW)
+
+    scheduler.tick()
+    payload = scheduler.status()
+
+    counters = payload["counters"]
+    assert isinstance(counters, dict)
+    assert counters.get("not_runnable") == 1

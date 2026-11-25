@@ -36,6 +36,10 @@ class WorksPaths:
         return self.root / ".works" / "state"
 
     @property
+    def config(self) -> Path:
+        return self.root / "config"
+
+    @property
     def scenarios(self) -> Path:
         return self.root.parent / "works-scenarios"
 
