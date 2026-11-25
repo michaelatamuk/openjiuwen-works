@@ -166,6 +166,16 @@ jobs:
         run: |
           uv sync --frozen --extra server
           uv run python scripts/smoke_wheel.py --wheel dist/*.whl
+      - name: CycloneDX SBOM and checksums
+        run: |
+          uv run --with cyclonedx-py cyclonedx-py environment --of json -o dist/sbom.json
+          cd dist && sha256sum *.whl sbom.json > SHA256SUMS
+      - name: Upload the wheel and its SBOM
+        uses: actions/upload-artifact@v7
+        with:
+          name: wheel-sbom
+          path: dist/*
+          if-no-files-found: error
 
   docker-verifier:
     runs-on: ubuntu-latest

@@ -1,4 +1,4 @@
-.PHONY: check lint format type test unit integration cov bench wheel security gitleaks demo docs-links
+.PHONY: check lint format type test unit integration cov bench wheel security gitleaks demo docs-links sbom
 
 check: lint format type cov
 
@@ -10,6 +10,10 @@ format:
 
 docs-links:
 	uv run python scripts/check_docs_links.py
+
+sbom:
+	mkdir -p dist
+	uv run --with cyclonedx-py cyclonedx-py environment --of json -o dist/sbom.json
 
 type:
 	uv run mypy

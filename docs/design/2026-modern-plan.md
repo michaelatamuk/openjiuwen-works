@@ -241,7 +241,9 @@ invariants.
 
 - [ ] **M8.1** 3.13 matrix (M0.4); decide 3.14 only after `requires-python` and dependencies allow.
 - [x] **M8.2** Renovate (better than Dependabot for `uv`) for Python and npm, grouped updates.
-- [ ] **M8.3** CycloneDX SBOM published with the wheel; checksums; `npm audit --omit=dev`/OSV.
+- [~] **M8.3** The `wheel` job builds a CycloneDX SBOM, writes `SHA256SUMS` for the wheel and the
+  SBOM, and uploads both; `pip-audit`, `npm audit --omit=dev` and gitleaks already gate the build.
+  **Open:** an OSV scan, which belongs with the release pipeline (`docs/reference/supply-chain.md`).
 - [ ] **M8.4** Clean 3.13 venv wheel install with `--require-hashes`, `works doctor`, daemon
   start/status/stop; no signed-wheel theater until a real publish workflow exists.
 - [ ] **M8.5** Windows service recipe: Task Scheduler or NSSM, start-at-logon, stop test. No MSI.
