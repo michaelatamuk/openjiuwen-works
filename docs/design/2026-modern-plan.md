@@ -526,6 +526,58 @@ check reported as a pass, and a deploy failure hidden behind a local check.
 - [x] **M20.7** The Release page shows target, code, stability, deployment link and recent
   confirmation history; the CLI prints the code.
 
+### M21 — Queue and scheduler (stage 0, planned)
+
+**Prevents:** a webhook that starts a run on every delivery, a burst that burns the daily budget, two
+runs racing for one worktree, and a queue that cannot say why a task is not moving.
+
+The design is `docs/design/2026-m21-scheduler.md`; the actor rule is ADR 024. Defaults are off.
+
+- [ ] **M21.1** `~/.works/config/dispatch.yaml` is the only policy: sources, labels, products, repos,
+  levels, limits, budget and pause; strict validation turns an unknown key or a bad level into a
+  `config_error` at load, and `enabled` defaults to false.
+- [ ] **M21.2** Selection is a pure function over task, queue, policy, budget and locks; every refusal
+  carries a typed reason (`disabled`, `paused`, `not_allowlisted`, `missing_label`,
+  `budget_exhausted`, `run_budget_cap`, `repo_busy`, `global_busy`, `stale`, `waiting_on_event`,
+  `attempts_exhausted`, `backoff`, `risk_too_high`, `duplicate`, `system_busy`, `interactive_load`,
+  `low_disk`, `provider_degraded`, `attention_full`, `blackout`, `eta_unknown`).
+- [ ] **M21.3** One dispatcher per home: a lock with a heartbeat, and claims are leases with a TTL;
+  a second dispatcher exits with `conflict` and a dead lease is reclaimed with `scheduler.reclaimed`.
+- [ ] **M21.4** The loop lives in the daemon (opt-in) and `works dispatch --watch` uses the same code,
+  so CLI and GUI never have two policies.
+- [ ] **M21.5** Autonomy levels decide only where a run stops: L1 at the plan gate, L2 at the release
+  gate, L3 delivers **after** a person approved; the new `scheduler` actor kind can start runs and is
+  refused by both gates.
+- [ ] **M21.6** Budget, concurrency, priority and **admission control** are checked before a claim:
+  daily and per-run USD, `global`/`per_repo` slots, risk-then-age ordering, and the machine's own
+  state — job-pool saturation (`system_busy`), API p95 (`interactive_load`), free disk (`low_disk`),
+  provider errors (`provider_degraded`), waiting plans (`attention_full`), maintenance windows
+  (`blackout`) and the duration estimate (`eta_unknown`). The estimate comes from history (with a
+  sample count), then the plan, then a static default, and is used only to decide fit and cost; hard
+  limits are `max_wall_clock_minutes` and `per_run_usd`, with no preemption of a started run. A manual
+  run always outranks the queue.
+- [ ] **M21.7** `dispatch_on_import` exists for imports and tasks but only enqueues a
+  `scheduler.requested` event, and only when the policy allows source, label and budget; the label is
+  evaluated by the scheduler, not by the webhook handler.
+- [ ] **M21.8** Scheduler retries are bounded (`max_attempts`, default 2) with backoff, only for
+  transient failures; a failing check or a policy violation stops and stays visible. Every attempt is
+  a new run id with `trigger: scheduler` and the attempt number.
+- [ ] **M21.9** `GET /api/v1/scheduler` reports state, counters per reason, the waiting list with
+  reasons, budget, the sampled signals and the estimate behind the next claim; events cover tick,
+  claim, skip, pause, resume, reclaim and error; the ledger records each claim with its reason and
+  estimate.
+- [ ] **M21.10** Pause/resume is a persisted kill switch: a paused scheduler claims nothing, says so in
+  the UI and does not lose the queue.
+- [ ] **M21.11** GUI parity: a Scheduler card (state, waiting reasons, pause, budget), a **Run** button
+  on the task card and **Dispatch ready (N)** in the queue header; `works task merge` closes the last
+  CLI gap for duplicate tasks.
+- [ ] **M21.12** Docs and acceptance: `docs/design/2026-m21-scheduler.md`, ADR 024, and tests for
+  policy-off, labelled L1, unlabelled import, two dispatchers, crash reclaim, budget exhaustion,
+  pause/resume, L2/L3 stop states and a scheduler gate refusal.
+
+**Not in scope:** auto-merge, auto-deploy, auto-close, a cron DSL, cloud or remote workers,
+per-repository parallelism, preemption of a started run, and CPU-level scheduling.
+
 ## 4. Sequencing and gates
 
 ### Phase 0 — Land the safety floor (week 1)

@@ -30,3 +30,4 @@ Format: context, decision, consequences, alternatives rejected.
 - [021 - React Compiler stays opt-in until it pays for itself](021-react-compiler.md)
 - [022 - Gate decisions, identity and expiry](022-gate-identity.md)
 - [023 - Bounded repair attempts](023-repair-attempts.md)
+- [024 - The scheduler runs, never decides](024-scheduler-actor.md)
