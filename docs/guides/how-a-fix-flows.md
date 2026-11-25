@@ -129,10 +129,16 @@ flowchart TD
 
 ## 4. Plan gate — a person says “yes, this is the right plan” 🔒
 
-This is the first mandatory human moment. The decision screen shows the plan, what changed since the
-previous version, which reported files are covered by tests and which are not, the time/cost estimate
-against the budget, the independent reviewer’s concerns and the risk. A person decides with that in
-front of them.
+This is the first mandatory human moment. The decision screen gathers everything the decision needs:
+
+- the plan and **what changed** since the previous version;
+- which files named in the report are covered by tests, and which are gaps;
+- the time and cost estimate against the task budget;
+- the independent reviewer’s concerns and score;
+- the risk level and the owners of the affected areas.
+
+Approve stays unavailable while an automatic check fails. A person decides with all of that in front of
+them, not from a chat reply.
 
 There are three answers, not one:
 
@@ -144,7 +150,7 @@ The approver is a **named person on a device**. An AI agent cannot approve, and 
 cannot count twice when the optional two-person rule is on. The approval is tied to that exact plan
 fingerprint and expires after about a week; editing the plan, moving the starting version or changing
 the tests all cancel it. Works records who decided, when, from which device, and for which plan — in a
-history that cannot be edited afterwards.
+history that cannot be edited afterwards. The same record is what a later audit reads.
 
 ```mermaid
 flowchart TD
