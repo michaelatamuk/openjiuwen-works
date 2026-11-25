@@ -25,6 +25,9 @@ def main_entry() -> None:
 
     harden_sys_path()
     configure(os.environ.get("WORKS_LOG_LEVEL", "INFO"))
+    from works.application.observability.tracing import configure_tracing
+
+    configure_tracing()
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     if hasattr(sys.stderr, "reconfigure"):

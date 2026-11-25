@@ -17,6 +17,7 @@ from typing import Any, Literal
 from works.adapters.processes.runner import CURRENT_CANCEL
 from works.adapters.queue.atomic import atomic_write
 from works.adapters.queue.store import Queue
+from works.application.observability.tracing import current_trace_id, span
 from works.config.paths import WorksPaths
 from works.domain.errors import ConflictError, NotFoundError, UnavailableError
 
@@ -154,6 +155,7 @@ class JobRunner:
                 daemon_id=self._daemon_id,
                 pid=self._pid,
                 heartbeat_at=time.time(),
+                trace_id=current_trace_id() or secrets.token_hex(8),
             )
             self._jobs[job.id] = job
             self._cancel[job.id] = threading.Event()
@@ -197,7 +199,14 @@ class JobRunner:
             )
         token = CURRENT_CANCEL.set(event)
         try:
-            result = body(JobContext(job_id=job_id, cancel_event=event))
+            with span(
+                "job.run",
+                job_id=job_id,
+                action=job.action,
+                task_id=job.task_id or "",
+                trace_id=job.trace_id,
+            ):
+                result = body(JobContext(job_id=job_id, cancel_event=event))
         except JobCancelled:
             self._finish(job, "cancelled")
         except Exception as exc:  # a job failure is a status, not a crash

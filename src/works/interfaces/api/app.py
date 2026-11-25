@@ -15,6 +15,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+from works.application.observability.tracing import configure_tracing
 from works.config.paths import WorksPaths
 from works.domain.errors import (
     AuthError,
@@ -30,6 +31,7 @@ from works.domain.errors import (
 )
 from works.interfaces.api.context import RequestContextMiddleware
 from works.interfaces.api.guard import LocalOnlyMiddleware, ReadAuthMiddleware
+from works.interfaces.api.http_tracing import TracingMiddleware
 from works.interfaces.api.idempotency import IdempotencyMiddleware
 from works.interfaces.api.limits import BodyLimitMiddleware
 from works.interfaces.api.ratelimit import RateLimitMiddleware
@@ -91,6 +93,7 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
+        configure_tracing()
         current = state or build_state(paths, writable=writable, bootstrap_token=bootstrap_token)
         application.state.works = current
         current.live.start()
@@ -120,6 +123,7 @@ def create_app(
     app.add_middleware(RateLimitMiddleware, enabled=rate_limit)
     app.add_middleware(BodyLimitMiddleware, max_bytes=max_body_bytes)
     app.add_middleware(RequestContextMiddleware)
+    app.add_middleware(TracingMiddleware)
 
     @app.exception_handler(WorksError)
     async def works_error(request: Request, exc: WorksError) -> JSONResponse:

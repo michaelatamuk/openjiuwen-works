@@ -8,6 +8,8 @@ import time
 from collections.abc import Awaitable, Callable
 from typing import Any
 
+from works.application.observability.tracing import current_trace_id
+
 Scope = dict[str, Any]
 Message = dict[str, Any]
 Send = Callable[[Message], Awaitable[None]]
@@ -69,6 +71,7 @@ class RequestContextMiddleware:
                         "path": path,
                         "status": status,
                         "duration_ms": int((time.monotonic() - started) * 1000),
+                        "trace_id": current_trace_id() or "-",
                     },
                 )
 

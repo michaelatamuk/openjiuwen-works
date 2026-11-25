@@ -92,6 +92,28 @@ same `Idempotency-Key`; on `409` re-read the task and do not retry blindly.
 * The task index rebuilds from events and has a time budget; a corrupt or old index is rebuilt rather
   than trusted.
 
+## Tracing
+
+Instrumentation is always on but the OpenTelemetry API is a **no-op unless asked**: a plain daemon
+creates spans that go nowhere, which cost 0.3% on the p95 benchmark (78.45 -> 78.68 ms on 10k tasks
+with 20 SSE streams).
+
+```bash
+WORKS_OTEL=1 works daemon start ...                  # spans to the daemon log
+WORKS_OTEL=1 WORKS_OTEL_ENDPOINT=http://host:4318/v1/traces works daemon start ...   # OTLP/HTTP
+WORKS_OTEL=1 WORKS_OTEL_EXPORTER=none works daemon start ...   # instrument, drop spans
+```
+
+What is traced today:
+
+- one span per HTTP request (`http GET /api/v1/tasks`) with the status code;
+- one span per job body (`job.run`) with job id, action and task;
+- one span per supervised subprocess.
+
+The request trace id is written into the job record and the job logs (`trace_id`), so a job can be
+followed from the browser request that started it. No collector is needed for a local trace: the
+console exporter writes the finished span as one JSON line.
+
 ## See also
 
 - `docs/adrs/016-local-daemon.md` - why one daemon owns one home.
