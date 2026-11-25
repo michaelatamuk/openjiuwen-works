@@ -44,12 +44,12 @@ class SourceConfig(BaseModel):
 DEFAULTS = {
     "github": SourceConfig(
         name="github",
-        secret_env="WORKS_WEBHOOK_SECRET_GITHUB",  # noqa: S106 - a variable name, not a secret
+        secret_env="WORKS_WEBHOOK_SECRET_GITHUB",  # noqa: S106  # nosec B106 - a variable name
         limit_per_minute=60,
     ),
     "generic": SourceConfig(
         name="generic",
-        secret_env="WORKS_WEBHOOK_SECRET_GENERIC",  # noqa: S106 - a variable name, not a secret
+        secret_env="WORKS_WEBHOOK_SECRET_GENERIC",  # noqa: S106  # nosec B106 - a variable name
         limit_per_minute=60,
     ),
 }
