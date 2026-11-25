@@ -542,11 +542,7 @@ def stop_daemon(paths: WorksPaths, *, timeout: float = STOP_TIMEOUT) -> DaemonIn
         raise NotFoundError(f"no daemon is running for {paths.root}")
     # An in-process server (tests, `works ui` in this interpreter) shares our pid: never kill it.
     self_hosted = info.pid == os.getpid()
-    if (
-        not self_hosted
-        and _still_serving(info)
-        and not _post_shutdown(info, read_token(info))
-    ):
+    if not self_hosted and _still_serving(info) and not _post_shutdown(info, read_token(info)):
         _signal_stop(info.pid)
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
