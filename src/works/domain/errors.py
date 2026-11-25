@@ -62,6 +62,13 @@ class HarnessError(WorksError):
     exit_code = EXIT_BLOCKED
 
 
+class BudgetError(WorksError):
+    """A per-run or daily ceiling was reached; the work stops visibly."""
+
+    code = "budget_exceeded"
+    exit_code = EXIT_BLOCKED
+
+
 class AuthError(WorksError):
     """A write needs a valid local token."""
 

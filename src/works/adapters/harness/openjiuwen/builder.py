@@ -36,6 +36,7 @@ from works.adapters.harness.openjiuwen.providers import (
     validate_provider,
 )
 from works.adapters.harness.usage import UsageTotals
+from works.adapters.harness.version import package_version
 from works.application.prompts import DEFAULT_PROMPT, load_prompt
 from works.domain.errors import ConfigError, HarnessError
 from works.domain.records import Challenge
@@ -107,6 +108,11 @@ class LiveHarness:
             else None
         )
         self._factory = harness_factory
+
+    @property
+    def version(self) -> str:
+        """The adapter version a proof names, not the model's marketing version."""
+        return package_version("openjiuwen")
 
     @property
     def provider(self) -> str:
@@ -199,6 +205,7 @@ class LiveHarness:
                 prompt_sha256=self._prompt.sha256,
                 model=self._model,
                 provider=self.provider,
+                version=self.version,
                 harness=self._harness_provider,
                 stop=f"harness turn ended as {terminal.kind}: {detail}",
             )
@@ -223,6 +230,7 @@ class LiveHarness:
             prompt_sha256=self._prompt.sha256,
             model=self._model,
             provider=self.provider,
+            version=self.version,
             harness=self._harness_provider,
             tokens=tokens,
             usd=usd,
@@ -282,6 +290,7 @@ class LiveHarness:
                 reason=f"challenger could not run: {exc}",
                 model=self._verifier_model,
                 provider=self.verifier_provider,
+                version=self.version,
                 credential_split=self.credential_split,
                 prompt_sha256=self._challenge_prompt.sha256,
             )
@@ -306,6 +315,7 @@ class LiveHarness:
                 reason="challenger did not finish",
                 model=self._verifier_model,
                 provider=self.verifier_provider,
+                version=self.version,
                 credential_split=self.credential_split,
                 tokens=tokens,
                 usd=usd,
@@ -317,6 +327,7 @@ class LiveHarness:
             usd=usd,
             model=self._verifier_model,
             provider=self.verifier_provider,
+            version=self.version,
             credential_split=self.credential_split,
             prompt_sha256=self._challenge_prompt.sha256,
         )

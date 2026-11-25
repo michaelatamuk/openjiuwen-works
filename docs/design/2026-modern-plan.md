@@ -206,15 +206,22 @@ SSE reader wedging the daemon.
 **Proof:** a recorded eval set with denominators/thresholds, prompt hash in proof, hostile-model
 invariants.
 
-- [ ] **M6.1** Prompt registry with SHA-256, owner, changelog; runs record the hash (M0.5 lands the
-  first half).
-- [ ] **M6.2** Golden eval set on recorded traces, with explicit denominators: 30 planner cases,
-  20 ask Q/A with citations, 12 injection cases. Numeric thresholds and a max regression delta
-  (e.g. ≤2 points) vs the recorded baseline.
-- [ ] **M6.3** Invariant tests with a hostile fake model: no gate/release/evidence change; no agent
-  grades its own work; path policy decides paths; invalid JSON fails closed.
-- [ ] **M6.4** Per-run and per-day token/cost ceilings; a typed blocked state, not a silent stop.
-- [ ] **M6.5** Record provider/model/version/cost per call in evidence.
+- [x] **M6.1** `flows/prompts.lock.json` lists every shipped prompt with SHA-256, owner and
+  changelog; `scripts/check_prompts.py` gates it in `make check` and CI, and a run records the same
+  hash as `prompt_sha256` in the proof.
+- [x] **M6.2** `evals/` holds 30 planner cases, 20 ask Q/A with required citations and 12 injection
+  cases; `scripts/run_evals.py` enforces 100/90/100% thresholds and a 2-point regression delta
+  against `evals/baseline.json`, and runs on every push without calling a model.
+- [x] **M6.3** `tests/integration/test_hostile_model.py`: a model that claims `PLAN APPROVED`,
+  `RELEASE APPROVED` or its own review opens no gate, cannot release a proved task, and cannot turn a
+  failed holdout into an allow; invalid or patch-less traces fail closed. Path policy already decides
+  paths (`test_a_check_edit_is_refused_for_a_normal_fix`).
+- [x] **M6.4** Per-run tokens/usd/wall limits were already enforced; a daily ceiling
+  (`WORKS_DAILY_USD`) sums today's ledger, is checked before the run and before the verifier spends,
+  and turns into `budget_exceeded` on a `blocked` task — including a zero-token record when the day
+  is already over budget.
+- [x] **M6.5** Evidence carries `model_calls` (stage, provider, model, adapter version, tokens, usd)
+  for plan, build and verify, rendered as a table in `evidence.md` and bound into the proof hash.
 - [x] **M6.6** Decided: no cross-provider fallback. Silently switching models changes cost and quality
   behind a release gate; a failed provider stays a visible configuration error.
 
@@ -258,8 +265,10 @@ invariants.
   job scans `uv.lock` and `web/package-lock.json` on push and weekly (run 45596833850 is green); the
   only findings are filelock advisories blocked by openjiuwen's `<4` pin, recorded with an expiry in
   `osv-scanner.toml` and explained in `docs/reference/supply-chain.md`.
-- [ ] **M8.4** Clean 3.13 venv wheel install with `--require-hashes`, `works doctor`, daemon
-  start/status/stop; no signed-wheel theater until a real publish workflow exists.
+- [ ] **M8.4** The `clean-install` CI job downloads the built wheel, exports `uv.lock` as hashed
+  requirements, installs them with `pip install --require-hashes` into a clean Python 3.13 venv,
+  installs the wheel with `--no-deps`, then runs `works doctor --json` and the daemon
+  `start`/`status`/`stop` cycle on a fresh home.
 - [x] **M8.5** `docs/guides/runbook.md` documents Task Scheduler and NSSM with a start/health/stop
   verification; the Windows CI job's `smoke_daemon.py` covers start, kill and restart. No MSI.
 - [x] **M8.6** `docs/reference/supply-chain.md` records the deferrals (Sigstore, reproducible builds, MSI,
@@ -273,8 +282,11 @@ invariants.
 - [x] **M9.1** Extend the existing `Makefile` (not `just`) with `e2e`, `wheel`, `bench`; keep
   `check`/`security`; pre-commit already exists.
 - [~] **M9.2** `only_mutate` already lists `queue/index.py` and `api/jobs.py`; a weekly `mutation.yml`
-  runs mutmut on Linux and enforces `scripts/mutation_gate.py` at 70%. **Proof pending:** the first
-  scheduled run.
+  runs mutmut on Linux and enforces `scripts/mutation_gate.py` at 70%. **Measured (run 45596860746):**
+  64.9% killed — 720 killed, 388 survived, 1 timeout of 1109. Survivors cluster in `policy.py`
+  (`normalize_path`, `is_unsafe`, `_directory`, `check_paths`, `_unquote`, `paths_from_patch`) and one
+  in `state.py`; edge-case tests for those branches were added, and the gate needs ~57 more kills.
+  **Proof pending:** a green run at or above 70%.
 - [x] **M9.3** `scripts/check_docs_links.py` gates 56 files in CI, the contributor guide covers typed
   components, the async boundary and the renderer, and M0.6 fixed the contradictions. No MkDocs.
 - [x] **M9.4** ADR 018 plus `scripts/check_api_compat.py` and `make api-compat`; the web job still
@@ -294,9 +306,11 @@ migration.
   route was converted; blocking git/subprocess routes stay sync by design.
 - [x] **M10.3** ADR 019 keeps one bounded `ThreadPoolExecutor` (2 workers, 64 queued) as the documented
   exception to `plan.md` §6.4; the 503 backpressure path and the crash matrix cover it.
-- [ ] **M10.4** Enable React Compiler behind a measured build; compare bundle size, render latency
-  and test stability. Keep it if it is neutral-to-better; otherwise record the decision. *Proof:*
-  build/test green and a before/after size/latency note.
+- [x] **M10.4** React Compiler is opt-in (`WORKS_REACT_COMPILER=1`). `scripts/measure_web.py` builds
+  both ways and `web/e2e/perf.spec.ts` measures the first queue render plus console errors; a growth
+  over 5% fails the script. Measured: bundle **+6.33%** (JS +7.8%), build ~68% slower, render
+  difference within noise (median 609 ms plain vs 674 ms compiler), so it stays off by default
+  (ADR 021).
 - [x] **M10.5** ADR 020 rejects RSC/Next.js for the local SPA: no SSR/SEO/server-action requirement,
   and a Node runtime next to the Python daemon would double the install.
 - [x] **M10.6** `CONTRIBUTING.md` documents the route classes, the single executor and the RSC

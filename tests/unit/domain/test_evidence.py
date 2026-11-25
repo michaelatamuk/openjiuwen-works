@@ -226,3 +226,28 @@ def test_the_page_records_both_prompt_hashes() -> None:
     assert "prompt: `build`" in page
     assert "f" * 64 in page
     assert "e" * 64 in page
+
+
+def test_model_calls_are_part_of_the_proof() -> None:
+    from works.domain.evidence.models import ModelCall
+
+    base = fixed_evidence()
+    without = base.bind()
+    with_calls = base.model_copy(
+        update={
+            "model_calls": [
+                ModelCall(
+                    stage="build",
+                    provider="deepseek",
+                    model="deepseek-chat",
+                    version="1.2.3",
+                    tokens=1200,
+                    usd=0.0042,
+                )
+            ]
+        }
+    ).bind()
+
+    assert with_calls.proof_sha256 != without.proof_sha256
+    page = render_markdown(with_calls)
+    assert "| build | `deepseek` | `deepseek-chat` | `1.2.3` | 1200 | 0.0042 |" in page

@@ -56,12 +56,18 @@ class WorksPaths:
 
 
 def resolve_root(explicit: Path | None = None) -> Path:
+    """One home for every invocation, independent of the current directory.
+
+    `--home` is the explicit override (tests and isolated demos), `WORKS_HOME` the environment
+    override, and everything else lands in `~/.works` — so `works` run from any folder opens the
+    same queue at the same URL.
+    """
     if explicit is not None:
         return explicit.expanduser().resolve()
     env = os.environ.get("WORKS_HOME")
     if env:
         return Path(env).expanduser().resolve()
-    return Path.cwd().resolve()
+    return (Path.home() / ".works").expanduser().resolve()
 
 
 def load_paths(explicit: Path | None = None) -> WorksPaths:

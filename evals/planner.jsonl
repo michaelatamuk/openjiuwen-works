@@ -1,0 +1,30 @@
+{"id": "planner-01", "nodes": ["reproduce", "build", "test"], "deterministic": ["reproduce", "test"], "p0": ["p0-0-0"], "p1": [], "gate": false}
+{"id": "planner-02", "nodes": ["reproduce", "build", "test", "challenge"], "deterministic": ["reproduce", "test"], "p0": ["p0-1-0", "p0-1-1"], "p1": ["p1-1-0"], "gate": true}
+{"id": "planner-03", "nodes": ["reproduce", "build", "test", "challenge", "preview"], "deterministic": ["reproduce", "test", "preview"], "p0": ["p0-2-0", "p0-2-1", "p0-2-2"], "p1": ["p1-2-0", "p1-2-1"], "gate": true}
+{"id": "planner-04", "nodes": ["reproduce", "build", "test", "preview"], "deterministic": ["reproduce", "test", "preview"], "p0": ["p0-3-0"], "p1": ["p1-3-0", "p1-3-1", "p1-3-2"], "gate": true}
+{"id": "planner-05", "nodes": ["build", "test"], "deterministic": ["test"], "p0": ["p0-4-0", "p0-4-1"], "p1": [], "gate": true}
+{"id": "planner-06", "nodes": ["reproduce", "build", "challenge", "test", "preview"], "deterministic": ["reproduce", "test", "preview"], "p0": ["p0-5-0", "p0-5-1", "p0-5-2"], "p1": ["p1-5-0"], "gate": true}
+{"id": "planner-07", "nodes": ["reproduce", "build", "test"], "deterministic": ["reproduce", "test"], "p0": ["p0-6-0"], "p1": ["p1-6-0", "p1-6-1"], "gate": true}
+{"id": "planner-08", "nodes": ["reproduce", "build", "test", "challenge"], "deterministic": ["reproduce", "test"], "p0": ["p0-7-0", "p0-7-1"], "p1": ["p1-7-0", "p1-7-1", "p1-7-2"], "gate": false}
+{"id": "planner-09", "nodes": ["reproduce", "build", "test", "challenge", "preview"], "deterministic": ["reproduce", "test", "preview"], "p0": ["p0-8-0", "p0-8-1", "p0-8-2"], "p1": [], "gate": true}
+{"id": "planner-10", "nodes": ["reproduce", "build", "test", "preview"], "deterministic": ["reproduce", "test", "preview"], "p0": ["p0-9-0"], "p1": ["p1-9-0"], "gate": true}
+{"id": "planner-11", "nodes": ["build", "test"], "deterministic": ["test"], "p0": ["p0-10-0", "p0-10-1"], "p1": ["p1-10-0", "p1-10-1"], "gate": true}
+{"id": "planner-12", "nodes": ["reproduce", "build", "challenge", "test", "preview"], "deterministic": ["reproduce", "test", "preview"], "p0": ["p0-11-0", "p0-11-1", "p0-11-2"], "p1": ["p1-11-0", "p1-11-1", "p1-11-2"], "gate": true}
+{"id": "planner-13", "nodes": ["reproduce", "build", "test"], "deterministic": ["reproduce", "test"], "p0": ["p0-12-0"], "p1": [], "gate": true}
+{"id": "planner-14", "nodes": ["reproduce", "build", "test", "challenge"], "deterministic": ["reproduce", "test"], "p0": ["p0-13-0", "p0-13-1"], "p1": ["p1-13-0"], "gate": true}
+{"id": "planner-15", "nodes": ["reproduce", "build", "test", "challenge", "preview"], "deterministic": ["reproduce", "test", "preview"], "p0": ["p0-14-0", "p0-14-1", "p0-14-2"], "p1": ["p1-14-0", "p1-14-1"], "gate": false}
+{"id": "planner-16", "nodes": ["reproduce", "build", "test", "preview"], "deterministic": ["reproduce", "test", "preview"], "p0": ["p0-15-0"], "p1": ["p1-15-0", "p1-15-1", "p1-15-2"], "gate": true}
+{"id": "planner-17", "nodes": ["build", "test"], "deterministic": ["test"], "p0": ["p0-16-0", "p0-16-1"], "p1": [], "gate": true}
+{"id": "planner-18", "nodes": ["reproduce", "build", "challenge", "test", "preview"], "deterministic": ["reproduce", "test", "preview"], "p0": ["p0-17-0", "p0-17-1", "p0-17-2"], "p1": ["p1-17-0"], "gate": true}
+{"id": "planner-19", "nodes": ["reproduce", "build", "test"], "deterministic": ["reproduce", "test"], "p0": ["p0-18-0"], "p1": ["p1-18-0", "p1-18-1"], "gate": true}
+{"id": "planner-20", "nodes": ["reproduce", "build", "test", "challenge"], "deterministic": ["reproduce", "test"], "p0": ["p0-19-0", "p0-19-1"], "p1": ["p1-19-0", "p1-19-1", "p1-19-2"], "gate": true}
+{"id": "planner-21", "nodes": ["reproduce", "build", "test", "challenge", "preview"], "deterministic": ["reproduce", "test", "preview"], "p0": ["p0-20-0", "p0-20-1", "p0-20-2"], "p1": [], "gate": true}
+{"id": "planner-22", "nodes": ["reproduce", "build", "test", "preview"], "deterministic": ["reproduce", "test", "preview"], "p0": ["p0-21-0"], "p1": ["p1-21-0"], "gate": false}
+{"id": "planner-23", "nodes": ["build", "test"], "deterministic": ["test"], "p0": ["p0-22-0", "p0-22-1"], "p1": ["p1-22-0", "p1-22-1"], "gate": true}
+{"id": "planner-24", "nodes": ["reproduce", "build", "challenge", "test", "preview"], "deterministic": ["reproduce", "test", "preview"], "p0": ["p0-23-0", "p0-23-1", "p0-23-2"], "p1": ["p1-23-0", "p1-23-1", "p1-23-2"], "gate": true}
+{"id": "planner-25", "nodes": ["reproduce", "build", "test"], "deterministic": ["reproduce", "test"], "p0": ["p0-24-0"], "p1": [], "gate": true}
+{"id": "planner-26", "nodes": ["reproduce", "build", "test", "challenge"], "deterministic": ["reproduce", "test"], "p0": ["p0-25-0", "p0-25-1"], "p1": ["p1-25-0"], "gate": true}
+{"id": "planner-27", "nodes": ["reproduce", "build", "test", "challenge", "preview"], "deterministic": ["reproduce", "test", "preview"], "p0": ["p0-26-0", "p0-26-1", "p0-26-2"], "p1": ["p1-26-0", "p1-26-1"], "gate": true}
+{"id": "planner-28", "nodes": ["reproduce", "build", "test", "preview"], "deterministic": ["reproduce", "test", "preview"], "p0": ["p0-27-0"], "p1": ["p1-27-0", "p1-27-1", "p1-27-2"], "gate": true}
+{"id": "planner-29", "nodes": ["build", "test"], "deterministic": ["test"], "p0": ["p0-28-0", "p0-28-1"], "p1": [], "gate": false}
+{"id": "planner-30", "nodes": ["reproduce", "build", "challenge", "test", "preview"], "deterministic": ["reproduce", "test", "preview"], "p0": ["p0-29-0", "p0-29-1", "p0-29-2"], "p1": ["p1-29-0"], "gate": true}

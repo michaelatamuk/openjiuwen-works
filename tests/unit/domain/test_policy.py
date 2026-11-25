@@ -199,3 +199,98 @@ def test_paths_containing_dotdot_are_always_unsafe(path: str) -> None:
     if ".." in path.replace("\\", "/").split("/"):
         assert is_unsafe(path)
         assert check_paths([path], PathsSpec())
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("a//b", "a/b"),
+        ("a/./b", "a/b"),
+        ("a/.../b", "a/b"),
+        ("a/b ", "a/b"),
+        ("C:\\a\\b", "C:/a/b"),
+        ("   ", ""),
+        ("a/é/../b", "a/é/../b"),
+    ],
+)
+def test_normalize_path_matches_the_documented_rules(raw: str, expected: str) -> None:
+    assert normalize_path(raw) == expected
+
+
+@pytest.mark.parametrize(
+    "path",
+    ["a\tb", 'a"b', "~", "a/..", "a:b", "\\server\share"],
+)
+def test_is_unsafe_covers_each_refusal_rule(path: str) -> None:
+    assert is_unsafe(path)
+
+
+@pytest.mark.parametrize("path", ["a", ":", "ab:c", "a/.../b", "a/b"])
+def test_is_unsafe_does_not_over_refuse(path: str) -> None:
+    assert not is_unsafe(path)
+
+
+@pytest.mark.parametrize(
+    ("path", "pattern", "expected"),
+    [
+        ("tests", "**/tests/", True),
+        ("pkg/TESTS/x.py", "**/tests/", True),
+        ("x/tests", "**/tests/", True),
+        ("testsx/a.py", "**/tests/", False),
+        ("mytests/a.py", "**/tests/", False),
+        ("calc/tools.py", "calc/", True),
+        ("calc", "calc/", True),
+        ("calculator/x.py", "calc/", False),
+        ("a.py", "", False),
+    ],
+)
+def test_matches_globs_and_directories(path: str, pattern: str, expected: bool) -> None:
+    from works.domain.policy import matches
+
+    assert matches(path, [pattern]) is expected
+
+
+def test_refusal_reasons_are_exact() -> None:
+    unsafe = check_paths(["../x"], PathsSpec())
+    assert unsafe[0].reason == "unsafe path (absolute, drive or ..)"
+
+    empty = check_paths([" . "], PathsSpec())
+    assert empty and empty[0].reason == "empty path"
+
+    denied = check_paths(["tests/test_core.py"], PathsSpec())
+    assert denied and denied[0].reason == "denied by policy"
+
+
+def test_a_quoted_path_with_an_escape_is_decoded() -> None:
+    patch = (
+        'diff --git "a/tests/tab\\there.py" "b/tests/tab\\there.py"\n'
+        '--- "a/tests/tab\\there.py"\n'
+        '+++ "b/tests/tab\\there.py"\n'
+    )
+    assert "tests/tab\there.py" in paths_from_patch(patch)
+
+
+def test_an_unchanged_patch_lists_a_path_once() -> None:
+    patch = "\n".join(
+        [
+            "diff --git a/calc/core.py b/calc/core.py",
+            "--- a/calc/core.py",
+            "+++ b/calc/core.py",
+            "@@ -1 +1 @@",
+            "-x",
+            "+y",
+        ]
+    )
+    assert paths_from_patch(patch) == ["calc/core.py"]
+
+
+def test_an_added_file_uses_the_new_side_only() -> None:
+    patch = "\n".join(
+        ["diff --git a/new.py b/new.py", "new file mode 100644", "--- /dev/null", "+++ b/new.py"]
+    )
+    assert paths_from_patch(patch) == ["new.py"]
+
+
+def test_a_tab_separated_timestamp_is_dropped() -> None:
+    patch = "diff --git a/x.py b/x.py\n--- a/x.py\t2026-01-01\n+++ b/x.py\t2026-01-01\n"
+    assert paths_from_patch(patch) == ["x.py"]

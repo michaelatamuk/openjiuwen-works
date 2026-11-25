@@ -233,6 +233,15 @@ def render_markdown(evidence: Evidence) -> str:
         f"- prompt: `{evidence.prompt_name or '—'}` · sha256: `{evidence.prompt_sha256 or '—'}`",
         "",
     ]
+    if evidence.model_calls:
+        lines.append("| Stage | Provider | Model | Version | Tokens | USD |")
+        lines.append("|---|---|---|---|---|---|")
+        for call in evidence.model_calls:
+            lines.append(
+                f"| {call.stage} | `{_cell(call.provider)}` | `{_cell(call.model)}` | "
+                f"`{_cell(call.version)}` | {call.tokens} | {call.usd:.4f} |"
+            )
+        lines.append("")
     if evidence.builder_tokens or evidence.verifier_tokens:
         lines.extend(
             [

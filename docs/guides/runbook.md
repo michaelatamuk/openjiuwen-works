@@ -3,6 +3,17 @@
 Known failures and the first response. Every entry says what the operator sees, why it happens,
 and what to do — no narration, no guesses.
 
+## The one way to run it
+
+```bash
+works daemon start --write
+```
+
+Then open **http://127.0.0.1:8765/**. The home is always `~/.works`
+(`C:\Users\<you>\.works` on Windows), whatever directory you start from; `--home` exists for tests
+and isolated demos, not for daily use. Viewing needs no token on loopback; a token is only for
+changing things from another device (`works daemon pair`).
+
 ## `git apply: patch does not apply`
 
 **See:** the run stops with `conflict` and the task becomes `blocked`; `evidence.md` says `BLOCK`.
@@ -190,14 +201,14 @@ Two supported recipes; pick one and verify it survives a reboot.
 **Task Scheduler** (no extra software):
 
 ```text
-schtasks /Create /SC ONLOGON /TN "openJiuwen Works" /TR ""C:\path\to\.venv\Scripts\python.exe" -m works --home C:\path\to\workspace daemon start --write --port 8765"
+schtasks /Create /SC ONLOGON /TN "openJiuwen Works" /TR ""C:\path\to\.venv\Scripts\python.exe" -m works daemon start --write"
 ```
 
 **NSSM** (a real Windows service, restart on crash):
 
 ```text
 nssm install openJiuwenWorks "C:\path\to\.venv\Scripts\python.exe"
-nssm set openJiuwenWorks AppParameters "-m works --home C:\path\to\workspace daemon start --write --port 8765"
+nssm set openJiuwenWorks AppParameters "-m works daemon start --write"
 nssm set openJiuwenWorks AppDirectory "C:\path\to\workspace"
 nssm set openJiuwenWorks Start SERVICE_AUTO_START
 nssm start openJiuwenWorks

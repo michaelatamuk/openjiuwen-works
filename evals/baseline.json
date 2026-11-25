@@ -1,0 +1,18 @@
+{
+  "recorded_at": "2026-11-25",
+  "max_delta_points": 2.0,
+  "suites": {
+    "planner": {
+      "passed": 30,
+      "total": 30
+    },
+    "ask": {
+      "passed": 20,
+      "total": 20
+    },
+    "injection": {
+      "passed": 12,
+      "total": 12
+    }
+  }
+}

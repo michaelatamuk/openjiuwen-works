@@ -19,6 +19,7 @@ class Challenge(BaseModel):
     concerns: list[str] = Field(default_factory=list)
     model: str = "unknown"
     provider: str = "unknown"
+    version: str = "unknown"
     credential_split: bool = False
     tokens: int = 0
     usd: float = 0.0

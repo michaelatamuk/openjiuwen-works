@@ -92,6 +92,17 @@ Heartbeats are diagnostics. They never cause an automatic kill or an automatic r
 The client contract is therefore: on `503` wait for `Retry-After` and retry the same request with the
 same `Idempotency-Key`; on `409` re-read the task and do not retry blindly.
 
+## Budgets
+
+Two ceilings, both typed as `budget_exceeded` and both ending in a visible `blocked` state:
+
+* **Per run** — `Task.budget` (`tokens`, `usd`, `wall_minutes`) is checked after the builder turn
+  and against the wall clock; a run over budget stops instead of continuing quietly.
+* **Per day** — `WORKS_DAILY_USD` caps the sum of today's `usd` in the append-only ledger. It is
+  checked before the run starts and again before the verifier spends money; an over-budget start
+  still writes a blocked run record with zero tokens, so the operator sees why nothing happened.
+  Unset means no daily ceiling. The day boundary is UTC.
+
 ## Retention and recovery
 
 * `works prune-jobs --days 30 [--dry-run] [--json]` appends one summary line per pruned terminal job

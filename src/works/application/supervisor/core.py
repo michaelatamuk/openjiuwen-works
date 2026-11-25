@@ -12,6 +12,7 @@ from works.adapters.harness.base import Harness, Proposal
 from works.adapters.processes.runner import CommandResult, CommandRunner
 from works.adapters.queue.ledger import Ledger
 from works.adapters.queue.store import Queue
+from works.application import limits
 from works.application.approvals.decisions import (
     DecisionPort,
     GateVerdict,
@@ -170,6 +171,9 @@ class Supervisor:
             plan=plan or {},
         )
         try:
+            # Checked inside the run so an over-budget start becomes a typed blocked record,
+            # not an uncaught exception.
+            limits.check(self._paths)
             await self._execute(ctx, repo, approve_plan, scenario_set)
         except WorksError as exc:
             LOG.warning("run stopped: %s", exc, extra={"run_id": run_id, "task_id": task_id})
@@ -231,12 +235,14 @@ class Supervisor:
 
     @staticmethod
     def _reason_for(exc: WorksError) -> StopReason:
-        from works.domain.errors import ConfigError, ConflictError
+        from works.domain.errors import BudgetError, ConfigError, ConflictError
 
         if isinstance(exc, ConflictError):
             return StopReason.CONFLICT
         if isinstance(exc, ConfigError):
             return StopReason.CONFIG_ERROR
+        if isinstance(exc, BudgetError):
+            return StopReason.BUDGET_EXCEEDED
         if isinstance(exc, PolicyError):
             return StopReason.POLICY_VIOLATION
         return StopReason.INTERNAL_ERROR

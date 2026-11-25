@@ -1,4 +1,4 @@
-"""Capture canonicalized API responses from the legacy server.
+"""Capture canonicalized API responses from the FastAPI app.
 
 The fixtures are the safety net for the FastAPI migration: every read endpoint is recorded from a
 seeded home, with ids, timestamps, hashes and absolute paths masked.
@@ -14,26 +14,25 @@ import json
 import shutil
 import sys
 import tempfile
-import threading
-import urllib.request
 from pathlib import Path
 from typing import Any
 
 FACTORY = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(FACTORY))
 
+from fastapi.testclient import TestClient  # noqa: E402
 from scripts.seed_home import DEFAULT_NOW, seed  # noqa: E402
 from tests.contract.canonicalize import canonicalize  # noqa: E402
 
-from works.config.paths import WorksPaths  # noqa: E402
-from works.interfaces.api.server import serve  # noqa: E402
+from works.interfaces.api.app import create_app  # noqa: E402
 
 FIXTURES = FACTORY / "tests" / "contract" / "fixtures"
 
 
-def _get(base: str, path: str) -> Any:
-    with urllib.request.urlopen(f"{base}{path}", timeout=30) as response:  # noqa: S310
-        return json.loads(response.read().decode("utf-8"))
+def _get(client: TestClient, path: str) -> Any:
+    response = client.get(f"/api/v1{path}")
+    response.raise_for_status()
+    return response.json()
 
 
 def _stable_health(payload: dict[str, Any]) -> dict[str, Any]:
@@ -54,32 +53,25 @@ def _slug(ref: str) -> str:
 
 
 def capture(home: Path) -> dict[str, Any]:
-    paths = WorksPaths(home).ensure()
-    server = serve(paths, host="127.0.0.1", port=0)
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
-    base = f"http://127.0.0.1:{server.server_address[1]}"
-    try:
-        tasks = _get(base, "/api/tasks?limit=200")
+    app = create_app(home)
+    with TestClient(app, base_url="http://127.0.0.1") as client:
+        tasks = _get(client, "/tasks?limit=200")
         task_ids = [task["id"] for task in tasks.get("tasks", [])]
         fixtures: dict[str, Any] = {
-            "health": _stable_health(_get(base, "/api/health")),
-            "products": _get(base, "/api/products"),
-            "detectors": _get(base, "/api/detectors"),
+            "health": _stable_health(_get(client, "/health")),
+            "products": _get(client, "/products"),
+            "detectors": _get(client, "/detectors"),
             "tasks": tasks,
-            "metrics": _get(base, "/api/metrics"),
-            "ledger": _get(base, "/api/ledger"),
+            "metrics": _get(client, "/metrics"),
+            "ledger": _get(client, "/ledger"),
         }
         for task in tasks.get("tasks", []):
             slug = _slug(str(task["source"]).split(":", 1)[-1])
-            fixtures[f"task-{slug}"] = _get(base, f"/api/tasks/{task['id']}")
-            fixtures[f"runs-{slug}"] = _get(base, f"/api/tasks/{task['id']}/runs")
+            fixtures[f"task-{slug}"] = _get(client, f"/tasks/{task['id']}")
+            fixtures[f"runs-{slug}"] = _get(client, f"/tasks/{task['id']}/runs")
         if not task_ids:
             raise SystemExit("the seed home has no tasks")
         return fixtures
-    finally:
-        server.shutdown()
-        server.server_close()
 
 
 def _canonical(fixtures: dict[str, Any], home: Path) -> dict[str, Any]:

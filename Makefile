@@ -1,6 +1,6 @@
-.PHONY: check lint format type test unit integration cov bench wheel security gitleaks demo docs-links sbom api-compat routes mutation
+.PHONY: check lint format type test unit integration cov bench wheel security gitleaks demo docs-links sbom api-compat routes mutation prompts evals
 
-check: lint format type cov
+check: lint format type prompts evals cov
 
 lint:
 	uv run ruff check src tests
@@ -10,6 +10,12 @@ format:
 
 docs-links:
 	uv run python scripts/check_docs_links.py
+
+prompts:
+	uv run python scripts/check_prompts.py
+
+evals:
+	uv run python scripts/run_evals.py
 
 routes:
 	uv run python scripts/dump_route_classes.py --check

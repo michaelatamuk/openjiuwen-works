@@ -15,6 +15,7 @@ def parse_challenge(
     usd: float,
     model: str,
     provider: str,
+    version: str = "unknown",
     credential_split: bool,
     prompt_sha256: str,
 ) -> Challenge:
@@ -33,6 +34,7 @@ def parse_challenge(
             concerns=[str(item) for item in concerns],
             model=model,
             provider=provider,
+            version=version,
             credential_split=credential_split,
             tokens=tokens,
             usd=usd,
@@ -45,6 +47,7 @@ def parse_challenge(
             concerns=[text[:300]] if text else [],
             model=model,
             provider=provider,
+            version=version,
             credential_split=credential_split,
             tokens=tokens,
             usd=usd,

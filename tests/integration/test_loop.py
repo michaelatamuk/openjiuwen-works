@@ -220,6 +220,23 @@ def test_the_token_budget_is_enforced(paths, submit, scenario_set, make_supervis
     assert record.stop_reason is StopReason.BUDGET_EXCEEDED
 
 
+def test_the_daily_ceiling_blocks_before_the_model_is_called(
+    paths, submit, scenario_set, make_supervisor, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("WORKS_DAILY_USD", "1")
+    Ledger(paths.ledger).append(
+        LedgerRow(task_id="t-old", run_id="r-old", state=TaskState.PROVED, tokens=10, usd=1.5)
+    )
+    task = submit()
+
+    record = run(make_supervisor("fix-add"), task.id, scenario_set, approve_plan=True)
+
+    assert record.state is TaskState.BLOCKED
+    assert record.stop_reason is StopReason.BUDGET_EXCEEDED
+    assert record.tokens == 0, "the model must not be called once the day is over budget"
+    assert record.usd == 0.0
+
+
 def test_a_quarantine_file_inside_the_repository_is_refused(
     paths, submit, scenario_set, make_supervisor, repo
 ) -> None:

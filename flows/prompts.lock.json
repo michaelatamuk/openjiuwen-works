@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "prompts": [
+    {
+      "name": "fix-issue/prompts/build.md",
+      "path": "flows/fix-issue/prompts/build.md",
+      "sha256": "c2d00b627bae641bff1114f63623a4e15e6cb3b7b52bbd6289437756268ff051",
+      "owner": "platform",
+      "changelog": [
+        {
+          "version": 1,
+          "date": "2026-11-25",
+          "note": "initial registry; hash matches the prompt as shipped"
+        }
+      ]
+    },
+    {
+      "name": "fix-issue/prompts/challenge.md",
+      "path": "flows/fix-issue/prompts/challenge.md",
+      "sha256": "69c29829068d6522bf7bace1493ec177b9f33391779da1e46027db098b94bea0",
+      "owner": "platform",
+      "changelog": [
+        {
+          "version": 1,
+          "date": "2026-11-25",
+          "note": "initial registry; hash matches the prompt as shipped"
+        }
+      ]
+    },
+    {
+      "name": "fix-issue/prompts/plan-critique.md",
+      "path": "flows/fix-issue/prompts/plan-critique.md",
+      "sha256": "f22b7ea3d0274050886af9218a7bcb9e9f81650c76acbdb97a5d8f8d833e416b",
+      "owner": "platform",
+      "changelog": [
+        {
+          "version": 1,
+          "date": "2026-11-25",
+          "note": "initial registry; hash matches the prompt as shipped"
+        }
+      ]
+    },
+    {
+      "name": "fix-issue/prompts/plan-spec.md",
+      "path": "flows/fix-issue/prompts/plan-spec.md",
+      "sha256": "113f612f7f689ea90924ad0a046dbdfc8eb145d6de74dae6a3e3629d1ad67cff",
+      "owner": "platform",
+      "changelog": [
+        {
+          "version": 1,
+          "date": "2026-11-25",
+          "note": "initial registry; hash matches the prompt as shipped"
+        }
+      ]
+    },
+    {
+      "name": "fix-issue/prompts/plan.md",
+      "path": "flows/fix-issue/prompts/plan.md",
+      "sha256": "bf1330340c0765ea8f23b54dc1589da0d8ce46b0ba1c410f73da393c3745738e",
+      "owner": "platform",
+      "changelog": [
+        {
+          "version": 1,
+          "date": "2026-11-25",
+          "note": "initial registry; hash matches the prompt as shipped"
+        }
+      ]
+    }
+  ]
+}

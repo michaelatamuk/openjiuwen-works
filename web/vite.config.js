@@ -1,8 +1,17 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
+// React Compiler is opt-in behind a measured build (`node scripts/measure_web.py`).
+const compiler = process.env.WORKS_REACT_COMPILER === "1";
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(
+      compiler
+        ? { babel: { plugins: [["babel-plugin-react-compiler", { target: "19" }]] } }
+        : {},
+    ),
+  ],
   build: {
     outDir: "../src/works/interfaces/ui/static/dist",
     emptyOutDir: true,

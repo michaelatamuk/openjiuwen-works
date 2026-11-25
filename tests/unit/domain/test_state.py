@@ -55,3 +55,15 @@ def test_random_sequences_follow_the_table(targets: list[TaskState]) -> None:
 def test_a_blocked_task_can_never_be_reopened() -> None:
     for target in ALL_STATES:
         assert not can_transition(S.BLOCKED, target)
+
+
+def test_a_refusal_names_the_allowed_targets() -> None:
+    from works.domain.errors import StateError
+    from works.domain.state import require_transition
+
+    with pytest.raises(StateError) as exc:
+        require_transition(TaskState.QUEUED, TaskState.PROVED)
+
+    message = str(exc.value)
+    assert "queued -> proved" in message
+    assert "reproducing" in message

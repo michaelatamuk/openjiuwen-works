@@ -19,6 +19,7 @@ class Trace(BaseModel):
     name: str
     model: str = "fake-builder-1"
     provider: str = "fixture"
+    version: str = "fixture-1"
     tokens: int = 0
     usd: float = 0.0
     stop: str | None = None
@@ -67,6 +68,7 @@ class FakeHarness:
             patch=patch,
             model=trace.model,
             provider=trace.provider,
+            version=trace.version,
             harness="fake",
             tokens=trace.tokens,
             usd=trace.usd,
@@ -94,6 +96,7 @@ class FakeHarness:
             concerns=list(self._trace.challenge_concerns),
             model=self._trace.model,
             provider=self._trace.provider,
+            version=self._trace.version,
             tokens=0,
             usd=0.0,
         )

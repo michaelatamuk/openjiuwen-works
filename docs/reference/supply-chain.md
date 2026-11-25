@@ -9,6 +9,7 @@ before there is a release process.
 | Artefact | How it is produced | What proves it |
 |---|---|---|
 | Wheel | `uv build --wheel` in the `wheel` job | `scripts/check_wheel.py` (the UI bundle and flows are inside), `scripts/smoke_wheel.py` (install + `works --help` + daemon) |
+| Clean install | the `clean-install` job | Python 3.13 venv, `uv export` as hashed requirements, `pip install --require-hashes`, wheel with `--no-deps`, `works doctor`, daemon start/status/stop |
 | SBOM | `cyclonedx-py environment` against the `server` extra | `dist/sbom.json` (CycloneDX JSON) uploaded with the wheel |
 | Checksums | `sha256sum` in `dist/` | `dist/SHA256SUMS` covers the wheel and the SBOM |
 | Python dependencies | `uv.lock` (resolved, frozen in CI) | `uv sync --frozen`; Renovate proposes grouped updates |

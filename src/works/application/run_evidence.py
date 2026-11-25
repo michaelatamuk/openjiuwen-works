@@ -15,6 +15,7 @@ from works.adapters.queue.store import Queue
 from works.application.run_context import RunContext
 from works.domain.errors import WorksError
 from works.domain.evidence import DiffStatRow, Evidence
+from works.domain.evidence.models import ModelCall
 from works.domain.records import Finding, RunRecord, TaskState
 
 LOG = logging.getLogger("works.run")
@@ -87,6 +88,48 @@ def collect_findings(queue: Queue, task_id: str) -> list[Finding]:
     return findings
 
 
+def _model_calls(ctx: RunContext) -> list[ModelCall]:
+    """One entry per model invocation the run actually made."""
+    calls: list[ModelCall] = []
+    provenance = ctx.plan.get("provenance") or {}
+    if provenance.get("model"):
+        calls.append(
+            ModelCall(
+                stage="plan",
+                provider=str(provenance.get("provider") or "unknown"),
+                model=str(provenance["model"]),
+                version=str(provenance.get("version") or "unknown"),
+                tokens=int(provenance.get("tokens") or 0),
+                usd=float(provenance.get("usd") or 0.0),
+            )
+        )
+    proposal = ctx.proposal
+    if proposal is not None:
+        calls.append(
+            ModelCall(
+                stage="build",
+                provider=proposal.provider,
+                model=proposal.model,
+                version=proposal.version,
+                tokens=proposal.tokens,
+                usd=proposal.usd,
+            )
+        )
+    challenge = ctx.challenge
+    if challenge is not None:
+        calls.append(
+            ModelCall(
+                stage="verify",
+                provider=challenge.provider,
+                model=challenge.model,
+                version=challenge.version,
+                tokens=challenge.tokens,
+                usd=challenge.usd,
+            )
+        )
+    return calls
+
+
 def build_evidence(
     ctx: RunContext,
     *,
@@ -139,6 +182,7 @@ def build_evidence(
         builder_usd=totals.builder_usd,
         verifier_tokens=totals.verifier_tokens,
         verifier_usd=totals.verifier_usd,
+        model_calls=_model_calls(ctx),
         verification_share=totals.verification_share,
         duration_ms=duration_ms,
         files_changed=files_changed,

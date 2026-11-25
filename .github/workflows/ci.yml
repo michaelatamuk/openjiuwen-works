@@ -40,6 +40,10 @@ jobs:
         run: uv run ruff format --check src tests
       - name: Docs links
         run: uv run python scripts/check_docs_links.py
+      - name: Prompt registry
+        run: uv run python scripts/check_prompts.py
+      - name: Golden evals
+        run: uv run python scripts/run_evals.py
       - name: Types
         run: uv run mypy
       - name: Tests with coverage
@@ -182,6 +186,37 @@ jobs:
           name: wheel-sbom
           path: dist/*
           if-no-files-found: error
+
+  clean-install:
+    needs: wheel
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.4.0
+        with:
+          enable-cache: true
+      - uses: actions/download-artifact@v8
+        with:
+          name: wheel-sbom
+          path: dist
+      - name: Hashed requirements from the lock
+        run: >
+          uv export --frozen --no-dev --extra server --format requirements-txt
+          --no-emit-project -o dist/requirements.txt
+      - name: Clean 3.13 venv with a hashed install
+        run: |
+          uv venv --python 3.13 --seed /tmp/clean
+          /tmp/clean/bin/python -m pip install --quiet --require-hashes -r dist/requirements.txt
+          /tmp/clean/bin/python -m pip install --quiet --no-deps dist/*.whl
+          /tmp/clean/bin/works version
+      - name: Doctor on a fresh home
+        run: /tmp/clean/bin/works --home /tmp/clean-home doctor --json
+      - name: Daemon start, status, stop
+        run: |
+          /tmp/clean/bin/works --home /tmp/clean-home daemon start --write --port 8799 --json
+          /tmp/clean/bin/works --home /tmp/clean-home daemon status --port 8799 --json
+          /tmp/clean/bin/works --home /tmp/clean-home daemon stop --json
 
   docker-verifier:
     runs-on: ubuntu-latest

@@ -154,6 +154,14 @@ async def _build(sup: Supervisor, ctx: RunContext, repo: GitRepo) -> list[str] |
     if sup._over_wall(ctx):
         sup._stop(ctx, StopReason.BUDGET_EXCEEDED, detail="wall-clock budget")
         return None
+    from works.application.limits import check as check_daily
+    from works.domain.errors import BudgetError
+
+    try:
+        check_daily(sup._paths, add_usd=proposal.usd)
+    except BudgetError as exc:
+        sup._stop(ctx, StopReason.BUDGET_EXCEEDED, detail=str(exc))
+        return None
     worktree = _required(ctx.worktree, "worktree")
     touched = proposal.touched_paths or (
         repo.all_changed_files(worktree) if proposal.applied else paths_from_patch(proposal.patch)

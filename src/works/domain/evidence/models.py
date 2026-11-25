@@ -41,6 +41,17 @@ class Artifact(BaseModel):
     description: str = ""
 
 
+class ModelCall(BaseModel):
+    """One model invocation: who answered, with which model and adapter, and what it cost."""
+
+    stage: str
+    provider: str = "unknown"
+    model: str = "unknown"
+    version: str = "unknown"
+    tokens: int = 0
+    usd: float = 0.0
+
+
 class Evidence(BaseModel):
     schema_version: int = 1
     run_id: str
@@ -79,6 +90,7 @@ class Evidence(BaseModel):
     builder_usd: float = 0.0
     verifier_tokens: int = 0
     verifier_usd: float = 0.0
+    model_calls: list[ModelCall] = Field(default_factory=list)
     verification_share: float = 0.0
     duration_ms: int = 0
     files_changed: list[str] = Field(default_factory=list)

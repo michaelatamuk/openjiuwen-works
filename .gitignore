@@ -54,3 +54,5 @@ web/.e2e-state.json
 web/test-results/
 web/playwright-report/
 web/blob-report/
+
+web/.compiler-report.json

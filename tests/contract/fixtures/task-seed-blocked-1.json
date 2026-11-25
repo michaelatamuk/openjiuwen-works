@@ -18,7 +18,8 @@
       "reason": "fixture challenge passed",
       "schema_version": 1,
       "tokens": 0,
-      "usd": 0.0
+      "usd": 0.0,
+      "version": "fixture-1"
     },
     "checks_sha": "<sha256>",
     "credential_split": false,
@@ -54,6 +55,24 @@
     "harness": "fake",
     "memory_recall": [],
     "model": "fake-builder-1",
+    "model_calls": [
+      {
+        "model": "fake-builder-1",
+        "provider": "fixture",
+        "stage": "build",
+        "tokens": 1300,
+        "usd": 0.013,
+        "version": "fixture-1"
+      },
+      {
+        "model": "fake-builder-1",
+        "provider": "fixture",
+        "stage": "verify",
+        "tokens": 0,
+        "usd": 0.0,
+        "version": "fixture-1"
+      }
+    ],
     "not_tested": [],
     "plan_deviations": [],
     "plan_hash": "<sha256>",
@@ -500,7 +519,8 @@
           "reason": "fixture challenge passed",
           "schema_version": 1,
           "tokens": 0,
-          "usd": 0.0
+          "usd": 0.0,
+          "version": "fixture-1"
         },
         "stage": "check",
         "type": "challenge.decided"
@@ -768,12 +788,12 @@
       {
         "href": "",
         "label": "Branch",
-        "value": "\u2014"
+        "value": "—"
       },
       {
         "href": "",
         "label": "Pull request",
-        "value": "\u2014"
+        "value": "—"
       },
       {
         "href": "",
@@ -1605,7 +1625,8 @@
         "reason": "fixture challenge passed",
         "schema_version": 1,
         "tokens": 0,
-        "usd": 0.0
+        "usd": 0.0,
+        "version": "fixture-1"
       },
       "seq": 19,
       "ts": "<timestamp>",
