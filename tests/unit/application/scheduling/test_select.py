@@ -68,6 +68,7 @@ def signals(
     free_disk_gb: float = 999.0,
     provider_errors: int = 0,
     waiting_plans: int = 0,
+    stale_approvals: frozenset[str] = frozenset(),
 ) -> Signals:
     return Signals(
         now=NOW,
@@ -79,6 +80,7 @@ def signals(
         free_disk_gb=free_disk_gb,
         provider_errors=provider_errors,
         waiting_plans=waiting_plans,
+        stale_approvals=stale_approvals,
     )
 
 
@@ -218,3 +220,18 @@ def test_order_key_is_stable_for_equal_tasks() -> None:
 
 def test_age_is_never_negative() -> None:
     assert age_hours(task(created_at=NOW + timedelta(hours=2)), NOW) == 0.0
+
+
+def test_a_stale_approval_is_refused() -> None:
+    approved = task(
+        kind=SourceKind.TRACKER,
+        channel="github",
+        labels=("works:auto",),
+        state=TaskState.PLAN_APPROVED,
+    )
+    body = policy(levels={"default": "L2"})
+
+    assert (
+        evaluate(approved, body, signals(stale_approvals=frozenset({approved.id})))
+        == SkipReason.STALE_APPROVAL
+    )

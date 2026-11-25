@@ -42,6 +42,7 @@ class SkipReason(StrEnum):
     ATTEMPTS_EXHAUSTED = "attempts_exhausted"
     BACKOFF = "backoff"
     RISK_TOO_HIGH = "risk_too_high"
+    STALE_APPROVAL = "stale_approval"
     REPO_BUSY = "repo_busy"
     GLOBAL_BUSY = "global_busy"
     BUDGET_EXHAUSTED = "budget_exhausted"
@@ -90,6 +91,7 @@ class Signals:
     free_disk_gb: float = 999.0
     provider_errors: int = 0
     waiting_plans: int = 0
+    stale_approvals: frozenset[str] = frozenset()
 
 
 @dataclass(frozen=True)
@@ -151,6 +153,8 @@ def evaluate(task: Task, policy: DispatchPolicy, signals: Signals) -> SkipReason
 
     if task.state not in LEVEL_STATES[level]:
         return SkipReason.NOT_RUNNABLE
+    if task.id in signals.stale_approvals:
+        return SkipReason.STALE_APPROVAL
     if task.waiting_on is not None:
         return SkipReason.WAITING_ON_EVENT
     age = age_hours(task, signals.now)

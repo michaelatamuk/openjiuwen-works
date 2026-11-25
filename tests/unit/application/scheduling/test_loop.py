@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from works.adapters.queue.store import Queue
 from works.application.scheduling import lease
@@ -148,3 +148,64 @@ def test_the_counter_records_reasons(paths) -> None:
     counters = payload["counters"]
     assert isinstance(counters, dict)
     assert counters.get("not_runnable") == 1
+
+
+def _approved(paths, task_id: str, *, expires_in_hours: float, plan_hash: str = "h1") -> None:
+    queue = Queue(paths)
+    for state in (
+        TaskState.REPRODUCING,
+        TaskState.REPRODUCED,
+        TaskState.PLANNING,
+        TaskState.PLAN_APPROVED,
+    ):
+        queue.transition(task_id, state)
+    queue.append(task_id, "plan.drafted", {"hash": plan_hash})
+    queue.append(
+        task_id,
+        "gate.decided",
+        {
+            "gate": "plan",
+            "decision": "approved",
+            "plan_hash": plan_hash,
+            "expires_at": (NOW + timedelta(hours=expires_in_hours)).isoformat(),
+        },
+    )
+
+
+def test_an_expired_plan_approval_is_not_claimed(paths) -> None:
+    _write_policy(
+        paths,
+        """
+enabled: true
+allow:
+  manual: true
+levels:
+  default: L2
+""",
+    )
+    task_id = _task(paths)
+    _approved(paths, task_id, expires_in_hours=-1)
+
+    result = Scheduler(paths, now=lambda: NOW).tick()
+
+    assert task_id not in result.claimed
+    assert result.skipped[task_id] == "stale_approval"
+
+
+def test_a_fresh_plan_approval_is_claimed(paths) -> None:
+    _write_policy(
+        paths,
+        """
+enabled: true
+allow:
+  manual: true
+levels:
+  default: L2
+""",
+    )
+    task_id = _task(paths)
+    _approved(paths, task_id, expires_in_hours=4)
+
+    result = Scheduler(paths, now=lambda: NOW).tick()
+
+    assert result.claimed == [task_id]

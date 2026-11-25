@@ -379,6 +379,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/scheduler": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Scheduler Status */
+        get: operations["scheduler_status_api_v1_scheduler_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/scheduler/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Scheduler Pause */
+        post: operations["scheduler_pause_api_v1_scheduler_pause_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/scheduler/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Scheduler Resume */
+        post: operations["scheduler_resume_api_v1_scheduler_resume_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/scheduler/tick": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Scheduler Tick */
+        post: operations["scheduler_tick_api_v1_scheduler_tick_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/session": {
         parameters: {
             query?: never;
@@ -648,6 +716,14 @@ export interface components {
              */
             label: string;
         };
+        /** PauseRequest */
+        PauseRequest: {
+            /**
+             * Reason
+             * @default
+             */
+            reason: string;
+        };
         /** ReadinessRequest */
         ReadinessRequest: {
             /** Repo */
@@ -864,6 +940,57 @@ export interface components {
             waiting_on?: string | null;
             /** Would Block */
             would_block: number;
+        };
+        /** TickRequest */
+        TickRequest: {
+            /**
+             * Approve Plan
+             * @default false
+             */
+            approve_plan: boolean;
+            /** Decision */
+            decision?: string | null;
+            /**
+             * Limit
+             * @default 1
+             */
+            limit: number;
+            /**
+             * Live
+             * @default false
+             */
+            live: boolean;
+            /** Model */
+            model?: string | null;
+            /** Model Base */
+            model_base?: string | null;
+            /** Ppma */
+            ppma?: string | null;
+            /**
+             * Ppma Space
+             * @default me
+             */
+            ppma_space: string;
+            /** Prompt */
+            prompt?: string | null;
+            /** Quarantine */
+            quarantine?: string | null;
+            /** Scenarios */
+            scenarios?: string | null;
+            /**
+             * Swarm
+             * @default false
+             */
+            swarm: boolean;
+            /** Trace */
+            trace?: string | null;
+            /**
+             * Verifier
+             * @default local
+             */
+            verifier: string;
+            /** Verifier Image */
+            verifier_image?: string | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -1534,6 +1661,118 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    scheduler_status_api_v1_scheduler_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    scheduler_pause_api_v1_scheduler_pause_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PauseRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    scheduler_resume_api_v1_scheduler_resume_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    scheduler_tick_api_v1_scheduler_tick_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TickRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

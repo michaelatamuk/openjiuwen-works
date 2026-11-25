@@ -17,6 +17,7 @@ from pathlib import Path
 from works.adapters.queue.atomic import atomic_write
 from works.adapters.queue.store import Queue
 from works.application import limits
+from works.application.approvals.gates import approval_expired
 from works.application.scheduling import lease
 from works.application.scheduling.policy import DispatchPolicy, load_policy
 from works.application.scheduling.select import Signals, TickPlan, tick_plan
@@ -36,6 +37,36 @@ class TickResult:
     order: list[str] = field(default_factory=list)
     executed: list[dict[str, str]] = field(default_factory=list)
     error: str | None = None
+
+
+def stale_approvals(paths: WorksPaths, now: datetime) -> frozenset[str]:
+    """Plan/release approvals that expired; a hash mismatch is the next pass."""
+    queue = Queue(paths)
+    stale: set[str] = set()
+    for task in queue.list_tasks():
+        if task.state not in (TaskState.PLAN_APPROVED, TaskState.RELEASED):
+            continue
+        gate = "plan" if task.state is TaskState.PLAN_APPROVED else "release"
+        events = queue.events(task.id)
+        approved = [
+            event
+            for event in events
+            if event.type == "gate.decided"
+            and event.data.get("gate") == gate
+            and event.data.get("decision") == "approved"
+        ]
+        if not approved:
+            stale.add(task.id)
+            continue
+        latest = approved[-1]
+        if approval_expired(latest, now=now):
+            stale.add(task.id)
+            continue
+        if gate == "plan":
+            drafted = [event for event in events if event.type == "plan.drafted"]
+            if not drafted or drafted[-1].data.get("hash") != latest.data.get("plan_hash"):
+                stale.add(task.id)
+    return frozenset(stale)
 
 
 def dispatcher_id() -> str:
@@ -125,6 +156,7 @@ class Scheduler:
             active_repos=repos,
             remaining_usd=self._remaining_usd(policy),
             waiting_plans=waiting,
+            stale_approvals=stale_approvals(self._paths, moment),
         )
 
     def plan(self, policy: DispatchPolicy | None = None) -> TickPlan:

@@ -539,7 +539,8 @@ The design is `docs/design/2026-m21-scheduler.md`; the actor rule is ADR 024. De
 **Progress (first pass):** `application/scheduling/` has the policy loader, the pure selection and
 admission function, leases with a dispatcher lock and stale reclaim, pause/resume, and a CLI
 `works scheduler status|enable|disable|pause|resume|tick`; `GET /api/v1/scheduler` and
-`pause|resume|tick` (a job); 42 unit tests cover it. The daemon loop, GUI and triggers are next.
+`pause|resume|tick` (a job); 44 unit tests cover it, including stale plan approvals and the rule that
+a `scheduler` actor cannot decide a gate. The daemon loop, GUI and triggers are next.
 
 - [x] **M21.1** `~/.works/config/dispatch.yaml` is the only policy: sources, allow/deny labels, flows,
   products, repos, remote triggers, levels, limits, budget, windows and pause; strict validation turns

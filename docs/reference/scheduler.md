@@ -81,8 +81,9 @@ Every refusal has a typed code, visible in `status` and `tick`:
 `backoff`, `risk_too_high`, `repo_busy`, `global_busy`, `budget_exhausted`, `run_budget_cap`,
 `system_busy`, `interactive_load`, `low_disk`, `provider_degraded`, `attention_full`, `blackout`.
 
-`stale_approval` and `remote_trigger` exist in the design but are not emitted yet: they need gate
-freshness and the import path, which land with M21.5 and M21.7.
+`stale_approval` is emitted when a plan approval expired or no longer matches the latest plan hash;
+release approvals are checked for expiry (the release hash check lands with M21.5). `remote_trigger`
+still waits for the import path (M21.7).
 
 ## Order
 
