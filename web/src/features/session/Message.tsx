@@ -17,7 +17,9 @@ function Message({ message, onThreadAction }: MessageProps) {
   const hideTitle = message.generated || message.type === "thread.agent" || message.type === "thread.note";
   const details = message.generated ? (message.facts || []) : [];
   return (
-    <article className={`cl-msg ${role} ${message.generated ? "generated" : ""} ${message.tone || ""}`}>
+    <article
+      className={`cl-msg ${role} ${message.generated ? "generated" : ""} ${message.tone ? `tone-${message.tone}` : ""}`}
+    >
       <div className="cl-avatar" aria-hidden="true">{ROLE_LETTERS[role] || "·"}</div>
       <div className="cl-body">
         <div className="cl-meta">

@@ -92,11 +92,15 @@ body { background: var(--bg); }
 .cl-stance.support { background: var(--green-soft); color: var(--green); }
 .cl-stance.concern { background: var(--amber-soft); color: var(--amber); }
 .cl-stance.block { background: var(--red-soft); color: var(--red); }
-.cl-msg h3 { margin: 7px 0 4px; font-size: 13.5px; font-weight: 650; letter-spacing: -.01em; }
+.cl-msg h3 { margin: 7px 0 4px; font-size: 13.5px; font-weight: 650; letter-spacing: -.01em; color: var(--text); }
 .cl-msg p { margin: 0; color: var(--text); font-size: 13.5px; line-height: 1.62; white-space: pre-wrap; }
 .cl-msg .cl-body p { color: color-mix(in srgb, var(--text) 88%, var(--muted)); }
 .cl-msg.generated .cl-body p { color: var(--text); }
 .cl-msg code { font: 12px/1.4 var(--mono); background: var(--panel-3); padding: 1px 5px; border-radius: 5px; }
+/* Tone is a highlight on the name, never a blanket colour that would drop body contrast. */
+.cl-msg.tone-ok .cl-name { color: var(--green); }
+.cl-msg.tone-bad .cl-name { color: var(--red); }
+.cl-msg.tone-warn .cl-name { color: var(--amber); }
 .cl-msg strong { color: var(--text); font-weight: 650; }
 .cl-facts { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
 .cl-facts span { border: 1px solid var(--line); background: var(--panel-2); color: var(--faint); border-radius: 999px; padding: 2px 8px; font-size: 9.5px; }
