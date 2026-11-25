@@ -90,6 +90,11 @@ def _run_one(state: AppState, options: RunOptions, task_id: str) -> dict[str, An
     return run
 
 
+def run_task(state: AppState, options: RunOptions, task_id: str) -> dict[str, object]:
+    """The scheduler's execution seam: same supervisor, never a gate decision."""
+    return _run_one(state, options, task_id)
+
+
 @router.post("/runs", dependencies=[Depends(require_write)])
 def start_run(payload: RunRequest, request: Request) -> JSONResponse:
     state = _state(request)

@@ -1,7 +1,8 @@
 # Scheduler (first pass)
 
-Status: core implemented (policy, selection, leases, pause, one CLI tick). The daemon loop, the HTTP
-surface, GUI controls, import triggers and bounded retries are planned in M21 and not built yet.
+Status: core implemented (policy, selection, leases, pause, one CLI tick) and the HTTP surface
+(status, pause, resume, one tick as a job). The daemon loop, GUI controls, import triggers and bounded
+retries are planned in M21 and not built yet.
 
 The scheduler decides **whether** a queued task may run and **whether it should run now**. It never
 runs a task itself and never decides a gate.
@@ -50,6 +51,17 @@ works scheduler tick --live       # claim and run the selected task(s) sequentia
 ```
 
 Exit codes: `0` on success, `EXIT_BLOCKED` when an executed task returns an error.
+
+## HTTP
+
+| method | path | meaning |
+|---|---|---|
+| GET | `/api/v1/scheduler` | state, slots, budget, eligible tasks and the waiting reasons |
+| POST | `/api/v1/scheduler/pause` | `{"reason": "..."}`; the queue is kept |
+| POST | `/api/v1/scheduler/resume` | resume claiming |
+| POST | `/api/v1/scheduler/tick` | submit a job that selects and runs sequentially; answers `202` |
+
+Writes need the local bearer token; loopback reads follow the usual auth rules.
 
 ## Leases and slots
 

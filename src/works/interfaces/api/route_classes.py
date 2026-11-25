@@ -47,6 +47,13 @@ ROUTE_CLASSES: dict[str, tuple[RouteClass, str]] = {
     "POST /api/v1/readiness": ("blocking", "submits a readiness job; the job runs the commands"),
     "POST /api/v1/runs": ("blocking", "submits a run job; the supervisor spawns subprocesses"),
     "GET /api/v1/runs/{run_id}": ("blocking", "reads the run record and evidence"),
+    "GET /api/v1/scheduler": ("blocking", "reads the policy, leases and the queue"),
+    "POST /api/v1/scheduler/pause": ("blocking", "writes the pause flag"),
+    "POST /api/v1/scheduler/resume": ("blocking", "writes the pause flag"),
+    "POST /api/v1/scheduler/tick": (
+        "blocking",
+        "selects tasks and submits a job that runs them sequentially",
+    ),
     "POST /api/v1/session": ("async-safe", "compares a token against in-memory sessions"),
     "GET /api/v1/sources": ("blocking", "reads the source registry and its metrics"),
     "GET /api/v1/settings/builder": ("blocking", "reads the builder settings file"),

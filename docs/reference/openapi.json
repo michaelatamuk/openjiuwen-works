@@ -238,6 +238,18 @@
         "title": "PairStart",
         "type": "object"
       },
+      "PauseRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "default": "",
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "title": "PauseRequest",
+        "type": "object"
+      },
       "ReadinessRequest": {
         "properties": {
           "repo": {
@@ -817,6 +829,144 @@
           "would_block"
         ],
         "title": "TaskSummary",
+        "type": "object"
+      },
+      "TickRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "approve_plan": {
+            "default": false,
+            "title": "Approve Plan",
+            "type": "boolean"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision"
+          },
+          "limit": {
+            "default": 1,
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "live": {
+            "default": false,
+            "title": "Live",
+            "type": "boolean"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "model_base": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Base"
+          },
+          "ppma": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ppma"
+          },
+          "ppma_space": {
+            "default": "me",
+            "title": "Ppma Space",
+            "type": "string"
+          },
+          "prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt"
+          },
+          "quarantine": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quarantine"
+          },
+          "scenarios": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenarios"
+          },
+          "swarm": {
+            "default": false,
+            "title": "Swarm",
+            "type": "boolean"
+          },
+          "trace": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trace"
+          },
+          "verifier": {
+            "default": "local",
+            "title": "Verifier",
+            "type": "string"
+          },
+          "verifier_image": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verifier Image"
+          }
+        },
+        "title": "TickRequest",
         "type": "object"
       },
       "ValidationError": {
@@ -1580,6 +1730,122 @@
           }
         },
         "summary": "Get Run"
+      }
+    },
+    "/api/v1/scheduler": {
+      "get": {
+        "operationId": "scheduler_status_api_v1_scheduler_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Scheduler Status Api V1 Scheduler Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Scheduler Status"
+      }
+    },
+    "/api/v1/scheduler/pause": {
+      "post": {
+        "operationId": "scheduler_pause_api_v1_scheduler_pause_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PauseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Scheduler Pause Api V1 Scheduler Pause Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Scheduler Pause"
+      }
+    },
+    "/api/v1/scheduler/resume": {
+      "post": {
+        "operationId": "scheduler_resume_api_v1_scheduler_resume_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Scheduler Resume Api V1 Scheduler Resume Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Scheduler Resume"
+      }
+    },
+    "/api/v1/scheduler/tick": {
+      "post": {
+        "operationId": "scheduler_tick_api_v1_scheduler_tick_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TickRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Scheduler Tick"
       }
     },
     "/api/v1/session": {

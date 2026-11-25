@@ -56,6 +56,9 @@ from works.interfaces.api.routes import (
     sources,
     tasks,
 )
+from works.interfaces.api.routes import (
+    scheduler as scheduler_routes,
+)
 from works.interfaces.api.wiring import AppState, build_state
 
 VERSION = "0.0.1"
@@ -142,6 +145,7 @@ def create_app(
         session.router,
         actions.router,
         runs.router,
+        scheduler_routes.router,
         events.router,
         ask.router,
         readiness.router,
