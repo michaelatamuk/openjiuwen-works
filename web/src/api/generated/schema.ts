@@ -754,6 +754,10 @@ export interface components {
             confirmation?: {
                 [key: string]: unknown;
             } | null;
+            /** Confirmations */
+            confirmations?: {
+                [key: string]: unknown;
+            }[];
             /** Delivery */
             delivery?: {
                 [key: string]: unknown;
