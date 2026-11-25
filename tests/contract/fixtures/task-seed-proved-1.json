@@ -124,7 +124,7 @@
     "reproduction_attempts": 2,
     "reproduction_command": [],
     "reproduction_env": {
-      "python": "3.12.13"
+      "python": "<version>"
     },
     "reproduction_hint": null,
     "reproduction_source": null,

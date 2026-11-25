@@ -95,6 +95,14 @@ def _canon_string(text: str, home: Path | None, repo: Path | None) -> str:
 
 
 def _canon_field(key: str, value: Any, home: Path | None, repo: Path | None) -> Any:
+    if key == "reproduction_env" and isinstance(value, dict):
+        masked = {}
+        for name, item in value.items():
+            if isinstance(item, str) and re.fullmatch(r"\d+\.\d+(?:\.\d+)?", item):
+                masked[str(name)] = "<version>"
+            else:
+                masked[str(name)] = canonicalize(item, home=home, repo=repo)
+        return masked
     if key in DURATION_KEYS and isinstance(value, (int, float)):
         return 0
     if key in OUTPUT_KEYS and isinstance(value, str):
