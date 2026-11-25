@@ -272,6 +272,14 @@ def render_markdown(evidence: Evidence) -> str:
         f"- build attempts: `{evidence.attempts}`",
         *(
             [
+                f"- base commit check: exit `{evidence.baseline_exit}` ? sha256 "
+                f"`{evidence.baseline_output_sha256}`"
+            ]
+            if evidence.baseline_exit is not None
+            else []
+        ),
+        *(
+            [
                 f"- plan estimate: `{evidence.plan_estimated_tokens}` tokens / "
                 f"`${evidence.plan_estimated_usd:.4f}` / "
                 f"`{evidence.plan_estimated_minutes} min`"

@@ -100,6 +100,8 @@ export type EvidencePayload = {
   findings?: EvidenceFinding[];
   challenge?: EvidenceChallenge | null;
   verdict?: EvidenceVerdict | null;
+  baseline_exit?: number | null;
+  baseline_output_sha256?: string | null;
   reproduce?: EvidenceCommandResult | null;
   reproduction_command?: string[];
   reproduction_source?: string | null;
@@ -301,6 +303,14 @@ export function Evidence({ detail, onShowRun, onAction, onLightbox, onOpenEvent 
             <dt>Checks SHA</dt><dd className="mono">{shortSha(detail.run?.checks_sha)}</dd>
             <dt>Proof SHA-256</dt><dd className="mono">{shortSha(evidence?.proof_sha256)}</dd>
             <dt>Wall</dt><dd>{fmtMs(detail.run?.duration_ms)}</dd>
+            {evidence?.baseline_exit !== null && evidence?.baseline_exit !== undefined ? (
+              <>
+                <dt>Base check</dt>
+                <dd>
+                  exit {evidence.baseline_exit} ? {shortSha(evidence.baseline_output_sha256)}
+                </dd>
+              </>
+            ) : null}
             <dt>Tokens</dt><dd>{detail.run?.tokens ?? 0}</dd>
             <dt>USD</dt><dd>{fmtUsd(detail.run?.usd)}</dd>
           </dl>

@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from works.adapters.queue.store import atomic_write
+from works.application.planning.checks import scenario_digest
 from works.application.planning.context import PlannerContext
 from works.application.planning.render import plan_brief, plan_markdown
 from works.config.paths import WorksPaths
@@ -48,6 +49,9 @@ def make_plan_version(
         checks_source=context.checks_source,
         scenario_set=str(context.scenario_set),
         scenario_ids=[scenario.id for scenario in context.scenarios.scenarios],
+        scenario_sha=scenario_digest(
+            context.scenario_set.parent / context.scenarios.directory, context.scenarios
+        ),
         summary=proposal.summary,
         assumptions=proposal.assumptions,
         open_questions=proposal.open_questions,

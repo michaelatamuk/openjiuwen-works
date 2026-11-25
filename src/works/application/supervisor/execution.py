@@ -19,6 +19,7 @@ from works.application.planning.service import (
 from works.application.reproduce import detect, env
 from works.application.reproduce.classify import is_setup_failure
 from works.application.run_context import RunContext, _required
+from works.application.supervisor import review
 from works.domain.errors import (
     ConfigError,
     NotFoundError,
@@ -448,6 +449,17 @@ async def _verify(
                 else:
                     sup._stop(ctx, StopReason.CHALLENGE_FAILED, detail=challenge.reason)
                     return False
+            if not review.independent(
+                ctx.risk.level.value if ctx.risk is not None else None,
+                provider_split=challenge.provider != proposal.provider,
+                credential_split=challenge.credential_split,
+            ):
+                sup._stop(
+                    ctx,
+                    StopReason.CHALLENGE_FAILED,
+                    detail="high-risk work needs a reviewer with another provider or credential",
+                )
+                return False
     if not sup._check_flakes(ctx):
         return False
     verdict = await sup._judge(ctx)

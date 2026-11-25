@@ -103,6 +103,8 @@ class Evidence(BaseModel):
     verification_share: float = 0.0
     duration_ms: int = 0
     attempts: int = 1
+    baseline_exit: int | None = None
+    baseline_output_sha256: str | None = None
     files_changed: list[str] = Field(default_factory=list)
     diff_stat: list[DiffStatRow] = Field(default_factory=list)
     policy: PolicyReport = Field(default_factory=lambda: PolicyReport(ok=True))

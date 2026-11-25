@@ -127,6 +127,7 @@ class PlanVersion(BaseModel):
     checks_source: str
     scenario_set: str
     scenario_ids: list[str] = Field(default_factory=list)
+    scenario_sha: str = ""
     summary: str = ""
     assumptions: list[str] = Field(default_factory=list)
     open_questions: list[str] = Field(default_factory=list)

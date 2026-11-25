@@ -425,6 +425,23 @@ next step.
 - [ ] **M15.7** Network isolation for build commands (needs an OS sandbox; paths and commands are
   already constrained, the network claim is not made).
 
+### M16 ? Check 2026 (stage 6, in progress)
+
+**Prevents:** testing a different scenario than the one approved, blaming a change for a pre-existing
+failure, and a high-risk self-review passing as independent.
+
+- [x] **M16.1** A base-vs-candidate run (`WORKS_DIFFERENTIAL=1`) records the baseline exit and output
+  hash; a matching pre-existing failure is named as such instead of being blamed on the change.
+- [x] **M16.2** A plan records `scenario_sha` over the scenario scripts; if a script changes after
+  approval the run stops with `policy_violation`.
+- [ ] **M16.3** Explicit impacted-test and skipped-test lists with reasons.
+- [x] **M16.4** `WORKS_REQUIRE_SPLIT_REVIEW=1` refuses a high-risk self-review (same provider and
+  credential); low-risk work may share them.
+- [ ] **M16.5** Repeat a suspicious scenario two or three times and report `unstable` separately.
+- [x] **M16.6** Pre-existing failures, missing dependencies, flakes and verdict failures have typed
+  reasons and a Next step in evidence.
+- [~] **M16.7** Evidence and the Proof page show the base-commit check; a re-check button is not built.
+
 ## 4. Sequencing and gates
 
 ### Phase 0 — Land the safety floor (week 1)

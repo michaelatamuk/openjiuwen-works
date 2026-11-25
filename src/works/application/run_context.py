@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from works.adapters.harness.base import Proposal
+from works.adapters.processes.runner import CommandResult
 from works.application.approvals.decisions import GateVerdict
 from works.application.execution.scenarios import ScenarioSet
 from works.application.reproduce.detect import Detection
@@ -43,6 +44,7 @@ class RunContext:
     reproduction: Detection | None = None
     reproduction_attempts: int = 1
     attempt: int = 1
+    baseline: CommandResult | None = None
     retry_requested: bool = False
     reproduction_stable: bool = True
     reproduction_env: dict[str, str] = field(default_factory=dict)

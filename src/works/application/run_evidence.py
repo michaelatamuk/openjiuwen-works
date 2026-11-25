@@ -201,6 +201,8 @@ def build_evidence(
         verification_share=totals.verification_share,
         duration_ms=duration_ms,
         attempts=ctx.attempt,
+        baseline_exit=ctx.baseline.exit_code if ctx.baseline else None,
+        baseline_output_sha256=(ctx.baseline.output_sha256 if ctx.baseline else None),
         files_changed=files_changed,
         diff_stat=stats,
         policy=ctx.policy,

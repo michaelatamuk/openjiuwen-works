@@ -71,6 +71,8 @@
     ],
     "attempts": 1,
     "base_commit": "<commit>",
+    "baseline_exit": null,
+    "baseline_output_sha256": null,
     "builder_tokens": 1200,
     "builder_usd": 0.012,
     "challenge": {
@@ -1019,6 +1021,7 @@
       "mul-positive"
     ],
     "scenario_set": "<home>/scenarios/fix-add.yaml",
+    "scenario_sha": "<sha256>",
     "schema_version": 1,
     "status": "approved",
     "steps": [
