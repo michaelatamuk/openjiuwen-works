@@ -178,9 +178,9 @@ flowchart TD
     D --> E{"Any change?"}
     E -->|"yes"| F["Continue to the checks"]
     E -->|"no"| G["Stop: nothing was changed"]
+```
 
-
-## 6. Check — prove the change works
+## 6. Check - prove the change works
 
 Works runs the checks from the plan and applies the product’s rules (for example: tests must not be
 edited to make a build pass). The most important checks decide the outcome: one failing must-pass
