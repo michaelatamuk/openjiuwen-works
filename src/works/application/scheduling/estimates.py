@@ -8,8 +8,10 @@ tasks is shorter. It does not need a deadline. This module reads `runs/*/evidenc
 from __future__ import annotations
 
 import math
+import re
 from dataclasses import dataclass
 
+from works.adapters.queue.store import Queue
 from works.config.paths import WorksPaths
 from works.domain.evidence.models import Evidence
 
@@ -31,6 +33,8 @@ class Sample:
     risk: str
     minutes: float
     usd: float
+    title: str = ""
+    task_id: str = ""
 
 
 def read_samples(paths: WorksPaths) -> list[Sample]:
@@ -51,6 +55,7 @@ def read_samples(paths: WorksPaths) -> list[Sample]:
                 risk=str(risk),
                 minutes=evidence.duration_ms / 60_000.0,
                 usd=float(evidence.usd),
+                task_id=evidence.task_id,
             )
         )
     return samples
@@ -133,3 +138,63 @@ def backtest(samples: list[Sample], *, min_samples: int = 5) -> dict[str, float 
         "coverage_p90": coverage,
         "pinball": loss / (total * 2) if total else 0.0,
     }
+
+
+_WORD = re.compile(r"[a-z0-9]+")
+_STOP = frozenset(
+    {"the", "a", "an", "and", "or", "to", "of", "in", "is", "it", "on", "for", "with"}
+)
+
+
+def tokens(title: str) -> set[str]:
+    return {word for word in _WORD.findall(title.lower()) if word not in _STOP and len(word) > 2}
+
+
+def similarity(left: str, right: str) -> float:
+    one, two = tokens(left), tokens(right)
+    if not one or not two:
+        return 0.0
+    return len(one & two) / len(one | two)
+
+
+def knn_estimate(
+    samples: list[Sample],
+    *,
+    title: str,
+    flow: str,
+    risk: str,
+    k: int = 8,
+    min_samples: int = 3,
+) -> Estimate | None:
+    """Neighbour quantiles: same flow/risk plus title overlap, no service and no embeddings."""
+    scored: list[tuple[float, Sample]] = []
+    for sample in samples:
+        if not sample.title:
+            continue
+        score = similarity(title, sample.title)
+        if sample.flow == flow:
+            score += 0.5
+        if sample.risk == risk:
+            score += 0.25
+        if score > 0:
+            scored.append((score, sample))
+    scored.sort(key=lambda item: item[0], reverse=True)
+    chosen = [sample for _score, sample in scored[:k]]
+    if len(chosen) < min_samples:
+        return None
+    return estimate_from(chosen, source="knn")
+
+
+def titled_samples(paths: WorksPaths) -> list[Sample]:
+    titles = {task.id: task.source.title for task in Queue(paths).list_tasks()}
+    return [
+        Sample(
+            flow=sample.flow,
+            risk=sample.risk,
+            minutes=sample.minutes,
+            usd=sample.usd,
+            title=titles.get(sample.task_id, ""),
+            task_id=sample.task_id,
+        )
+        for sample in read_samples(paths)
+    ]

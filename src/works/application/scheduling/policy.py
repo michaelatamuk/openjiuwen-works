@@ -96,6 +96,10 @@ class SizeBuckets(_Strict):
     large_min_minutes: float = Field(45, gt=0)
 
 
+class Order(_Strict):
+    mode: Literal["rule", "shadow", "learned"] = "rule"
+
+
 class Priority(_Strict):
     order: list[str] = Field(
         default_factory=lambda: ["risk", "budget_fragility", "starvation", "size", "age"]
@@ -117,6 +121,7 @@ class DispatchPolicy(_Strict):
     windows: Windows = Field(default_factory=Windows)
     estimates: Estimates = Field(default_factory=Estimates)
     priority: Priority = Field(default_factory=Priority)
+    order: Order = Field(default_factory=Order)
 
 
 def policy_path(paths: WorksPaths) -> Path:
@@ -137,9 +142,12 @@ def load_policy(paths: WorksPaths) -> DispatchPolicy:
     if not isinstance(raw, dict):
         raise ConfigError(f"{path} must be a mapping, got {type(raw).__name__}")
     try:
-        return DispatchPolicy.model_validate(raw)
+        policy = DispatchPolicy.model_validate(raw)
     except ValidationError as exc:
         raise ConfigError(f"{path} is not a valid dispatch policy: {exc}") from exc
+    if policy.order.mode == "learned":
+        raise ConfigError("learned ordering is not available in this build; use order.mode: shadow")
+    return policy
 
 
 def parse_window(raw: str) -> tuple[time, time]:

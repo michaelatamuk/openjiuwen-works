@@ -28,9 +28,9 @@ def _write_policy(paths, text: str = POLICY) -> None:
     path.write_text(text, encoding="utf-8")
 
 
-def _task(paths, ref: str = "R") -> str:
+def _task(paths, ref: str = "R", title: str = "t") -> str:
     task, _created = Queue(paths).submit(
-        source=Source(kind=SourceKind.MANUAL, ref=ref, title="t"),
+        source=Source(kind=SourceKind.MANUAL, ref=ref, title=title),
         flow="fix-issue",
         product="P",
         repo=str(paths.root / "repo"),
@@ -249,7 +249,7 @@ queue:
 
     second = Scheduler(paths, now=lambda: NOW).tick(execute=execute)
     assert task_id not in second.claimed
-    assert second.skipped[task_id] == "attempts_exhausted"
+    assert second.skipped[task_id] == "terminal_failure"
 
 
 def test_a_skip_is_recorded_once_per_reason(paths) -> None:
@@ -272,3 +272,69 @@ def test_a_tick_writes_a_dispatcher_heartbeat(paths) -> None:
 
     payload = json.loads((paths.state / "dispatcher.json").read_text(encoding="utf-8"))
     assert str(payload["owner"]).startswith("scheduler:")
+
+
+def test_a_transient_failure_is_retried(paths) -> None:
+    from works.domain.errors import HarnessError
+
+    _write_policy(
+        paths,
+        """
+enabled: true
+allow:
+  manual: true
+queue:
+  max_attempts: 2
+""",
+    )
+    task_id = _task(paths)
+
+    def execute(_: str) -> None:
+        raise HarnessError("the harness died")
+
+    first = Scheduler(paths, now=lambda: NOW).tick(execute=execute)
+    second = Scheduler(paths, now=lambda: NOW).tick(execute=execute)
+
+    assert task_id in first.claimed
+    assert task_id in second.claimed
+    failures = [event for event in Queue(paths).events(task_id) if event.type == "scheduler.failed"]
+    assert all(event.data["retryable"] is True for event in failures)
+
+
+def test_shadow_logs_what_a_knn_order_would_pick(paths, monkeypatch) -> None:
+    from works.application.scheduling.estimates import Sample
+
+    _write_policy(
+        paths,
+        """
+enabled: true
+allow:
+  manual: true
+order:
+  mode: shadow
+""",
+    )
+    plain = _task(paths, "A", "unrelated words")
+    titled = _task(paths, "B", "export drops the last column")
+    samples = [
+        Sample(
+            flow="check-change",
+            risk="low",
+            minutes=5,
+            usd=1,
+            title="export drops the last column",
+        )
+        for _ in range(4)
+    ]
+    monkeypatch.setattr("works.application.scheduling.loop.titled_samples", lambda _paths: samples)
+
+    Scheduler(paths, now=lambda: NOW).tick()
+
+    events = [
+        event
+        for event in Queue(paths).events(plain) + Queue(paths).events(titled)
+        if event.type == "scheduler.shadow"
+    ]
+    assert len(events) == 1
+    assert events[0].data["would"][0] == titled
+    assert events[0].data["rule"][0] != events[0].data["would"][0] or plain < titled

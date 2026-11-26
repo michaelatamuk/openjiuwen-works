@@ -153,6 +153,7 @@ def _apply(task: Task | None, event: Event) -> Task:
         "scheduler.resumed",
         "scheduler.reclaimed",
         "scheduler.error",
+        "scheduler.shadow",
     ):
         return task.model_copy(update={"updated_at": event.ts})
 

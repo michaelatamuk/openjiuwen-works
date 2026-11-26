@@ -110,8 +110,10 @@ Every refusal has a typed code, visible in `status` and `tick`:
 `manual_not_allowed`, `flow_not_allowed`, `stale`, `waiting_on_event`, `attempts_exhausted`,
 `backoff`, `risk_too_high`, `stale_approval`, `repo_busy`, `global_busy`, `budget_exhausted`,
 `run_budget_cap`, `system_busy`, `interactive_load`, `low_disk`, `provider_degraded`,
-`attention_full`, `blackout`. A reason is written to the task as `scheduler.skipped` **when it
-changes**, not on every tick.
+`attention_full`, `blackout`, `terminal_failure`. A reason is written to the task as
+`scheduler.skipped` **when it changes**, not on every tick. A failed execution is retried only for
+transient codes (`harness_error`, `internal_error`, `timeout`, `network_error`); a config error or a
+policy failure records `retryable: false` and the task waits for a person as `terminal_failure`.
 
 `stale_approval` is emitted when a plan approval expired or no longer matches the latest plan hash;
 release approvals are checked for expiry (the release hash check lands with M21.5). `remote_trigger`
@@ -140,6 +142,10 @@ works estimate backtest --json
 ```
 
 The command exits non-zero when there are enough samples and p90 coverage falls below 80%.
+
+`order.mode: shadow` also computes a k-NN order over similar tickets (same flow and risk plus title
+overlap) and writes `scheduler.shadow` with `rule` and `would` when the two differ. It claims nothing
+differently. `learned` is refused in this build.
 
 ## Order
 

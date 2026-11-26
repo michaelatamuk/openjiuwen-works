@@ -19,12 +19,18 @@ from works.adapters.queue.store import Queue
 from works.application import limits
 from works.application.approvals.gates import approval_expired
 from works.application.scheduling import lease
-from works.application.scheduling.estimates import Estimate, history_map
-from works.application.scheduling.policy import DispatchPolicy, load_policy
+from works.application.scheduling.estimates import (
+    Estimate,
+    history_map,
+    knn_estimate,
+    titled_samples,
+)
+from works.application.scheduling.policy import DispatchPolicy, load_policy, risk_for_severity
 from works.application.scheduling.select import Signals, TickPlan, tick_plan
 from works.config.paths import WorksPaths
 from works.domain.enums import TaskState
 from works.domain.errors import WorksError
+from works.domain.task import Task
 
 STATE_FILE = "scheduler.json"
 
@@ -38,6 +44,31 @@ class TickResult:
     order: list[str] = field(default_factory=list)
     executed: list[dict[str, str]] = field(default_factory=list)
     error: str | None = None
+
+
+TRANSIENT = frozenset({"harness_error", "internal_error", "timeout", "network_error"})
+
+
+def terminal_failures(queue: Queue) -> frozenset[str]:
+    failed: set[str] = set()
+    if not queue.paths.queue.exists():
+        return frozenset()
+    for task in queue.list_tasks():
+        events = queue.events(task.id)
+        latest_failure = None
+        latest_claim = None
+        for event in events:
+            if event.type == "scheduler.failed":
+                latest_failure = event
+            elif event.type == "scheduler.claimed":
+                latest_claim = event
+        if latest_failure is None:
+            continue
+        if latest_claim is not None and latest_claim.seq > latest_failure.seq:
+            continue
+        if latest_failure.data.get("retryable") is False:
+            failed.add(task.id)
+    return frozenset(failed)
 
 
 def stale_approvals(paths: WorksPaths, now: datetime) -> frozenset[str]:
@@ -158,6 +189,7 @@ class Scheduler:
             remaining_usd=self._remaining_usd(policy),
             waiting_plans=waiting,
             stale_approvals=stale_approvals(self._paths, moment),
+            terminal_failures=terminal_failures(self._queue),
         )
 
     def _history(self, policy: DispatchPolicy) -> dict[str, Estimate] | None:
@@ -210,6 +242,39 @@ class Scheduler:
             "owner": self._owner,
         }
 
+    def _shadow(
+        self,
+        planned: TickPlan,
+        tasks: list[Task],
+        policy: DispatchPolicy,
+        moment: datetime,
+    ) -> None:
+        titles = {task.id: task.source.title for task in tasks}
+        samples = titled_samples(self._paths)
+        rule = [item.task.id for item in planned.eligible]
+        scored: list[tuple[int, int, float, str]] = []
+        for candidate in planned.eligible:
+            title = titles.get(candidate.task.id, "")
+            risk = risk_for_severity(candidate.task.source.severity)
+            estimate = knn_estimate(
+                samples,
+                title=title,
+                flow=candidate.task.flow,
+                risk=risk,
+                min_samples=3,
+            )
+            minutes = estimate.p50_min if estimate is not None else candidate.estimate.p50_min
+            starving = 0 if candidate.age_hours >= policy.queue.starvation_boost_hours else 1
+            scored.append((starving, -candidate.risk_rank, minutes, candidate.task.id))
+        would = [item[3] for item in sorted(scored)]
+        if would == rule:
+            return
+        self._queue.append(
+            planned.eligible[0].task.id,
+            "scheduler.shadow",
+            {"rule": rule, "would": would, "at": _iso(moment)},
+        )
+
     def tick(
         self,
         *,
@@ -233,12 +298,15 @@ class Scheduler:
                 json.dumps({"owner": self._owner, "at": _iso(moment)}, sort_keys=True),
             )
             reclaimed = lease.reclaim_stale(self._paths, self._queue, moment)
+            tasks = self._queue.list_tasks()
             planned = tick_plan(
-                self._queue.list_tasks(),
+                tasks,
                 policy,
                 self.signals(policy, now=moment),
                 self._history(policy),
             )
+            if policy.order.mode == "shadow" and len(planned.eligible) >= 2:
+                self._shadow(planned, tasks, policy, moment)
             active = lease.active_leases(self._paths, moment)
             free = max(0, policy.concurrency.global_slots - len(active))
             if limit is not None:
@@ -289,11 +357,11 @@ class Scheduler:
                     execute(candidate.task.id)
                     result.executed.append({"task_id": candidate.task.id, "result": "ok"})
                 except Exception as exc:
-                    code = getattr(exc, "code", "internal_error")
+                    code = str(getattr(exc, "code", "internal_error"))
                     self._queue.append(
                         candidate.task.id,
                         "scheduler.failed",
-                        {"code": str(code), "error": str(exc)},
+                        {"code": code, "error": str(exc), "retryable": code in TRANSIENT},
                     )
                     result.executed.append(
                         {"task_id": candidate.task.id, "result": f"{code}: {exc}"}

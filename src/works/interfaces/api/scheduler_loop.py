@@ -11,7 +11,7 @@ import threading
 
 from works.adapters.queue.store import Queue
 from works.application.scheduling.lease import release
-from works.application.scheduling.loop import Scheduler
+from works.application.scheduling.loop import TRANSIENT, Scheduler
 from works.application.scheduling.policy import load_policy
 from works.interfaces.api.jobs import JobContext
 from works.interfaces.api.routes.runs import RunOptions, run_task
@@ -64,10 +64,11 @@ def _submit(state: AppState, scheduler: Scheduler, task_id: str) -> None:
             ctx.check()
             return run_task(state, options, task_id)
         except Exception as exc:
+            code = str(getattr(exc, "code", "internal_error"))
             Queue(state.paths).append(
                 task_id,
                 "scheduler.failed",
-                {"code": str(getattr(exc, "code", "internal_error")), "error": str(exc)},
+                {"code": code, "error": str(exc), "retryable": code in TRANSIENT},
             )
             raise
         finally:

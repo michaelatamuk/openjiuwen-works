@@ -546,8 +546,9 @@ loop and submits claims as run jobs; `POST /tasks` accepts `dispatch_on_import` 
 reason, remote clients need `allow.remote_triggers`); failures consume a bounded attempt and the queue
 header offers **Dispatch ready (N)**; history estimates group evidence by flow and risk and
 `works estimate backtest` reports p90 coverage and pinball loss; `/sources` takes the same trigger and
-`works task <dup> --merge-into <target>` closes the duplicate gap. Still open: kNN and the shadow order,
-the release hash check and the ledger entry.
+`works task <dup> --merge-into <target>` closes the duplicate gap; retries now separate transient
+from terminal failures; `order.mode: shadow` logs a k-NN order without changing claims. Still open:
+the release hash check, the ledger entry and promoting a learned order.
 
 - [x] **M21.1** `~/.works/config/dispatch.yaml` is the only policy: sources, allow/deny labels, flows,
   products, repos, remote triggers, levels, limits, budget, windows and pause; strict validation turns
@@ -582,7 +583,7 @@ the release hash check and the ledger entry.
   policy allows source, label and budget; the label is evaluated by the scheduler, not by the webhook
   handler. A task typed in the GUI is not picked up unless `allow.manual: true`; otherwise the **Run**
   button starts it immediately.
-- [ ] **M21.8** Scheduler retries are bounded (`max_attempts`, default 2) with backoff, only for
+- [x] **M21.8** Scheduler retries are bounded (`max_attempts`, default 2) with backoff, only for
   transient failures; a failing check or a policy violation stops and stays visible. Every attempt is
   a new run id with `trigger: scheduler` and the attempt number.
 - [ ] **M21.9** `GET /api/v1/scheduler` reports state, counters per reason, the waiting list with
