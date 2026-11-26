@@ -91,6 +91,18 @@ class RiskSpec(BaseModel):
             "src/works/scenarios.py",
         ]
     )
+    sensitive_paths: list[str] = Field(
+        default_factory=lambda: [
+            "auth/",
+            "billing/",
+            "crypto/",
+            "payments/",
+            "secrets/",
+            "**/*.pem",
+            "**/*.key",
+            "**/id_rsa*",
+        ]
+    )
     owners: dict[str, list[str]] = Field(default_factory=dict)
 
 

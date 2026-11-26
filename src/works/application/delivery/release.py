@@ -41,6 +41,9 @@ class ReleasePacket:
     blockers: list[str] = field(default_factory=list)
     blocker_codes: list[dict[str, str]] = field(default_factory=list)
     risk: str | None = None
+    risk_reasons: list[str] = field(default_factory=list)
+    risk_files: int = 0
+    risk_lines: int = 0
     owners: list[str] = field(default_factory=list)
     not_tested: list[str] = field(default_factory=list)
     verdict_allow: bool | None = None
@@ -78,6 +81,9 @@ class ReleasePacket:
             "blockers": self.blockers,
             "blocker_codes": self.blocker_codes,
             "risk": self.risk,
+            "risk_reasons": self.risk_reasons,
+            "risk_files": self.risk_files,
+            "risk_lines": self.risk_lines,
             "owners": self.owners,
             "not_tested": self.not_tested,
             "verdict_allow": self.verdict_allow,
@@ -190,6 +196,9 @@ def release_packet(
     packet.commit = record.base_commit
     packet.proof_sha256 = evidence.proof_sha256 or None
     packet.risk = evidence.risk.level.value if evidence.risk else None
+    packet.risk_reasons = list(evidence.risk.reasons) if evidence.risk else []
+    packet.risk_files = evidence.risk.files if evidence.risk else 0
+    packet.risk_lines = evidence.risk.lines if evidence.risk else 0
     packet.owners = list(evidence.risk.owners) if evidence.risk else []
     packet.not_tested = list(evidence.not_tested)
     packet.verdict_allow = evidence.verdict.allow if evidence.verdict else None

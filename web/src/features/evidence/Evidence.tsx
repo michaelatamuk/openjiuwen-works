@@ -93,7 +93,15 @@ export type EvidencePayload = {
   harness?: string | null;
   proof_sha256?: string | null;
   policy?: { ok?: boolean; violations?: EvidenceViolation[] } | null;
-  risk?: { level?: string; reasons?: string[] } | null;
+  risk?: {
+    level?: string;
+    reasons?: string[];
+    files?: number;
+    lines?: number;
+    max_file_churn?: number;
+    heavy_files?: number;
+    security_paths?: string[];
+  } | null;
   decision?: EvidenceDecision | null;
   not_tested?: string[];
   memory_recall?: unknown[];
@@ -350,6 +358,12 @@ export function Evidence({ detail, onShowRun, onAction, onLightbox, onOpenEvent 
         </Card>
         <Card title="Risk" actions={<Pill tone={detail.summary?.risk === "low" ? "green" : detail.summary?.risk === "medium" ? "amber" : "red"}>{detail.summary?.risk || "—"}</Pill>}>
           <ul className="bullets">{(evidence?.risk?.reasons || []).map((item) => <li key={item}>{item}</li>)}</ul>
+          {evidence?.risk ? (
+            <p className="muted small">
+              {evidence.risk.files || 0} file(s) · {evidence.risk.lines || 0} line(s) · largest file {evidence.risk.max_file_churn || 0}
+              {evidence.risk.heavy_files ? ` · ${evidence.risk.heavy_files} heavy file(s)` : ""}
+            </p>
+          ) : null}
         </Card>
         <Card title="Decision" actions={evidence?.decision?.verb ? <Pill>{evidence.decision.verb}</Pill> : null}>
           {evidence?.decision ? (

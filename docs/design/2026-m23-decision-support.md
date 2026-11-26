@@ -36,20 +36,25 @@ Nothing in M23 needs a new store, a new service or a new model call.
 `rate_risk` already answers "how risky is this change" from paths, diff size, the flow's high-risk
 paths, coverage and recent incidents. M23 extends it with two cheap, deterministic signals:
 
-- **complexity delta** — added and removed lines per file, and the number of functions or branches the
-  diff touches when the language is known; reported as a number, not a score;
-- **security surface** — paths matching the flow's sensitive areas (auth, crypto, payments, secrets),
-  and changed-line coverage when the repository reports it.
+- **complexity delta** — changed lines per file, the largest file and how many files carry more than
+  200 changed lines; reported as numbers, not a score;
+- **security surface** — paths matching the flow's `risk.sensitive_paths` (auth, billing, crypto,
+  payments, secrets, key material). The list is flow policy with a default, so a team can widen or
+  narrow it in the flow file.
+
+Coverage stays the existing optional input; M23 collects nothing new for it.
 
 Output stays `RiskRating`: a level, one-line reasons and the reviewers it implies. It is shown first on
-the evidence page and in the release-gate payload, so an approver sees "high — auth path, 14 files"
-before the diff.
+the evidence page and in the release-gate payload, so an approver sees "high — security-sensitive path:
+payments/charge.py" before the diff.
 
 Rules:
 
 - the tier is computed **before** `bind()`, so it is covered by `proof_sha256` and cannot change after
   approval;
-- a tier never opens, closes or blocks a gate; it is evidence, not policy;
+- a tier never approves or bypasses a gate, and never blocks a task by itself; a security-sensitive
+  path raises the tier to high, which routes the change to the owner the flow already names — the
+  decision still belongs to that person;
 - if a signal is unavailable, the reason says so instead of guessing.
 
 ## Plain-language summary

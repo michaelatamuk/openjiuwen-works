@@ -86,8 +86,28 @@ describe("Release", () => {
     );
   });
 
-  it("confirms a delivery with a URL and command", async () => {
-    const onAction = vi.fn(async () => ({}));
+  it("shows the risk tier and its reasons at the release gate", () => {
+    render(
+      <Release
+        detail={draftDetail({
+          release: {
+            risk: "high",
+            risk_reasons: ["security-sensitive path: payments/charge.py"],
+            risk_files: 2,
+            risk_lines: 40,
+          },
+        })}
+        onAction={vi.fn()}
+        onShowRuns={vi.fn()}
+        onShowRun={vi.fn()}
+        onToast={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/high · 2 file\(s\), 40 line\(s\)/)).toBeInTheDocument();
+    expect(screen.getByText("security-sensitive path: payments/charge.py")).toBeInTheDocument();
+  });
+
+  it("confirms a delivery with a URL and command", async () => {    const onAction = vi.fn(async () => ({}));
     render(
       <Release
         detail={draftDetail({

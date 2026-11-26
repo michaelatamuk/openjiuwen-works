@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { eventSummary, fmtMs, stateLabel, timeAgo } from "../../lib/format.js";
-import { Card } from "../../ui/primitives";
+import { Card, Pill } from "../../ui/primitives";
 import { GateCard } from "./GateCard";
 import { PlanCard, type PlanRecord } from "./PlanCard";
 import { Receipt } from "./Receipt";
@@ -128,9 +128,9 @@ export function Story({ detail, onAction, onView, onToast, onShowRun }: StoryPro
               <span className={`memory-${memory.tone}`}>
                 Memory <strong>{memory.label}</strong>
               </span>
-              {detail.summary?.risk && detail.summary.risk !== "low" ? (
+              {detail.summary?.risk ? (
                 <span>
-                  Risk <strong>{detail.summary.risk}</strong>
+                  Risk <Pill tone={detail.summary.risk === "low" ? "green" : detail.summary.risk === "medium" ? "amber" : "red"}>{detail.summary.risk}</Pill>
                 </span>
               ) : null}
             </div>

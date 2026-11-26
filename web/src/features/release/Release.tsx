@@ -21,7 +21,17 @@ export type ReleasePacket = {
   ready?: boolean;
   released?: boolean;
   blockers?: string[];
+  risk?: string | null;
+  risk_reasons?: string[];
+  risk_files?: number;
+  risk_lines?: number;
 };
+
+function riskTone(level?: string | null): "green" | "amber" | "red" {
+  if (level === "low") return "green";
+  if (level === "medium") return "amber";
+  return "red";
+}
 
 export type ReleaseDelivery = {
   commit?: string | null;
@@ -193,7 +203,16 @@ export function Release({ detail, onAction, onShowRuns, onShowRun, onToast }: Re
             <Gate label="Packet" value={release.released ? "RELEASED" : release.ready ? "READY" : "BLOCKED"} />
             <div className="gate-row"><span>Commit</span><b className="mono">{shortSha(release.commit || detail.run?.base_commit)}</b></div>
             <div className="gate-row"><span>Proof SHA-256</span><b className="mono">{shortSha(release.proof_sha256 || detail.evidence?.proof_sha256)}</b></div>
+            <div className="gate-row">
+              <span>Risk</span>
+              <Pill tone={riskTone(release.risk)}>{release.risk ? `${release.risk} · ${release.risk_files || 0} file(s), ${release.risk_lines || 0} line(s)` : "not rated"}</Pill>
+            </div>
           </div>
+          {release.risk_reasons?.length ? (
+            <ul className="bullets small" aria-label="Risk reasons">
+              {release.risk_reasons.map((item) => <li key={item}>{item}</li>)}
+            </ul>
+          ) : null}
           {release.blockers?.length ? (
             <ul className="bullets">{release.blockers.map((item) => <li key={item}>{item}</li>)}</ul>
           ) : <p className="good small">No release blockers.</p>}

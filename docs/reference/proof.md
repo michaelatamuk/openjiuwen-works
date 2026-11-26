@@ -29,6 +29,14 @@ hash), capped at `event_seq`. Removing or editing an event changes the root, and
 `evidence.json` keeps the full diff; `evidence.md` truncates it with a visible note and points to the
 JSON. Binary files and renames appear as git writes them.
 
+## Risk
+
+`evidence.json` carries a `RiskRating`: the level, one-line reasons, owners, required reviewers, file
+and line counts, the largest file's churn, the number of files over 200 changed lines and the matched
+security-sensitive paths. A path in the flow's `risk.high_paths` or `risk.sensitive_paths` raises the
+tier to high and names an owner. The rating is written before the fingerprint, so editing it later
+breaks `works proof verify`. The rating never approves or bypasses a gate; the owner still decides.
+
 ## Redaction
 
 Command tails and the builder transcript are scanned for credential shapes (provider keys, GitHub
