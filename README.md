@@ -78,6 +78,13 @@ Everything between the two decisions is automatic and recorded.
 
 Every phase is recorded. A failed check or a mismatched proof returns the task to a person.
 
+## Built on openjiuwen
+
+The name is deliberate: Works is the factory around **openjiuwen**. The planner, builder and challenger
+are openjiuwen harnesses, and JiuwenSwarm can run as an isolated builder. Works adds the queue, the two
+human gates, the proof, delivery and confirmation. The agent layer is openjiuwen; the model and provider
+are your choice, and every run records the runtime, model and provider.
+
 ## When there is more than one thing to do
 
 One queue, one job per project. Works shows why each task is waiting: a free slot, your decision, the
