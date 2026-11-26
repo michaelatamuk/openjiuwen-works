@@ -36,3 +36,11 @@ checks has the same effect through the plan hash.
 `gate.decided` is append-only and contains: gate, decision, by, device, actor_kind, comment, plan id,
 plan hash, plan version, commit, checks hash, expires_at and the quorum flag. The CLI and the UI write
 the same shape.
+
+
+## Reopened tasks
+
+A reporter reply moves a released task back to `queued` (see `reporter.md`). The old approvals do
+not carry over: the plan gate is bound to the plan hash and the release gate to the commit and the
+proof fingerprint, so a stale decision is refused rather than reused. A reopened task pays for a
+fresh plan draft and a fresh run.

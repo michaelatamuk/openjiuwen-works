@@ -665,7 +665,7 @@ end — backend, API, UI and CLI — before the next one starts.
   `works task retry <id> --note "..."`, and the UI marks the task "reported again" with a link to the
   previous proof. Tests cover duplicate delivery, unknown reporter, closed pull request,
   non-allowlisted source and the reopening limit.
-- [ ] **M23.4 Docs and acceptance.** The design doc, ADR 026, `docs/reference/proof.md`, and a
+- [x] **M23.4 Docs and acceptance.** The design doc, ADR 026, `docs/reference/proof.md`, and a
   cross-feature acceptance pass: both gates keep exactly the same authority, no new model calls are
   made, old proofs are not rewritten, and `mypy`, the web suite, e2e and the docs link check stay
   green.

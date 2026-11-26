@@ -1,6 +1,6 @@
 # M23 — decision support at the gate (design)
 
-Status: in progress. 23.1?23.3 are complete; 23.4 is the acceptance pass. Wave one of
+Status: complete (23.1?23.4). The ADR is `docs/adrs/026-risk-is-evidence.md`. Wave one of
 `docs/design/feature-recommendations.md`: three low-effort features that make the existing release
 gate usable by the person who has to sign it.
 
@@ -146,6 +146,17 @@ feature is left half shipped for a later pass.
 - an unknown reporter, a closed PR and a non-allowlisted source are each refused with a reason;
 - the Summary/Technical toggle is covered by an e2e test and the CLI prints the summary;
 - `mypy`, the web suite and the docs link check stay green.
+
+| Acceptance | Where |
+|---|---|
+| tier determinism and reasons | `tests/unit/domain/test_risk.py` |
+| the tier still asks a person | `tests/unit/application/approvals/test_decision.py` |
+| summary sections, no invented numbers, hash | `tests/unit/domain/test_summary.py` |
+| old proof keeps its hash | `tests/unit/domain/test_summary.py` |
+| summary run verifies end to end | `tests/unit/domain/test_summary.py` |
+| duplicate, closed, bot, unknown, limit | `tests/unit/application/test_reporter.py`, `tests/unit/interfaces/api/test_webhooks.py` |
+| CLI parity | `tests/unit/interfaces/cli/test_cli.py` |
+| Summary/Technical toggle | `web/src/features/evidence/Evidence.test.tsx`, `web/e2e/app.spec.ts` |
 
 ## Work breakdown
 

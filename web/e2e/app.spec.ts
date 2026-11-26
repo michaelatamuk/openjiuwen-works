@@ -21,6 +21,10 @@ test("queue → story → evidence → release", async ({ page }) => {
   await expect(page.getByText("Run metadata")).toBeVisible();
   await expect(page.getByText("Runtime artifacts")).toBeVisible();
 
+  await page.getByRole("tab", { name: "Summary" }).click();
+  await expect(page.getByText("Plain-language summary")).toBeVisible();
+  await page.getByRole("tab", { name: "Technical" }).click();
+
   await page.getByRole("tab", { name: "Release" }).click();
   await expect(page.getByText("Release packet")).toBeVisible();
 });
