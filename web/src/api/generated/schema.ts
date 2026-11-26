@@ -891,6 +891,10 @@ export interface components {
              * @default
              */
             proof_md: string;
+            /** Proof Summary */
+            proof_summary?: {
+                [key: string]: string | boolean;
+            };
             /** Rail */
             rail: {
                 [key: string]: unknown;
