@@ -15,6 +15,8 @@ matter — approve the plan and approve the release — and Works delivers the c
 result.
 
 [![ci](https://github.com/michaelatamuk/openjiuwen-works/actions/workflows/ci.yml/badge.svg)](https://github.com/michaelatamuk/openjiuwen-works/actions/workflows/ci.yml)
+[![python](https://img.shields.io/badge/python-3.12%20%7C%203.13-3776AB.svg)](pyproject.toml)
+[![platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-4B5563.svg)](#built-for-one-machine)
 [![license](https://img.shields.io/badge/license-Apache--2.0-6D28D9.svg)](LICENSE)
 
 <sub>v0.0.1 · pre-release</sub>
