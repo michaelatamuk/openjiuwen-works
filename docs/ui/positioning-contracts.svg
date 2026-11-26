@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600" font-family="Inter, Segoe UI, Arial, Helvetica, sans-serif">
+  <defs>
+    <filter id="softB" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="7" flood-color="#111827" flood-opacity="0.07"/>
+    </filter>
+    <marker id="tealB" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#0F766E"/>
+    </marker>
+    <marker id="violetB" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6D28D9"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1200" height="600" fill="#F4F5F9"/>
+
+  <text x="40" y="42" font-size="12" font-weight="700" fill="#6D28D9" letter-spacing="2">POSITIONING</text>
+  <text x="40" y="86" font-size="34" font-weight="700" fill="#111827">How they compose</text>
+  <text x="40" y="114" font-size="14" fill="#6B7280">Three narrow contracts. Neither product absorbs the other.</text>
+
+  <!-- Orbit box -->
+  <rect x="40" y="150" width="360" height="238" rx="16" fill="#FFFFFF" stroke="#0F766E" stroke-width="1.5" filter="url(#softB)"/>
+  <text x="64" y="182" font-size="11" font-weight="700" fill="#0F766E" letter-spacing="1.4">ORBIT · HORIZONTAL</text>
+  <text x="64" y="212" font-size="16" font-weight="700" fill="#111827">Keeps the room</text>
+  <text x="64" y="244" font-size="13" fill="#475569">rooms, connectors and linked chats</text>
+  <text x="64" y="270" font-size="13" fill="#475569">shared memory and project decisions</text>
+  <text x="64" y="296" font-size="13" fill="#475569">agent routing and runtimes</text>
+  <text x="64" y="322" font-size="13" fill="#475569">people, approvals and delivery to chats</text>
+  <text x="64" y="360" font-size="12" fill="#0F766E">No reproduction, no checks, no release gate.</text>
+
+  <!-- Works box -->
+  <rect x="800" y="150" width="360" height="238" rx="16" fill="#FFFFFF" stroke="#6D28D9" stroke-width="1.5" filter="url(#softB)"/>
+  <text x="824" y="182" font-size="11" font-weight="700" fill="#6D28D9" letter-spacing="1.4">WORKS · VERTICAL</text>
+  <text x="824" y="212" font-size="16" font-weight="700" fill="#111827">Keeps the change</text>
+  <text x="824" y="244" font-size="13" fill="#475569">reproduction on the current code</text>
+  <text x="824" y="270" font-size="13" fill="#475569">plan gate, build, checks, proof</text>
+  <text x="824" y="296" font-size="13" fill="#475569">release gate, delivery and confirmation</text>
+  <text x="824" y="322" font-size="13" fill="#475569">queue, budget and a bound SHA-256 proof</text>
+  <text x="824" y="360" font-size="12" fill="#6D28D9">Not a harness and not a generic assistant.</text>
+
+  <!-- contract 1: Orbit -> Works -->
+  <line x1="408" y1="207" x2="792" y2="207" stroke="#0F766E" stroke-width="2" stroke-dasharray="7 6" marker-end="url(#tealB)"/>
+  <text x="600" y="196" font-size="13" font-weight="700" fill="#0F766E" text-anchor="middle">1 · a room signal becomes a task</text>
+  <text x="600" y="224" font-size="11" fill="#64748B" text-anchor="middle">submit_signal over MCP</text>
+
+  <!-- contract 2: Works -> Orbit -->
+  <line x1="792" y1="280" x2="408" y2="280" stroke="#6D28D9" stroke-width="2" stroke-dasharray="7 6" marker-end="url(#violetB)"/>
+  <text x="600" y="269" font-size="13" font-weight="700" fill="#6D28D9" text-anchor="middle">2 · Orbit runs the build turn</text>
+  <text x="600" y="297" font-size="11" fill="#64748B" text-anchor="middle">an execution adapter inside build</text>
+
+  <!-- contract 3: Orbit -> Works -->
+  <line x1="408" y1="352" x2="792" y2="352" stroke="#0F766E" stroke-width="2" stroke-dasharray="7 6" marker-end="url(#tealB)"/>
+  <text x="600" y="341" font-size="13" font-weight="700" fill="#0F766E" text-anchor="middle">3 · “fix and prove” returns the proof</text>
+  <text x="600" y="369" font-size="11" fill="#64748B" text-anchor="middle">evidence and release over MCP</text>
+
+  <!-- legend -->
+  <text x="40" y="424" font-size="12" fill="#64748B">Dashed arrows are proposed composition, not built. Works already exposes the MCP tools, intake and harness adapters.</text>
+
+  <!-- what must not change -->
+  <rect x="40" y="452" width="1120" height="112" rx="16" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1.5" filter="url(#softB)"/>
+  <text x="64" y="480" font-size="11" font-weight="700" fill="#9CA3AF" letter-spacing="1.4">WHAT MUST NOT CHANGE</text>
+  <text x="64" y="508" font-size="14" fill="#334155">Works keeps both gates and the proof. Orbit keeps rooms, connectors and memory.</text>
+  <text x="64" y="536" font-size="14" fill="#334155">Merging them would make a horizontal workspace own per-language checks and release semantics — two products in one.</text>
+</svg>

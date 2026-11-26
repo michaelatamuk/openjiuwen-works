@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" font-family="Inter, Segoe UI, Arial, Helvetica, sans-serif">
+  <defs>
+    <filter id="softE" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="7" flood-color="#111827" flood-opacity="0.07"/>
+    </filter>
+    <marker id="tealE" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#0F766E"/>
+    </marker>
+    <marker id="violetE" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6D28D9"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1200" height="720" fill="#F4F5F9"/>
+
+  <text x="40" y="42" font-size="12" font-weight="700" fill="#6D28D9" letter-spacing="2">POSITIONING</text>
+  <text x="40" y="86" font-size="32" font-weight="700" fill="#111827">One vertical spine. Three horizontal branches.</text>
+  <text x="40" y="114" font-size="14" fill="#6B7280">Works owns the change top to bottom. Orbit attaches sideways only where a room adds something.</text>
+
+  <!-- vertical axis label -->
+  <line x1="22" y1="170" x2="22" y2="626" stroke="#6D28D9" stroke-width="2" marker-end="url(#violetE)"/>
+  <text x="16" y="400" font-size="10.5" font-weight="700" fill="#6D28D9" text-anchor="middle" letter-spacing="1" transform="rotate(-90 16 400)">THE CHANGE</text>
+
+  <text x="40" y="146" font-size="11" font-weight="700" fill="#6D28D9" letter-spacing="1.4">WORKS · VERTICAL</text>
+
+  <!-- stages -->
+  <g font-size="13">
+    <rect x="40" y="170" width="340" height="44" rx="9" fill="#F8FAFC" stroke="#E2E8F0"/>
+    <text x="60" y="197" fill="#334155">1 · reproduce on the current code</text>
+
+    <rect x="40" y="230" width="340" height="44" rx="9" fill="#F5F3FF" stroke="#DDD6FE"/>
+    <text x="60" y="257" fill="#5B21B6" font-weight="700">2 · plan</text>
+    <rect x="256" y="241" width="108" height="22" rx="11" fill="#6D28D9"/>
+    <text x="310" y="256" font-size="9.5" font-weight="700" fill="#FFFFFF" text-anchor="middle">YOU APPROVE</text>
+
+    <rect x="40" y="290" width="340" height="44" rx="9" fill="#F8FAFC" stroke="#E2E8F0"/>
+    <text x="60" y="317" fill="#334155">3 · build in a disposable copy</text>
+
+    <rect x="40" y="350" width="340" height="44" rx="9" fill="#F8FAFC" stroke="#E2E8F0"/>
+    <text x="60" y="377" fill="#334155">4 · check against the approved plan</text>
+
+    <rect x="40" y="410" width="340" height="44" rx="9" fill="#F8FAFC" stroke="#E2E8F0"/>
+    <text x="60" y="437" fill="#334155">5 · prove with a sealed record</text>
+
+    <rect x="40" y="470" width="340" height="44" rx="9" fill="#F5F3FF" stroke="#DDD6FE"/>
+    <text x="60" y="497" fill="#5B21B6" font-weight="700">6 · release</text>
+    <rect x="256" y="481" width="108" height="22" rx="11" fill="#6D28D9"/>
+    <text x="310" y="496" font-size="9.5" font-weight="700" fill="#FFFFFF" text-anchor="middle">YOU APPROVE</text>
+
+    <rect x="40" y="530" width="340" height="44" rx="9" fill="#F8FAFC" stroke="#E2E8F0"/>
+    <text x="60" y="557" fill="#334155">7 · deliver the change</text>
+
+    <rect x="40" y="590" width="340" height="44" rx="9" fill="#F8FAFC" stroke="#E2E8F0"/>
+    <text x="60" y="617" fill="#334155">8 · confirm the real result</text>
+  </g>
+
+  <!-- small spine arrows -->
+  <g stroke="#CBD5E1" stroke-width="2">
+    <line x1="210" y1="214" x2="210" y2="226"/>
+    <line x1="210" y1="274" x2="210" y2="286"/>
+    <line x1="210" y1="334" x2="210" y2="346"/>
+    <line x1="210" y1="394" x2="210" y2="406"/>
+    <line x1="210" y1="454" x2="210" y2="466"/>
+    <line x1="210" y1="514" x2="210" y2="526"/>
+    <line x1="210" y1="574" x2="210" y2="586"/>
+  </g>
+
+  <!-- branch dots -->
+  <circle cx="384" cy="192" r="5" fill="#0F766E"/>
+  <circle cx="384" cy="312" r="5" fill="#0F766E"/>
+  <circle cx="384" cy="552" r="5" fill="#0F766E"/>
+
+  <!-- intake branch: orbit -> works -->
+  <line x1="696" y1="192" x2="392" y2="192" stroke="#0F766E" stroke-width="2" stroke-dasharray="6 6" marker-end="url(#tealE)"/>
+  <text x="544" y="184" font-size="11" font-weight="700" fill="#0F766E" text-anchor="middle">1 · a report becomes a task</text>
+
+  <!-- build branch: two-way -->
+  <line x1="392" y1="312" x2="696" y2="312" stroke="#0F766E" stroke-width="2" stroke-dasharray="6 6" marker-start="url(#tealE)" marker-end="url(#tealE)"/>
+  <text x="544" y="304" font-size="11" font-weight="700" fill="#0F766E" text-anchor="middle">3 · build runs there, the patch returns</text>
+
+  <!-- delivery branch: works -> orbit -->
+  <line x1="392" y1="552" x2="696" y2="552" stroke="#0F766E" stroke-width="2" stroke-dasharray="6 6" marker-end="url(#tealE)"/>
+  <text x="544" y="544" font-size="11" font-weight="700" fill="#0F766E" text-anchor="middle">7 · the result lands in the room</text>
+
+  <!-- Orbit intake band -->
+  <rect x="700" y="150" width="460" height="92" rx="12" fill="#F0FDFA" stroke="#99F6E4" stroke-width="1.5"/>
+  <text x="720" y="176" font-size="11" font-weight="700" fill="#0F766E" letter-spacing="1.2">ORBIT · INTAKE</text>
+  <g font-size="11.5" font-weight="600" fill="#134E4A">
+    <rect x="720" y="188" width="108" height="28" rx="14" fill="#FFFFFF" stroke="#99F6E4"/>
+    <text x="774" y="206" text-anchor="middle">room message</text>
+    <rect x="840" y="188" width="76" height="28" rx="14" fill="#FFFFFF" stroke="#99F6E4"/>
+    <text x="878" y="206" text-anchor="middle">chat</text>
+    <rect x="928" y="188" width="76" height="28" rx="14" fill="#FFFFFF" stroke="#99F6E4"/>
+    <text x="966" y="206" text-anchor="middle">ticket</text>
+  </g>
+  <text x="1136" y="230" font-size="11" fill="#0F766E" text-anchor="end">any room can start the same task</text>
+
+  <!-- Orbit build band -->
+  <rect x="700" y="252" width="460" height="146" rx="12" fill="#F0FDFA" stroke="#99F6E4" stroke-width="1.5"/>
+  <text x="720" y="278" font-size="11" font-weight="700" fill="#0F766E" letter-spacing="1.2">ORBIT · BUILD TURN</text>
+  <g font-size="11.5" font-weight="600" fill="#134E4A">
+    <rect x="720" y="290" width="88" height="28" rx="14" fill="#FFFFFF" stroke="#99F6E4"/>
+    <text x="764" y="308" text-anchor="middle">rooms</text>
+    <rect x="820" y="290" width="108" height="28" rx="14" fill="#FFFFFF" stroke="#99F6E4"/>
+    <text x="874" y="308" text-anchor="middle">connectors</text>
+    <rect x="940" y="290" width="88" height="28" rx="14" fill="#FFFFFF" stroke="#99F6E4"/>
+    <text x="984" y="308" text-anchor="middle">memory</text>
+    <rect x="1040" y="290" width="96" height="28" rx="14" fill="#FFFFFF" stroke="#99F6E4"/>
+    <text x="1088" y="308" text-anchor="middle">runtimes</text>
+  </g>
+  <line x1="810" y1="304" x2="818" y2="304" stroke="#0F766E" stroke-width="1.5" marker-end="url(#tealE)"/>
+  <line x1="930" y1="304" x2="938" y2="304" stroke="#0F766E" stroke-width="1.5" marker-end="url(#tealE)"/>
+  <line x1="1030" y1="304" x2="1038" y2="304" stroke="#0F766E" stroke-width="1.5" marker-end="url(#tealE)"/>
+  <text x="720" y="344" font-size="12" fill="#134E4A">Several harnesses in one room: openJiuwen, JiuwenSwarm, Claude Code, Codex.</text>
+  <text x="720" y="364" font-size="12" fill="#134E4A">The patch comes back to the same run, with its transcript.</text>
+  <text x="720" y="384" font-size="11" fill="#0F766E">Orbit never sees the checks, the proof or the gates.</text>
+
+  <!-- Orbit delivery band -->
+  <rect x="700" y="506" width="460" height="92" rx="12" fill="#F0FDFA" stroke="#99F6E4" stroke-width="1.5"/>
+  <text x="720" y="532" font-size="11" font-weight="700" fill="#0F766E" letter-spacing="1.2">ORBIT · DELIVERY</text>
+  <g font-size="11.5" font-weight="600" fill="#134E4A">
+    <rect x="720" y="544" width="144" height="28" rx="14" fill="#FFFFFF" stroke="#99F6E4"/>
+    <text x="792" y="562" text-anchor="middle">reply in the room</text>
+    <rect x="876" y="544" width="120" height="28" rx="14" fill="#FFFFFF" stroke="#99F6E4"/>
+    <text x="936" y="562" text-anchor="middle">notify people</text>
+  </g>
+  <text x="1136" y="586" font-size="11" fill="#0F766E" text-anchor="end">the people who reported it see the outcome</text>
+
+  <!-- footnote -->
+  <text x="40" y="672" font-size="12" fill="#64748B">Dashed branches are proposed composition. The Works side exists: MCP intake, harness adapters and release state.</text>
+  <text x="40" y="694" font-size="12" fill="#64748B">The spine stays vertical: checks, proof and both gates never leave Works.</text>
+</svg>

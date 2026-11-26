@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="660" viewBox="0 0 1200 660" font-family="Inter, Segoe UI, Arial, Helvetica, sans-serif">
+  <defs>
+    <filter id="softD" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="7" flood-color="#111827" flood-opacity="0.07"/>
+    </filter>
+    <marker id="arrowD" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#94A3B8"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1200" height="660" fill="#F4F5F9"/>
+
+  <text x="40" y="42" font-size="12" font-weight="700" fill="#6D28D9" letter-spacing="2">TWO PRODUCTS, TWO JOBS</text>
+  <text x="40" y="86" font-size="34" font-weight="700" fill="#111827">Many jobs at once. One change all the way.</text>
+  <text x="40" y="114" font-size="14" fill="#6B7280">Orbit runs different work in rooms. Works takes a single change from report to proof.</text>
+
+  <!-- ORBIT -->
+  <rect x="40" y="136" width="560" height="386" rx="16" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5" filter="url(#softD)"/>
+  <text x="64" y="172" font-size="18" font-weight="700" fill="#0F766E">ORBIT</text>
+  <rect x="404" y="152" width="172" height="24" rx="12" fill="#F0FDFA" stroke="#99F6E4"/>
+  <text x="490" y="168" font-size="11" font-weight="700" fill="#0F766E" text-anchor="middle">many tasks · many rooms</text>
+  <text x="64" y="198" font-size="13" fill="#475569">A room per job. People and agents in the same conversation.</text>
+
+  <!-- six small jobs -->
+  <g>
+    <rect x="64" y="214" width="252" height="84" rx="12" fill="#FCFEFE" stroke="#E2E8F0"/>
+    <rect x="78" y="228" width="20" height="16" rx="4" fill="none" stroke="#0F766E" stroke-width="1.5"/>
+    <path d="M 84 244 L 84 248 L 90 244" fill="none" stroke="#0F766E" stroke-width="1.5"/>
+    <text x="108" y="240" font-size="13" font-weight="700" fill="#134E4A">sales question</text>
+    <text x="78" y="270" font-size="12" fill="#64748B">why did spend jump in August?</text>
+    <text x="78" y="288" font-size="11" fill="#94A3B8">room: finance</text>
+
+    <rect x="332" y="214" width="244" height="84" rx="12" fill="#FCFEFE" stroke="#E2E8F0"/>
+    <rect x="346" y="228" width="20" height="16" rx="3" fill="none" stroke="#0F766E" stroke-width="1.5"/>
+    <line x1="350" y1="233" x2="362" y2="233" stroke="#0F766E" stroke-width="1.5"/>
+    <line x1="350" y1="238" x2="358" y2="238" stroke="#0F766E" stroke-width="1.5"/>
+    <text x="376" y="240" font-size="13" font-weight="700" fill="#134E4A">support ticket</text>
+    <text x="346" y="270" font-size="12" fill="#64748B">refund is stuck for two weeks</text>
+    <text x="346" y="288" font-size="11" fill="#94A3B8">room: support</text>
+
+    <rect x="64" y="306" width="252" height="84" rx="12" fill="#FCFEFE" stroke="#E2E8F0"/>
+    <circle cx="88" cy="235" r="0" fill="none"/>
+    <circle cx="88" cy="320" r="8" fill="none" stroke="#0F766E" stroke-width="1.5"/>
+    <line x1="94" y1="326" x2="100" y2="332" stroke="#0F766E" stroke-width="1.5"/>
+    <text x="108" y="332" font-size="13" font-weight="700" fill="#134E4A">research brief</text>
+    <text x="78" y="362" font-size="12" fill="#64748B">compare three competitors</text>
+    <text x="78" y="380" font-size="11" fill="#94A3B8">room: product</text>
+
+    <rect x="332" y="306" width="244" height="84" rx="12" fill="#FCFEFE" stroke="#E2E8F0"/>
+    <circle cx="356" cy="326" r="6" fill="none" stroke="#0F766E" stroke-width="1.5"/>
+    <line x1="352" y1="330" x2="348" y2="334" stroke="#0F766E" stroke-width="1.5"/>
+    <line x1="360" y1="330" x2="364" y2="334" stroke="#0F766E" stroke-width="1.5"/>
+    <text x="376" y="332" font-size="13" font-weight="700" fill="#134E4A">code fix</text>
+    <text x="346" y="362" font-size="12" fill="#64748B">flaky checkout test</text>
+    <text x="346" y="380" font-size="11" fill="#94A3B8">room: engineering</text>
+
+    <rect x="64" y="398" width="252" height="84" rx="12" fill="#FCFEFE" stroke="#E2E8F0"/>
+    <polyline points="78,436 84,436 88,424 94,444 98,436 110,436" fill="none" stroke="#0F766E" stroke-width="1.5"/>
+    <text x="118" y="424" font-size="13" font-weight="700" fill="#134E4A">ops alert</text>
+    <text x="78" y="454" font-size="12" fill="#64748B">latency spike after deploy</text>
+    <text x="78" y="472" font-size="11" fill="#94A3B8">room: on-call</text>
+
+    <rect x="332" y="398" width="244" height="84" rx="12" fill="#FCFEFE" stroke="#E2E8F0"/>
+    <rect x="346" y="412" width="18" height="20" rx="3" fill="none" stroke="#0F766E" stroke-width="1.5"/>
+    <line x1="350" y1="418" x2="360" y2="418" stroke="#0F766E" stroke-width="1.2"/>
+    <line x1="350" y1="423" x2="358" y2="423" stroke="#0F766E" stroke-width="1.2"/>
+    <line x1="350" y1="428" x2="356" y2="428" stroke="#0F766E" stroke-width="1.2"/>
+    <text x="376" y="424" font-size="13" font-weight="700" fill="#134E4A">meeting notes</text>
+    <text x="346" y="454" font-size="12" fill="#64748B">actions for Friday</text>
+    <text x="346" y="472" font-size="11" fill="#94A3B8">room: launch</text>
+  </g>
+
+  <text x="64" y="506" font-size="13" fill="#0F766E">Different work, different rooms. No proof at the end.</text>
+
+  <!-- WORKS -->
+  <rect x="640" y="136" width="520" height="386" rx="16" fill="#FFFFFF" stroke="#6D28D9" stroke-width="1.5" filter="url(#softD)"/>
+  <text x="664" y="172" font-size="18" font-weight="700" fill="#6D28D9">WORKS</text>
+  <rect x="944" y="152" width="192" height="24" rx="12" fill="#F5F3FF" stroke="#DDD6FE"/>
+  <text x="1040" y="168" font-size="11" font-weight="700" fill="#5B21B6" text-anchor="middle">one change · end to end</text>
+  <text x="664" y="198" font-size="13" fill="#475569">One change, every stage, one run.</text>
+
+  <!-- the one task -->
+  <rect x="664" y="212" width="472" height="42" rx="10" fill="#FAFAFF" stroke="#E9E4FF"/>
+  <circle cx="682" cy="233" r="6" fill="none" stroke="#6D28D9" stroke-width="1.5"/>
+  <line x1="678" y1="237" x2="674" y2="241" stroke="#6D28D9" stroke-width="1.5"/>
+  <line x1="686" y1="237" x2="690" y2="241" stroke="#6D28D9" stroke-width="1.5"/>
+  <text x="702" y="238" font-size="13" font-weight="700" fill="#111827">bug: the parser drops the last line</text>
+  <text x="1116" y="238" font-size="11" fill="#7C3AED" text-anchor="end">one task</text>
+
+  <!-- stages -->
+  <rect x="664" y="266" width="472" height="30" rx="7" fill="#F8FAFC" stroke="#E2E8F0"/>
+  <text x="680" y="286" font-size="12" fill="#334155">reproduce on the current code</text>
+
+  <rect x="664" y="302" width="472" height="30" rx="7" fill="#F5F3FF" stroke="#DDD6FE"/>
+  <text x="680" y="322" font-size="12" fill="#5B21B6" font-weight="700">plan</text>
+  <rect x="1016" y="307" width="108" height="20" rx="10" fill="#6D28D9"/>
+  <text x="1070" y="321" font-size="10" font-weight="700" fill="#FFFFFF" text-anchor="middle">YOU APPROVE</text>
+
+  <rect x="664" y="338" width="472" height="30" rx="7" fill="#F8FAFC" stroke="#E2E8F0"/>
+  <text x="680" y="358" font-size="12" fill="#334155">build in a disposable copy</text>
+
+  <rect x="664" y="374" width="472" height="30" rx="7" fill="#F8FAFC" stroke="#E2E8F0"/>
+  <text x="680" y="394" font-size="12" fill="#334155">check against the approved plan</text>
+
+  <rect x="664" y="410" width="472" height="30" rx="7" fill="#F8FAFC" stroke="#E2E8F0"/>
+  <text x="680" y="430" font-size="12" fill="#334155">prove: a sealed record of the change</text>
+  <text x="1116" y="430" font-size="10" fill="#6B7280" text-anchor="end">SHA-256 · bound to the commit</text>
+
+  <rect x="664" y="446" width="472" height="30" rx="7" fill="#F5F3FF" stroke="#DDD6FE"/>
+  <text x="680" y="466" font-size="12" fill="#5B21B6" font-weight="700">release</text>
+  <rect x="1016" y="451" width="108" height="20" rx="10" fill="#6D28D9"/>
+  <text x="1070" y="465" font-size="10" font-weight="700" fill="#FFFFFF" text-anchor="middle">YOU APPROVE</text>
+
+  <rect x="664" y="482" width="472" height="30" rx="7" fill="#F8FAFC" stroke="#E2E8F0"/>
+  <text x="680" y="502" font-size="12" fill="#334155">deliver · confirm the real result</text>
+
+  <!-- harness layer -->
+  <rect x="40" y="540" width="1120" height="46" rx="14" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5" filter="url(#softD)"/>
+  <text x="64" y="560" font-size="11" font-weight="700" fill="#475569" letter-spacing="1.4">HARNESSES</text>
+  <text x="64" y="578" font-size="12.5" fill="#334155">openJiuwen · JiuwenSwarm · Claude Code · Codex — both products call them as black boxes</text>
+
+  <rect x="120" y="598" width="960" height="40" rx="12" fill="#F9FAFB" stroke="#D1D5DB" stroke-width="1.5" filter="url(#softD)"/>
+  <text x="144" y="623" font-size="12" font-weight="700" fill="#6B7280" letter-spacing="1.2">MODELS &amp; PROVIDERS</text>
+  <text x="1056" y="623" font-size="12" fill="#6B7280" text-anchor="end">your choice, recorded per run</text>
+
+  <line x1="320" y1="540" x2="320" y2="526" stroke="#94A3B8" stroke-width="2" marker-end="url(#arrowD)"/>
+  <line x1="900" y1="540" x2="900" y2="526" stroke="#94A3B8" stroke-width="2" marker-end="url(#arrowD)"/>
+</svg>
