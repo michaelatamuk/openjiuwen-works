@@ -214,15 +214,18 @@
     "risk": {
       "deeper_verification": false,
       "files": 1,
+      "heavy_files": 0,
       "level": "low",
       "lines": 0,
+      "max_file_churn": 0,
       "owners": [],
       "reasons": [
         "no high-risk path and a bounded change"
       ],
       "required_reviewers": 1,
       "rounded_up": false,
-      "schema_version": 1
+      "schema_version": 1,
+      "security_paths": []
     },
     "run_id": "<run-id>",
     "runtime": {
@@ -605,15 +608,18 @@
         "data": {
           "deeper_verification": false,
           "files": 1,
+          "heavy_files": 0,
           "level": "low",
           "lines": 0,
+          "max_file_churn": 0,
           "owners": [],
           "reasons": [
             "no high-risk path and a bounded change"
           ],
           "required_reviewers": 1,
           "rounded_up": false,
-          "schema_version": 1
+          "schema_version": 1,
+          "security_paths": []
         },
         "stage": "proof",
         "type": "risk.rated"
@@ -1422,6 +1428,11 @@
     },
     "released": true,
     "risk": "low",
+    "risk_files": 1,
+    "risk_lines": 0,
+    "risk_reasons": [
+      "no high-risk path and a bounded change"
+    ],
     "rollback": "discard the worktree; delivery never rewrites history",
     "run_id": "<run-id>",
     "task_id": "<task-id>",
@@ -2280,15 +2291,18 @@
       "data": {
         "deeper_verification": false,
         "files": 1,
+        "heavy_files": 0,
         "level": "low",
         "lines": 0,
+        "max_file_churn": 0,
         "owners": [],
         "reasons": [
           "no high-risk path and a bounded change"
         ],
         "required_reviewers": 1,
         "rounded_up": false,
-        "schema_version": 1
+        "schema_version": 1,
+        "security_paths": []
       },
       "seq": 18,
       "ts": "<timestamp>",
