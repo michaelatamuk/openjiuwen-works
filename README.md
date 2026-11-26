@@ -7,11 +7,12 @@
 
 # openJiuwen Works
 
-**A local-first software factory for teams whose bottleneck is verifying changes, not writing them.**
-A report arrives from a tracker, a monitor or a person. Works reproduces the failure on the current
-code, plans the change and the checks that will judge it, builds in a disposable copy and writes proof
-tied to the exact commit. People make the two decisions that matter — approve the plan and approve the
-release — and Works delivers the change and confirms the real result.
+**A local-first software factory for anyone responsible for shipping software, where the bottleneck is
+verifying changes, not writing them.** A report arrives from a tracker, a monitor or a person. Works
+reproduces the failure on the current code, plans the change and the checks that will judge it, builds
+in a disposable copy and writes proof tied to the exact commit. People make the two decisions that
+matter — approve the plan and approve the release — and Works delivers the change and confirms the real
+result.
 
 [![ci](https://github.com/michaelatamuk/openjiuwen-works/actions/workflows/ci.yml/badge.svg)](https://github.com/michaelatamuk/openjiuwen-works/actions/workflows/ci.yml)
 [![license](https://img.shields.io/badge/license-Apache--2.0-6D28D9.svg)](LICENSE)
@@ -19,6 +20,13 @@ release — and Works delivers the change and confirms the real result.
 <sub>v0.0.1 · pre-release</sub>
 
 > Works carries a change through proof, review and release.
+
+## The point
+
+The technical work an agent can do should not consume a person's day. Reproduction, builds, checks,
+proofs, delivery and confirmation run on their own; people keep the decisions that need judgement — the
+plan and the release — and spend their time on the problems that actually need them. The result is a
+team whose hours go to judgement and design.
 
 ## What it does
 
