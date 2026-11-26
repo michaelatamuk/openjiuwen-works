@@ -69,9 +69,12 @@ def estimate_for(
     task: Task,
     policy: DispatchPolicy,
     history: dict[str, Estimate] | None = None,
+    per_task: dict[str, Estimate] | None = None,
 ) -> Estimate:
-    """History when the policy asks for it and has enough samples; a static prior otherwise."""
-    if history is not None and policy.estimates.source == "history":
+    """Per-task (plan, learned) first, then history, then a static prior."""
+    if per_task is not None and task.id in per_task:
+        return per_task[task.id]
+    if history is not None and policy.estimates.source in ("history", "plan"):
         risk = risk_for_severity(task.source.severity)
         found = history.get(group_key(task.flow, risk))
         if found is not None:
@@ -152,10 +155,11 @@ def evaluate(
     policy: DispatchPolicy,
     signals: Signals,
     history: dict[str, Estimate] | None = None,
+    per_task: dict[str, Estimate] | None = None,
 ) -> SkipReason | None:
     source = source_name(task)
     level = level_for(policy, source)
-    estimate = estimate_for(task, policy, history)
+    estimate = estimate_for(task, policy, history, per_task)
 
     if task.state not in LEVEL_STATES[level]:
         return SkipReason.NOT_RUNNABLE
@@ -268,11 +272,12 @@ def tick_plan(
     policy: DispatchPolicy,
     signals: Signals,
     history: dict[str, Estimate] | None = None,
+    per_task: dict[str, Estimate] | None = None,
 ) -> TickPlan:
     eligible: list[Candidate] = []
     skipped: dict[str, SkipReason] = {}
     for task in tasks:
-        reason = evaluate(task, policy, signals, history)
+        reason = evaluate(task, policy, signals, history, per_task)
         if reason is not None:
             skipped[task.id] = reason
             continue
@@ -280,7 +285,7 @@ def tick_plan(
         eligible.append(
             Candidate(
                 task=task,
-                estimate=estimate_for(task, policy, history),
+                estimate=estimate_for(task, policy, history, per_task),
                 age_hours=age_hours(task, signals.now),
                 level=level_for(policy, source),
                 risk_rank=task_risk(task),

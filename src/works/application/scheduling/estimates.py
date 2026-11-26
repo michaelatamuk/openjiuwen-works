@@ -1,14 +1,16 @@
 """Estimates from stored evidence: p50/p90, confidence, never a promise.
 
 The scheduler needs to know whether a run fits a budget or a window, and which of two equal-risk
-tasks is shorter. It does not need a deadline. This module reads `runs/*/evidence.json`, groups by
-`flow` and `risk`, and returns empirical quantiles once a group has enough samples.
+tasks is shorter. It does not need a deadline. This module reads `runs/*/evidence.json`, joins each
+sample with the task it came from, and offers four estimators: grouped history, similar tasks (BM25
+over titles plus label/path overlap), the planner's own estimate, and a static prior.
 """
 
 from __future__ import annotations
 
 import math
 import re
+from collections import Counter
 from dataclasses import dataclass
 
 from works.adapters.queue.store import Queue
@@ -37,6 +39,19 @@ class Sample:
     task_id: str = ""
     plan_minutes: float = 0.0
     plan_usd: float = 0.0
+    labels: frozenset[str] = frozenset()
+    paths: frozenset[str] = frozenset()
+    source: str = ""
+
+
+@dataclass(frozen=True)
+class Features:
+    title: str = ""
+    flow: str = ""
+    risk: str = "medium"
+    labels: frozenset[str] = frozenset()
+    paths: frozenset[str] = frozenset()
+    source: str = ""
 
 
 def read_samples(paths: WorksPaths) -> list[Sample]:
@@ -63,6 +78,38 @@ def read_samples(paths: WorksPaths) -> list[Sample]:
             )
         )
     return samples
+
+
+def enriched_samples(paths: WorksPaths) -> list[Sample]:
+    """Join each run with its task: title, labels, source and the paths it was allowed to touch."""
+    tasks = {task.id: task for task in Queue(paths).list_tasks()}
+    enriched: list[Sample] = []
+    for sample in read_samples(paths):
+        task = tasks.get(sample.task_id)
+        if task is None:
+            enriched.append(sample)
+            continue
+        source = (task.source.channel or "").strip().lower() or task.source.kind.value
+        enriched.append(
+            Sample(
+                flow=sample.flow,
+                risk=sample.risk,
+                minutes=sample.minutes,
+                usd=sample.usd,
+                title=task.source.title,
+                task_id=sample.task_id,
+                plan_minutes=sample.plan_minutes,
+                plan_usd=sample.plan_usd,
+                labels=frozenset(task.source.labels),
+                paths=frozenset(task.scope.paths_allow),
+                source=source,
+            )
+        )
+    return enriched
+
+
+def titled_samples(paths: WorksPaths) -> list[Sample]:
+    return enriched_samples(paths)
 
 
 def quantile(values: list[float], q: float) -> float:
@@ -92,6 +139,21 @@ def estimate_from(samples: list[Sample], *, source: str = "history") -> Estimate
         confidence=min(1.0, len(samples) / 20.0),
         samples=len(samples),
         source=source,
+    )
+
+
+def estimate_from_plan(minutes: float, usd: float) -> Estimate | None:
+    """The planner's own size estimate: one point, widened for the tail."""
+    if minutes <= 0:
+        return None
+    return Estimate(
+        p50_min=minutes,
+        p90_min=minutes * 1.5,
+        p50_usd=max(usd, 0.0),
+        p90_usd=max(usd, 0.0) * 1.5,
+        confidence=0.4,
+        samples=0,
+        source="plan",
     )
 
 
@@ -140,33 +202,8 @@ def history_map(
     return group_estimates(read_samples(paths), min_samples=min_samples)
 
 
-def backtest(samples: list[Sample], *, min_samples: int = 5) -> dict[str, float | int]:
-    """Leave-one-out coverage and pinball loss for the history estimator itself."""
-    groups: dict[str, list[Sample]] = {}
-    for sample in samples:
-        groups.setdefault(group_key(sample.flow, sample.risk), []).append(sample)
-    covered = 0
-    total = 0
-    loss = 0.0
-    for values in groups.values():
-        if len(values) < min_samples + 1:
-            continue
-        for index, actual in enumerate(values):
-            others = values[:index] + values[index + 1 :]
-            estimate = estimate_from(others)
-            total += 1
-            if actual.minutes <= estimate.p90_min:
-                covered += 1
-            for q, predicted in ((0.5, estimate.p50_min), (0.9, estimate.p90_min)):
-                error = actual.minutes - predicted
-                loss += max(q * error, (q - 1) * error)
-    coverage = covered / total if total else 0.0
-    return {
-        "samples": total,
-        "coverage_p90": coverage,
-        "pinball": loss / (total * 2) if total else 0.0,
-    }
-
+# --------------------------------------------------------------------------------------------------
+# Similar tasks: BM25 over titles plus label and path overlap. No service, no embeddings.
 
 _WORD = re.compile(r"[a-z0-9]+")
 _STOP = frozenset(
@@ -185,24 +222,70 @@ def similarity(left: str, right: str) -> float:
     return len(one & two) / len(one | two)
 
 
+def _jaccard(one: frozenset[str], two: frozenset[str]) -> float:
+    if not one or not two:
+        return 0.0
+    return len(one & two) / len(one | two)
+
+
+class Bm25:
+    """A small BM25 index over titles; the score is normalised to 0..1 for one query."""
+
+    def __init__(self, documents: list[set[str]]) -> None:
+        self._documents = documents
+        self._df: Counter[str] = Counter()
+        for document in documents:
+            self._df.update(document)
+        self._size = len(documents)
+        self._average = (
+            sum(len(document) for document in documents) / self._size if self._size else 0.0
+        )
+
+    def score(self, query: set[str], index: int) -> float:
+        document = self._documents[index]
+        if not query or not document:
+            return 0.0
+        length = len(document)
+        total = 0.0
+        for term in query:
+            frequency = 1 if term in document else 0
+            if not frequency:
+                continue
+            df = self._df.get(term, 0)
+            idf = math.log(1 + (self._size - df + 0.5) / (df + 0.5))
+            denominator = frequency + 1.5 * (1 - 0.75 + 0.75 * (length / self._average or 1))
+            total += idf * (frequency * 2.5) / denominator
+        return min(1.0, total / max(len(query), 1))
+
+
 def knn_estimate(
     samples: list[Sample],
     *,
-    title: str,
-    flow: str,
-    risk: str,
+    title: str = "",
+    flow: str = "",
+    risk: str = "medium",
+    labels: frozenset[str] = frozenset(),
+    paths: frozenset[str] = frozenset(),
+    source: str = "",
     k: int = 8,
     min_samples: int = 3,
 ) -> Estimate | None:
-    """Neighbour quantiles: same flow/risk plus title overlap, no service and no embeddings."""
+    """Neighbour quantiles from similar tickets, with the sample count as the explanation."""
+    with_titles = [sample for sample in samples if sample.title]
+    if len(with_titles) < min_samples:
+        return None
+    index = Bm25([tokens(sample.title) for sample in with_titles])
+    query = tokens(title)
     scored: list[tuple[float, Sample]] = []
-    for sample in samples:
-        if not sample.title:
-            continue
-        score = similarity(title, sample.title)
-        if sample.flow == flow:
+    for position, sample in enumerate(with_titles):
+        score = 2.0 * index.score(query, position)
+        score += _jaccard(labels, sample.labels)
+        score += 1.5 * _jaccard(paths, sample.paths)
+        if flow and sample.flow == flow:
             score += 0.5
         if sample.risk == risk:
+            score += 0.25
+        if source and sample.source == source:
             score += 0.25
         if score > 0:
             scored.append((score, sample))
@@ -213,16 +296,51 @@ def knn_estimate(
     return estimate_from(chosen, source="knn")
 
 
-def titled_samples(paths: WorksPaths) -> list[Sample]:
-    titles = {task.id: task.source.title for task in Queue(paths).list_tasks()}
-    return [
-        Sample(
-            flow=sample.flow,
-            risk=sample.risk,
-            minutes=sample.minutes,
-            usd=sample.usd,
-            title=titles.get(sample.task_id, ""),
-            task_id=sample.task_id,
+def backtest(samples: list[Sample], *, min_samples: int = 5) -> dict[str, object]:
+    """Leave-one-out coverage, pinball loss, tail misses and the same per group."""
+    groups: dict[str, list[Sample]] = {}
+    for sample in samples:
+        groups.setdefault(group_key(sample.flow, sample.risk), []).append(sample)
+    covered = 0
+    total = 0
+    loss = 0.0
+    tails = 0
+    details: list[dict[str, object]] = []
+    for key, values in groups.items():
+        if len(values) < min_samples + 1:
+            continue
+        group_covered = 0
+        group_total = 0
+        group_loss = 0.0
+        group_tails = 0
+        for index, actual in enumerate(values):
+            others = values[:index] + values[index + 1 :]
+            estimate = estimate_from(others)
+            group_total += 1
+            if actual.minutes <= estimate.p90_min:
+                group_covered += 1
+            else:
+                group_tails += 1
+            for q, predicted in ((0.5, estimate.p50_min), (0.9, estimate.p90_min)):
+                error = actual.minutes - predicted
+                group_loss += max(q * error, (q - 1) * error)
+        total += group_total
+        covered += group_covered
+        tails += group_tails
+        loss += group_loss
+        details.append(
+            {
+                "group": key,
+                "samples": group_total,
+                "coverage_p90": group_covered / group_total,
+                "pinball": group_loss / (group_total * 2),
+                "tail_misses": group_tails,
+            }
         )
-        for sample in read_samples(paths)
-    ]
+    return {
+        "samples": total,
+        "coverage_p90": covered / total if total else 0.0,
+        "pinball": loss / (total * 2) if total else 0.0,
+        "tail_misses": tails,
+        "groups": details,
+    }

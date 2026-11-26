@@ -326,7 +326,9 @@ order:
         )
         for _ in range(4)
     ]
-    monkeypatch.setattr("works.application.scheduling.loop.titled_samples", lambda _paths: samples)
+    monkeypatch.setattr(
+        "works.application.scheduling.loop.enriched_samples", lambda _paths: samples
+    )
 
     Scheduler(paths, now=lambda: NOW).tick()
 
@@ -439,7 +441,7 @@ def test_a_claim_is_written_to_the_ledger(paths) -> None:
     Scheduler(paths, now=lambda: NOW).tick()
 
     lines = [line for line in paths.ledger.read_text(encoding="utf-8").splitlines() if line.strip()]
-    assert any("scheduler claim" in line for line in lines)
+    assert any("scheduler claim" in line and "p50" in line for line in lines)
     assert task_id in "".join(lines)
 
 
@@ -491,3 +493,40 @@ def test_status_reports_estimates_events_and_errors(paths) -> None:
     kinds = {str(item["kind"]) for item in recent}
     assert "scheduler.error" in kinds
     assert "scheduler.paused" in kinds
+
+
+def test_a_knn_source_records_a_neighbour_estimate(paths, monkeypatch) -> None:
+    from works.application.scheduling.estimates import Sample
+
+    _write_policy(
+        paths,
+        """
+enabled: true
+allow:
+  manual: true
+estimates:
+  source: knn
+  min_samples: 3
+""",
+    )
+    task_id = _task(paths, "K", "export drops the last column")
+    samples = [
+        Sample(
+            flow="fix-issue",
+            risk="medium",
+            minutes=8,
+            usd=1,
+            title="export drops the last column",
+        )
+        for _ in range(4)
+    ]
+    monkeypatch.setattr(
+        "works.application.scheduling.loop.enriched_samples", lambda _paths: samples
+    )
+
+    payload = Scheduler(paths, now=lambda: NOW).status()
+
+    estimates = payload["estimates"]
+    assert isinstance(estimates, list)
+    found = next(item for item in estimates if item["task_id"] == task_id)
+    assert found["source"] == "knn"

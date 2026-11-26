@@ -255,3 +255,19 @@ def test_flow_product_and_repo_filters_are_typed() -> None:
 
     body = policy(allow={"manual": True, "repos": ["/elsewhere"]})
     assert evaluate(task(), body, signals()) == SkipReason.NOT_ALLOWLISTED
+
+
+def test_a_plan_estimate_overrides_history_for_that_task() -> None:
+    item = task()
+    planned = Estimate(30, 45, 4.0, 6.0, 0.4, 0, "plan")
+
+    assert (
+        evaluate(
+            item,
+            policy(estimates={"source": "history"}, budget={"per_run_usd": 5}),
+            signals(),
+            None,
+            {item.id: planned},
+        )
+        == SkipReason.RUN_BUDGET_CAP
+    )

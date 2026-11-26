@@ -426,7 +426,8 @@ next step.
   builder turn only for a failing test/preview or verdict; each retry resets the worktree to the
   approved base, `build.retry` records the reason and evidence records the attempts (ADR 023).
 - [ ] **M15.7** Network isolation for build commands (needs an OS sandbox; paths and commands are
-  already constrained, the network claim is not made).
+  already constrained, the network claim is not made). **Deferred 2026-11-26**: revisit when a
+  container or firewall-based runner is in scope; it is not a blocker for the local flow.
 
 ### M16 ? Check 2026 (stage 6, in progress)
 
@@ -547,7 +548,7 @@ reason, remote clients need `allow.remote_triggers`); failures consume a bounded
 header offers **Dispatch ready (N)**; history estimates group evidence by flow and risk and
 `works estimate backtest` reports p90 coverage and pinball loss; `/sources` takes the same trigger and
 `works task <dup> --merge-into <target>` closes the duplicate gap; retries now separate transient
-from terminal failures; `order.mode: shadow` logs a k-NN order without changing claims. M21 is complete. Still open: M22.5?M22.7 (k-NN promotion and a learned order) and M15.7.
+from terminal failures; `order.mode: shadow` logs a k-NN order without changing claims. M21 and M22 are complete. Still open: M15.7 (network isolation, needs an OS sandbox).
 
 - [x] **M21.1** `~/.works/config/dispatch.yaml` is the only policy: sources, allow/deny labels, flows,
   products, repos, remote triggers, levels, limits, budget, windows and pause; strict validation turns
@@ -609,23 +610,23 @@ nobody can explain or trust.
 M21 ships with coarse grouped medians. M22 turns them into a calibrated distribution and adds the
 shadow mode that decides whether a learned order ever earns the right to run.
 
-- [ ] **M22.1** An `Estimate` carries `p50_min`, `p90_min`, `p50_usd`, `p90_usd`, `confidence`,
+- [x] **M22.1** An `Estimate` carries `p50_min`, `p90_min`, `p50_usd`, `p90_usd`, `confidence`,
   `samples` and `source`; it is recorded on the claim and in the ledger, so estimate and fact can be
   compared later.
-- [ ] **M22.2** Pre-run features come from intake and the repository: text shape (stack traces, code
+- [x] **M22.2** Pre-run features come from intake and the repository: text shape (stack traces, code
   blocks, mentioned files), source/flow/labels, path overlap with the plan policy, and BM25 similarity
   to past tickets. No new collection.
-- [ ] **M22.3** The estimate is recomputed after the plan (steps, files, risk, tests, migrations); a
+- [x] **M22.3** The estimate is recomputed after the plan (steps, files, risk, tests, migrations); a
   planner-supplied estimate is one feature, never the answer.
-- [ ] **M22.4** `works estimate backtest` reports pinball loss, p90 coverage (expected band 85–95%),
+- [x] **M22.4** `works estimate backtest` reports pinball loss, p90 coverage (expected band 85–95%),
   tail misses and per-group results over stored runs, and fails a CI threshold so the estimator cannot
   rot.
-- [ ] **M22.5** Similar-task k-NN (neighbour quantiles with a widened interval for small `k`) replaces
+- [x] **M22.5** Similar-task k-NN (neighbour quantiles with a widened interval for small `k`) replaces
   grouped medians once there is enough history; the sample count is shown as the explanation.
-- [ ] **M22.6** `order.mode: rule|shadow|learned`: shadow logs "would pick X, rule picked Y" and starts
+- [x] **M22.6** `order.mode: rule|shadow|learned`: shadow logs "would pick X, rule picked Y" and starts
   nothing; `learned` is allowed only with ≥ 4 weeks or ≥ 50 claims of shadow evidence, no worse p95
   wait, no new starvation, no worse `$` per `proved`, and calibration inside the band.
-- [ ] **M22.7** Docs and acceptance: `docs/design/2026-m22-estimates.md`, plus tests for cold start,
+- [x] **M22.7** Docs and acceptance: `docs/design/2026-m22-estimates.md`, plus tests for cold start,
   plan update, fit refusals, ordering by equal risk, shadow no-op, monotonicity and the promotion
   guard.
 

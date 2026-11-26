@@ -1,6 +1,6 @@
 # ADR 025 — Ordering is a cost model; a learned ranker must earn it in shadow
 
-Status: proposed, 2026-11-25. (Accepted when M22.6 lands with the promotion guard tested.)
+Status: accepted, 2026-11-26 (shadow and the promotion guard landed with tests).
 
 ## Context
 

@@ -142,3 +142,16 @@ def test_enable_inserts_the_key_when_missing(paths) -> None:
 
     assert load_policy(paths).enabled is True
     assert "tick_seconds: 7" in path.read_text(encoding="utf-8")
+
+
+def test_learned_order_needs_a_promotion_record(paths) -> None:
+    _write(paths, "enabled: true\norder:\n  mode: learned\n")
+
+    with pytest.raises(ConfigError, match="promotion"):
+        load_policy(paths)
+
+    import json
+
+    record = {"approved": True, "shadow_claims": 50, "weeks": 4.5, "coverage": 0.9}
+    (paths.state / "order-promotion.json").write_text(json.dumps(record), encoding="utf-8")
+    assert load_policy(paths).order.mode == "learned"

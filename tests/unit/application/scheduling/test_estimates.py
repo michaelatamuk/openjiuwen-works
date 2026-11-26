@@ -4,7 +4,9 @@ from works.application.scheduling.estimates import (
     Sample,
     backtest,
     estimate_from,
+    estimate_from_plan,
     group_estimates,
+    knn_estimate,
     plan_map,
     quantile,
     read_samples,
@@ -118,3 +120,53 @@ def test_similarity_and_knn_need_content() -> None:
         )
         is None
     )
+
+
+def test_plan_estimates_are_widened_for_the_tail() -> None:
+    estimate = estimate_from_plan(30, 2.0)
+
+    assert estimate is not None
+    assert estimate.source == "plan"
+    assert estimate.p50_min == 30
+    assert estimate.p90_min == 45
+
+
+def test_similar_tasks_use_labels_and_paths() -> None:
+    samples = [
+        Sample(
+            flow="fix-issue",
+            risk="medium",
+            minutes=8,
+            usd=1,
+            title="export drops the last column",
+            labels=frozenset({"ui"}),
+            paths=frozenset({"web/export.py"}),
+            source="github",
+        )
+        for _ in range(4)
+    ]
+
+    estimate = knn_estimate(
+        samples,
+        title="export drops a column",
+        flow="fix-issue",
+        risk="medium",
+        labels=frozenset({"ui"}),
+        paths=frozenset({"web/export.py"}),
+        source="github",
+        min_samples=3,
+    )
+
+    assert estimate is not None
+    assert estimate.source == "knn"
+    assert estimate.p50_min == 8
+    assert estimate.samples == 4
+
+
+def test_backtest_reports_groups_and_tail_misses() -> None:
+    report = backtest([sample(10) for _ in range(8)], min_samples=5)
+
+    assert report["tail_misses"] == 0
+    groups = report["groups"]
+    assert isinstance(groups, list) and groups
+    assert groups[0]["group"] == "fix-issue|medium"

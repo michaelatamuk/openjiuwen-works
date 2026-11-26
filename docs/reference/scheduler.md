@@ -133,23 +133,35 @@ be terminal. History is never deleted.
 
 ## Estimates
 
-When the policy sets `estimates.source: history`, the scheduler groups stored `evidence.json` by
-`flow` and `risk` and uses empirical p50/p90 minutes and dollars once a group has
-`estimates.min_samples` runs (default 5). Otherwise it falls back to a static per-flow prior. The
-estimate is used for the budget fit, the per-run cap and the size bucket; it is never shown as a
-deadline.
+`estimates.source` chooses the estimator:
+
+- `history` (default) groups stored `evidence.json` by `flow` and `risk` and uses empirical p50/p90
+  once a group has `min_samples` runs;
+- `knn` compares the new job with similar past jobs (BM25 over titles, plus label and path overlap)
+  and takes the neighbour quantiles, with the sample count recorded;
+- `plan` uses the planner's `estimated_minutes`/`estimated_usd` for a task with a saved plan, then
+  the grouped plan prior;
+- `static` uses the per-flow prior.
+
+A saved plan always supplies the estimate for that task (widened for the tail). The estimate is used
+for the budget fit, the per-run cap and the size bucket; it is never shown as a deadline.
 
 ```bash
-works estimate backtest            # leave-one-out p90 coverage and pinball loss
+works estimate backtest            # coverage, pinball, tail misses, per group
 works estimate backtest --json
+works estimate promotion            # is a learned order ready?
+works estimate promote --by anna --device laptop
 ```
 
-The command exits non-zero when there are enough samples and p90 coverage falls below 80%. When
+The backtest exits non-zero when there are enough samples and p90 coverage is outside 85%..95%
+(too narrow misses the tail; too wide hides the point). Promotion requires at least 50 shadow
+claims, at least four weeks, agreement >= 80% and calibration inside the band; `learned` refuses to
+load without that record. The person is recorded by name and device. When
 history is thin, the planner's `plan_estimated_minutes`/`usd` fill the gap with `source: plan`.
 
-`order.mode: shadow` also computes a k-NN order over similar tickets (same flow and risk plus title
-overlap) and writes `scheduler.shadow` with `rule` and `would` when the two differ. It claims nothing
-differently. `learned` is refused in this build.
+`order.mode: shadow` computes a k-NN order over similar tickets and writes `scheduler.shadow` with
+`rule` and `would` when the two differ; it claims nothing differently. `learned` uses the k-NN order
+for claims, but only after `works estimate promote` records the evidence.
 
 ## Order
 

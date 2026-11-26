@@ -19,14 +19,16 @@ from works.adapters.queue.ledger import Ledger
 from works.adapters.queue.store import Queue
 from works.application import limits
 from works.application.approvals.gates import approval_expired
+from works.application.planning.store import PlanStore
 from works.application.scheduling import lease
 from works.application.scheduling.estimates import (
     Estimate,
+    Sample,
+    enriched_samples,
+    estimate_from_plan,
     group_estimates,
     knn_estimate,
     plan_map,
-    read_samples,
-    titled_samples,
 )
 from works.application.scheduling.policy import DispatchPolicy, load_policy, risk_for_severity
 from works.application.scheduling.select import Signals, TickPlan, tick_plan
@@ -268,24 +270,65 @@ class Scheduler:
             owned=owned,
         )
 
-    def _history(self, policy: DispatchPolicy) -> dict[str, Estimate] | None:
+    def _samples(self, policy: DispatchPolicy) -> list[Sample]:
+        if policy.estimates.source == "static" and policy.order.mode != "learned":
+            return []
+        return enriched_samples(self._paths)
+
+    def _history(self, policy: DispatchPolicy, samples: list[Sample]) -> dict[str, Estimate] | None:
         if policy.estimates.source == "static":
             return None
-        samples = read_samples(self._paths)
         estimates: dict[str, Estimate] = {}
-        if policy.estimates.source == "history":
+        if policy.estimates.source in ("history", "knn"):
             estimates = group_estimates(samples, min_samples=policy.estimates.min_samples)
         for key, value in plan_map(samples).items():
             estimates.setdefault(key, value)
+        return estimates or None
+
+    def _per_task(
+        self, tasks: list[Task], policy: DispatchPolicy, samples: list[Sample]
+    ) -> dict[str, Estimate]:
+        estimates: dict[str, Estimate] = {}
+        store = PlanStore(self._paths)
+        for task in tasks:
+            plan = None
+            try:
+                plan = store.load(task.id)
+            except Exception:  # no plan yet, or an unreadable one
+                plan = None
+            plan_paths: frozenset[str] = frozenset()
+            if plan is not None and plan.estimated_minutes > 0:
+                planned = estimate_from_plan(plan.estimated_minutes, plan.estimated_usd)
+                if planned is not None:
+                    estimates[task.id] = planned
+                plan_paths = frozenset(name for step in plan.steps for name in step.files)
+            if policy.estimates.source == "knn" or (
+                policy.order.mode == "learned" and policy.estimates.source in ("history", "knn")
+            ):
+                learned = knn_estimate(
+                    samples,
+                    title=task.source.title,
+                    flow=task.flow,
+                    risk=risk_for_severity(task.source.severity),
+                    labels=frozenset(task.source.labels),
+                    paths=frozenset(task.scope.paths_allow) | plan_paths,
+                    source=(task.source.channel or task.source.kind.value),
+                    min_samples=3,
+                )
+                if learned is not None:
+                    estimates[task.id] = learned
         return estimates
 
     def plan(self, policy: DispatchPolicy | None = None) -> TickPlan:
         loaded = policy or load_policy(self._paths)
+        tasks = self._queue.list_tasks()
+        samples = self._samples(loaded)
         return tick_plan(
-            self._queue.list_tasks(),
+            tasks,
             loaded,
             self.signals(loaded),
-            self._history(loaded),
+            self._history(loaded, samples),
+            self._per_task(tasks, loaded, samples),
         )
 
     def status(self) -> dict[str, object]:
@@ -343,7 +386,7 @@ class Scheduler:
         moment: datetime,
     ) -> None:
         titles = {task.id: task.source.title for task in tasks}
-        samples = titled_samples(self._paths)
+        samples = enriched_samples(self._paths)
         rule = [item.task.id for item in planned.eligible]
         scored: list[tuple[int, int, float, str]] = []
         for candidate in planned.eligible:
@@ -354,6 +397,9 @@ class Scheduler:
                 title=title,
                 flow=candidate.task.flow,
                 risk=risk,
+                labels=frozenset(candidate.task.source.labels),
+                paths=frozenset(candidate.task.scope.paths_allow),
+                source=(candidate.task.source.channel or candidate.task.source.kind.value),
                 min_samples=3,
             )
             minutes = estimate.p50_min if estimate is not None else candidate.estimate.p50_min
@@ -394,11 +440,13 @@ class Scheduler:
             )
             reclaimed = lease.reclaim_stale(self._paths, self._queue, moment)
             tasks = self._queue.list_tasks()
+            samples = self._samples(policy)
             planned = tick_plan(
                 tasks,
                 policy,
                 self.signals(policy, now=moment),
-                self._history(policy),
+                self._history(policy, samples),
+                self._per_task(tasks, policy, samples),
             )
             if policy.order.mode == "shadow" and len(planned.eligible) >= 2:
                 self._shadow(planned, tasks, policy, moment)
@@ -437,7 +485,10 @@ class Scheduler:
                         "estimate": {
                             "p50_min": candidate.estimate.p50_min,
                             "p90_min": candidate.estimate.p90_min,
+                            "p50_usd": candidate.estimate.p50_usd,
                             "p90_usd": candidate.estimate.p90_usd,
+                            "confidence": candidate.estimate.confidence,
+                            "samples": candidate.estimate.samples,
                             "source": candidate.estimate.source,
                         },
                         "age_hours": round(candidate.age_hours, 2),
@@ -450,7 +501,13 @@ class Scheduler:
                         state=candidate.task.state,
                         usd=0.0,
                         tokens=0,
-                        note=f"scheduler claim {candidate.level}",
+                        note=(
+                            f"scheduler claim {candidate.level}: "
+                            f"p50 {candidate.estimate.p50_min:.0f}m, "
+                            f"p90 {candidate.estimate.p90_min:.0f}m, "
+                            f"${candidate.estimate.p90_usd:.2f}, "
+                            f"{candidate.estimate.source} n={candidate.estimate.samples}"
+                        ),
                     )
                 )
                 if execute is None:

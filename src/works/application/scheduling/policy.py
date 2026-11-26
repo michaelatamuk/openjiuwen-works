@@ -86,7 +86,7 @@ class Windows(_Strict):
 
 
 class Estimates(_Strict):
-    source: Literal["history", "plan", "static"] = "static"
+    source: Literal["history", "knn", "plan", "static"] = "static"
     min_samples: int = Field(5, ge=1)
     max_wall_clock_minutes: int = Field(90, ge=1)
 
@@ -146,7 +146,13 @@ def load_policy(paths: WorksPaths) -> DispatchPolicy:
     except ValidationError as exc:
         raise ConfigError(f"{path} is not a valid dispatch policy: {exc}") from exc
     if policy.order.mode == "learned":
-        raise ConfigError("learned ordering is not available in this build; use order.mode: shadow")
+        from works.application.scheduling.promotion import promotion_ok
+
+        if not promotion_ok(paths):
+            raise ConfigError(
+                "learned ordering needs a promotion record with shadow evidence; "
+                "use order.mode: shadow and `works estimate promote` when it is ready"
+            )
     return policy
 
 
