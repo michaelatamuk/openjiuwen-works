@@ -7,230 +7,209 @@
 
 # openJiuwen Works
 
-**A local-first software factory.** A bug report goes in. A reproduced, tested and proven fix comes out - with a person approving the plan and a person releasing the proven commit.
+**A local-first software factory.** A bug report goes in. A reproduced, tested and proven fix comes
+out — with a person approving the plan and a person releasing the proven commit.
 
 [![ci](https://github.com/michaelatamuk/openjiuwen-works/actions/workflows/ci.yml/badge.svg)](https://github.com/michaelatamuk/openjiuwen-works/actions/workflows/ci.yml)
 [![license](https://img.shields.io/badge/license-Apache--2.0-6D28D9.svg)](LICENSE)
-[![python](https://img.shields.io/badge/python-3.12-3776AB.svg)](pyproject.toml)
-
-**Local-first preview** · proof before release · the plan gate is live, release is next
 
 > Most coding agents stop at a diff. Works carries the fix to release — and brings the proof with it.
 
 <div align="center">
-  <img src="docs/ui/story.png" alt="openJiuwen Works Story view: Reported → Picked up → Confirmed → Fixed → Checked, with Mira at the ready-to-release gate and Evidence one click away" width="100%" />
+  <img src="docs/ui/story.png" alt="The Story view: reported, picked up, confirmed, fixed and checked, with the release gate ready for a person" width="100%" />
 </div>
 
-## Reports in. Releases out.
+## What it does
 
-A bug report waits: for triage, for an agent's answer, for a reviewer, for someone to prove the change works. Writing the fix is the short part.
+Writing the fix is the short part. The waiting is the work: waiting for triage, for a plan, for a
+review, for someone to prove the change is safe.
 
-## Built to ship.
+Works moves the waiting into one local engine and keeps the judgement with people. It reproduces the
+problem, drafts a plan, builds in a disposable copy, checks the change, writes the proof, prepares the
+release, delivers it and confirms the real result. You make two decisions: **the plan** and **the
+release**.
 
-**A factory that turns a report into a released fix — with proof you can inspect.**
+## The two moments that stay yours
 
-Works moves the waiting into an engine and keeps the judgement with people:
+- **The plan gate.** A person approves the checks that will judge the change. The engine cannot approve
+  itself, and an agent identity is refused.
+- **The release gate.** A person approves the exact commit and proof. Delivery waits for that decision.
 
-- **Reproduce before fixing.** A deterministic command must fail on the base commit. No failing reproduction, no fix.
-- **Two human gates in the design.** The plan gate and the release gate are live; the engine never
-  approves itself, and delivery waits for the release gate.
-- **Every release carries its proof.** One page bound to the exact diff by SHA-256: verdict, commands, policy, cost, risk and residual gaps.
-- **No silent retry.** A blocked task stays blocked until a person changes the plan or the evidence.
+Everything else — reproduce, build, check, proof, delivery, confirmation — is automatic and recorded.
 
-Mira, the magpie courier, appears in the empty state and at the current milestone — never as a chat avatar and never instead of status text. Brand notes: [`docs/brand/mascot.md`](docs/brand/mascot.md).
+## The whole path
 
-## How it works
+| Step | What happens | Who |
+|---|---|---|
+| **Signal** | A person, a tracker or a detector reports a problem. Duplicates are suggested, never merged by themselves. | anyone |
+| **Reproduce** | The failing command must fail on the base commit. No reproduction, no fix. | engine |
+| **Plan** | A plan with steps, files and the checks that will judge it. | engine |
+| **Plan gate** | The plan is approved, changed or rejected, with a name, a device and an expiry. | **you** |
+| **Build** | A real builder edits a disposable worktree; every touched path is checked against policy. | engine |
+| **Check** | Repository tests, an independent challenger, then the approved scenarios. | engine |
+| **Proof** | One page bound to the exact diff by SHA-256: verdict, commands, policy, cost, risk, gaps. | engine |
+| **Release gate** | Approve, hold or reject the released packet; a stale proof or an expired approval blocks it. | **you** |
+| **Deliver** | A branch, one change request and one comment on the original report. | engine |
+| **Confirm** | The released commit is re-checked by URL, command or preview; the result is kept beside the proof. | engine |
 
-```text
-signal → reproduce → plan gate → build → check · challenge · prove → release gate → return
-```
+A blocked task stays blocked until a person changes the plan or the evidence. Nothing is retried
+silently.
 
-| Step | What happens |
-|---|---|
-| **Signal** | A person, a tracker or a detector reports the problem. |
-| **Reproduce** | A failing test or scenario runs against the base commit. |
-| **Plan gate** | A person approves the scenarios that will judge the change. |
-| **Build** | `openjiuwen` edits a disposable git worktree; policy checks every touched path. |
-| **Check** | Repository tests, an independent challenger, then P0/P1 scenarios. |
-| **Prove** | The evidence page is computed from the run and bound to the diff. |
-| **Release gate** | A person approves the exact commit; release and publishing are the next milestone. |
-| **Return** | The proof is shaped to return to the app, tracker or person that reported it. |
-
-Verdict rule: **all P0 pass and P1 pass rate ≥ 80%**. Anything else blocks. A blocked task is terminal until a person acts.
-
-## See it in 60 seconds
+## Try it in 60 seconds (no model, no network)
 
 ```bash
 uv sync --extra dev
 python scripts/demo-ui.py
-# use the path printed by the script
+# use the path the script prints
 uv run works --home /path/printed/by/demo ui
 ```
 
-The demo is local, deterministic and free: no model, no network, no external services. It creates five tasks on products people know — Firefox, LibreOffice, GIMP, Blender and Joplin — including a blocked tablet-zoom check and a task in the middle of **Checked**.
+That opens `http://127.0.0.1:8765/` with five deterministic tasks — a known product report, a blocked
+check and a task in the middle of the flow. It is local, free and repeatable.
 
-Report from the GUI (opt-in writes, queued only):
+Add `--write` to report a new problem from the GUI. Creating a task never starts a run and never
+approves a gate.
 
-```bash
-uv run works --home /path/printed/by/demo ui --write
-```
+## Run it for real
 
-The `+ New task` prompt creates a queued task; exact fields sit under Details. It never starts a
-run and never approves a gate.
-
-The GUI is a React/Vite app in [`web/`](web/). The built assets in `src/works/interfaces/ui/static/dist` are
-committed, so `works ui` needs no Node at runtime. After changing the UI:
+Works keeps one home: `~/.works` (on Windows, `C:\Users\<you>\.works`), whatever directory you start
+from. `--home` is for demos and tests, not daily use.
 
 ```bash
-cd web
-npm ci
-npm run build
+uv sync --extra server --extra providers   # daemon, UI and live providers
+works daemon start --write                 # one daemon owns the home and the runs
 ```
 
-For a headless local daemon:
+Open `http://127.0.0.1:8765/`. Viewing on loopback needs no token; another device needs pairing
+(`docs/guides/remote.md`).
+
+### Through the browser
+
+1. **Import** a ticket from GitHub, Jira or a detector, or **create** one by hand.
+2. A run reproduces the problem and drafts a plan; the task waits at the plan gate.
+3. Approve, hold or reject the plan on the task card.
+4. Approve the plan and let it build, check and write the proof.
+5. On the Release page, approve the packet, deliver the change and confirm the result.
+
+### Through the terminal, one task start to finish
 
 ```bash
-uv sync --extra server
-works --home /path/to/workspace daemon start --write --port 8765
-works --home /path/to/workspace daemon status
-works --home /path/to/workspace daemon stop
+works submit --repo /path/to/repo --product MyProduct --ref GH-42 \
+  --title "The export drops the last column"
+
+works run <task-id>                 # reproduce + draft a plan, then stop
+works approve <task-id> --gate plan # the first human decision
+
+works run <task-id> --live --scenarios scenarios.yaml
+works release <task-id>             # the read-only release packet
+works approve <task-id> --gate release
+
+works deliver <task-id> --provider github
+works confirm <task-id> --url https://app.example/health \
+  --expect-status 200 --expect-commit <sha> --provider github
 ```
 
-`daemon start` prints a bootstrap URL; the same UI is served at `/`. The daemon owns runs and jobs
-for that home, and standalone `works run` refuses while it is running.
+Use `--trace fixtures/traces/fix-add.json` instead of `--live` for a deterministic run with no model.
+The live builder needs a provider key (`ANTHROPIC_API_KEY` or your configured provider); see
+`docs/guides/live-harness.md`.
 
-The original recorded M0 demo:
+## The queue, without the drama
 
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/demo-m0.ps1
-```
-
-## Use it on a real repository
-
-Readiness is a gate, not a warning. Add `.works/readiness.yaml` and a feature map first; a live run refuses to start while the gate is red.
+When more than one thing is ready, a local scheduler decides what runs next — and says why on every
+card.
 
 ```bash
-uv sync --extra live
-# openjiuwen must be installed or on PYTHONPATH; see docs/guides/live-harness.md
-uv run works readiness --repo /path/to/repo
-uv run works source github owner/name --product MyProduct --label bug
-uv run works source detector --file alerts.json --product MyProduct
-uv run works submit --repo /path/to/repo --product MyProduct --ref GH-42 --title "The export drops the last column"
-uv run works run <task-id> --live --approve-plan --scenarios scenarios.yaml
-uv run works run <task-id> --live --verifier docker --scenarios scenarios.yaml
-uv run works release <task-id>
-uv run works approve <task-id> --gate release
-uv run works deliver <task-id> --provider github
-uv run works deploy <task-id> --command "python scripts/deploy.py --env staging"
-uv run works confirm <task-id> --url https://app.example/health --provider github --close
-uv run works confirm <task-id> --preview preview.yaml
-uv run works escapes
-uv run works team verify <task-id>
-uv run works swarm doctor
+works scheduler status
+works scheduler enable
+works scheduler pause --reason "deploying"
+works scheduler tick
 ```
 
-A product can point at its checkout once in `.works/products.yaml`, so `--product MyProduct` is
-enough; add `deploy: [python, scripts/deploy.py]` to the same entry for `works deploy` without
-`--command`. See [`docs/guides/intake.md`](docs/guides/intake.md).
-
-The live builder needs `ANTHROPIC_API_KEY` (or `WORKS_MODEL_KEY`). PPMA memory is optional:
+It is off by default. It never approves a plan or a release, never runs two jobs in one project, and
+never preempts a started run. When the history is thin it estimates from the plan; when it has history
+it compares similar past jobs; it never promises a deadline.
 
 ```bash
-uv run works run <task-id> --live --ppma http://127.0.0.1:8766
-uv run works memory backfill --ppma http://127.0.0.1:8766
-uv run works memory recall --ppma http://127.0.0.1:8766
+works estimate backtest      # is the estimate honest? coverage and tail misses by group
+works estimate promotion     # has a learned order earned a vote?
 ```
 
-## What works today
+A learned order only starts after a named person records the evidence with `works estimate promote`;
+until then the rules decide. Details: `docs/reference/scheduler.md`.
 
-| Area | State |
+## What is in the box
+
+| Area | What you get |
 |---|---|
-| **Loop** | Queue, policy, disposable worktree, reproduce, build, check, proof and ledger work end to end. |
-| **Live builder** | Real `openjiuwen` harness on an Anthropic-compatible endpoint (default Claude Code; `dsh`/`codex` selectable when installed); model, tokens, USD and prompt hash are recorded. |
-| **Proof** | Computed evidence page and immutable ledger row; P0/P1 verdict, policy, risk, cost, diff and residual gaps. |
-| **GUI** | A React/Vite app served by `works ui`: Story with the wave route, Evidence, Release and a Claude-style Session that reads the whole run as one conversation - person report, plan, build, check, release - with a Run log switch, inline human gates, a 900px measure, a right-edge context rail and near-white panes. SSE (`/api/v1/events`) updates the queue and worklog without polling; `Ask Mira` streams over `/api/v1/ask/stream`. Every AI answer is labelled and advisory. Factory shows metrics and the ledger; artifacts open in a lightbox; settings control theme, density and fallback refresh. |
-| **Readiness** | `works readiness` runs lint, format, types, fast tests, product verify, architecture and import boundaries; the report carries the internal import graph and fails on cycles, and a red gate blocks live runs. |
-| **Feature map** | `features/<product>.yaml`; Evidence shows covered, failed and not-covered features. |
-| **Memory** | When configured, finished runs are reported to PPMA; older runs can be backfilled; `works memory recall` reads statements. |
-| **Decision layer** | `DecisionPort` and `LaixGate` exist behind a deterministic fallback; off by default, shadow opt-in. |
-| **Agent-core team** | `works team verify` runs inspector + challenger + reporter on `BaseTeam`/`TeamRuntime`; model-free, no API key. |
-| **Ask Mira** | The Thread view can ask a real `openjiuwen` model about the recorded run; answers stream into the worklog and are advisory, never a gate. |
-| **Intake** | GitHub Issues, Jira and firing detector alerts become queued tasks with `(kind, ref)` deduplication; `.works/products.yaml` maps a product to its checkout. |
-| **Verifier container** | `--verifier docker` runs checks with no network, dropped capabilities and only the worktree mounted; a missing daemon is an error, never a silent host fallback. |
-| **Provider split** | The live challenger can use `WORKS_VERIFIER_MODEL`, `WORKS_VERIFIER_BASE` and `WORKS_VERIFIER_API_KEY`; run and proof record the verifier model/provider plus provider/credential split flags, and builder vs verifier tokens/USD. `works doctor` warns when one key is shared. |
-| **JiuwenSwarm boundary** | `works run --swarm` speaks `works.swarm.v1` through `scripts/swarm_adapter.py`; `works swarm doctor` probes it, and the protocol is tested on a fixture. A live model run still needs the gateway and an isolated venv. |
-| **Release gate** | `works approve --gate release` binds gate 2 to the base commit and proof, moves the task to `released`, and records `release.json`; a repeat is idempotent. |
-| **Delivery** | `works deliver` commits the approved diff with `Works-Run:` trailers, pushes `works/<task-id>`, opens one GitHub PR or GitLab MR, and returns one comment to GitHub, GitLab or Jira. |
-| **Deploy** | `works deploy` consumes the delivered commit and runs one owner-approved argv command (or the product map's `deploy:`), with `--dry-run`, an idempotent `deployment.json`, and a `deploy.finished` event. No shell, no automatic merge. |
-| **Confirmation** | `works confirm` re-checks the delivered commit (HTTP, command or the plan's scenarios) and returns to the tracker, optionally closing a GitHub/GitLab issue or moving a Jira issue to Done. `--preview` drives an optional Playwright YAML script and records screenshots with the confirmation. |
-| **Escapes** | `works escapes` scans the release window for reverts, hotfixes touching the same paths and repeated source references; writes `escapes.json` and records `escape.detected` / `rework.detected`; `works metrics` reports both counts. |
+| **Queue** | One line, typed waiting reasons, duplicate suggestions, pause/resume, an opt-in scheduler. |
+| **Estimates** | p50/p90 time and cost from similar jobs, the plan or a static prior; a backtest and a promotion guard. |
+| **Gates** | Plan and release decisions bound to an artefact, with a person, a device, an expiry and an appendix-only history. |
+| **Proof** | One page bound to the diff; artifacts, event chain, cost, risk and residual gaps. |
+| **Delivery** | A branch, one change request and one source comment; idempotent by markers. |
+| **Confirmation** | HTTP with expected status/text/commit, a command in a fresh copy, or a Playwright preview; retries report instability, never a silent green. |
+| **Intake** | GitHub Issues, Jira, detector alerts and people; product-to-repository map. |
+| **UI** | Queue, Story, Evidence, Release, Session and Settings, served by the daemon. |
+| **Surfaces** | CLI, HTTP API and an MCP server for agents — none of them can approve a gate. |
+| **Checks** | Repository tests, an independent challenger, approved scenarios, a Docker verifier option. |
 
-## Roadmap
+## What it deliberately does not do
 
-Three things turn the preview into the full factory:
+- no cloud, no accounts, no hosted queue — one daemon owns one home;
+- no auto-merge, auto-deploy or auto-close;
+- no automatic approval of either gate, at any level;
+- no second job in the same project, and no preemption of a started run;
+- no claim of network isolation for build commands yet (deferred; it needs an OS sandbox).
 
-- **Independent verifier.** The container boundary exists; the remaining work is the provider split and a live daemon in CI.
-- **Release and return.** Gate 2, delivery, deploy, confirmation and preview adapters exist; a live
-  pull request, deploy, comment and issue close need a real remote, the matching token and a browser.
-- **Depth in memory and evidence.** Feed PPMA recall into the planner, attach runtime artifacts, and execute feature selectors in the preview.
-- **Escape feedback.** `works escapes` classifies local reverts, hotfixes and repeated sources; a
-  remote main/CI feed and a promotion back into a deterministic check are next.
+## Status
 
-LAIX is optional and keeps the deterministic gate as the fallback. Merging stays human.
+Stages 1–10 of the flow are built: signal, reproduce, plan, plan gate, build, check, proof, release
+gate, delivery and confirmation. The queue and scheduler are built; estimates and the shadow order are
+built. The single deferred item is network isolation for build commands (`M15.7`).
 
-## Engineering standard
+CI runs lint, types, the typing ratchet, unit and contract tests with a coverage floor, the web suite,
+Playwright journeys, benchmarks and supply-chain checks on Linux and Windows.
 
-Python 3.12, strict `mypy`, `ruff`, `pydantic`, `hypothesis`, mutation testing on state/policy/queue, versioned prompts, schema migrations, structured JSON logs and supply-chain checks.
+## Documentation
+
+- [`docs/guides/how-a-fix-flows.md`](docs/guides/how-a-fix-flows.md) — the flow in plain words, with
+  the two human moments.
+- [`docs/design/2026-modern-plan.md`](docs/design/2026-modern-plan.md) — the live plan and checkboxes.
+- [`docs/design/2026-m21-scheduler.md`](docs/design/2026-m21-scheduler.md) and
+  [`docs/design/2026-m22-estimates.md`](docs/design/2026-m22-estimates.md) — the queue and the numbers.
+- [`docs/reference/scheduler.md`](docs/reference/scheduler.md) and
+  [`docs/reference/inbox.md`](docs/reference/inbox.md) — scheduler and duplicate triage reference.
+- [`docs/guides/runbook.md`](docs/guides/runbook.md) — known failures and the first response.
+- [`docs/guides/remote.md`](docs/guides/remote.md) — another device without opening the world.
+- [`docs/guides/live-harness.md`](docs/guides/live-harness.md) — a real builder.
+- [`docs/guides/intake.md`](docs/guides/intake.md) — trackers, detectors and the product map.
+- [`docs/reference/proof.md`](docs/reference/proof.md) — what the proof contains and how to verify it.
+- [`docs/adrs/`](docs/adrs/) — the decisions that are expensive to reverse.
+
+## Development
 
 ```bash
-make check          # ruff, format, mypy, pytest with coverage
+make check          # ruff, format, mypy, typing ratchet, prompts, evals, tests with coverage
 make integration    # the whole loop, no model
 make bench          # CLI, status and evidence budgets
 ```
 
-CI runs lint, tests, bandit and gitleaks; mutation and `pip-audit` run weekly. Decisions are recorded as ADRs in [`docs/adrs/`](docs/adrs/), and known failures are in [`docs/guides/runbook.md`](docs/guides/runbook.md).
-
-## Documentation
-
-| Document | What it answers |
-|---|---|
-| [`docs/design/plan.md`](docs/design/plan.md) | Milestones, checkboxes, standards and refactoring gates |
-| [`docs/guides/ui.md`](docs/guides/ui.md) | Story, Evidence, report intake and the read-only/write boundary |
-| [`docs/guides/release.md`](docs/guides/release.md) | Release packet, gate 2, delivery and confirmation |
-| [`docs/guides/readiness.md`](docs/guides/readiness.md) | `.works/readiness.yaml` and the autonomy gate |
-| [`docs/reference/features.md`](docs/reference/features.md) | Feature map format and proof coverage |
-| [`docs/reference/layout.md`](docs/reference/layout.md) | Where each kind of code lives and what to touch when adding to it |
-| [`docs/guides/live-harness.md`](docs/guides/live-harness.md) | Real `openjiuwen` builder setup |
-| [`docs/reference/agent-core.md`](docs/reference/agent-core.md) | agent-core harness, verification team and Ask Mira |
-| [`docs/guides/intake.md`](docs/guides/intake.md) | GitHub/Jira/detector intake and product-to-repository map |
-| [`docs/guides/swarm.md`](docs/guides/swarm.md) | Isolated JiuwenSwarm builder contract |
-| [`docs/guides/ppma.md`](docs/guides/ppma.md) | PPMA north contract, backfill and recall |
-| [`docs/guides/laix.md`](docs/guides/laix.md) | Decision-layer boundary and rollout |
-| [`docs/guides/verification.md`](docs/guides/verification.md) | Verification and approval boundaries |
-| [`docs/guides/waiting-and-dispatch.md`](docs/guides/waiting-and-dispatch.md) | Waits, wake events and dispatch |
-| [`docs/adrs/`](docs/adrs/) | Fifteen architecture decisions |
+The web app is React/Vite in `web/`; the built assets under
+`src/works/interfaces/ui/static/dist` are committed, so `works ui` needs no Node at runtime. After
+changing the UI, run `cd web && npm ci && npm run test && npm run build`.
 
 ## Repository map
 
 ```text
-src/works/domain/       task, event, run, plan, evidence, policy, flow
-src/works/application/  supervisor, planning, execution, delivery, approvals
-src/works/adapters/     queue, git, harness, processes
-src/works/interfaces/   CLI, HTTP API, local Story/Evidence preview assets
-web/src/app/            entry point and App shell
-web/src/features/       queue, session, story, evidence, release, dialogs
-web/src/ui/             small UI primitives
-web/src/styles/         CSS split into foundation, session and shell passes
-flows/                  the fix-issue flow as a node graph
-fixtures/               planted-bug repo, scenarios, traces and decision cases
-tests/unit/             domain, application, adapters and interfaces tests
-tests/integration/      live, Docker, Swarm, team and performance tests
-docs/guides/            operator and integration guides
-docs/design/            product plan and planner design
-docs/reference/         feature map and agent-core reference
-docs/adrs/              architecture decision records
-docs/archive/           historical demos, proposals and reviews
-scripts/                demo, benchmark, checks, deck and film
+src/works/domain/        task, event, run, plan, evidence, policy, flow
+src/works/application/   supervisor, planning, execution, delivery, approvals, scheduling
+src/works/adapters/      queue, git, harness, processes
+src/works/interfaces/    CLI, HTTP API, UI assets and daemon
+web/src/                 React app: queue, story, evidence, release, session, settings
+flows/                   the fix-issue flow as a node graph
+fixtures/                planted-bug repo, scenarios, traces and decision cases
+tests/                   unit, contract, integration and end-to-end
+docs/                    guides, reference, design and ADRs
+scripts/                 demo, benchmark, checks and deck
 ```
 
 ## License
