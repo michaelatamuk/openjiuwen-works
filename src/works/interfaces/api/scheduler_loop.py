@@ -49,8 +49,9 @@ def _run(state: AppState, stop: threading.Event) -> None:
             continue
         try:
             result = scheduler.tick(hold=True)
-        except Exception:  # one bad tick must not stop the loop
+        except Exception as exc:  # one bad tick must not stop the loop
             LOGGER.exception("scheduler tick failed")
+            scheduler.log_error(str(exc))
             continue
         for task_id in result.claimed:
             _submit(state, scheduler, task_id)

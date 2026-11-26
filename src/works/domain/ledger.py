@@ -22,3 +22,4 @@ class LedgerRow(BaseModel):
     usd: float | None = None
     escape: bool = False
     rework: bool = False
+    note: str | None = None

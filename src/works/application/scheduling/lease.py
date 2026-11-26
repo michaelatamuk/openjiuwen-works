@@ -8,6 +8,7 @@ is the basis for slot accounting, without stealing the supervisor's claim.
 from __future__ import annotations
 
 import json
+import os
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -16,7 +17,6 @@ from pathlib import Path
 
 from filelock import FileLock, Timeout
 
-from works.adapters.queue.atomic import atomic_write
 from works.adapters.queue.store import Queue
 from works.config.paths import WorksPaths
 from works.domain.errors import ConflictError
@@ -70,6 +70,33 @@ def read_lease(paths: WorksPaths, task_id: str) -> Lease | None:
     return _parse(path.read_text(encoding="utf-8"))
 
 
+def _payload(lease: Lease) -> str:
+    return json.dumps(
+        {
+            "task_id": lease.task_id,
+            "owner": lease.owner,
+            "claimed_at": lease.claimed_at.isoformat(),
+            "expires_at": lease.expires_at.isoformat(),
+            "estimated_min": lease.estimated_min,
+        },
+        ensure_ascii=False,
+        sort_keys=True,
+    )
+
+
+def _write_new(path: Path, lease: Lease) -> bool:
+    """Create the lease with O_EXCL: the write itself is the exclusion, not a read-then-write."""
+    try:
+        descriptor = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+    except FileExistsError:
+        return False
+    with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as handle:
+        handle.write(_payload(lease))
+        handle.flush()
+        os.fsync(handle.fileno())
+    return True
+
+
 def claim(
     paths: WorksPaths,
     task_id: str,
@@ -79,11 +106,8 @@ def claim(
     estimated_min: float = 0.0,
     now: datetime | None = None,
 ) -> Lease:
-    """Take the lease atomically enough for one local dispatcher."""
+    """Take the lease with an exclusive create; a losing writer sees the winner's lease."""
     moment = now or datetime.now(tz=UTC)
-    current = read_lease(paths, task_id)
-    if current is not None and current.active(moment) and current.owner != owner:
-        raise ConflictError(f"task {task_id} is leased by {current.owner}")
     lease = Lease(
         task_id=task_id,
         owner=owner,
@@ -93,21 +117,14 @@ def claim(
     )
     path = lease_path(paths, task_id)
     path.parent.mkdir(parents=True, exist_ok=True)
-    atomic_write(
-        path,
-        json.dumps(
-            {
-                "task_id": lease.task_id,
-                "owner": lease.owner,
-                "claimed_at": lease.claimed_at.isoformat(),
-                "expires_at": lease.expires_at.isoformat(),
-                "estimated_min": lease.estimated_min,
-            },
-            ensure_ascii=False,
-            sort_keys=True,
-        ),
-    )
-    return lease
+    for _attempt in range(3):
+        current = read_lease(paths, task_id)
+        if current is not None and current.active(moment) and current.owner != owner:
+            raise ConflictError(f"task {task_id} is leased by {current.owner}")
+        path.unlink(missing_ok=True)
+        if _write_new(path, lease):
+            return lease
+    raise ConflictError(f"task {task_id} is leased by another dispatcher")
 
 
 def release(paths: WorksPaths, task_id: str, *, owner: str) -> None:

@@ -237,6 +237,32 @@ export default function App() {
     [loadTasks, notify],
   );
 
+  const mergeGroup = useCallback(
+    async (duplicates: string[], into: string) => {
+      try {
+        for (const taskId of duplicates) await api.mergeTask(taskId, into);
+        notify(`Merged ${duplicates.length} duplicate(s) into ${into}.`);
+        await loadTasks();
+      } catch (error) {
+        notify(`Merge failed: ${errorMessage(error)}`);
+      }
+    },
+    [loadTasks, notify],
+  );
+
+  const dismissGroup = useCallback(
+    async (signature: string) => {
+      try {
+        await api.dismissDuplicates(signature);
+        notify("Marked as not duplicates.");
+        await loadTasks();
+      } catch (error) {
+        notify(`Dismiss failed: ${errorMessage(error)}`);
+      }
+    },
+    [loadTasks, notify],
+  );
+
   const loadDetail = useCallback(async (id: string | null) => {
     if (!id) return;
     try {
@@ -484,6 +510,8 @@ export default function App() {
         writable={Boolean(health?.write)}
         inbox={inbox}
         onMerge={mergeTask}
+        onMergeMany={mergeGroup}
+        onDismiss={dismissGroup}
         onNew={() => setDialog("new")}
         dispatchCount={dispatchable}
         onDispatch={schedulerOn ? dispatchReady : undefined}

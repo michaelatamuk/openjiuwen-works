@@ -128,3 +128,37 @@ describe("Queue dispatch", () => {
     expect(screen.queryByRole("button", { name: /Dispatch ready/ })).not.toBeInTheDocument();
   });
 });
+
+
+describe("Duplicate triage", () => {
+  const group = {
+    key: "add subtracts",
+    signature: "sig-1",
+    reason: "same title after normalisation",
+    tasks: [
+      { id: "t-1", state: "queued", title: "Add subtracts", source: "tracker:GH-1" },
+      { id: "t-2", state: "queued", title: "Add subtracts!", source: "tracker:GH-2" },
+    ],
+  };
+
+  it("shows every member and merges into the chosen target", () => {
+    const onMergeMany = vi.fn();
+    const onDismiss = vi.fn();
+    renderQueue({
+      inbox: { ok: true, duplicates: [group], groups: 1 },
+      onMergeMany,
+      onDismiss,
+    });
+
+    expect(screen.getByText("t-1")).toBeInTheDocument();
+    expect(screen.getByText("t-2")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText(/t-2/));
+    fireEvent.click(screen.getByRole("button", { name: "Merge 1 into t-2" }));
+
+    expect(onMergeMany).toHaveBeenCalledWith(["t-1"], "t-2");
+
+    fireEvent.click(screen.getByRole("button", { name: "Not duplicates" }));
+    expect(onDismiss).toHaveBeenCalledWith("sig-1");
+  });
+});

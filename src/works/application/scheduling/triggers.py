@@ -46,6 +46,12 @@ def request_dispatch(paths: WorksPaths, task_id: str, *, remote: bool) -> Trigge
             return TriggerResult(False, "manual_not_allowed")
     elif policy.allow.sources and source not in policy.allow.sources:
         return TriggerResult(False, "not_allowlisted")
+    if (
+        task.source.kind is not SourceKind.MANUAL
+        and policy.allow.labels
+        and not set(policy.allow.labels) & set(task.source.labels)
+    ):
+        return TriggerResult(False, "missing_label")
     if policy.allow.flows and task.flow not in policy.allow.flows:
         return TriggerResult(False, "flow_not_allowed")
     remaining = remaining_usd(paths)

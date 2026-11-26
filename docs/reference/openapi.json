@@ -1,6 +1,20 @@
 {
   "components": {
     "schemas": {
+      "DismissRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "signature": {
+            "title": "Signature",
+            "type": "string"
+          }
+        },
+        "required": [
+          "signature"
+        ],
+        "title": "DismissRequest",
+        "type": "object"
+      },
       "DispatchRequest": {
         "additionalProperties": false,
         "properties": {
@@ -1379,6 +1393,46 @@
           }
         },
         "summary": "Inbox"
+      }
+    },
+    "/api/v1/inbox/dismiss": {
+      "post": {
+        "operationId": "dismiss_api_v1_inbox_dismiss_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DismissRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Dismiss Api V1 Inbox Dismiss Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Dismiss"
       }
     },
     "/api/v1/inbox/mute": {

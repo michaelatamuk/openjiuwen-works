@@ -338,3 +338,134 @@ order:
     assert len(events) == 1
     assert events[0].data["would"][0] == titled
     assert events[0].data["rule"][0] != events[0].data["would"][0] or plain < titled
+
+
+def _released(
+    paths,
+    task_id: str,
+    *,
+    proof: str = "p1",
+    commit: str = "c1",
+    expires_in_hours: float = 4,
+) -> None:
+    queue = Queue(paths)
+    for state in (
+        TaskState.REPRODUCING,
+        TaskState.REPRODUCED,
+        TaskState.PLANNING,
+        TaskState.PLAN_APPROVED,
+        TaskState.BUILDING,
+        TaskState.CHECKING,
+        TaskState.PROVED,
+        TaskState.RELEASING,
+        TaskState.RELEASED,
+    ):
+        queue.transition(task_id, state)
+    queue.append(
+        task_id,
+        "gate.decided",
+        {
+            "gate": "release",
+            "decision": "approved",
+            "proof_sha256": proof,
+            "commit": commit,
+            "expires_at": (NOW + timedelta(hours=expires_in_hours)).isoformat(),
+        },
+    )
+
+
+def _evidence(paths, task_id: str, *, proof: str = "p1", commit: str = "c1") -> None:
+    run_dir = paths.runs / "r-release"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "run_id": "r-release",
+        "task_id": task_id,
+        "flow": "fix-issue",
+        "product": "P",
+        "source": "manual:R",
+        "state": "proved",
+        "stop_reason": "completed",
+        "base_commit": commit,
+        "proof_sha256": proof,
+    }
+    (run_dir / "evidence.json").write_text(json.dumps(payload), encoding="utf-8")
+
+
+def test_a_released_task_is_claimed_at_l3(paths) -> None:
+    _write_policy(
+        paths,
+        """
+enabled: true
+allow:
+  manual: true
+levels:
+  default: L3
+""",
+    )
+    task_id = _task(paths)
+    _released(paths, task_id)
+    _evidence(paths, task_id)
+
+    result = Scheduler(paths, now=lambda: NOW).tick()
+
+    assert result.claimed == [task_id]
+
+
+def test_a_changed_proof_makes_the_release_stale(paths) -> None:
+    _write_policy(
+        paths,
+        """
+enabled: true
+allow:
+  manual: true
+levels:
+  default: L3
+""",
+    )
+    task_id = _task(paths)
+    _released(paths, task_id, proof="p1")
+    _evidence(paths, task_id, proof="p2")
+
+    result = Scheduler(paths, now=lambda: NOW).tick()
+
+    assert task_id not in result.claimed
+    assert result.skipped[task_id] == "stale_approval"
+
+
+def test_a_claim_is_written_to_the_ledger(paths) -> None:
+    _write_policy(paths)
+    task_id = _task(paths)
+
+    Scheduler(paths, now=lambda: NOW).tick()
+
+    lines = [line for line in paths.ledger.read_text(encoding="utf-8").splitlines() if line.strip()]
+    assert any("scheduler claim" in line for line in lines)
+    assert task_id in "".join(lines)
+
+
+def test_a_labelled_tracker_task_is_claimed_at_l1(paths) -> None:
+    _write_policy(
+        paths,
+        """
+enabled: true
+allow:
+  sources: [github]
+  labels: ["works:auto"]
+""",
+    )
+    task, _created = Queue(paths).submit(
+        source=Source(
+            kind=SourceKind.TRACKER,
+            ref="GH-9",
+            title="the export drops a column",
+            channel="github",
+            labels=["works:auto"],
+        ),
+        flow="fix-issue",
+        product="P",
+        repo=str(paths.root / "repo"),
+    )
+
+    result = Scheduler(paths, now=lambda: NOW).tick()
+
+    assert result.claimed == [task.id]

@@ -45,6 +45,7 @@ class SkipReason(StrEnum):
     RISK_TOO_HIGH = "risk_too_high"
     STALE_APPROVAL = "stale_approval"
     TERMINAL_FAILURE = "terminal_failure"
+    OWNED = "owned"
     REPO_BUSY = "repo_busy"
     GLOBAL_BUSY = "global_busy"
     BUDGET_EXHAUSTED = "budget_exhausted"
@@ -91,6 +92,7 @@ class Signals:
     waiting_plans: int = 0
     stale_approvals: frozenset[str] = frozenset()
     terminal_failures: frozenset[str] = frozenset()
+    owned: frozenset[str] = frozenset()
 
 
 @dataclass(frozen=True)
@@ -161,6 +163,8 @@ def evaluate(
         return SkipReason.STALE_APPROVAL
     if task.id in signals.terminal_failures:
         return SkipReason.TERMINAL_FAILURE
+    if task.id in signals.owned:
+        return SkipReason.OWNED
     if task.waiting_on is not None:
         return SkipReason.WAITING_ON_EVENT
     age = age_hours(task, signals.now)

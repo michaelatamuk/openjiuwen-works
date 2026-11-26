@@ -85,3 +85,13 @@ def test_an_unlisted_source_is_refused(paths) -> None:
 
     assert result.requested is False
     assert result.reason == "not_allowlisted"
+
+
+def test_an_import_without_the_label_is_refused(paths) -> None:
+    _policy(paths)
+    task_id = _task(paths, kind=SourceKind.TRACKER, channel="github")
+
+    result = request_dispatch(paths, task_id, remote=False)
+
+    assert result.requested is False
+    assert result.reason == "missing_label"

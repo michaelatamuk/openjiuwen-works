@@ -48,6 +48,7 @@ works scheduler pause --reason "deploying"
 works scheduler resume
 works scheduler tick --no-run     # plan only; claim nothing
 works scheduler tick --live       # claim and run the selected task(s) sequentially
+works dispatch --watch            # the same loop, foreground, for a headless machine
 ```
 
 Exit codes: `0` on success, `EXIT_BLOCKED` when an executed task returns an error.
@@ -66,7 +67,9 @@ Writes need the local bearer token; loopback reads follow the usual auth rules.
 ## In the daemon
 
 Each tick writes `state/dispatcher.json` with the owner and the timestamp, so a status call can show
-who is dispatching.
+who is dispatching. A second dispatcher gets `conflict` with that owner. Meaningful ticks, pause,
+resume, conflicts and errors are appended to `state/scheduler-events.jsonl`, and every claim writes a
+zero-cost ledger row with `note: scheduler claim L1|L2|L3`.
 
 A **writable** daemon starts the loop automatically: every `tick_seconds` it reloads the policy, and
 when the policy is enabled it claims tasks and submits each claim as the same run job the manual path
@@ -110,7 +113,7 @@ Every refusal has a typed code, visible in `status` and `tick`:
 `manual_not_allowed`, `flow_not_allowed`, `stale`, `waiting_on_event`, `attempts_exhausted`,
 `backoff`, `risk_too_high`, `stale_approval`, `repo_busy`, `global_busy`, `budget_exhausted`,
 `run_budget_cap`, `system_busy`, `interactive_load`, `low_disk`, `provider_degraded`,
-`attention_full`, `blackout`, `terminal_failure`. A reason is written to the task as
+`attention_full`, `blackout`, `terminal_failure`, `owned`. A reason is written to the task as
 `scheduler.skipped` **when it changes**, not on every tick. A failed execution is retried only for
 transient codes (`harness_error`, `internal_error`, `timeout`, `network_error`); a config error or a
 policy failure records `retryable: false` and the task waits for a person as `terminal_failure`.
@@ -141,7 +144,8 @@ works estimate backtest            # leave-one-out p90 coverage and pinball loss
 works estimate backtest --json
 ```
 
-The command exits non-zero when there are enough samples and p90 coverage falls below 80%.
+The command exits non-zero when there are enough samples and p90 coverage falls below 80%. When
+history is thin, the planner's `plan_estimated_minutes`/`usd` fill the gap with `source: plan`.
 
 `order.mode: shadow` also computes a k-NN order over similar tickets (same flow and risk plus title
 overlap) and writes `scheduler.shadow` with `rule` and `would` when the two differ. It claims nothing

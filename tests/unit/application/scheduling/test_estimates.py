@@ -5,6 +5,7 @@ from works.application.scheduling.estimates import (
     backtest,
     estimate_from,
     group_estimates,
+    plan_map,
     quantile,
 )
 
@@ -55,3 +56,15 @@ def test_backtest_is_empty_without_enough_history() -> None:
 
     assert report["samples"] == 0
     assert report["coverage_p90"] == 0.0
+
+
+def test_plan_estimates_fill_a_thin_history() -> None:
+    samples = [
+        Sample(flow="fix-issue", risk="medium", minutes=30, usd=2, plan_minutes=12, plan_usd=0.8)
+        for _ in range(2)
+    ]
+
+    plan = plan_map(samples)
+
+    assert plan["fix-issue|medium"].source == "plan"
+    assert plan["fix-issue|medium"].p50_min == 12

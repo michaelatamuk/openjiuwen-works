@@ -406,3 +406,10 @@ def test_task_merge_blocks_the_duplicate(paths, repo) -> None:
     assert result.exit_code == 0, result.stdout + result.stderr
     assert payload(result)["merged"] == duplicate
     assert Queue(paths).load(duplicate).state is TaskState.BLOCKED
+
+
+def test_dispatch_watch_needs_an_enabled_policy(paths) -> None:
+    result = invoke(paths, "dispatch", "--watch")
+
+    assert result.exit_code != 0
+    assert "scheduler is disabled" in (result.stdout + result.stderr)

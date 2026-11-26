@@ -38,6 +38,10 @@ ROUTE_CLASSES: dict[str, tuple[RouteClass, str]] = {
         "verifies HMAC, writes the task, the audit line and the metrics",
     ),
     "GET /api/v1/inbox": ("blocking", "reads tasks and groups possible duplicates"),
+    "POST /api/v1/inbox/dismiss": (
+        "blocking",
+        "remembers a duplicate suggestion as not a duplicate",
+    ),
     "POST /api/v1/inbox/mute": ("blocking", "rewrites the source registry"),
     "GET /api/v1/ledger": ("blocking", "reads the append-only ledger"),
     "GET /api/v1/metrics": ("blocking", "reads job and queue counters"),

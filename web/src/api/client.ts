@@ -13,8 +13,20 @@ export type Health = components["schemas"]["Health"];
 export type TaskSummary = components["schemas"]["TaskSummary"];
 export type TaskList = components["schemas"]["TaskList"];
 
-export type InboxTask = { id: string; state: string; title: string; source: string };
-export type InboxGroup = { key: string; tasks: InboxTask[] };
+export type InboxTask = {
+  id: string;
+  state: string;
+  title: string;
+  source: string;
+  flow?: string;
+  created_at?: string;
+};
+export type InboxGroup = {
+  key: string;
+  signature?: string;
+  reason?: string;
+  tasks: InboxTask[];
+};
 export type InboxGate = {
   task_id: string;
   title: string;
@@ -382,6 +394,12 @@ export const api = {
       `/tasks/${encodeURIComponent(taskId)}/merge`,
       { method: "POST", body: { into }, idempotencyKey: newIdempotencyKey() },
     ),
+  dismissDuplicates: (signature: string) =>
+    request<{ ok: boolean; signature: string }>("/inbox/dismiss", {
+      method: "POST",
+      body: { signature },
+      idempotencyKey: newIdempotencyKey(),
+    }),
   muteSource: (source: string) =>
     request<{ ok: boolean; source: { name: string; enabled: boolean } }>("/inbox/mute", {
       method: "POST",

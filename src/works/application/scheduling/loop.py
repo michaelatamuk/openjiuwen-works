@@ -15,14 +15,17 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from works.adapters.queue.atomic import atomic_write
+from works.adapters.queue.ledger import Ledger
 from works.adapters.queue.store import Queue
 from works.application import limits
 from works.application.approvals.gates import approval_expired
 from works.application.scheduling import lease
 from works.application.scheduling.estimates import (
     Estimate,
-    history_map,
+    group_estimates,
     knn_estimate,
+    plan_map,
+    read_samples,
     titled_samples,
 )
 from works.application.scheduling.policy import DispatchPolicy, load_policy, risk_for_severity
@@ -30,6 +33,8 @@ from works.application.scheduling.select import Signals, TickPlan, tick_plan
 from works.config.paths import WorksPaths
 from works.domain.enums import TaskState
 from works.domain.errors import WorksError
+from works.domain.evidence.models import Evidence
+from works.domain.ledger import LedgerRow
 from works.domain.task import Task
 
 STATE_FILE = "scheduler.json"
@@ -71,6 +76,23 @@ def terminal_failures(queue: Queue) -> frozenset[str]:
     return frozenset(failed)
 
 
+def latest_evidence(paths: WorksPaths, task_id: str) -> Evidence | None:
+    best: Evidence | None = None
+    best_mtime = -1.0
+    for path in paths.runs.glob("*/evidence.json"):
+        try:
+            evidence = Evidence.model_validate_json(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if evidence.task_id != task_id:
+            continue
+        mtime = path.stat().st_mtime
+        if mtime > best_mtime:
+            best = evidence
+            best_mtime = mtime
+    return best
+
+
 def stale_approvals(paths: WorksPaths, now: datetime) -> frozenset[str]:
     """Plan/release approvals that expired; a hash mismatch is the next pass."""
     queue = Queue(paths)
@@ -98,6 +120,17 @@ def stale_approvals(paths: WorksPaths, now: datetime) -> frozenset[str]:
             drafted = [event for event in events if event.type == "plan.drafted"]
             if not drafted or drafted[-1].data.get("hash") != latest.data.get("plan_hash"):
                 stale.add(task.id)
+            continue
+        evidence = latest_evidence(paths, task.id)
+        if evidence is None:
+            continue
+        approved_proof = latest.data.get("proof_sha256")
+        if evidence.proof_sha256 and approved_proof and approved_proof != evidence.proof_sha256:
+            stale.add(task.id)
+            continue
+        approved_commit = latest.data.get("commit")
+        if evidence.base_commit and approved_commit and approved_commit != evidence.base_commit:
+            stale.add(task.id)
     return frozenset(stale)
 
 
@@ -148,12 +181,52 @@ class Scheduler:
         self._paths.state.mkdir(parents=True, exist_ok=True)
         atomic_write(self.state_path, json.dumps(state, ensure_ascii=False, sort_keys=True))
 
+    def log_error(self, message: str) -> None:
+        self._log("scheduler.error", {"error": message})
+
+    def _log(self, kind: str, data: dict[str, object] | None = None) -> None:
+        try:
+            self._paths.state.mkdir(parents=True, exist_ok=True)
+            line = json.dumps(
+                {"ts": _iso(self._now()), "kind": kind, "data": data or {}},
+                ensure_ascii=False,
+                sort_keys=True,
+            )
+            with (self._paths.state / "scheduler-events.jsonl").open(
+                "a", encoding="utf-8", newline="\n"
+            ) as handle:
+                handle.write(line + "\n")
+        except OSError:
+            return
+
+    def _dispatcher_owner(self) -> str:
+        try:
+            raw = json.loads((self._paths.state / "dispatcher.json").read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return ""
+        return str(raw.get("owner") or "") if isinstance(raw, dict) else ""
+
+    def _recent(self, limit: int = 10) -> list[dict[str, object]]:
+        path = self._paths.state / "scheduler-events.jsonl"
+        if not path.exists():
+            return []
+        entries: list[dict[str, object]] = []
+        for line in path.read_text(encoding="utf-8").splitlines()[-limit:]:
+            try:
+                raw = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(raw, dict):
+                entries.append(raw)
+        return entries
+
     def paused(self) -> tuple[bool, str]:
         state = self._read_state()
         reason = str(state.get("pause_reason") or "")
         return bool(state.get("paused")), reason
 
     def pause(self, reason: str = "") -> None:
+        self._log("scheduler.paused", {"reason": reason})
         state = self._read_state()
         state["paused"] = True
         state["pause_reason"] = reason
@@ -161,6 +234,7 @@ class Scheduler:
         self._write_state(state)
 
     def resume(self) -> None:
+        self._log("scheduler.resumed", {})
         state = self._read_state()
         state["paused"] = False
         state["pause_reason"] = ""
@@ -182,6 +256,7 @@ class Scheduler:
             by_id = {task.id: task for task in tasks}
             repos = frozenset(by_id[item.task_id].repo for item in active if item.task_id in by_id)
         waiting = sum(1 for task in tasks if task.state is TaskState.PLANNING)
+        owned = frozenset(task.id for task in tasks if self._queue.owner(task.id))
         return Signals(
             now=moment,
             active_runs=len(active),
@@ -190,12 +265,19 @@ class Scheduler:
             waiting_plans=waiting,
             stale_approvals=stale_approvals(self._paths, moment),
             terminal_failures=terminal_failures(self._queue),
+            owned=owned,
         )
 
     def _history(self, policy: DispatchPolicy) -> dict[str, Estimate] | None:
-        if policy.estimates.source != "history":
+        if policy.estimates.source == "static":
             return None
-        return history_map(self._paths, min_samples=policy.estimates.min_samples)
+        samples = read_samples(self._paths)
+        estimates: dict[str, Estimate] = {}
+        if policy.estimates.source == "history":
+            estimates = group_estimates(samples, min_samples=policy.estimates.min_samples)
+        for key, value in plan_map(samples).items():
+            estimates.setdefault(key, value)
+        return estimates
 
     def plan(self, policy: DispatchPolicy | None = None) -> TickPlan:
         loaded = policy or load_policy(self._paths)
@@ -239,6 +321,17 @@ class Scheduler:
             "waiting": {task_id: reason.value for task_id, reason in planned.skipped.items()},
             "last_tick": state.get("last_tick"),
             "counters": state.get("counters", {}),
+            "estimates": [
+                {
+                    "task_id": item.task.id,
+                    "p50_min": item.estimate.p50_min,
+                    "p90_min": item.estimate.p90_min,
+                    "p90_usd": item.estimate.p90_usd,
+                    "source": item.estimate.source,
+                }
+                for item in planned.eligible[:5]
+            ],
+            "recent": self._recent(),
             "owner": self._owner,
         }
 
@@ -292,7 +385,9 @@ class Scheduler:
         moment = now or self._now()
         with lease.dispatcher(self._paths) as held:
             if not held:
-                return TickResult(status="busy")
+                owner = self._dispatcher_owner()
+                self._log("scheduler.conflict", {"owner": owner})
+                return TickResult(status="conflict", error=owner)
             atomic_write(
                 self._paths.state / "dispatcher.json",
                 json.dumps({"owner": self._owner, "at": _iso(moment)}, sort_keys=True),
@@ -349,6 +444,15 @@ class Scheduler:
                     },
                 )
                 result.claimed.append(candidate.task.id)
+                Ledger(self._paths.ledger).append(
+                    LedgerRow(
+                        task_id=candidate.task.id,
+                        state=candidate.task.state,
+                        usd=0.0,
+                        tokens=0,
+                        note=f"scheduler claim {candidate.level}",
+                    )
+                )
                 if execute is None:
                     if not hold:
                         lease.release(self._paths, candidate.task.id, owner=self._owner)
@@ -384,6 +488,15 @@ class Scheduler:
                     )
             state["last_reasons"] = dict(result.skipped)
             state["last_tick"] = _iso(moment)
+            if result.claimed or reclaimed:
+                self._log(
+                    "scheduler.tick",
+                    {
+                        "claimed": list(result.claimed),
+                        "reclaimed": list(reclaimed),
+                        "skipped": len(result.skipped),
+                    },
+                )
             counters = state.get("counters")
             counts: dict[str, int] = (
                 {str(key): int(value) for key, value in counters.items()}

@@ -547,8 +547,7 @@ reason, remote clients need `allow.remote_triggers`); failures consume a bounded
 header offers **Dispatch ready (N)**; history estimates group evidence by flow and risk and
 `works estimate backtest` reports p90 coverage and pinball loss; `/sources` takes the same trigger and
 `works task <dup> --merge-into <target>` closes the duplicate gap; retries now separate transient
-from terminal failures; `order.mode: shadow` logs a k-NN order without changing claims. Still open:
-the release hash check, the ledger entry and promoting a learned order.
+from terminal failures; `order.mode: shadow` logs a k-NN order without changing claims. M21 is complete. Still open: M22.5?M22.7 (k-NN promotion and a learned order) and M15.7.
 
 - [x] **M21.1** `~/.works/config/dispatch.yaml` is the only policy: sources, allow/deny labels, flows,
   products, repos, remote triggers, levels, limits, budget, windows and pause; strict validation turns
@@ -559,17 +558,17 @@ the release hash check, the ledger entry and promoting a learned order.
   `attempts_exhausted`, `backoff`, `risk_too_high`, `duplicate`, `system_busy`, `interactive_load`,
   `low_disk`, `provider_degraded`, `attention_full`, `blackout`, `eta_unknown`, `not_runnable`,
   `denied_label`, `flow_not_allowed`, `manual_not_allowed`, `remote_trigger`, `stale_approval`).
-- [ ] **M21.3** One dispatcher per home: a lock with a heartbeat, and claims are leases with a TTL;
+- [x] **M21.3** One dispatcher per home: a lock with a heartbeat, and claims are leases with a TTL;
   a second dispatcher exits with `conflict` and a dead lease is reclaimed with `scheduler.reclaimed`.
-- [ ] **M21.4** The loop lives in the daemon (opt-in) and `works dispatch --watch` uses the same code,
+- [x] **M21.4** The loop lives in the daemon (opt-in) and `works dispatch --watch` uses the same code,
   so CLI and GUI never have two policies; a tick error is recorded as `scheduler.error` and the next
   tick proceeds, and the pause flag and last tick persist in `state/scheduler.json`.
-- [ ] **M21.5** A level is a ceiling, not a one-shot: L1 claims `queued` and stops at the plan gate,
+- [x] **M21.5** A level is a ceiling, not a one-shot: L1 claims `queued` and stops at the plan gate,
   L2 also resumes `plan_approved` after a person approves, L3 also delivers `released` after a person
   approved; an expired or hash-mismatched approval is refused as `stale_approval`, and nothing else is
   claimed (a run in progress owns its lease). The new `scheduler` actor kind can start runs and is
   refused by both gates.
-- [ ] **M21.6** Budget, concurrency, ordering and **admission control** are checked before a claim:
+- [x] **M21.6** Budget, concurrency, ordering and **admission control** are checked before a claim:
   daily and per-run USD, `global`/`per_repo` slots, ordering by risk → budget fragility → starvation →
   size bucket → age (the score and its components go to the ledger), and the machine's own state —
   job-pool saturation (`system_busy`), API p95 (`interactive_load`), free disk (`low_disk`), provider
@@ -578,7 +577,7 @@ the release hash check, the ledger entry and promoting a learned order.
   the plan, then a static default, and is used only to decide fit and cost; hard limits are
   `max_wall_clock_minutes` and `per_run_usd`, with no preemption of a started run. A manual run always
   outranks the queue.
-- [ ] **M21.7** `dispatch_on_import` exists for imports and tasks but only enqueues a
+- [x] **M21.7** `dispatch_on_import` exists for imports and tasks but only enqueues a
   `scheduler.requested` event (which wakes the next tick, it does not bypass it), and only when the
   policy allows source, label and budget; the label is evaluated by the scheduler, not by the webhook
   handler. A task typed in the GUI is not picked up unless `allow.manual: true`; otherwise the **Run**
@@ -586,7 +585,7 @@ the release hash check, the ledger entry and promoting a learned order.
 - [x] **M21.8** Scheduler retries are bounded (`max_attempts`, default 2) with backoff, only for
   transient failures; a failing check or a policy violation stops and stays visible. Every attempt is
   a new run id with `trigger: scheduler` and the attempt number.
-- [ ] **M21.9** `GET /api/v1/scheduler` reports state, counters per reason, the waiting list with
+- [x] **M21.9** `GET /api/v1/scheduler` reports state, counters per reason, the waiting list with
   reasons, budget, the sampled signals and the estimate behind the next claim; events cover tick,
   claim, skip, pause, resume, reclaim and error; the ledger records each claim with its reason and
   estimate.
@@ -595,7 +594,7 @@ the release hash check, the ledger entry and promoting a learned order.
 - [x] **M21.11** GUI parity: a Scheduler card (state, waiting reasons, pause, budget), a **Run** button
   on the task card and **Dispatch ready (N)** in the queue header; `works task merge` closes the last
   CLI gap for duplicate tasks.
-- [ ] **M21.12** Docs and acceptance: `docs/design/2026-m21-scheduler.md`, ADR 024, and tests for
+- [x] **M21.12** Docs and acceptance: `docs/design/2026-m21-scheduler.md`, ADR 024, and tests for
   policy-off, labelled L1, unlabelled import, two dispatchers, crash reclaim, budget exhaustion,
   pause/resume, L2/L3 stop states and a scheduler gate refusal.
 

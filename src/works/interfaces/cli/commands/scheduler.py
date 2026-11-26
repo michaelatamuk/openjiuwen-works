@@ -122,6 +122,9 @@ def cmd_scheduler_tick(args: argparse.Namespace) -> int:
             supervisor, task_id, scenarios=scenarios, quarantine=quarantine
         )
     result = scheduler.tick(execute=execute, limit=args.limit)
+    if result.status == "conflict":
+        print(f"another dispatcher is active ({result.error or 'unknown'}); nothing claimed")
+        return EXIT_BLOCKED
     if args.json:
         _emit(
             {

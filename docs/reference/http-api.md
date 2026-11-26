@@ -137,6 +137,7 @@ design (M10): only a measured hot read path moves to `async def`.
 | GET | `/api/v1/health/ready` | blocking | probes builder and provider readiness |
 | POST | `/api/v1/hooks/{source}` | blocking | verifies HMAC, writes the task, the audit line and the metrics |
 | GET | `/api/v1/inbox` | blocking | reads tasks and groups possible duplicates |
+| POST | `/api/v1/inbox/dismiss` | blocking | remembers a duplicate suggestion as not a duplicate |
 | POST | `/api/v1/inbox/mute` | blocking | rewrites the source registry |
 | DELETE | `/api/v1/jobs/{job_id}` | async-safe | sets the in-memory cancel flag |
 | GET | `/api/v1/jobs/{job_id}` | async-safe | reads the in-memory job record |

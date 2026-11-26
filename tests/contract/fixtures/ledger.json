@@ -3,6 +3,7 @@
     {
       "escape": false,
       "minutes_human": null,
+      "note": null,
       "rework": false,
       "run_id": "<run-id>",
       "schema_version": 1,
@@ -16,6 +17,7 @@
     {
       "escape": false,
       "minutes_human": null,
+      "note": null,
       "rework": false,
       "run_id": "<run-id>",
       "schema_version": 1,
@@ -29,6 +31,7 @@
     {
       "escape": false,
       "minutes_human": null,
+      "note": null,
       "rework": false,
       "run_id": "<run-id>",
       "schema_version": 1,

@@ -1,7 +1,8 @@
+import { useState } from "react";
 import type { ChangeEvent } from "react";
 
 import { groups, riskLabel, riskTone, stateLabel, timeAgo } from "../../lib/format.js";
-import type { Inbox } from "../../api/client";
+import type { Inbox, InboxGroup } from "../../api/client";
 import { Pill } from "../../ui/primitives";
 
 export type QueueTask = {
@@ -33,6 +34,8 @@ export type QueueProps = {
   onNew: () => void;
   dispatchCount?: number;
   onDispatch?: () => void;
+  onMergeMany?: (duplicates: string[], into: string) => void;
+  onDismiss?: (signature: string) => void;
 };
 
 const GROUPS = groups as Array<[string, string, string[]]>;
@@ -55,7 +58,10 @@ export function Queue({
   onNew,
   dispatchCount = 0,
   onDispatch,
+  onMergeMany,
+  onDismiss,
 }: QueueProps) {
+  const [targets, setTargets] = useState<Record<string, string>>({});
   const products = [...new Set(tasks.map((task) => task.product).filter(Boolean))].sort();
   const states: Record<string, string[]> = Object.fromEntries(
     GROUPS.map(([id, , stateList]) => [id, stateList]),
@@ -161,22 +167,58 @@ export function Queue({
 
       {inbox && inbox.duplicates.length ? (
         <section className="inbox" aria-label="Possible duplicates">
-          <h2>Possible duplicates</h2>
-          {inbox.duplicates.slice(0, 3).map((group) => (
-            <div className="inbox-row" key={group.key}>
-              <span className="small" title={group.tasks[0].title}>
-                {group.tasks[0].title}
-              </span>
-              <button
-                className="btn"
-                type="button"
-                disabled={!writable}
-                onClick={() => onMerge(group.tasks[1].id, group.tasks[0].id)}
-              >
-                Merge
-              </button>
-            </div>
-          ))}
+          <h2>
+            Possible duplicates <span className="small muted">{inbox.duplicates.length}</span>
+          </h2>
+          {inbox.duplicates.slice(0, 3).map((group) => {
+            const target = targets[group.key] || group.tasks[0]?.id || "";
+            const duplicates = group.tasks.filter((task) => task.id !== target).map((task) => task.id);
+            return (
+              <div className="inbox-card" key={group.key}>
+                <p className="small muted">{group.reason || "Same title after normalisation"}</p>
+                <ul className="inbox-members">
+                  {group.tasks.map((task) => (
+                    <li key={task.id}>
+                      <label>
+                        <input
+                          type="radio"
+                          name={`target-${group.key}`}
+                          checked={task.id === target}
+                          onChange={() => setTargets({ ...targets, [group.key]: task.id })}
+                        />
+                        <span className="mono">{task.id}</span> {task.title}
+                        <span className="small muted"> ? {task.source}</span>
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+                <p className="small muted">
+                  Keep {target}; {duplicates.length} duplicate(s) become blocked. History is kept.
+                </p>
+                <div className="inbox-actions">
+                  <button
+                    className="btn"
+                    type="button"
+                    disabled={!writable || !duplicates.length}
+                    onClick={() => {
+                      if (onMergeMany) onMergeMany(duplicates, target);
+                      else duplicates.forEach((taskId) => onMerge(taskId, target));
+                    }}
+                  >
+                    Merge {duplicates.length} into {target}
+                  </button>
+                  <button
+                    className="btn ghost"
+                    type="button"
+                    disabled={!writable}
+                    onClick={() => onDismiss?.(group.signature || group.key)}
+                  >
+                    Not duplicates
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </section>
       ) : null}
 

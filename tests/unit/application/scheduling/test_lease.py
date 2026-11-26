@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import subprocess
+import sys
+import textwrap
 from datetime import UTC, datetime, timedelta
 
 import pytest
 
 from works.adapters.queue.store import Queue
 from works.application.scheduling import lease
+from works.application.scheduling.loop import Scheduler
 from works.domain.errors import ConflictError
 from works.domain.records import Source, SourceKind
 
@@ -69,3 +73,36 @@ def test_the_dispatcher_lock_is_exclusive_in_one_process(paths) -> None:
         assert held is True
     with lease.dispatcher(paths) as held:
         assert held is True
+
+
+def test_a_second_process_is_refused(paths) -> None:
+    from works.application.scheduling.policy import POLICY_PATH
+
+    path = paths.root / POLICY_PATH
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("enabled: true\nallow:\n  manual: true\n", encoding="utf-8")
+    code = textwrap.dedent(
+        f"""
+        import time
+        from pathlib import Path
+        from works.application.scheduling import lease
+        from works.config.paths import WorksPaths
+
+        with lease.dispatcher(WorksPaths(Path(r"{paths.root}"))) as held:
+            print(held, flush=True)
+            time.sleep(20)
+        """
+    )
+    holder = subprocess.Popen(
+        [sys.executable, "-c", code],
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    try:
+        assert holder.stdout is not None
+        assert holder.stdout.readline().strip() == "True"
+        result = Scheduler(paths, now=lambda: NOW).tick()
+        assert result.status == "conflict"
+    finally:
+        holder.terminate()
+        holder.wait(timeout=10)

@@ -240,6 +240,49 @@ def cmd_run(args: argparse.Namespace) -> int:
     return 0
 
 
+def _dispatch_watch(args: argparse.Namespace) -> int:
+    import asyncio
+    import time
+
+    from works.application.scheduling.loop import Scheduler
+    from works.application.scheduling.policy import load_policy, policy_path
+
+    paths = _paths(args)
+    policy = load_policy(paths)
+    if not policy.enabled:
+        raise ConfigError(
+            f"the scheduler is disabled; run `works scheduler enable` ({policy_path(paths)})"
+        )
+    scenarios = Path(args.scenarios) if args.scenarios else None
+    quarantine = Path(args.quarantine) if args.quarantine else None
+    supervisor = _supervisor(args)
+
+    def execute(task_id: str) -> None:
+        asyncio.run(
+            supervisor.run(
+                task_id,
+                approve_plan=False,
+                scenario_set=scenarios,
+                quarantine=quarantine,
+            )
+        )
+
+    scheduler = Scheduler(paths)
+    print(f"watching with the scheduler (tick {policy.tick_seconds}s); Ctrl+C to stop")
+    try:
+        while True:
+            result = scheduler.tick(execute=execute, limit=args.limit)
+            if result.status in ("disabled", "paused", "conflict"):
+                print(f"{result.status}: {result.error or result.status}", flush=True)
+            for task_id in result.claimed:
+                print(f"claimed {task_id}", flush=True)
+            for item in result.executed:
+                print(f"  {item['task_id']}: {item['result']}", flush=True)
+            time.sleep(args.interval)
+    except KeyboardInterrupt:
+        return 0
+
+
 def cmd_dispatch(args: argparse.Namespace) -> int:
     import asyncio
     import time
@@ -249,6 +292,8 @@ def cmd_dispatch(args: argparse.Namespace) -> int:
     if getattr(args, "daemon", False):
         return _dispatch_via_daemon(args)
     _refuse_when_daemon_owns(args)
+    if args.watch:
+        return _dispatch_watch(args)
 
     queue = _queue(args)
     scenarios = Path(args.scenarios) if args.scenarios else None

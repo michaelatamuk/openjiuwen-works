@@ -1,6 +1,6 @@
 # ADR 024 — The scheduler is a system actor that runs, never decides
 
-Status: proposed, 2026-11-25. (Accepted when M21.5 lands with tests.)
+Status: accepted, 2026-11-26 (M21.5 landed with tests).
 
 ## Context
 

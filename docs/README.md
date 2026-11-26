@@ -8,7 +8,7 @@
 - `reference/` - the facts, one page per area:
   - stages: `signal-intake`, `reproduce`, `planning`, `build`, `check`, `proof`, `gates`,
     `release-gate`, `deliver`, `confirm`;
-  - queue: `scheduler` (core; daemon/API/GUI planned);
+  - queue: `scheduler`, `inbox` (duplicate triage);
   - platform: `layout`, `http-api`, `reliability`, `supply-chain`, `typing`, `prompts`,
     `features`, `agent-core`.
 - `adrs/` - architecture decision records.

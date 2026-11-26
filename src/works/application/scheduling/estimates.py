@@ -35,6 +35,8 @@ class Sample:
     usd: float
     title: str = ""
     task_id: str = ""
+    plan_minutes: float = 0.0
+    plan_usd: float = 0.0
 
 
 def read_samples(paths: WorksPaths) -> list[Sample]:
@@ -56,6 +58,8 @@ def read_samples(paths: WorksPaths) -> list[Sample]:
                 minutes=evidence.duration_ms / 60_000.0,
                 usd=float(evidence.usd),
                 task_id=evidence.task_id,
+                plan_minutes=float(evidence.plan_estimated_minutes),
+                plan_usd=float(evidence.plan_estimated_usd),
             )
         )
     return samples
@@ -101,6 +105,30 @@ def group_estimates(
         groups.setdefault(group_key(sample.flow, sample.risk), []).append(sample)
     return {
         key: estimate_from(values) for key, values in groups.items() if len(values) >= min_samples
+    }
+
+
+def plan_map(
+    samples: list[Sample],
+    *,
+    min_samples: int = 1,
+) -> dict[str, Estimate]:
+    """The planner's own size estimate, used only when history is thin."""
+    groups: dict[str, list[Sample]] = {}
+    for sample in samples:
+        if sample.plan_minutes <= 0:
+            continue
+        planned = Sample(
+            flow=sample.flow,
+            risk=sample.risk,
+            minutes=sample.plan_minutes,
+            usd=sample.plan_usd,
+        )
+        groups.setdefault(group_key(sample.flow, sample.risk), []).append(planned)
+    return {
+        key: estimate_from(values, source="plan")
+        for key, values in groups.items()
+        if len(values) >= min_samples
     }
 
 

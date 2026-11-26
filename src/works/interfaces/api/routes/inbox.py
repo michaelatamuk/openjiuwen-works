@@ -7,6 +7,8 @@ Merging records the decision and blocks the duplicate; it never deletes history.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import os
 import re
 import shlex
@@ -15,9 +17,12 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
+from works.adapters.queue.atomic import atomic_write
 from works.adapters.queue.store import Queue
 from works.application import webhooks
+from works.config.paths import WorksPaths
 from works.domain.errors import ConfigError
 from works.domain.records import TaskState
 from works.domain.state import TERMINAL
@@ -37,6 +42,40 @@ def normalise(title: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", title.lower()).strip()
 
 
+DISMISS_FILE = "inbox-dismissed.json"
+REASON = "same title after normalisation"
+
+
+class DismissRequest(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    signature: str
+
+
+def _dismissed(paths: WorksPaths) -> set[str]:
+    path = paths.state / DISMISS_FILE
+    if not path.exists():
+        return set()
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return set()
+    items = raw.get("signatures") if isinstance(raw, dict) else None
+    if not isinstance(items, list):
+        return set()
+    return {str(item) for item in items}
+
+
+def _remember_dismissal(paths: WorksPaths, signature: str) -> None:
+    values = _dismissed(paths)
+    values.add(signature)
+    paths.state.mkdir(parents=True, exist_ok=True)
+    atomic_write(
+        paths.state / DISMISS_FILE,
+        json.dumps({"signatures": sorted(values)[-200:]}, ensure_ascii=False, sort_keys=True),
+    )
+
+
 def groups(tasks: list[Any]) -> list[dict[str, Any]]:
     buckets: dict[str, list[Any]] = {}
     for task in tasks:
@@ -50,17 +89,25 @@ def groups(tasks: list[Any]) -> list[dict[str, Any]]:
     for key, items in buckets.items():
         if len(items) < 2:
             continue
+        ordered = sorted(items, key=lambda item: item.created_at)
+        signature = hashlib.sha256(
+            "|".join(sorted(task.id for task in ordered)).encode("utf-8")
+        ).hexdigest()[:16]
         found.append(
             {
                 "key": key,
+                "signature": signature,
+                "reason": REASON,
                 "tasks": [
                     {
                         "id": task.id,
                         "state": task.state.value,
                         "title": task.source.title or task.source.ref,
                         "source": f"{task.source.kind.value}:{task.source.ref}",
+                        "flow": task.flow,
+                        "created_at": task.created_at.isoformat(),
                     }
-                    for task in sorted(items, key=lambda item: item.created_at)
+                    for task in ordered
                 ],
             }
         )
@@ -71,7 +118,8 @@ def groups(tasks: list[Any]) -> list[dict[str, Any]]:
 def inbox(request: Request) -> JSONResponse:
     queue = Queue(_state(request).paths)
     tasks = queue.list_tasks()
-    found = groups(tasks)
+    dismissed = _dismissed(_state(request).paths)
+    found = [group for group in groups(tasks) if group["signature"] not in dismissed]
     try:
         reminder_hours = float(os.environ.get("WORKS_GATE_REMINDER_HOURS", "24"))
     except ValueError:
@@ -129,6 +177,15 @@ def merge(task_id: str, request: Request, payload: dict[str, Any]) -> JSONRespon
         status_code=200,
         content={"ok": True, "merged": task_id, "into": into, "target_state": target.state.value},
     )
+
+
+@router.post("/inbox/dismiss", dependencies=[Depends(require_write)])
+def dismiss(payload: DismissRequest, request: Request) -> dict[str, object]:
+    signature = payload.signature.strip()
+    if not signature:
+        raise ConfigError("signature is required")
+    _remember_dismissal(_state(request).paths, signature)
+    return {"ok": True, "signature": signature}
 
 
 @router.post("/inbox/mute", dependencies=[Depends(require_write)])
