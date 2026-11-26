@@ -675,7 +675,7 @@ back to the tracker beyond the existing comment, auto-reopening a merged PR, and
 
 **Estimate:** ~13 days (~15 with contingency); order 23.1 → 23.2 → 23.3, each merged complete.
 
-### M24 — Parallel tasks in one repository (started)
+### M24 — Parallel tasks in one repository (done)
 
 **Prevents:** a queue with work, budget and estimates that still runs one task at a time.
 
