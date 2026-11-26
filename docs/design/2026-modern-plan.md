@@ -552,7 +552,7 @@ the release hash check and the ledger entry.
 - [x] **M21.1** `~/.works/config/dispatch.yaml` is the only policy: sources, allow/deny labels, flows,
   products, repos, remote triggers, levels, limits, budget, windows and pause; strict validation turns
   an unknown key or a bad level into a `config_error` at load, and `enabled` defaults to false.
-- [ ] **M21.2** Selection is a pure function over task, queue, policy, budget and locks; every refusal
+- [x] **M21.2** Selection is a pure function over task, queue, policy, budget and locks; every refusal
   carries a typed reason (`disabled`, `paused`, `not_allowlisted`, `missing_label`,
   `budget_exhausted`, `run_budget_cap`, `repo_busy`, `global_busy`, `stale`, `waiting_on_event`,
   `attempts_exhausted`, `backoff`, `risk_too_high`, `duplicate`, `system_busy`, `interactive_load`,
@@ -589,9 +589,9 @@ the release hash check and the ledger entry.
   reasons, budget, the sampled signals and the estimate behind the next claim; events cover tick,
   claim, skip, pause, resume, reclaim and error; the ledger records each claim with its reason and
   estimate.
-- [ ] **M21.10** Pause/resume is a persisted kill switch: a paused scheduler claims nothing, says so in
+- [x] **M21.10** Pause/resume is a persisted kill switch: a paused scheduler claims nothing, says so in
   the UI and does not lose the queue.
-- [ ] **M21.11** GUI parity: a Scheduler card (state, waiting reasons, pause, budget), a **Run** button
+- [x] **M21.11** GUI parity: a Scheduler card (state, waiting reasons, pause, budget), a **Run** button
   on the task card and **Dispatch ready (N)** in the queue header; `works task merge` closes the last
   CLI gap for duplicate tasks.
 - [ ] **M21.12** Docs and acceptance: `docs/design/2026-m21-scheduler.md`, ADR 024, and tests for
