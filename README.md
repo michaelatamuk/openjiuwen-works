@@ -7,12 +7,14 @@
 
 # openJiuwen Works
 
-**A local-first software factory.** A report arrives. Works reproduces the problem, plans the change
-and the checks that will judge it, builds in a disposable copy and writes the proof. You approve the
-plan. You approve the release. Works delivers the change and confirms the result.
+**A local-first software factory for teams whose review queue, not their typing speed, is the
+bottleneck.** A report arrives. Works reproduces it, plans the change, builds it in a disposable copy
+and writes the proof; people make the two decisions that matter.
 
 [![ci](https://github.com/michaelatamuk/openjiuwen-works/actions/workflows/ci.yml/badge.svg)](https://github.com/michaelatamuk/openjiuwen-works/actions/workflows/ci.yml)
 [![license](https://img.shields.io/badge/license-Apache--2.0-6D28D9.svg)](LICENSE)
+
+<sub>v0.0.1 · pre-release</sub>
 
 > Works carries a change through proof, review and release.
 
@@ -29,6 +31,18 @@ plan. You approve the release. Works delivers the change and confirms the result
   not covered.
 - **Delivers and confirms**: a change request, one comment on the original report, then a fresh check
   of the real result.
+
+The difference is in the binding: the proof is tied to the commit and re-verified at release, and the
+checks are read from the base commit, so the change cannot edit its judge.
+
+## The proof is a page, not a claim
+
+<div align="center">
+  <img src="docs/ui/evidence.png" alt="The evidence page: the ten steps, policy, risk, the decision, residual risk, cost and run metadata" width="100%" />
+</div>
+
+This is a deterministic run, so the model cost is zero; a live run adds tokens, USD and the model. The
+page and its bindings are the same. [Watch the 90-second film](docs/video/openjiuwen-works-two-mondays.mp4).
 
 ## Two decisions stay with people
 
@@ -70,6 +84,8 @@ started run finishes.
 The demo is local and deterministic; it runs without a model or network.
 
 ```bash
+git clone https://github.com/michaelatamuk/openjiuwen-works.git
+cd openjiuwen-works
 uv sync --extra dev
 python scripts/demo-ui.py
 # open the path the script prints
@@ -93,15 +109,20 @@ Open `http://127.0.0.1:8765/` and:
 3. **Approve the plan**, then let Works build, check and write the proof.
 4. **Approve the release**, deliver the change and confirm the result.
 
+Requirements: Python 3.12+, `uv`, git and port 8765; Node only for UI development. A measured run on
+the fixture costs $0.09 with the builder and $0.19 with an independent challenger, in 90–120 s; daily
+and per-run limits live in the scheduler policy (`dispatch.yaml`).
+
 A provider key is needed for the live builder; trace mode runs without a model — see
 [`docs/guides/live-harness.md`](docs/guides/live-harness.md). The CLI follows the same two decisions;
 `works --help` lists the commands.
 
 ## Built for one machine
 
-Works runs on your machine: one daemon, one home (`~/.works`). The plan and release decisions are human;
-one project runs one job at a time. Delivery creates a change request; merge, deploy and close remain
-your decisions.
+Works runs on your machine: one daemon, one home (`~/.works`). Source, diffs and proofs stay there;
+only your model provider receives the context the builder sends. The builder runs with your OS
+permissions, so use a repository you trust. The plan and release decisions are human; one project runs
+one job at a time. Delivery creates a change request; merge, deploy and close remain your decisions.
 
 ## Documentation
 
@@ -110,6 +131,8 @@ your decisions.
 - [`docs/reference/proof.md`](docs/reference/proof.md) — what the proof contains.
 - [`docs/guides/intake.md`](docs/guides/intake.md) — trackers, monitors and your products.
 - [`docs/guides/remote.md`](docs/guides/remote.md) — another device without exposing the port.
+- [`docs/video/openjiuwen-works-two-mondays.mp4`](docs/video/openjiuwen-works-two-mondays.mp4) — the
+  flow in motion.
 - [`docs/deck/`](docs/deck/) — slides and diagrams.
 
 ## License
