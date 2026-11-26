@@ -178,7 +178,8 @@ def fetch_osv(packages: list[tuple[str, str, str]], *, timeout: float = 15.0) ->
         method="POST",
     )
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310
+        # The URL is the constant https endpoint above, never user input.
+        with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310  # nosec B310
             payload = json.loads(response.read().decode("utf-8"))
     except (urllib.error.URLError, TimeoutError, OSError) as exc:
         raise ConfigError(f"OSV is unreachable: {exc}") from exc
