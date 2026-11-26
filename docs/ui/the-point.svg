@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="440" viewBox="0 0 1200 440" font-family="Inter, Segoe UI, Arial, Helvetica, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="460" viewBox="0 0 1200 460" font-family="Inter, Segoe UI, Arial, Helvetica, sans-serif">
   <defs>
     <filter id="softP" x="-20%" y="-20%" width="140%" height="140%">
       <feDropShadow dx="0" dy="3" stdDeviation="7" flood-color="#111827" flood-opacity="0.07"/>
@@ -9,13 +9,13 @@
     </marker>
   </defs>
 
-  <rect x="0" y="0" width="1200" height="440" fill="#F4F5F9"/>
+  <rect x="0" y="0" width="1200" height="460" fill="#F4F5F9"/>
 
   <text x="40" y="44" font-size="12" font-weight="700" fill="#6D28D9" letter-spacing="2">THE POINT</text>
   <text x="40" y="88" font-size="36" font-weight="700" fill="#111827">Same people. Different hours.</text>
 
   <!-- Today -->
-  <rect x="40" y="112" width="540" height="292" rx="16" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1.5" filter="url(#softP)"/>
+  <rect x="40" y="112" width="540" height="312" rx="16" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1.5" filter="url(#softP)"/>
   <text x="64" y="146" font-size="12" font-weight="700" fill="#9CA3AF" letter-spacing="1.4">TODAY</text>
 
   <circle cx="96" cy="200" r="15" fill="none" stroke="#6B7280" stroke-width="2"/>
@@ -39,10 +39,10 @@
 
   <line x1="128" y1="240" x2="146" y2="240" stroke="#9CA3AF" stroke-width="2" marker-end="url(#arrowP)"/>
 
-  <text x="64" y="378" font-size="15" fill="#6B7280">Technical work fills the day.</text>
+  <text x="64" y="390" font-size="15" fill="#6B7280">Technical work fills the day.</text>
 
   <!-- With Works -->
-  <rect x="620" y="112" width="540" height="292" rx="16" fill="#FFFFFF" stroke="#C4B5FD" stroke-width="1.5" filter="url(#softP)"/>
+  <rect x="620" y="112" width="540" height="312" rx="16" fill="#FFFFFF" stroke="#C4B5FD" stroke-width="1.5" filter="url(#softP)"/>
   <text x="644" y="146" font-size="12" font-weight="700" fill="#6D28D9" letter-spacing="1.4">WITH WORKS</text>
 
   <rect x="660" y="168" width="46" height="46" rx="13" fill="#EDE9FE" stroke="#C4B5FD"/>
@@ -51,31 +51,31 @@
   <path d="M 673 200 Q 683 207 693 200" fill="none" stroke="#6D28D9" stroke-width="2" stroke-linecap="round"/>
   <text x="683" y="236" font-size="13" fill="#6D28D9" text-anchor="middle">agent</text>
 
-  <rect x="730" y="150" width="290" height="40" rx="9" fill="#F9FAFB" stroke="#E5E7EB"/>
+  <rect x="730" y="150" width="250" height="40" rx="9" fill="#F9FAFB" stroke="#E5E7EB"/>
   <text x="748" y="175" font-size="16" fill="#6B7280">reproduce</text>
-  <rect x="730" y="196" width="290" height="40" rx="9" fill="#F9FAFB" stroke="#E5E7EB"/>
+  <rect x="730" y="196" width="250" height="40" rx="9" fill="#F9FAFB" stroke="#E5E7EB"/>
   <text x="748" y="221" font-size="16" fill="#6B7280">build</text>
-  <rect x="730" y="242" width="290" height="40" rx="9" fill="#F9FAFB" stroke="#E5E7EB"/>
+  <rect x="730" y="242" width="250" height="40" rx="9" fill="#F9FAFB" stroke="#E5E7EB"/>
   <text x="748" y="267" font-size="16" fill="#6B7280">check</text>
-  <rect x="730" y="288" width="290" height="40" rx="9" fill="#F9FAFB" stroke="#E5E7EB"/>
+  <rect x="730" y="288" width="250" height="40" rx="9" fill="#F9FAFB" stroke="#E5E7EB"/>
   <text x="748" y="313" font-size="16" fill="#6B7280">prove</text>
 
-  <text x="875" y="352" font-size="12" font-weight="700" fill="#6D28D9" text-anchor="middle" letter-spacing="0.8">RUNS ITSELF</text>
-  <line x1="1026" y1="242" x2="1052" y2="242" stroke="#6D28D9" stroke-width="2" marker-end="url(#arrowP)"/>
+  <text x="855" y="356" font-size="12" font-weight="700" fill="#6D28D9" text-anchor="middle" letter-spacing="0.8">RUNS ITSELF</text>
+  <line x1="990" y1="242" x2="1014" y2="242" stroke="#6D28D9" stroke-width="2" marker-end="url(#arrowP)"/>
 
-  <circle cx="1076" cy="200" r="15" fill="none" stroke="#6B7280" stroke-width="2"/>
-  <circle cx="1071" cy="196" r="1.5" fill="#6B7280"/>
-  <circle cx="1081" cy="196" r="1.5" fill="#6B7280"/>
-  <path d="M 1069 204 Q 1076 212 1083 204" fill="none" stroke="#6B7280" stroke-width="1.6" stroke-linecap="round"/>
-  <path d="M 1076 216 L 1076 250" fill="none" stroke="#6B7280" stroke-width="2" stroke-linecap="round"/>
-  <path d="M 1076 228 L 1058 211" fill="none" stroke="#6B7280" stroke-width="2" stroke-linecap="round"/>
-  <path d="M 1076 228 L 1094 211" fill="none" stroke="#6B7280" stroke-width="2" stroke-linecap="round"/>
-  <text x="1076" y="274" font-size="13" fill="#6B7280" text-anchor="middle">you</text>
+  <circle cx="1036" cy="200" r="15" fill="none" stroke="#6B7280" stroke-width="2"/>
+  <circle cx="1031" cy="196" r="1.5" fill="#6B7280"/>
+  <circle cx="1041" cy="196" r="1.5" fill="#6B7280"/>
+  <path d="M 1029 204 Q 1036 212 1043 204" fill="none" stroke="#6B7280" stroke-width="1.6" stroke-linecap="round"/>
+  <path d="M 1036 216 L 1036 250" fill="none" stroke="#6B7280" stroke-width="2" stroke-linecap="round"/>
+  <path d="M 1036 228 L 1018 211" fill="none" stroke="#6B7280" stroke-width="2" stroke-linecap="round"/>
+  <path d="M 1036 228 L 1054 211" fill="none" stroke="#6B7280" stroke-width="2" stroke-linecap="round"/>
+  <text x="1036" y="274" font-size="13" fill="#6B7280" text-anchor="middle">you</text>
 
-  <rect x="1096" y="174" width="60" height="30" rx="15" fill="#EDE9FE" stroke="#C4B5FD"/>
-  <text x="1126" y="194" font-size="13" font-weight="700" fill="#6D28D9" text-anchor="middle">plan</text>
-  <rect x="1096" y="214" width="60" height="30" rx="15" fill="#EDE9FE" stroke="#C4B5FD"/>
-  <text x="1126" y="234" font-size="13" font-weight="700" fill="#6D28D9" text-anchor="middle">release</text>
+  <rect x="1080" y="174" width="60" height="30" rx="15" fill="#EDE9FE" stroke="#C4B5FD"/>
+  <text x="1110" y="194" font-size="13" font-weight="700" fill="#6D28D9" text-anchor="middle">plan</text>
+  <rect x="1080" y="214" width="60" height="30" rx="15" fill="#EDE9FE" stroke="#C4B5FD"/>
+  <text x="1110" y="234" font-size="13" font-weight="700" fill="#6D28D9" text-anchor="middle">release</text>
 
-  <text x="644" y="378" font-size="15" fill="#6B7280">Your hours go to judgement and design.</text>
+  <text x="644" y="390" font-size="15" fill="#6B7280">Your hours go to judgement and design.</text>
 </svg>
