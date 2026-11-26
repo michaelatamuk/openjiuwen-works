@@ -29,7 +29,7 @@ plan and the release — and spend their time on the problems that actually need
 team whose hours go to judgement and design.
 
 <div align="center">
-  <img src="docs/ui/the-point.png" alt="The old way: one person does all six stages. With openJiuwen: the agent runs all six, and the person approves the plan and the release" width="100%" />
+  <img src="docs/ui/the-point.png" alt="The old way: one person does all six stages. With openJiuwen Works: the agent runs all six, and the person approves the plan and the release" width="100%" />
 </div>
 
 ## What it does
