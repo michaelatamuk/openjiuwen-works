@@ -22,16 +22,17 @@ release — and Works delivers the change and confirms the real result.
 
 ## What it does
 
-- **Reproduces the problem** on the current code before anything changes.
-- **Plans the change** and the checks that will judge it.
-- **Builds in a disposable copy**, leaving your working tree clean.
-- **Writes the proof**: one page tied to the exact change — commands, verdict, cost, risk and what was
-  not covered.
+- **Reproduces the problem on the current code** before anything changes, so the work starts from a
+  failure that actually exists.
+- **Plans the change and the checks that will judge it**, so the bar is agreed before the build starts.
+- **Builds in a disposable copy**, leaving your working tree untouched.
+- **Writes the proof**: one page bound to the exact change — what ran, what passed, what it cost, what
+  it risked and what was not covered.
 - **Delivers and confirms**: a change request, one comment on the original report, then a fresh check
   of the real result.
 
-The difference is in the binding: the proof is tied to the commit and re-verified at release, and the
-checks are read from the base commit, so the change cannot edit its judge.
+**The difference is the binding.** The proof is tied to the exact commit and re-verified at release;
+the checks are read from the base commit, so a change cannot rewrite the tests that judge it.
 
 ## One screen, the whole task
 
