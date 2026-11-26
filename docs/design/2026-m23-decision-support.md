@@ -118,6 +118,18 @@ A model-written summary, risk-based blocking, a chat with the reporter, writing 
 beyond the existing comment, reopening a merged PR automatically, multi-repo tasks, and any
 per-person productivity metric.
 
+## Slices
+
+Each slice is merged complete — backend, API, UI, CLI and tests — before the next one starts. No
+feature is left half shipped for a later pass.
+
+| slice | done means |
+|---|---|
+| **23.1 risk** | tier computed before `bind()`, shown on the evidence page and in the gate payload, badge on the Story card and release banner, tests for determinism and the unchanged gate refusal |
+| **23.2 summary** | template renderer, `proof.summary.md` bound into `proof_sha256`, API field, Summary/Technical toggle, CLI flag, old records marked `derived` |
+| **23.3 reporter loop** | event, matching, guards, re-queue context, CLI `task retry --note`, "reported again" in the UI, tests for duplicate, unknown, closed, non-allowlisted and the daily limit |
+| **23.4 acceptance** | design doc, ADR 026, `proof.md` reference, cross-feature pass over both gates and the green checks |
+
 ## Acceptance
 
 - risk tier is deterministic for the same input and covered by `proof_sha256`;
@@ -133,9 +145,8 @@ per-person productivity metric.
 
 | item | days |
 |---|---|
-| 23.1 risk extension and placement | 3 |
-| 23.2 summary template, binding, API and CLI | 3 |
-| 23.3 reporter event, matching and guards | 4 |
-| 23.4 GUI parity and e2e | 1.5 |
-| 23.5 docs, ADR and acceptance tests | 1.5 |
-| **total** | **13 (~12 with reuse, ~14 with contingency)** |
+| 23.1 risk: signals, evidence, gate payload, badge and tests | 3.5 |
+| 23.2 summary: template, binding, API, CLI, toggle and tests | 3.5 |
+| 23.3 reporter loop: event, matching, guards, context, CLI, UI and tests | 4.5 |
+| 23.4 docs, ADR 026 and cross-feature acceptance | 1.5 |
+| **total** | **13 (~15 with contingency)** |
