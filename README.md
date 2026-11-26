@@ -28,6 +28,10 @@ proofs, delivery and confirmation run on their own; people keep the decisions th
 plan and the release — and spend their time on the problems that actually need them. The result is a
 team whose hours go to judgement and design.
 
+<div align="center">
+  <img src="docs/ui/the-point.png" alt="Today technical work fills the day; with Works the agent runs reproduce, build, check and prove, and the person makes the plan and release decisions" width="62%" />
+</div>
+
 ## What it does
 
 - **Reproduces the problem on the current code** before anything changes, so the work starts from a
