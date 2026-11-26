@@ -7,9 +7,11 @@
 
 # openJiuwen Works
 
-**A local-first software factory for teams whose review queue, not their typing speed, is the
-bottleneck.** A report arrives. Works reproduces it, plans the change, builds it in a disposable copy
-and writes the proof; people make the two decisions that matter.
+**A local-first software factory for teams whose bottleneck is verifying changes, not writing them.**
+A report arrives from a tracker, a monitor or a person. Works reproduces the failure on the current
+code, plans the change and the checks that will judge it, builds in a disposable copy and writes proof
+tied to the exact commit. People make the two decisions that matter — approve the plan and approve the
+release — and Works delivers the change and confirms the real result.
 
 [![ci](https://github.com/michaelatamuk/openjiuwen-works/actions/workflows/ci.yml/badge.svg)](https://github.com/michaelatamuk/openjiuwen-works/actions/workflows/ci.yml)
 [![license](https://img.shields.io/badge/license-Apache--2.0-6D28D9.svg)](LICENSE)
