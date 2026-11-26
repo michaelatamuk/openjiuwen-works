@@ -78,7 +78,7 @@ Everything between the two decisions is automatic and recorded.
 
 Every phase is recorded. A failed check or a mismatched proof returns the task to a person.
 
-## When several things are ready
+## When there is more than one thing to do
 
 One queue, one job per project. Works shows why each task is waiting: a free slot, your decision, the
 day's budget or the machine being busy.
