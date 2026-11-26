@@ -52,6 +52,10 @@ Everything else — reproduce, build, check, proof, delivery, confirmation — i
 | **Deliver** | A branch, one change request and one comment on the original report. | engine |
 | **Confirm** | The released commit is re-checked by URL, command or preview; the result is kept beside the proof. | engine |
 
+<div align="center">
+  <img src="docs/deck/software-factory-flow.png" alt="The flow: signal, reproduce, plan, plan gate, build, check, proof, release gate, delivery and confirmation" width="100%" />
+</div>
+
 A blocked task stays blocked until a person changes the plan or the evidence. Nothing is retried
 silently.
 
@@ -124,6 +128,10 @@ works scheduler enable
 works scheduler pause --reason "deploying"
 works scheduler tick
 ```
+
+<div align="center">
+  <img src="docs/deck/software-factory-queue.png" alt="The queue: new work waits in one line, a helper asks four questions, and two moments belong to a person" width="100%" />
+</div>
 
 It is off by default. It never approves a plan or a release, never runs two jobs in one project, and
 never preempts a started run. When the history is thin it estimates from the plan; when it has history
