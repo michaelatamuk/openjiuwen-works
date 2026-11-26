@@ -12,21 +12,47 @@ function inline(text: string): ReactNode[] {
 }
 
 function parse(text: string): Block[] {
-  return text
-    .trim()
-    .split(/\n{2,}/)
-    .map((group) => group.trim())
-    .filter(Boolean)
-    .flatMap<Block>((group) => {
-      const lines = group.split("\n").map((line) => line.trim()).filter(Boolean);
-      if (lines.length === 1 && lines[0].startsWith("## ")) {
-        return [{ kind: "heading", text: lines[0].slice(3) }];
-      }
-      if (lines.every((line) => line.startsWith("- "))) {
-        return [{ kind: "list", items: lines.map((line) => line.slice(2)) }];
-      }
-      return [{ kind: "paragraph", text: lines.join(" ") }];
-    });
+  const blocks: Block[] = [];
+  let paragraph: string[] = [];
+  let list: string[] = [];
+
+  const flushParagraph = () => {
+    if (paragraph.length) {
+      blocks.push({ kind: "paragraph", text: paragraph.join(" ") });
+      paragraph = [];
+    }
+  };
+  const flushList = () => {
+    if (list.length) {
+      blocks.push({ kind: "list", items: list });
+      list = [];
+    }
+  };
+
+  for (const raw of text.split("\n")) {
+    const line = raw.trim();
+    if (!line) {
+      flushParagraph();
+      flushList();
+      continue;
+    }
+    if (line.startsWith("## ")) {
+      flushParagraph();
+      flushList();
+      blocks.push({ kind: "heading", text: line.slice(3) });
+      continue;
+    }
+    if (line.startsWith("- ")) {
+      flushParagraph();
+      list.push(line.slice(2));
+      continue;
+    }
+    flushList();
+    paragraph.push(line);
+  }
+  flushParagraph();
+  flushList();
+  return blocks;
 }
 
 export type SummaryTextProps = {
