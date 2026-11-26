@@ -125,6 +125,19 @@ def render_markdown(evidence: Evidence) -> str:
         if risk.owners:
             lines.append(f"- Owners: {', '.join(f'`{_cell(owner)}`' for owner in risk.owners)}")
         lines.append("")
+    if evidence.advisory is not None:
+        advisory = evidence.advisory
+        fixed = f" fixed in `{_cell(advisory.fixed)}`" if advisory.fixed else ""
+        lines += [
+            "## Advisory",
+            "",
+            f"**{_cell(advisory.id)}** — {_cell(advisory.severity)} severity, "
+            f"`{_cell(advisory.package)}` {_cell(advisory.version)}{fixed}.",
+            "",
+        ]
+        lines += [f"- {_cell(link)}" for link in advisory.links[:5]]
+        if advisory.links:
+            lines.append("")
     lines += ["## Findings", ""]
     if evidence.findings:
         lines += [

@@ -72,6 +72,13 @@ def render_summary(evidence: Evidence) -> str:
         lines.append(_clean(evidence.task_title) + ".")
     else:
         lines.append("The task title was not recorded.")
+    if evidence.advisory is not None:
+        advisory = evidence.advisory
+        fixed = f"; fixed in {advisory.fixed}" if advisory.fixed else ""
+        lines.append(
+            f"Advisory {advisory.id} ({advisory.severity}) affects "
+            f"`{advisory.package}` {advisory.version}{fixed}."
+        )
     if evidence.reproduction_command:
         lines.append(
             "Reproduced with `"

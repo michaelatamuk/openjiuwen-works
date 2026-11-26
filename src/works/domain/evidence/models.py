@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 from works.adapters.git.repo import DiffStat
 from works.application.approvals.decisions import GateVerdict
+from works.domain.advisory import AdvisoryRef
 from works.domain.policy import PolicyReport, Violation
 from works.domain.records import (
     Challenge,
@@ -115,6 +116,7 @@ class Evidence(BaseModel):
     diff_stat: list[DiffStatRow] = Field(default_factory=list)
     policy: PolicyReport = Field(default_factory=lambda: PolicyReport(ok=True))
     risk: RiskRating | None = None
+    advisory: AdvisoryRef | None = None
     decision: GateVerdict | None = None
     reproduce: CommandRecord | None = None
     test: CommandRecord | None = None
@@ -143,6 +145,9 @@ class Evidence(BaseModel):
         if not self.summary:
             # Same for records written before the plain-language summary existed.
             exclude.add("summary")
+        if self.advisory is None:
+            # And for every proof written before advisories existed.
+            exclude.add("advisory")
         if not any(
             (
                 self.plan_id,

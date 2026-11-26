@@ -242,6 +242,7 @@ def build_evidence(
         diff_stat=stats,
         policy=ctx.policy,
         risk=ctx.risk,
+        advisory=ctx.task.source.advisory,
         decision=ctx.decisions[-1] if ctx.decisions else None,
         reproduce=ctx.reproduce,
         test=ctx.test,

@@ -701,13 +701,32 @@ resolution.
 
 **Estimate:** ~3 days (~4 with contingency).
 
-### M25 — CVE intake (planned, after M24)
+### M25 — CVE intake (done)
 
 **Prevents:** a known vulnerable dependency waiting for a person to notice it.
 
-An intake adapter matches OSV and GitHub Advisory entries against the target lockfile and turns each
-hit into a task; the CVE proof or vulnerable path is the reproduction, the pipeline is unchanged, and
-the evidence page carries the CVE id and severity. **Estimate:** ~9 days (~11).
+The design is `docs/design/2026-m25-cve.md`; the reference is `docs/reference/cve.md`. Offline first:
+a scan reads an OSV-style feed, `--osv` is an explicit opt-in, and reproduction stays the repository's
+own checks. No PoC is claimed.
+
+- [x] **M25.1** An OSV-style feed is parsed into advisories: a single record, a list or `{vulns: []}`;
+  the CVE alias is preferred over a GHSA id; severity comes from the advisory database block.
+- [x] **M25.2** `uv.lock`, `poetry.lock`, `requirements*.txt` and `package-lock.json` are read as
+  pins; names are normalised and duplicates collapse.
+- [x] **M25.3** Matching honours explicit versions and OSV ranges (`introduced`/`fixed`/
+  `last_affected`) with PEP 440 for PyPI and a numeric comparison for npm; severity maps to S1–S4.
+- [x] **M25.4** Each hit becomes one task per CVE × package@version with a dedupe key, the advisory on
+  the source and the fixed release in the reproduction hint.
+- [x] **M25.5** The advisory is written into the evidence before binding, rendered as its own section
+  and in the summary, shown in the UI, and excluded from old proofs so their hash is unchanged.
+- [x] **M25.6** `works cve scan --repo ... --feed ...|--osv` reports hits, created tasks and existing
+  ones; `--json` is available. Docs and tests cover the feed, lockfiles, ranges, dedupe, evidence and
+  the OSV client.
+
+**Not in scope:** PoC or exploit execution, transitive resolution beyond the lockfile, floating ranges,
+environment markers, a scheduled poller, Jira/Linear feeds, automatic upgrades or releases.
+
+**Estimate:** ~4 days (~5 with contingency).
 
 ## 4. Sequencing and gates
 
@@ -755,7 +774,7 @@ M11 12 + M12 14 = **69 engineer-days**, **~83 with 20% contingency** — 13–16
 
 **Beyond that scope:** M13–M20 (stages 3–10) were delivered as separate passes and are not re-estimated
 here. The remaining planned work is M21 **~27 days (~32)**, M22 **~11 days (~13)**, M23 **~13 days
-(~15)**, M24 **~3 days (~4)** and M25 **~9 days (~11)**, which is where the queue, the scheduler, the
+(~15)**, M24 **~3 days (~4)** and M25 **~4 days (~5)**, which is where the queue, the scheduler, the
 estimates and decision support live.
 
 ## 5. Acceptance metrics

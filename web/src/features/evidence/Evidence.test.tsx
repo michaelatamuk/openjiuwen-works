@@ -98,3 +98,37 @@ describe("Evidence summary", () => {
     expect(screen.getByText("Run metadata")).toBeInTheDocument();
   });
 });
+
+
+describe("Evidence advisory", () => {
+  it("shows the CVE, the package and the fixed release", () => {
+    const detail = {
+      ...provedDetail,
+      evidence: {
+        ...provedDetail.evidence,
+        advisory: {
+          id: "CVE-2026-0001",
+          package: "demo-pkg",
+          version: "1.2.0",
+          severity: "high",
+          fixed: "1.4.2",
+          cvss: 8.1,
+          links: ["https://example.test/advisory"],
+        },
+      },
+    };
+    render(
+      <Evidence
+        detail={detail}
+        onShowRun={vi.fn()}
+        onAction={vi.fn()}
+        onLightbox={vi.fn()}
+        onOpenEvent={vi.fn()}
+        onToast={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Advisory")).toBeInTheDocument();
+    expect(screen.getByText("CVE-2026-0001")).toBeInTheDocument();
+    expect(screen.getByText(/demo-pkg/)).toBeInTheDocument();
+  });
+});

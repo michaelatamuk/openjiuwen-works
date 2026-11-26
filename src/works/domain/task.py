@@ -7,6 +7,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
+from .advisory import AdvisoryRef
 from .base import SCHEMA_VERSION, utcnow
 from .enums import SourceKind, TaskKind, TaskState
 
@@ -32,6 +33,7 @@ class Source(BaseModel):
     reproduction_hint: str | None = None
     dedupe_key: str | None = None
     received_at: datetime | None = None
+    advisory: AdvisoryRef | None = None
 
     @field_validator("ref", "title")
     @classmethod

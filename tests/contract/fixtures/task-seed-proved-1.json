@@ -21,6 +21,7 @@
   "delivery": null,
   "deployment": null,
   "evidence": {
+    "advisory": null,
     "artifacts": [
       {
         "description": "the builder turn: model, prompt hash, notes and trace",
@@ -293,6 +294,7 @@
               "paths_deny": []
             },
             "source": {
+              "advisory": null,
               "author": null,
               "channel": null,
               "dedupe_key": null,
@@ -1375,6 +1377,7 @@
       "paths_deny": []
     },
     "source": {
+      "advisory": null,
       "author": null,
       "channel": null,
       "dedupe_key": null,
@@ -1708,6 +1711,7 @@
             "paths_deny": []
           },
           "source": {
+            "advisory": null,
             "author": null,
             "channel": null,
             "dedupe_key": null,

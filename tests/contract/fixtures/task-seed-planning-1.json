@@ -45,6 +45,7 @@
               "paths_deny": []
             },
             "source": {
+              "advisory": null,
               "author": null,
               "channel": null,
               "dedupe_key": null,
@@ -655,6 +656,7 @@
       "paths_deny": []
     },
     "source": {
+      "advisory": null,
       "author": null,
       "channel": null,
       "dedupe_key": null,
@@ -806,6 +808,7 @@
             "paths_deny": []
           },
           "source": {
+            "advisory": null,
             "author": null,
             "channel": null,
             "dedupe_key": null,

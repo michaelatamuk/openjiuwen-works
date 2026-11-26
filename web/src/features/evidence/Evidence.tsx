@@ -94,6 +94,15 @@ export type EvidencePayload = {
   harness?: string | null;
   proof_sha256?: string | null;
   policy?: { ok?: boolean; violations?: EvidenceViolation[] } | null;
+  advisory?: {
+    id?: string;
+    package?: string;
+    version?: string;
+    severity?: string;
+    fixed?: string | null;
+    cvss?: number | null;
+    links?: string[];
+  } | null;
   risk?: {
     level?: string;
     reasons?: string[];
@@ -419,6 +428,26 @@ export function Evidence({ detail, onShowRun, onAction, onLightbox, onOpenEvent 
             <ul className="bullets">{evidence.policy.violations.map((item) => <li key={item.path}>{item.path}</li>)}</ul>
           ) : <p className="muted small">No policy violations recorded.</p>}
         </Card>
+        {evidence?.advisory ? (
+          <Card
+            title="Advisory"
+            actions={
+              <Pill tone={evidence.advisory.severity === "critical" || evidence.advisory.severity === "high" ? "red" : evidence.advisory.severity === "low" ? "green" : "amber"}>
+                {evidence.advisory.severity || "unknown"}
+              </Pill>
+            }
+          >
+            <dl className="kv">
+              <dt>Id</dt><dd className="mono">{evidence.advisory.id || "?"}</dd>
+              <dt>Package</dt><dd>{evidence.advisory.package || "?"} {evidence.advisory.version || ""}</dd>
+              <dt>Fixed in</dt><dd>{evidence.advisory.fixed || "not recorded"}</dd>
+              {typeof evidence.advisory.cvss === "number" ? (<><dt>CVSS</dt><dd>{evidence.advisory.cvss}</dd></>) : null}
+            </dl>
+            {evidence.advisory.links?.length ? (
+              <p className="small"><a href={evidence.advisory.links[0]} target="_blank" rel="noopener noreferrer">advisory</a></p>
+            ) : null}
+          </Card>
+        ) : null}
         <Card title="Risk" actions={<Pill tone={detail.summary?.risk === "low" ? "green" : detail.summary?.risk === "medium" ? "amber" : "red"}>{detail.summary?.risk || "—"}</Pill>}>
           <ul className="bullets">{(evidence?.risk?.reasons || []).map((item) => <li key={item}>{item}</li>)}</ul>
           {evidence?.risk ? (
