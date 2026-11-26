@@ -643,7 +643,7 @@ Wave one of `docs/design/feature-recommendations.md`. The design is
 new pipeline stage: three features strengthen the existing release gate, and each is delivered end to
 end — backend, API, UI and CLI — before the next one starts.
 
-- [ ] **M23.1 Risk tier, end to end.** `rate_risk` is extended, not replaced: complexity delta and
+- [x] **M23.1 Risk tier, end to end.** `rate_risk` is extended, not replaced: complexity delta and
   security surface (auth, crypto, payments paths from the flow policy) join the current path, size and
   coverage signals; the tier and one-line reasons lead the evidence page and the release-gate payload,
   and a risk badge appears on the Story card and in the release banner. The tier is computed before

@@ -1,7 +1,8 @@
 # M23 — decision support at the gate (design)
 
-Status: planned. Wave one of `docs/design/feature-recommendations.md`: three low-effort features that
-make the existing release gate usable by the person who has to sign it.
+Status: in progress. 23.1 is complete; 23.2 and 23.3 follow. Wave one of
+`docs/design/feature-recommendations.md`: three low-effort features that make the existing release
+gate usable by the person who has to sign it.
 
 ## Why
 
