@@ -145,14 +145,17 @@ A provider key is needed for the live builder; trace mode runs without a model �
 
 Works runs on your machine: one daemon, one home (`~/.works`). Source, diffs and proofs stay there;
 only your model provider receives the context the builder sends. The builder runs with your OS
-permissions, so use a repository you trust. The plan and release decisions are human; one project runs
-one job at a time. Delivery creates a change request; merge, deploy and close remain your decisions.
+permissions, so use a repository you trust. The plan and release decisions are human; one machine
+runs the jobs, and the default is one per project. Delivery creates a change request; merge, deploy
+and close remain your decisions.
 
 ## Documentation
 
 - [`docs/guides/how-a-fix-flows.md`](docs/guides/how-a-fix-flows.md) — the flow in plain words.
 - [`docs/guides/runbook.md`](docs/guides/runbook.md) — what to do when something goes wrong.
 - [`docs/reference/proof.md`](docs/reference/proof.md) — what the proof contains.
+- [`docs/reference/cve.md`](docs/reference/cve.md) — scanning lockfiles for advisories.
+- [`docs/reference/reporter.md`](docs/reference/reporter.md) — what happens when a fix does not hold.
 - [`docs/guides/intake.md`](docs/guides/intake.md) — trackers, monitors and your products.
 - [`docs/guides/remote.md`](docs/guides/remote.md) — another device without exposing the port.
 - [`docs/video/openjiuwen-works-two-mondays.mp4`](docs/video/openjiuwen-works-two-mondays.mp4) — the
