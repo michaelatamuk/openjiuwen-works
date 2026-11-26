@@ -16,6 +16,7 @@ from works.interfaces.cli.parser.maintenance import add_maintenance_commands
 from works.interfaces.cli.parser.memory import add_memory_commands
 from works.interfaces.cli.parser.plan import add_plan_commands
 from works.interfaces.cli.parser.proof import add_proof_commands
+from works.interfaces.cli.parser.report import add_report_commands
 from works.interfaces.cli.parser.reproduce import add_reproduce_commands
 from works.interfaces.cli.parser.run import add_run_commands
 from works.interfaces.cli.parser.scheduler import add_scheduler_commands
@@ -39,6 +40,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_intake_commands(sub)
     add_proof_commands(sub)
     add_cve_commands(sub)
+    add_report_commands(sub)
     add_reproduce_commands(sub)
     add_sources_commands(sub)
     add_inspect_commands(sub)

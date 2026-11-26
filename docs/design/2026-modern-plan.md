@@ -728,6 +728,26 @@ environment markers, a scheduled poller, Jira/Linear feeds, automatic upgrades o
 
 **Estimate:** ~4 days (~5 with contingency).
 
+### M26 ? Measurement report (done)
+
+**Prevents:** arguing about value from anecdotes, and adding features nobody uses.
+
+After the M23?M25 wave the next step is a number, not another feature. `works report` reads the
+existing events, runs and evidence and prints time to release, cost per released change, gate
+decisions, reopens, CVE work, escapes and stop reasons. It is read-only, local and model-free.
+
+- [x] **M26.1** `works report [--days N] [--json]` summarises tasks by state, released changes, runs,
+  latest-run cost, cost per released change and median/p90 time to first release.
+- [x] **M26.2** Gates are counted per decision; reopens, CVE sources, escapes, rework and stop reasons
+  come from the same events the UI reads.
+- [x] **M26.3** The window filters on task creation; an empty home prints zeros and "not enough data"
+  rather than a fabricated average.
+- [x] **M26.4** Docs and tests cover the arithmetic, the window, the empty case and the CLI.
+
+**Not in scope:** per-person metrics, forecasts, dashboards, telemetry, uploads.
+
+**Estimate:** ~1 day (~1.5 with contingency).
+
 ## 4. Sequencing and gates
 
 ### Phase 0 — Land the safety floor (week 1)
@@ -774,7 +794,7 @@ M11 12 + M12 14 = **69 engineer-days**, **~83 with 20% contingency** — 13–16
 
 **Beyond that scope:** M13–M20 (stages 3–10) were delivered as separate passes and are not re-estimated
 here. The remaining planned work is M21 **~27 days (~32)**, M22 **~11 days (~13)**, M23 **~13 days
-(~15)**, M24 **~3 days (~4)** and M25 **~4 days (~5)**, which is where the queue, the scheduler, the
+(~15)**, M24 **~3 days (~4)** and M25 **~4 days (~5)** and M26 **~1 day (~1.5)**, which is where the queue, the scheduler, the
 estimates and decision support live.
 
 ## 5. Acceptance metrics

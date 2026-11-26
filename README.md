@@ -156,6 +156,7 @@ and close remain your decisions.
 - [`docs/reference/proof.md`](docs/reference/proof.md) — what the proof contains.
 - [`docs/reference/cve.md`](docs/reference/cve.md) — scanning lockfiles for advisories.
 - [`docs/reference/reporter.md`](docs/reference/reporter.md) — what happens when a fix does not hold.
+- [`docs/reference/report.md`](docs/reference/report.md) — time, cost and gate decisions.
 - [`docs/guides/intake.md`](docs/guides/intake.md) — trackers, monitors and your products.
 - [`docs/guides/remote.md`](docs/guides/remote.md) — another device without exposing the port.
 - [`docs/video/openjiuwen-works-two-mondays.mp4`](docs/video/openjiuwen-works-two-mondays.mp4) — the
