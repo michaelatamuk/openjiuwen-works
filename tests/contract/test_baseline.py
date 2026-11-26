@@ -39,6 +39,7 @@ DETAIL_SECTIONS = {
     "deployment",
     "confirmation",
     "team",
+    "reporter",
     "laix",
     "verifier",
     "artifacts",

@@ -1266,6 +1266,10 @@
     "usd": 0.012,
     "verdict_allow": true
   },
+  "reporter": {
+    "last": null,
+    "replies": 0
+  },
   "run": {
     "attempts": 1,
     "base_commit": "<commit>",

@@ -141,6 +141,27 @@ def _merge_task(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_retry(args: argparse.Namespace) -> int:
+    from dataclasses import asdict
+
+    from works.application.reporter import record_reply
+
+    reply = record_reply(
+        _paths(args),
+        task_id=args.task_id,
+        text=args.note,
+        author="cli",
+        source="cli",
+    )
+    if args.json:
+        _emit(asdict(reply))
+    elif reply.reopened:
+        print(f"reopened {reply.task_id}; the queue can pick it up again")
+    else:
+        print(f"not reopened: {reply.reason}")
+    return 0 if reply.task_id else 1
+
+
 def cmd_task(args: argparse.Namespace) -> int:
     if getattr(args, "merge_into", None):
         return _merge_task(args)

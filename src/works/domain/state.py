@@ -20,7 +20,7 @@ ALLOWED: dict[TaskState, frozenset[TaskState]] = {
     S.RELEASING: frozenset({S.RELEASED, S.WAITING_CI, S.BLOCKED}),
     S.WAITING_CI: frozenset({S.WAITING_DEPLOY, S.RELEASED, S.BLOCKED}),
     S.WAITING_DEPLOY: frozenset({S.RELEASED, S.WAITING_REVIEW, S.BLOCKED}),
-    S.RELEASED: frozenset({S.REVERTED}),
+    S.RELEASED: frozenset({S.REVERTED, S.QUEUED}),
     S.BLOCKED: frozenset(),
     S.REVERTED: frozenset(),
 }

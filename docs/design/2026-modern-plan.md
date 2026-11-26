@@ -657,7 +657,7 @@ end — backend, API, UI and CLI — before the next one starts.
   gives CLI parity. Old evidence renders the summary on demand and is marked `derived`, never bound.
   Tests cover the required sections, the absence of invented numbers, identical hash binding and the
   old-record path.
-- [ ] **M23.3 Reporter feedback loop, end to end.** A `reporter_replied` event on the existing intake
+- [x] **M23.3 Reporter feedback loop, end to end.** A `reporter_replied` event on the existing intake
   matches the comment to the task through the delivery link and re-queues it with the previous plan,
   the evidence link and the reporter's text as context. Events are idempotent by id, only allowlisted
   sources are accepted, bots and the system's own comments are ignored, the scheduler still decides

@@ -165,6 +165,7 @@ def _task_detail(
         "latest": team_events[-1] if team_events else None,
         "history": team_events[-10:],
     }
+    replies = [event.data for event in events if event.type == "reporter.replied"]
     return {
         "task": task.model_dump(mode="json"),
         "summary": _task_summary(task, events),
@@ -184,6 +185,7 @@ def _task_detail(
         "deployment": deployment,
         "confirmation": confirmation,
         "team": team_payload,
+        "reporter": {"replies": len(replies), "last": replies[-1] if replies else None},
         "laix": laix,
         "verifier": verifier,
         "artifacts": _artifact_list(run_dir, task_id, evidence, prefix=api_prefix),

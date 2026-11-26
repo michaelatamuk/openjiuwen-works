@@ -67,3 +67,8 @@ def test_a_refusal_names_the_allowed_targets() -> None:
     message = str(exc.value)
     assert "queued -> proved" in message
     assert "reproducing" in message
+
+
+def test_a_released_task_can_be_reopened_by_a_reporter() -> None:
+    assert can_transition(S.RELEASED, S.QUEUED)
+    require_transition(S.RELEASED, S.QUEUED)

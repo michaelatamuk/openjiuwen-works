@@ -907,6 +907,10 @@ export interface components {
             release: {
                 [key: string]: unknown;
             };
+            /** Reporter */
+            reporter?: {
+                [key: string]: unknown;
+            };
             /** Run */
             run?: {
                 [key: string]: unknown;

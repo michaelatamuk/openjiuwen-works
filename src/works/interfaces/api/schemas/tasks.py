@@ -70,6 +70,7 @@ class TaskDetail(BaseModel):
     confirmation: dict[str, Any] | None = None
     confirmations: list[dict[str, object]] = Field(default_factory=list)
     team: dict[str, Any]
+    reporter: dict[str, object] = Field(default_factory=dict)
     laix: list[dict[str, Any]]
     verifier: dict[str, Any]
     artifacts: list[dict[str, Any]]

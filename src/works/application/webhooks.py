@@ -22,6 +22,7 @@ from pydantic import BaseModel, Field
 
 from works.adapters.queue.atomic import atomic_write
 from works.adapters.queue.store import Queue
+from works.application import reporter
 from works.application.intake.products import resolve_repo
 from works.config.paths import WorksPaths
 from works.domain.errors import ConfigError
@@ -208,6 +209,33 @@ def _generic_source(payload: dict[str, Any]) -> Source:
     )
 
 
+def _comment(payload: dict[str, object]) -> tuple[str, str, str, str, str, bool]:
+    """(ref, url, text, author, author_kind, closed) for an issue or PR comment."""
+    issue = payload.get("issue")
+    comment = payload.get("comment")
+    repository = payload.get("repository")
+    if (
+        not isinstance(issue, dict)
+        or not isinstance(comment, dict)
+        or not isinstance(repository, dict)
+    ):
+        raise ConfigError("the github hook expects an issue_comment with an issue and a comment")
+    full_name = str(repository.get("full_name") or "")
+    number = issue.get("number")
+    if not full_name or number is None:
+        raise ConfigError("the github comment has no repository or issue number")
+    user = comment.get("user")
+    user = user if isinstance(user, dict) else {}
+    return (
+        f"{full_name}#{number}",
+        str(issue.get("html_url") or ""),
+        str(comment.get("body") or ""),
+        str(user.get("login") or "someone"),
+        str(user.get("type") or "User"),
+        str(issue.get("state") or "") == "closed",
+    )
+
+
 def handle(
     paths: WorksPaths,
     name: str,
@@ -250,6 +278,48 @@ def handle(
     if not isinstance(payload, dict):
         _count(paths, name, "rejected")
         return 400, {"ok": False, "error": "body must be an object"}
+    if name == "github" and _header(headers, "x-github-event") == "issue_comment":
+        if payload.get("action") not in (None, "created"):
+            _count(paths, name, "duplicates")
+            return 200, {"ok": True, "reopened": False, "reason": "not-a-new-comment"}
+        try:
+            ref, url, text, author, author_kind, closed = _comment(payload)
+        except ConfigError as exc:
+            _count(paths, name, "rejected")
+            _audit(paths, {"source": name, "delivery": delivery, "outcome": f"comment: {exc}"})
+            return 422, {"ok": False, "error": str(exc)}
+        reply = reporter.record_reply(
+            paths,
+            text=text,
+            author=author,
+            author_kind=author_kind,
+            source=name,
+            event_id=delivery or None,
+            ref=ref,
+            url=url or None,
+            closed=closed,
+            queue=queue,
+        )
+        if delivery:
+            remember_delivery(paths, delivery)
+        _count(paths, name, "accepted" if reply.reopened else "duplicates")
+        _audit(
+            paths,
+            {
+                "source": name,
+                "delivery": delivery,
+                "outcome": f"reporter-reply: {reply.reason}",
+                "task": reply.task_id,
+            },
+        )
+        status = 202 if reply.reopened else 200
+        return status, {
+            "ok": True,
+            "reopened": reply.reopened,
+            "reason": reply.reason,
+            "task": reply.task_id,
+            "delivery": delivery,
+        }
     try:
         source = _github_source(payload) if name == "github" else _generic_source(payload)
         product = str(payload.get("product") or config.product).strip()

@@ -611,6 +611,10 @@
     "usd": 0.0,
     "verdict_allow": null
   },
+  "reporter": {
+    "last": null,
+    "replies": 0
+  },
   "run": null,
   "runs": [],
   "summary": {

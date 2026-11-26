@@ -88,3 +88,34 @@ describe("Story", () => {
 
     expect(onAction).toHaveBeenCalledWith("run");
   });
+
+
+describe("Story reporter loop", () => {
+  it("shows the reopened task and opens the previous proof", () => {
+    const onView = vi.fn();
+    render(
+      <Story
+        detail={{
+          ...provedDetail,
+          reporter: {
+            replies: 1,
+            last: {
+              text: "still broken on Windows",
+              author: "michael",
+              previous_run: "r-previous",
+              reopened: true,
+            },
+          },
+        }}
+        onAction={vi.fn()}
+        onView={onView}
+        onToast={vi.fn()}
+        onShowRun={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Reported again")).toBeInTheDocument();
+    expect(screen.getByText(/still broken on Windows/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Open proof" }));
+    expect(onView).toHaveBeenCalledWith("evidence");
+  });
+});

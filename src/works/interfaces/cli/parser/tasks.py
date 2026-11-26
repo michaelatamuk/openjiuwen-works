@@ -8,6 +8,7 @@ from pathlib import Path
 from works.interfaces.cli.commands.tasks import (
     cmd_finding_add,
     cmd_finding_list,
+    cmd_retry,
     cmd_status,
     cmd_submit,
     cmd_task,
@@ -51,6 +52,12 @@ def add_tasks_commands(sub: argparse._SubParsersAction[argparse.ArgumentParser])
     task.add_argument("task_id")
     task.add_argument("--json", action="store_true")
     task.set_defaults(func=cmd_task)
+
+    retry = sub.add_parser("retry", help="Reopen a released task with a reporter note")
+    retry.add_argument("task_id")
+    retry.add_argument("--note", required=True, help="What the reporter says still fails")
+    retry.add_argument("--json", action="store_true")
+    retry.set_defaults(func=cmd_retry)
 
     trace = sub.add_parser("trace", help="Render the event timeline")
     trace.add_argument("task_id")

@@ -1,6 +1,6 @@
 # M23 — decision support at the gate (design)
 
-Status: in progress. 23.1 and 23.2 are complete; 23.3 follows. Wave one of
+Status: in progress. 23.1?23.3 are complete; 23.4 is the acceptance pass. Wave one of
 `docs/design/feature-recommendations.md`: three low-effort features that make the existing release
 gate usable by the person who has to sign it.
 

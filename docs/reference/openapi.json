@@ -684,6 +684,11 @@
             "title": "Release",
             "type": "object"
           },
+          "reporter": {
+            "additionalProperties": true,
+            "title": "Reporter",
+            "type": "object"
+          },
           "run": {
             "anyOf": [
               {

@@ -54,6 +54,16 @@ export type StoryDetail = {
   };
   timeline?: { type: string }[];
   summary?: { risk?: string | null };
+  reporter?: {
+    replies?: number;
+    last?: {
+      text?: string;
+      author?: string;
+      previous_run?: string | null;
+      closed?: boolean;
+      reopened?: boolean;
+    } | null;
+  } | null;
   run?: { run_id: string; duration_ms: number };
   evidence?: StoryEvidence | null;
   plan?: PlanRecord | null;
@@ -163,6 +173,26 @@ export function Story({ detail, onAction, onView, onToast, onShowRun }: StoryPro
             height="140"
           />
         </section>
+
+        {detail.reporter?.last ? (
+          <div className="reporter-banner">
+            <div>
+              <strong>{detail.reporter.last.reopened ? "Reported again" : "Reporter replied"}</strong>
+              <span> {detail.reporter.last.author || "a reporter"}: ?{detail.reporter.last.text}?</span>
+              {detail.reporter.last.closed ? (
+                <span className="muted small"> The report is closed; nothing was reopened.</span>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={() => onView("evidence")}
+              title={detail.reporter.last.previous_run ? `Previous run ${detail.reporter.last.previous_run}` : undefined}
+            >
+              Open proof
+            </button>
+          </div>
+        ) : null}
 
         <Route
           stages={stages}

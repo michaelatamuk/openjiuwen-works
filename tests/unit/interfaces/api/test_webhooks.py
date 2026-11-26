@@ -6,6 +6,7 @@ import pytest
 
 from works.adapters.queue.store import Queue
 from works.application import webhooks
+from works.domain.records import Source, SourceKind, TaskState
 
 
 @pytest.fixture(autouse=True)
@@ -138,3 +139,111 @@ def test_a_generic_signal_is_accepted(paths, repo, monkeypatch) -> None:
     task = Queue(paths).load(payload["task"])
     assert task.source.reproduction_hint == "curl -s localhost/health"
     assert task.source.kind.value == "manual"
+
+
+def _released(paths, repo) -> str:
+    queue = Queue(paths)
+    task, _ = queue.submit(
+        source=Source(
+            kind=SourceKind.TRACKER,
+            ref="o/r#7",
+            title="add subtracts",
+            links=["https://github.com/o/r/issues/7"],
+        ),
+        flow="fix-issue",
+        product="openjiuwen",
+        repo=str(repo.path),
+    )
+    for state in (
+        TaskState.REPRODUCING,
+        TaskState.REPRODUCED,
+        TaskState.PLANNING,
+        TaskState.PLAN_APPROVED,
+        TaskState.BUILDING,
+        TaskState.CHECKING,
+        TaskState.PROVED,
+        TaskState.RELEASING,
+        TaskState.RELEASED,
+    ):
+        queue.transition(task.id, state)
+    return task.id
+
+
+def _comment_body(*, closed: bool = False, author: str = "michael", kind: str = "User") -> bytes:
+    return json.dumps(
+        {
+            "action": "created",
+            "repository": {"full_name": "o/r"},
+            "issue": {
+                "number": 7,
+                "html_url": "https://github.com/o/r/issues/7",
+                "state": "closed" if closed else "open",
+            },
+            "comment": {
+                "id": 11,
+                "body": "still broken on Windows",
+                "user": {"login": author, "type": kind},
+            },
+        }
+    ).encode()
+
+
+def _comment_headers(body: bytes, secret: str, delivery: str = "c-1") -> dict[str, str]:
+    return {
+        "x-hub-signature-256": webhooks.signature(body, secret),
+        "x-github-delivery": delivery,
+        "x-github-event": "issue_comment",
+    }
+
+
+def test_a_comment_reopens_the_released_task(paths, repo, monkeypatch) -> None:
+    monkeypatch.setenv("WORKS_WEBHOOK_SECRET_GITHUB", "s3cret")
+    task_id = _released(paths, repo)
+    body = _comment_body()
+
+    status, payload = webhooks.handle(paths, "github", _comment_headers(body, "s3cret"), body)
+
+    assert status == 202
+    assert payload["reopened"] is True
+    assert Queue(paths).load(task_id).state is TaskState.QUEUED
+
+
+def test_the_same_comment_delivery_is_not_applied_twice(paths, repo, monkeypatch) -> None:
+    monkeypatch.setenv("WORKS_WEBHOOK_SECRET_GITHUB", "s3cret")
+    _released(paths, repo)
+    body = _comment_body()
+    headers = _comment_headers(body, "s3cret")
+
+    webhooks.handle(paths, "github", headers, body)
+    status, payload = webhooks.handle(paths, "github", headers, body)
+
+    assert status == 200
+    assert payload["duplicate"] is True
+
+
+def test_a_closed_issue_keeps_the_task_released(paths, repo, monkeypatch) -> None:
+    monkeypatch.setenv("WORKS_WEBHOOK_SECRET_GITHUB", "s3cret")
+    task_id = _released(paths, repo)
+    body = _comment_body(closed=True)
+
+    status, payload = webhooks.handle(
+        paths, "github", _comment_headers(body, "s3cret", "c-2"), body
+    )
+
+    assert status == 200
+    assert payload["reason"] == "closed"
+    assert Queue(paths).load(task_id).state is TaskState.RELEASED
+
+
+def test_a_bot_comment_is_ignored(paths, repo, monkeypatch) -> None:
+    monkeypatch.setenv("WORKS_WEBHOOK_SECRET_GITHUB", "s3cret")
+    task_id = _released(paths, repo)
+    body = _comment_body(author="dependabot[bot]", kind="Bot")
+
+    status, payload = webhooks.handle(
+        paths, "github", _comment_headers(body, "s3cret", "c-3"), body
+    )
+
+    assert status == 200
+    assert payload["reason"] == "bot"
+    assert Queue(paths).load(task_id).state is TaskState.RELEASED

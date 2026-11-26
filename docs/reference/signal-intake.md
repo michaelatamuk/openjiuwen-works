@@ -35,7 +35,8 @@ X-GitHub-Delivery: <uuid>          (replay protection)
 - A delivery id seen before returns `200 {"duplicate": true}`.
 - Over `limit_per_minute` returns `429`.
 - A disabled source returns `403`, an unknown one `404`, an unset secret `503`.
-- A `github` payload must be an issues event; a `generic` payload is `{ref, title, …}`.
+- A `github` payload is an issues event, or an `issue_comment` on a released task
+  (see `reporter.md`); a `generic` payload is `{ref, title, …}`.
 - Every attempt is appended to `state/webhooks.jsonl`; counters live in
   `state/webhook-metrics.json`.
 

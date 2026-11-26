@@ -29,6 +29,7 @@ from works.interfaces.api.presenters.thread.messages.notes import (
     _discussion,
     _memory,
     _note,
+    _reporter_replied,
     _thread_note,
     _wait,
 )
@@ -71,6 +72,7 @@ _HANDLERS: dict[str, Handler] = {
     "thread.commentary": _commentary,
     "thread.discussion": _discussion,
     "thread.note": _thread_note,
+    "reporter.replied": _reporter_replied,
     "note": _note,
     "wait.started": _wait,
     "wait.woken": _wait,

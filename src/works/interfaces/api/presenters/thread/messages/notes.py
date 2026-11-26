@@ -109,6 +109,23 @@ def _note(event: Event, task: Task) -> Fields:
     return {"role": "system", "title": "Note", "body": raw_body}
 
 
+def _reporter_replied(event: Event, task: Task) -> Fields:
+    data = event.data
+    reopened = bool(data.get("reopened"))
+    facts = [f"by {data.get('author') or 'a reporter'}"]
+    if data.get("previous_run"):
+        facts.append(f"previous run {data['previous_run']}")
+    if data.get("closed"):
+        facts.append("the report is closed; nothing was reopened")
+    return {
+        "role": "person",
+        "title": "Reported again" if reopened else "Reporter replied",
+        "body": str(data.get("text") or ""),
+        "facts": facts,
+        "tone": "warn" if reopened else "",
+    }
+
+
 def _wait(event: Event, task: Task) -> Fields:
     data = event.data
     return {

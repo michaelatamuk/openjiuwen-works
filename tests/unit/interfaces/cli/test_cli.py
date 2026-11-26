@@ -11,7 +11,7 @@ from works.adapters.git.repo import GitRepo
 from works.adapters.queue.store import Queue
 from works.domain.evidence import write_evidence
 from works.domain.evidence.summary import summary_digest
-from works.domain.records import TaskState
+from works.domain.records import Source, SourceKind, TaskState
 from works.domain.risk import RiskLevel, RiskRating
 from works.interfaces.cli.main import main
 
@@ -459,3 +459,31 @@ def test_proof_summary_marks_an_old_record_derived(paths) -> None:
     assert body["derived"] is True
     assert "## What was wrong" in body["text"]
     assert body["sha256"] == summary_digest(body["text"])
+
+
+def test_retry_reopens_a_released_task(paths, repo) -> None:
+    queue = Queue(paths)
+    task, _ = queue.submit(
+        source=Source(kind=SourceKind.TRACKER, ref="GH-9", title="still failing"),
+        flow="fix-issue",
+        product="openjiuwen",
+        repo=str(repo.path),
+    )
+    for state in (
+        TaskState.REPRODUCING,
+        TaskState.REPRODUCED,
+        TaskState.PLANNING,
+        TaskState.PLAN_APPROVED,
+        TaskState.BUILDING,
+        TaskState.CHECKING,
+        TaskState.PROVED,
+        TaskState.RELEASING,
+        TaskState.RELEASED,
+    ):
+        queue.transition(task.id, state)
+
+    result = invoke(paths, "retry", task.id, "--note", "still broken", "--json")
+
+    assert result.exit_code == 0, result.stderr
+    assert payload(result)["reopened"] is True
+    assert Queue(paths).load(task.id).state is TaskState.QUEUED

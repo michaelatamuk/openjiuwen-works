@@ -142,6 +142,7 @@ def _apply(task: Task | None, event: Event) -> Task:
         "thread.commentary",
         "thread.discussion",
         "task.merged",
+        "reporter.replied",
         "build.started",
         "build.finished",
         "build.retry",

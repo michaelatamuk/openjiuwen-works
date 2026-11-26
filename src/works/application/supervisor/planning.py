@@ -17,6 +17,7 @@ from works.application.planning.service import (
     draft_plan,
     plan_brief,
 )
+from works.application.reporter import reply_texts
 from works.application.run_context import RunContext
 from works.domain.errors import (
     ConfigError,
@@ -179,11 +180,13 @@ def _planner_context(
     ctx.scenario_set = scenarios
     ctx.scenario_dir = directory
     repository = collect_repository_context(repo.path)
+    events = sup._queue.events(ctx.task.id)
     findings = tuple(
         str(event.data.get("summary", ""))
-        for event in sup._queue.events(ctx.task.id)
+        for event in events
         if event.type == "finding" and str(event.data.get("summary", "")).strip()
     )[-5:]
+    replies = reply_texts(events)
     return PlannerContext(
         task_id=ctx.task.id,
         product=ctx.task.product,
@@ -195,6 +198,7 @@ def _planner_context(
             for item in (
                 ctx.task.source.title,
                 ctx.task.source.reproduction_hint or "",
+                *replies,
             )
             if item
         ),
