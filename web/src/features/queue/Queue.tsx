@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { ChangeEvent } from "react";
 
 import { groups, riskLabel, riskTone, stateLabel, timeAgo } from "../../lib/format.js";
-import type { Inbox, InboxGroup } from "../../api/client";
+import type { Inbox } from "../../api/client";
 import { Pill } from "../../ui/primitives";
 
 export type QueueTask = {

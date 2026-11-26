@@ -413,3 +413,17 @@ def test_dispatch_watch_needs_an_enabled_policy(paths) -> None:
 
     assert result.exit_code != 0
     assert "scheduler is disabled" in (result.stdout + result.stderr)
+
+
+def test_scheduler_commands_are_wired(paths) -> None:
+    for args in (
+        ("scheduler", "status"),
+        ("scheduler", "enable"),
+        ("scheduler", "status", "--json"),
+        ("scheduler", "tick", "--no-run"),
+        ("scheduler", "pause", "--reason", "test"),
+        ("scheduler", "resume"),
+        ("scheduler", "disable"),
+    ):
+        result = invoke(paths, *args)
+        assert result.exit_code == 0, result.stdout + result.stderr

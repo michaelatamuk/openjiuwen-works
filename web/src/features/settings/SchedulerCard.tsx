@@ -22,7 +22,21 @@ export function SchedulerCard({ writable }: { writable: boolean }) {
   }
 
   useEffect(() => {
-    void load();
+    let alive = true;
+    api
+      .scheduler()
+      .then((value) => {
+        if (alive) {
+          setStatus(value);
+          setError("");
+        }
+      })
+      .catch((reason) => {
+        if (alive) setError(errorMessage(reason));
+      });
+    return () => {
+      alive = false;
+    };
   }, []);
 
   async function toggle() {

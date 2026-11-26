@@ -469,3 +469,25 @@ allow:
     result = Scheduler(paths, now=lambda: NOW).tick()
 
     assert result.claimed == [task.id]
+
+
+def test_status_reports_estimates_events_and_errors(paths) -> None:
+    _write_policy(paths)
+    task_id = _task(paths)
+    scheduler = Scheduler(paths, now=lambda: NOW)
+    scheduler.pause("deploy")
+    scheduler.resume()
+    scheduler.log_error("boom")
+    scheduler.tick()
+
+    payload = scheduler.status()
+
+    assert payload["enabled"] is True
+    estimates = payload["estimates"]
+    assert isinstance(estimates, list)
+    assert any(item["task_id"] == task_id for item in estimates)
+    recent = payload["recent"]
+    assert isinstance(recent, list)
+    kinds = {str(item["kind"]) for item in recent}
+    assert "scheduler.error" in kinds
+    assert "scheduler.paused" in kinds

@@ -121,3 +121,24 @@ def test_blackout_is_checked_against_the_policy(paths) -> None:
     policy = DispatchPolicy.model_validate({"windows": {"blackout": ["00:00-23:59"]}})
 
     assert in_blackout(policy, datetime(2026, 11, 25, 10, 0, tzinfo=UTC)) is True
+
+
+def test_a_non_mapping_policy_is_refused(paths) -> None:
+    _write(paths, "- 1\n- 2\n")
+
+    with pytest.raises(ConfigError, match="must be a mapping"):
+        load_policy(paths)
+
+
+def test_a_malformed_window_is_refused() -> None:
+    with pytest.raises(ValueError, match="HH:MM-HH:MM"):
+        parse_window("10:00")
+
+
+def test_enable_inserts_the_key_when_missing(paths) -> None:
+    path = _write(paths, "tick_seconds: 7\n")
+
+    set_enabled(paths, True)
+
+    assert load_policy(paths).enabled is True
+    assert "tick_seconds: 7" in path.read_text(encoding="utf-8")

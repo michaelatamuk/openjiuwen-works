@@ -7,6 +7,8 @@ from works.application.scheduling.estimates import (
     group_estimates,
     plan_map,
     quantile,
+    read_samples,
+    titled_samples,
 )
 
 
@@ -68,3 +70,51 @@ def test_plan_estimates_fill_a_thin_history() -> None:
 
     assert plan["fix-issue|medium"].source == "plan"
     assert plan["fix-issue|medium"].p50_min == 12
+
+
+def test_evidence_files_become_samples(paths) -> None:
+    run_dir = paths.runs / "r-1"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "run_id": "r-1",
+        "task_id": "t-x",
+        "flow": "fix-issue",
+        "product": "P",
+        "source": "manual:R",
+        "state": "proved",
+        "stop_reason": "completed",
+        "duration_ms": 600_000,
+        "usd": 1.5,
+        "plan_estimated_minutes": 12,
+        "plan_estimated_usd": 0.8,
+    }
+    (run_dir / "evidence.json").write_text(__import__("json").dumps(payload), encoding="utf-8")
+
+    samples = read_samples(paths)
+    assert samples[0].minutes == 10
+    assert samples[0].plan_minutes == 12
+    assert titled_samples(paths)[0].task_id == "t-x"
+
+
+def test_invalid_evidence_is_skipped(paths) -> None:
+    run_dir = paths.runs / "r-bad"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    (run_dir / "evidence.json").write_text("{not json", encoding="utf-8")
+
+    assert read_samples(paths) == []
+
+
+def test_similarity_and_knn_need_content() -> None:
+    from works.application.scheduling.estimates import knn_estimate, similarity
+
+    assert similarity("", "anything") == 0.0
+    assert knn_estimate([], title="x", flow="fix-issue", risk="medium") is None
+    assert (
+        knn_estimate(
+            [sample(10, flow="check-change", risk="low")],
+            title="nothing alike",
+            flow="fix-issue",
+            risk="medium",
+        )
+        is None
+    )

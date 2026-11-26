@@ -5,6 +5,8 @@ const mocks = vi.hoisted(() => ({
   devices: vi.fn(),
   pairStart: vi.fn(),
   revokeDevice: vi.fn(),
+  scheduler: vi.fn(),
+  waitForJob: vi.fn(),
 }));
 
 vi.mock("../../api/client", () => ({
@@ -12,7 +14,9 @@ vi.mock("../../api/client", () => ({
     devices: mocks.devices,
     pairStart: mocks.pairStart,
     revokeDevice: mocks.revokeDevice,
+    scheduler: mocks.scheduler,
   },
+  waitForJob: mocks.waitForJob,
 }));
 
 import { SettingsDialog } from "./SettingsDialog";
@@ -26,6 +30,17 @@ describe("SettingsDialog", () => {
     mocks.pairStart.mockReset();
     mocks.revokeDevice.mockReset();
     mocks.devices.mockResolvedValue({ devices: [] });
+    mocks.scheduler.mockResolvedValue({
+      enabled: false,
+      paused: false,
+      tick_seconds: 10,
+      levels: { default: "L1", by_source: {} },
+      limits: { global: 2, per_repo: 1, per_run_usd: 5, remaining_usd: null },
+      active: [],
+      eligible: [],
+      waiting: {},
+      counters: {},
+    });
     mocks.pairStart.mockResolvedValue({
       ok: true,
       code: "PAIR-123",

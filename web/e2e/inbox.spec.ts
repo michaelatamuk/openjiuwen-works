@@ -39,7 +39,7 @@ test("duplicate signals can be merged from the queue", async ({ page, request })
   await expect(inbox).toBeVisible();
   await expect(inbox).toContainText("the same duplicate inbox case");
 
-  await inbox.getByRole("button", { name: "Merge" }).first().click();
+  await inbox.getByRole("button", { name: /^Merge 1 into / }).first().click();
 
-  await expect(page.getByText("Merged the duplicate into the older task.")).toBeVisible();
+  await expect(page.getByText(/Merged 1 duplicate/)).toBeVisible();
 });

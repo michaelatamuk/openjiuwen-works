@@ -106,3 +106,19 @@ def test_a_second_process_is_refused(paths) -> None:
     finally:
         holder.terminate()
         holder.wait(timeout=10)
+
+
+def test_a_corrupt_lease_reads_as_missing(paths) -> None:
+    task_id = _task(paths)
+    lease.lease_path(paths, task_id).write_text("{broken", encoding="utf-8")
+
+    assert lease.read_lease(paths, task_id) is None
+
+
+def test_release_ignores_another_owner(paths) -> None:
+    task_id = _task(paths)
+    lease.claim(paths, task_id, owner="scheduler:a", ttl_seconds=60, now=NOW)
+
+    lease.release(paths, task_id, owner="scheduler:b")
+
+    assert lease.read_lease(paths, task_id) is not None

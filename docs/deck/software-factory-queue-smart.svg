@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" font-family="Inter, Segoe UI, Arial, Helvetica, sans-serif">
+  <defs>
+    <filter id="softS" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="8" flood-color="#111827" flood-opacity="0.07"/>
+    </filter>
+    <marker id="arrowS" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6D28D9"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1600" height="900" fill="#F4F5F9"/>
+
+  <!-- Header -->
+  <text x="90" y="66" font-size="12" font-weight="700" fill="#6D28D9" letter-spacing="2.2">OPENJIUWEN WORKS · THE QUEUE, STEP BY STEP</text>
+  <text x="90" y="116" font-size="42" font-weight="700" fill="#111827">It looks at the past before it picks</text>
+  <text x="90" y="152" font-size="17" fill="#4B5563">For every job it compares similar past jobs, checks today's time and money, and says why it chose. Careful, not magic.</text>
+
+  <!-- 1. Remembers -->
+  <rect x="90" y="185" width="700" height="250" rx="16" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1.5" filter="url(#softS)"/>
+  <text x="114" y="215" font-size="10" font-weight="700" fill="#6D28D9" letter-spacing="1.6">1 · PAST JOBS</text>
+  <text x="114" y="247" font-size="18" font-weight="700" fill="#111827">It remembers how long similar jobs took</text>
+
+  <rect x="114" y="270" width="168" height="38" rx="9" fill="#F9FAFB" stroke="#E5E7EB"/>
+  <text x="126" y="294" font-size="11" fill="#4B5563">export bug · 32 min</text>
+  <rect x="114" y="316" width="168" height="38" rx="9" fill="#F9FAFB" stroke="#E5E7EB"/>
+  <text x="126" y="340" font-size="11" fill="#4B5563">slow login · 26 min</text>
+  <rect x="114" y="362" width="168" height="38" rx="9" fill="#F9FAFB" stroke="#E5E7EB"/>
+  <text x="126" y="386" font-size="11" fill="#4B5563">typo page · 18 min</text>
+
+  <rect x="306" y="300" width="120" height="70" rx="12" fill="#FBFAFF" stroke="#6D28D9" stroke-width="1.5"/>
+  <text x="366" y="330" font-size="11.5" font-weight="700" fill="#6D28D9" text-anchor="middle">this job</text>
+  <text x="366" y="350" font-size="11.5" fill="#6B7280" text-anchor="middle">how long?</text>
+
+  <line x1="286" y1="335" x2="302" y2="335" stroke="#6D28D9" stroke-width="2" marker-end="url(#arrowS)"/>
+  <line x1="430" y1="335" x2="452" y2="335" stroke="#6D28D9" stroke-width="2" marker-end="url(#arrowS)"/>
+
+  <!-- tiny distribution -->
+  <text x="470" y="286" font-size="10" font-weight="700" fill="#9CA3AF" letter-spacing="1.2">HOW LONG THESE JOBS TOOK</text>
+  <line x1="470" y1="380" x2="760" y2="380" stroke="#D1D5DB" stroke-width="1.5"/>
+  <rect x="560" y="310" width="56" height="70" rx="6" fill="#EDE9FE"/>
+  <text x="588" y="300" font-size="10" font-weight="700" fill="#6D28D9" text-anchor="middle">usually</text>
+  <text x="588" y="404" font-size="10.5" fill="#6B7280" text-anchor="middle">25–40 min</text>
+  <circle cx="724" cy="345" r="5" fill="#B45309"/>
+  <text x="724" y="330" font-size="10" font-weight="700" fill="#B45309" text-anchor="middle">worst case</text>
+  <text x="724" y="404" font-size="10.5" fill="#6B7280" text-anchor="middle">~70 min</text>
+  <text x="470" y="426" font-size="11" fill="#6B7280">A range, not a promise. The plan can change it.</text>
+
+  <!-- 2. Checks today -->
+  <rect x="830" y="185" width="680" height="250" rx="16" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1.5" filter="url(#softS)"/>
+  <text x="854" y="215" font-size="10" font-weight="700" fill="#6D28D9" letter-spacing="1.6">2 · TODAY</text>
+  <text x="854" y="247" font-size="18" font-weight="700" fill="#111827">It checks time and money before it starts</text>
+
+  <text x="854" y="286" font-size="11" fill="#4B5563">today's spending limit</text>
+  <text x="1256" y="286" font-size="11" fill="#6B7280" text-anchor="end">$2 used · $8 left</text>
+  <rect x="854" y="296" width="402" height="16" rx="8" fill="#E5E7EB"/>
+  <rect x="854" y="296" width="80" height="16" rx="8" fill="#C4B5FD"/>
+  <text x="854" y="332" font-size="10" fill="#9CA3AF">$0</text>
+  <text x="1256" y="332" font-size="10" fill="#9CA3AF" text-anchor="end">$10</text>
+
+  <rect x="854" y="352" width="150" height="34" rx="17" fill="#ECFDF5" stroke="#A7F3D0"/>
+  <text x="929" y="374" font-size="11" font-weight="700" fill="#047857" text-anchor="middle">small fix · $1</text>
+  <rect x="1018" y="352" width="160" height="34" rx="17" fill="#FFFBEB" stroke="#FDE68A"/>
+  <text x="1098" y="374" font-size="11" font-weight="700" fill="#B45309" text-anchor="middle">big change · $6</text>
+  <text x="1194" y="374" font-size="11" fill="#6B7280">fits only if it goes first</text>
+
+  <text x="854" y="414" font-size="11.5" fill="#6B7280">A big job moves up if waiting would make it</text>
+  <text x="854" y="432" font-size="11.5" fill="#6B7280">too expensive later. Small jobs cannot use its money.</text>
+
+  <!-- 3. Protects the day -->
+  <rect x="90" y="455" width="700" height="220" rx="16" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1.5" filter="url(#softS)"/>
+  <text x="114" y="485" font-size="10" font-weight="700" fill="#6D28D9" letter-spacing="1.6">3 · YOUR TIME</text>
+  <text x="114" y="517" font-size="18" font-weight="700" fill="#111827">It stays out of your way</text>
+
+  <rect x="114" y="540" width="320" height="36" rx="10" fill="#F9FAFB" stroke="#E5E7EB"/>
+  <circle cx="132" cy="558" r="7" fill="#D1D5DB"/>
+  <text x="150" y="563" font-size="11.5" fill="#374151">the computer is busy</text>
+  <text x="414" y="563" font-size="10" font-weight="700" fill="#6B7280" text-anchor="end">waits</text>
+
+  <rect x="454" y="540" width="312" height="36" rx="10" fill="#F9FAFB" stroke="#E5E7EB"/>
+  <circle cx="472" cy="558" r="7" fill="#D1D5DB"/>
+  <text x="490" y="563" font-size="11.5" fill="#374151">you are using the app</text>
+  <text x="746" y="563" font-size="10" font-weight="700" fill="#6B7280" text-anchor="end">waits</text>
+
+  <rect x="114" y="586" width="320" height="36" rx="10" fill="#F9FAFB" stroke="#E5E7EB"/>
+  <circle cx="132" cy="604" r="7" fill="#D1D5DB"/>
+  <text x="150" y="609" font-size="11.5" fill="#374151">too many plans wait for you</text>
+  <text x="414" y="609" font-size="10" font-weight="700" fill="#6B7280" text-anchor="end">waits</text>
+
+  <rect x="454" y="586" width="312" height="36" rx="10" fill="#F9FAFB" stroke="#E5E7EB"/>
+  <circle cx="472" cy="604" r="7" fill="#D1D5DB"/>
+  <text x="490" y="609" font-size="11.5" fill="#374151">the nightly backup is running</text>
+  <text x="746" y="609" font-size="10" font-weight="700" fill="#6B7280" text-anchor="end">waits</text>
+
+  <text x="114" y="652" font-size="11.5" fill="#6B7280">If any is true, the job waits — and the card says why.</text>
+
+  <!-- 4. Learns carefully -->
+  <rect x="830" y="455" width="680" height="220" rx="16" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1.5" filter="url(#softS)"/>
+  <text x="854" y="485" font-size="10" font-weight="700" fill="#6D28D9" letter-spacing="1.6">4 · THE SECOND METHOD</text>
+  <text x="854" y="517" font-size="18" font-weight="700" fill="#111827">It learns, but does not take over</text>
+
+  <rect x="854" y="540" width="240" height="64" rx="12" fill="#FBFAFF" stroke="#6D28D9" stroke-width="1.5"/>
+  <text x="974" y="566" font-size="11" font-weight="700" fill="#6D28D9" text-anchor="middle">the usual rules choose</text>
+  <text x="974" y="588" font-size="13" font-weight="700" fill="#111827" text-anchor="middle">Fix the export</text>
+
+  <rect x="1118" y="540" width="240" height="64" rx="12" fill="#F9FAFB" stroke="#D1D5DB" stroke-width="1.5"/>
+  <text x="1238" y="566" font-size="11" font-weight="700" fill="#6B7280" text-anchor="middle">a second method would choose</text>
+  <text x="1238" y="588" font-size="13" font-weight="700" fill="#374151" text-anchor="middle">Slow login</text>
+
+  <rect x="1372" y="552" width="114" height="24" rx="12" fill="#FEF3C7"/>
+  <text x="1429" y="568" font-size="9.5" font-weight="700" fill="#B45309" text-anchor="middle" letter-spacing="0.6">ONLY WATCHING</text>
+
+  <text x="854" y="634" font-size="11.5" fill="#6B7280">The second method writes down what it would choose. The usual rules still decide.</text>
+  <text x="854" y="652" font-size="11.5" fill="#6B7280">After weeks of agreement, it may be allowed to suggest — never to approve.</text>
+
+  <!-- Legend -->
+  <rect x="90" y="708" width="16" height="16" rx="8" fill="#6D28D9"/>
+  <text x="114" y="721" font-size="12" fill="#4B5563">the helper's choice</text>
+  <rect x="300" y="708" width="16" height="16" rx="8" fill="#FEF3C7"/>
+  <text x="324" y="721" font-size="12" fill="#4B5563">a person decides</text>
+  <rect x="500" y="708" width="16" height="16" rx="4" fill="#F9FAFB" stroke="#D1D5DB" stroke-width="1.3"/>
+  <text x="524" y="721" font-size="12" fill="#4B5563">waiting, with a reason</text>
+  <text x="1510" y="721" font-size="12" fill="#6B7280" text-anchor="end">It remembers, checks, and explains — that is the smart part.</text>
+
+  <!-- Footer -->
+  <line x1="90" y1="744" x2="1510" y2="744" stroke="#DDE2E8" stroke-width="1.5"/>
+  <text x="90" y="780" font-size="17" fill="#111827">Every choice has a one-line reason.</text>
+  <text x="1510" y="780" font-size="13" fill="#9CA3AF" text-anchor="end">A wrong order costs minutes; a wrong run costs money.</text>
+  <text x="90" y="812" font-size="13" fill="#6B7280">It remembers past jobs and checks today's room.</text>
+  <text x="1510" y="812" font-size="13" fill="#9CA3AF" text-anchor="end">When it does not know, the job waits instead of guessing.</text>
+  <text x="90" y="844" font-size="13" fill="#6B7280">Hard limits: minutes and dollars per job.</text>
+  <text x="1510" y="844" font-size="13" fill="#9CA3AF" text-anchor="end">The rest is a careful guess, revised after every run.</text>
+</svg>

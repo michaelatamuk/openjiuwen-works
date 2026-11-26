@@ -244,3 +244,14 @@ def test_a_history_estimate_can_block_a_run() -> None:
     history = {group_key("fix-issue", "medium"): Estimate(30, 60, 4.0, 6.0, 0.8, 10, "history")}
 
     assert evaluate(item, body, signals(), history) == SkipReason.RUN_BUDGET_CAP
+
+
+def test_flow_product_and_repo_filters_are_typed() -> None:
+    body = policy(allow={"manual": True, "flows": ["check-change"]})
+    assert evaluate(task(), body, signals()) == SkipReason.FLOW_NOT_ALLOWED
+
+    body = policy(allow={"manual": True, "products": ["Other"]})
+    assert evaluate(task(), body, signals()) == SkipReason.NOT_ALLOWLISTED
+
+    body = policy(allow={"manual": True, "repos": ["/elsewhere"]})
+    assert evaluate(task(), body, signals()) == SkipReason.NOT_ALLOWLISTED

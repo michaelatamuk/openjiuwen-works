@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 from works.adapters.processes.runner import SubprocessRunner, sanitize_env
 
 
@@ -71,3 +73,16 @@ def test_timeout_kills_the_process(tmp_path) -> None:
     assert result.timed_out
     assert not result.ok
     assert result.exit_code != 0
+
+
+def test_a_command_that_reads_stdin_gets_eof(tmp_path) -> None:
+    runner = SubprocessRunner()
+    result = runner.run(
+        [sys.executable, "-c", "import sys; sys.stdin.read(); print('done')"],
+        tmp_path,
+        timeout_s=15,
+    )
+
+    assert result.timed_out is False
+    assert result.exit_code == 0
+    assert "done" in result.output

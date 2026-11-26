@@ -2,9 +2,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from works.adapters.queue.ledger import Ledger
 from works.adapters.queue.store import Queue
 from works.application.scheduling.policy import POLICY_PATH
 from works.application.scheduling.triggers import request_dispatch
+from works.domain.enums import TaskState
+from works.domain.ledger import LedgerRow
 from works.domain.records import Source, SourceKind
 
 POLICY = """
@@ -95,3 +98,15 @@ def test_an_import_without_the_label_is_refused(paths) -> None:
 
     assert result.requested is False
     assert result.reason == "missing_label"
+
+
+def test_a_spent_budget_refuses_the_request(paths, monkeypatch) -> None:
+    _policy(paths)
+    task_id = _task(paths)
+    monkeypatch.setenv("WORKS_DAILY_USD", "1")
+    Ledger(paths.ledger).append(LedgerRow(task_id=task_id, state=TaskState.QUEUED, usd=1.0))
+
+    result = request_dispatch(paths, task_id, remote=False)
+
+    assert result.requested is False
+    assert result.reason == "budget_exhausted"

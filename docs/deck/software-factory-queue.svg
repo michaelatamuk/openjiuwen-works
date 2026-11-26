@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" font-family="Inter, Segoe UI, Arial, Helvetica, sans-serif">
+  <defs>
+    <filter id="softQ" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="8" flood-color="#111827" flood-opacity="0.07"/>
+    </filter>
+    <marker id="arrowQ" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6D28D9"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1600" height="900" fill="#F4F5F9"/>
+
+  <!-- Header -->
+  <text x="90" y="66" font-size="12" font-weight="700" fill="#6D28D9" letter-spacing="2.2">OPENJIUWEN WORKS · THE QUEUE</text>
+  <text x="90" y="116" font-size="42" font-weight="700" fill="#111827">How the queue picks the next job</text>
+  <text x="90" y="152" font-size="17" fill="#4B5563">New work waits in one line. A careful helper picks the next job; a person still decides the two big moments.</text>
+
+  <!-- New work -->
+  <rect x="90" y="215" width="230" height="170" rx="14" fill="#FFFFFF" stroke="#C4B5FD" stroke-width="1.5" stroke-dasharray="7 5" filter="url(#softQ)"/>
+  <text x="110" y="247" font-size="9.5" font-weight="700" fill="#9CA3AF" letter-spacing="1.2">NEW WORK</text>
+  <text x="110" y="272" font-size="16.5" font-weight="700" fill="#111827">Three doors,</text>
+  <text x="110" y="294" font-size="16.5" font-weight="700" fill="#111827">one line</text>
+  <text x="110" y="322" font-size="12.5" fill="#6B7280">a ticket, an alert,</text>
+  <text x="110" y="340" font-size="12.5" fill="#6B7280">or a person asking</text>
+  <rect x="110" y="352" width="56" height="20" rx="10" fill="#FBFAFF" stroke="#DDD6FE"/>
+  <text x="138" y="366" font-size="9.5" font-weight="700" fill="#6D28D9" text-anchor="middle">ticket</text>
+  <rect x="174" y="352" width="52" height="20" rx="10" fill="#FBFAFF" stroke="#DDD6FE"/>
+  <text x="200" y="366" font-size="9.5" font-weight="700" fill="#6D28D9" text-anchor="middle">alert</text>
+  <rect x="234" y="352" width="62" height="20" rx="10" fill="#FBFAFF" stroke="#DDD6FE"/>
+  <text x="265" y="366" font-size="9.5" font-weight="700" fill="#6D28D9" text-anchor="middle">person</text>
+
+  <!-- Arrow into the line -->
+  <line x1="326" y1="290" x2="374" y2="290" stroke="#6D28D9" stroke-width="2.5" marker-end="url(#arrowQ)"/>
+
+  <!-- The line -->
+  <rect x="382" y="180" width="440" height="440" rx="20" fill="#F8F9FC" stroke="#D1D5DB" stroke-width="1.5"/>
+  <text x="402" y="212" font-size="10.5" font-weight="700" fill="#6D28D9" letter-spacing="1.6">THE LINE · NOTHING STARTS TWICE</text>
+
+  <rect x="402" y="230" width="400" height="82" rx="12" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1.5" filter="url(#softQ)"/>
+  <text x="422" y="262" font-size="15.5" font-weight="700" fill="#111827">Fix the export</text>
+  <text x="422" y="286" font-size="12" fill="#6B7280">a report from the tracker</text>
+  <rect x="652" y="272" width="132" height="22" rx="11" fill="#E5E7EB"/>
+  <text x="718" y="287" font-size="10" font-weight="700" fill="#4B5563" text-anchor="middle">needs a free slot</text>
+
+  <rect x="402" y="322" width="400" height="82" rx="12" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1.5" filter="url(#softQ)"/>
+  <text x="422" y="354" font-size="15.5" font-weight="700" fill="#111827">Slow login</text>
+  <text x="422" y="378" font-size="12" fill="#6B7280">the plan is ready for you</text>
+  <rect x="672" y="364" width="112" height="22" rx="11" fill="#FEF3C7"/>
+  <text x="728" y="379" font-size="10" font-weight="700" fill="#B45309" text-anchor="middle">waits for you</text>
+
+  <rect x="402" y="414" width="400" height="82" rx="12" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1.5" filter="url(#softQ)"/>
+  <text x="422" y="446" font-size="15.5" font-weight="700" fill="#111827">Typo on the page</text>
+  <text x="422" y="470" font-size="12" fill="#6B7280">an alert from the monitor</text>
+  <rect x="652" y="456" width="132" height="22" rx="11" fill="#FEE2E2"/>
+  <text x="718" y="471" font-size="10" font-weight="700" fill="#B91C1C" text-anchor="middle">over today's budget</text>
+
+  <rect x="402" y="506" width="400" height="82" rx="12" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1.5" filter="url(#softQ)"/>
+  <text x="422" y="538" font-size="15.5" font-weight="700" fill="#111827">Nightly check</text>
+  <text x="422" y="562" font-size="12" fill="#6B7280">you are using the app</text>
+  <rect x="672" y="548" width="112" height="22" rx="11" fill="#E5E7EB"/>
+  <text x="728" y="563" font-size="10" font-weight="700" fill="#4B5563" text-anchor="middle">machine is busy</text>
+
+  <text x="402" y="606" font-size="11.5" fill="#6B7280">Every card says why it is waiting.</text>
+
+  <!-- Arrow to the helper -->
+  <line x1="826" y1="400" x2="874" y2="400" stroke="#6D28D9" stroke-width="2.5" marker-end="url(#arrowQ)"/>
+
+  <!-- The helper -->
+  <rect x="882" y="180" width="390" height="440" rx="20" fill="#FFFFFF" stroke="#C4B5FD" stroke-width="1.5" filter="url(#softQ)"/>
+  <text x="906" y="212" font-size="10.5" font-weight="700" fill="#6D28D9" letter-spacing="1.6">THE HELPER ASKS FOUR THINGS</text>
+
+  <circle cx="920" cy="252" r="13" fill="#6D28D9"/>
+  <text x="920" y="257" font-size="12.5" font-weight="700" fill="#FFFFFF" text-anchor="middle">1</text>
+  <text x="946" y="250" font-size="15.5" font-weight="700" fill="#111827">Is it allowed?</text>
+  <text x="946" y="270" font-size="11.5" fill="#6B7280">only the sources you allowed</text>
+
+  <circle cx="920" cy="322" r="13" fill="#6D28D9"/>
+  <text x="920" y="327" font-size="12.5" font-weight="700" fill="#FFFFFF" text-anchor="middle">2</text>
+  <text x="946" y="320" font-size="15.5" font-weight="700" fill="#111827">Is there room?</text>
+  <text x="946" y="340" font-size="11.5" fill="#6B7280">one job per project at a time</text>
+
+  <circle cx="920" cy="392" r="13" fill="#6D28D9"/>
+  <text x="920" y="397" font-size="12.5" font-weight="700" fill="#FFFFFF" text-anchor="middle">3</text>
+  <text x="946" y="390" font-size="15.5" font-weight="700" fill="#111827">Is the machine free?</text>
+  <text x="946" y="410" font-size="11.5" fill="#6B7280">not while you are working</text>
+
+  <circle cx="920" cy="462" r="13" fill="#6D28D9"/>
+  <text x="920" y="467" font-size="12.5" font-weight="700" fill="#FFFFFF" text-anchor="middle">4</text>
+  <text x="946" y="460" font-size="15.5" font-weight="700" fill="#111827">Can you take it?</text>
+  <text x="946" y="480" font-size="11.5" fill="#6B7280">not ten plans at once</text>
+
+  <line x1="906" y1="506" x2="1248" y2="506" stroke="#E5E7EB" stroke-width="1"/>
+  <text x="906" y="534" font-size="11.5" fill="#4B5563">It also looks at today's budget, the clock,</text>
+  <text x="906" y="552" font-size="11.5" fill="#4B5563">and how long this usually takes.</text>
+  <rect x="906" y="570" width="300" height="24" rx="12" fill="#FBFAFF" stroke="#DDD6FE"/>
+  <text x="1056" y="586" font-size="10.5" font-weight="700" fill="#6D28D9" text-anchor="middle">a guess from similar past jobs, not a promise</text>
+
+  <!-- Outcomes -->
+  <line x1="1276" y1="255" x2="1324" y2="255" stroke="#6D28D9" stroke-width="2.5" marker-end="url(#arrowQ)"/>
+  <rect x="1332" y="205" width="178" height="100" rx="14" fill="#FFFFFF" stroke="#6D28D9" stroke-width="1.5" filter="url(#softQ)"/>
+  <text x="1352" y="237" font-size="15.5" font-weight="700" fill="#6D28D9">Yes — start it</text>
+  <text x="1352" y="261" font-size="11.5" fill="#6B7280">in its own copy of</text>
+  <text x="1352" y="277" font-size="11.5" fill="#6B7280">the project</text>
+
+  <line x1="1276" y1="420" x2="1324" y2="420" stroke="#9CA3AF" stroke-width="2.5" marker-end="url(#arrowQ)"/>
+  <rect x="1332" y="370" width="178" height="100" rx="14" fill="#F9FAFB" stroke="#D1D5DB" stroke-width="1.5" filter="url(#softQ)"/>
+  <text x="1352" y="402" font-size="15.5" font-weight="700" fill="#374151">No — stay in line</text>
+  <text x="1352" y="426" font-size="11.5" fill="#6B7280">the card keeps</text>
+  <text x="1352" y="442" font-size="11.5" fill="#6B7280">the reason</text>
+
+  <!-- Gates band -->
+  <rect x="90" y="650" width="1420" height="88" rx="16" fill="#FFFDF5" stroke="#FDE68A" stroke-width="1.5"/>
+  <text x="114" y="682" font-size="10.5" font-weight="700" fill="#B45309" letter-spacing="1.6">TWO MOMENTS BELONG TO A PERSON</text>
+  <text x="114" y="712" font-size="15.5" fill="#111827">The helper never says yes to a plan or a release. It brings those two moments to you.</text>
+  <rect x="1012" y="668" width="220" height="28" rx="14" fill="#FEF3C7"/>
+  <text x="1122" y="687" font-size="11" font-weight="700" fill="#B45309" text-anchor="middle">plan · a person agrees</text>
+  <rect x="1246" y="668" width="240" height="28" rx="14" fill="#FEF3C7"/>
+  <text x="1366" y="687" font-size="11" font-weight="700" fill="#B45309" text-anchor="middle">release · a person agrees</text>
+
+  <!-- Legend -->
+  <rect x="90" y="778" width="16" height="16" rx="4" fill="#FFFFFF" stroke="#C4B5FD" stroke-width="1.3" stroke-dasharray="4 3"/>
+  <text x="114" y="791" font-size="12" fill="#4B5563">New work — from outside</text>
+  <rect x="330" y="778" width="16" height="16" rx="4" fill="#F8F9FC" stroke="#D1D5DB" stroke-width="1.3"/>
+  <text x="354" y="791" font-size="12" fill="#4B5563">The line — waiting, with a reason</text>
+  <rect x="620" y="778" width="16" height="16" rx="8" fill="#FEF3C7"/>
+  <text x="644" y="791" font-size="12" fill="#4B5563">A person decides</text>
+  <text x="1510" y="791" font-size="12" fill="#6B7280" text-anchor="end">The helper chooses the order; it never chooses for you.</text>
+
+  <!-- Footer -->
+  <line x1="90" y1="810" x2="1510" y2="810" stroke="#DDE2E8" stroke-width="1.5"/>
+  <text x="90" y="842" font-size="17" fill="#111827">A line with a reason on every card.</text>
+  <text x="1510" y="842" font-size="13" fill="#9CA3AF" text-anchor="end">Estimates come from similar past jobs — a guess, not a promise.</text>
+  <text x="90" y="872" font-size="13" fill="#6B7280">One helper per home. One job per project.</text>
+  <text x="1510" y="872" font-size="13" fill="#9CA3AF" text-anchor="end">Nothing starts while you are away unless you asked for it.</text>
+</svg>
