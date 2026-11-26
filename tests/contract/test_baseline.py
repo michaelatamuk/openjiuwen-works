@@ -29,6 +29,7 @@ DETAIL_SECTIONS = {
     "run",
     "evidence",
     "proof_md",
+    "proof_summary",
     "timeline",
     "pipeline",
     "readiness",

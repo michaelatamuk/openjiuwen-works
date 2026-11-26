@@ -6,8 +6,11 @@ from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import dataclass
 from pathlib import Path
 
+from tests.unit.domain.test_evidence import fixed_evidence
 from works.adapters.git.repo import GitRepo
 from works.adapters.queue.store import Queue
+from works.domain.evidence import write_evidence
+from works.domain.evidence.summary import summary_digest
 from works.domain.records import TaskState
 from works.domain.risk import RiskLevel, RiskRating
 from works.interfaces.cli.main import main
@@ -427,3 +430,32 @@ def test_scheduler_commands_are_wired(paths) -> None:
     ):
         result = invoke(paths, *args)
         assert result.exit_code == 0, result.stdout + result.stderr
+
+
+def test_proof_summary_prints_the_stored_page(paths) -> None:
+    run_id = "r-summary"
+    run_dir = paths.runs / run_id
+    run_dir.mkdir(parents=True)
+    write_evidence(run_dir, fixed_evidence().model_copy(update={"run_id": run_id}))
+
+    plain = invoke(paths, "proof", "summary", run_id)
+    assert plain.exit_code == 0, plain.stderr
+    assert "## What was wrong" in plain.stdout
+
+    machine = invoke(paths, "proof", "summary", run_id, "--json")
+    body = payload(machine)
+    assert body["derived"] is False
+    assert body["sha256"] == summary_digest(body["text"])
+
+
+def test_proof_summary_marks_an_old_record_derived(paths) -> None:
+    run_id = "r-summary-old"
+    run_dir = paths.runs / run_id
+    run_dir.mkdir(parents=True)
+    write_evidence(run_dir, fixed_evidence().model_copy(update={"run_id": run_id}).bind())
+
+    machine = invoke(paths, "proof", "summary", run_id, "--json")
+    body = payload(machine)
+    assert body["derived"] is True
+    assert "## What was wrong" in body["text"]
+    assert body["sha256"] == summary_digest(body["text"])

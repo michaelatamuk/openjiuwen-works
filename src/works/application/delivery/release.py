@@ -20,6 +20,7 @@ from works.application.proof.verify import verify_run
 from works.config.paths import WorksPaths
 from works.domain.errors import ConfigError
 from works.domain.evidence import Evidence
+from works.domain.evidence.summary import render_summary
 from works.domain.records import RunRecord, Task, TaskState
 from works.domain.state import can_transition
 
@@ -44,6 +45,8 @@ class ReleasePacket:
     risk_reasons: list[str] = field(default_factory=list)
     risk_files: int = 0
     risk_lines: int = 0
+    summary: str = ""
+    summary_derived: bool = False
     owners: list[str] = field(default_factory=list)
     not_tested: list[str] = field(default_factory=list)
     verdict_allow: bool | None = None
@@ -84,6 +87,8 @@ class ReleasePacket:
             "risk_reasons": self.risk_reasons,
             "risk_files": self.risk_files,
             "risk_lines": self.risk_lines,
+            "summary": self.summary,
+            "summary_derived": self.summary_derived,
             "owners": self.owners,
             "not_tested": self.not_tested,
             "verdict_allow": self.verdict_allow,
@@ -199,6 +204,8 @@ def release_packet(
     packet.risk_reasons = list(evidence.risk.reasons) if evidence.risk else []
     packet.risk_files = evidence.risk.files if evidence.risk else 0
     packet.risk_lines = evidence.risk.lines if evidence.risk else 0
+    packet.summary = evidence.summary or render_summary(evidence)
+    packet.summary_derived = not evidence.summary
     packet.owners = list(evidence.risk.owners) if evidence.risk else []
     packet.not_tested = list(evidence.not_tested)
     packet.verdict_allow = evidence.verdict.allow if evidence.verdict else None

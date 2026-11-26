@@ -135,3 +135,25 @@ describe("Release", () => {
     );
   });
 });
+
+
+describe("Release summary", () => {
+  it("shows the plain-language summary at the gate", () => {
+    render(
+      <Release
+        detail={draftDetail({
+          release: {
+            summary: "## What was wrong\n\nThe parser drops the last line.\n",
+            summary_derived: false,
+          },
+        })}
+        onAction={vi.fn()}
+        onShowRuns={vi.fn()}
+        onShowRun={vi.fn()}
+        onToast={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Plain-language summary")).toBeInTheDocument();
+    expect(screen.getByText("The parser drops the last line.")).toBeInTheDocument();
+  });
+});

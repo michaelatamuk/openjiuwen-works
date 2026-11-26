@@ -96,6 +96,12 @@ def _canon_string(text: str, home: Path | None, repo: Path | None) -> str:
 
 
 def _canon_field(key: str, value: Any, home: Path | None, repo: Path | None) -> Any:
+    if key == "proof_summary" and isinstance(value, dict):
+        return {
+            "text": "<summary>" if value.get("text") else "",
+            "sha256": "<sha256>" if value.get("sha256") else "",
+            "derived": bool(value.get("derived")),
+        }
     if key == "runtime" and isinstance(value, dict):
         return {str(name): "<runtime>" for name in value}
     if key == "reproduction_env" and isinstance(value, dict):

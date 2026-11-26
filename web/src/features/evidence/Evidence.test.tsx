@@ -69,3 +69,32 @@ describe("Evidence", () => {
     }
   });
 });
+
+
+describe("Evidence summary", () => {
+  it("opens on the plain-language summary and switches to technical", () => {
+    const detail = {
+      ...provedDetail,
+      proof_summary: {
+        text: "## What was wrong\n\nThe parser drops the last line.\n\n## What proves it\n\nVerdict: allow.",
+        sha256: "a".repeat(64),
+        derived: false,
+      },
+    };
+    render(
+      <Evidence
+        detail={detail}
+        onShowRun={vi.fn()}
+        onAction={vi.fn()}
+        onLightbox={vi.fn()}
+        onOpenEvent={vi.fn()}
+        onToast={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Run metadata")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: "Summary" }));
+    expect(screen.getByText("The parser drops the last line.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: "Technical" }));
+    expect(screen.getByText("Run metadata")).toBeInTheDocument();
+  });
+});

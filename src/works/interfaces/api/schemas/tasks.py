@@ -57,6 +57,7 @@ class TaskDetail(BaseModel):
     run: dict[str, Any] | None = None
     evidence: dict[str, Any] | None = None
     proof_md: str = ""
+    proof_summary: dict[str, str | bool] = Field(default_factory=dict)
     timeline: list[dict[str, Any]]
     pipeline: dict[str, Any]
     plan: dict[str, Any] | None = None

@@ -6,9 +6,9 @@ quorum mechanics are shared with the plan gate (`gates.md`); this page adds what
 ## The packet
 
 `release_packet(paths, task_id)` returns commit, run id, proof fingerprint, plan and release gates,
-risk with its reasons, file and line counts, owners, residual `not_tested`, verdict and challenge
-outcomes, tokens/USD, plan estimate, `proof_verified`, `delivery_configured`, rollback and **typed
-blockers**.
+risk with its reasons, file and line counts, a plain-language summary, owners, residual `not_tested`,
+verdict and challenge outcomes, tokens/USD, plan estimate, `proof_verified`, `delivery_configured`,
+rollback and **typed blockers**.
 
 A blocker is never a warning: `not_proved`, `plan_gate_missing`, `release_gate_missing`, `proof_unbound`,
 `proof_mismatch`, `must_pass_failed`, `challenge_blocked`, `policy_violation`, `stale_plan`,

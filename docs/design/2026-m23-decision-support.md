@@ -1,6 +1,6 @@
 # M23 — decision support at the gate (design)
 
-Status: in progress. 23.1 is complete; 23.2 and 23.3 follow. Wave one of
+Status: in progress. 23.1 and 23.2 are complete; 23.3 follows. Wave one of
 `docs/design/feature-recommendations.md`: three low-effort features that make the existing release
 gate usable by the person who has to sign it.
 
@@ -74,14 +74,14 @@ is empty the summary says "not recorded" rather than inventing a sentence.
 
 Binding and storage:
 
-- the summary is generated before `bind()` and stored as `summary` plus an artifact of kind `summary`
+- the summary is generated before `bind()` and stored as `summary` plus an artifact `artifacts/summary.md`
   with its own SHA-256, so `proof_sha256` covers it;
-- `proof.md` is unchanged and remains the technical page;
+- `evidence.md` is unchanged and remains the technical page;
 - evidence from before M23 has no stored summary: it is rendered on demand and marked `derived` in the
   API, and it is never written back into an old proof.
 
-Surfaces: `GET` evidence returns `summary {text, sha256, derived}`; the UI toggles **Summary /
-Technical** and opens on Summary at the release gate; `works proof <run> --summary` prints it.
+Surfaces: `GET` evidence returns `proof_summary {text, sha256, derived}`; the UI toggles **Summary /
+Technical** and opens on Summary at the release gate; `works proof summary <run>` prints it.
 
 ## Reporter feedback loop
 
@@ -132,7 +132,7 @@ feature is left half shipped for a later pass.
 | slice | done means |
 |---|---|
 | **23.1 risk** | tier computed before `bind()`, shown on the evidence page and in the gate payload, badge on the Story card and release banner, tests for determinism and the unchanged gate refusal |
-| **23.2 summary** | template renderer, `proof.summary.md` bound into `proof_sha256`, API field, Summary/Technical toggle, CLI flag, old records marked `derived` |
+| **23.2 summary** | template renderer, `artifacts/summary.md` bound into `proof_sha256`, API field, Summary/Technical toggle, CLI command, old records marked `derived` |
 | **23.3 reporter loop** | event, matching, guards, re-queue context, CLI `task retry --note`, "reported again" in the UI, tests for duplicate, unknown, closed, non-allowlisted and the daily limit |
 | **23.4 acceptance** | design doc, ADR 026, `proof.md` reference, cross-feature pass over both gates and the green checks |
 

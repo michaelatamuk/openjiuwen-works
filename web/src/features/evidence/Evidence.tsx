@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 
 import { fmtMs, fmtUsd, shortSha } from "../../lib/format.js";
 import { Card, EmptyProof, Pill } from "../../ui/primitives";
+import { SummaryText } from "../../ui/summary";
 import {
   Artifacts,
   ChallengeCard,
@@ -197,6 +198,7 @@ export type EvidenceDetail = {
   task: EvidenceTask;
   pipeline?: { technical?: EvidenceStage[] } | null;
   evidence?: EvidencePayload | null;
+  proof_summary?: { text?: string; sha256?: string; derived?: boolean } | null;
   run?: EvidenceRun | null;
   release?: { released?: boolean; ready?: boolean; blockers?: string[] } | null;
   delivery?: unknown;
@@ -279,6 +281,8 @@ export function Evidence({ detail, onShowRun, onAction, onLightbox, onOpenEvent 
   const evidence = detail.evidence;
   const task = detail.task;
   const stages = detail.pipeline?.technical || [];
+  const summary = detail.proof_summary;
+  const [mode, setMode] = useState<"summary" | "technical">("technical");
   const exports = useMemo<ExportLink[]>(() => {
     const links: ExportLink[] = [
       ["proof.md", "evidence.md"],
@@ -293,7 +297,66 @@ export function Evidence({ detail, onShowRun, onAction, onLightbox, onOpenEvent 
 
   if (!evidence && !detail.run) return <EmptyProof />;
 
+  const showSummary = Boolean(summary?.text);
+  const verdictOk = evidence?.verdict?.allow;
+
   return (
+    <>
+      {showSummary ? (
+        <div className="proof-head">
+          <div className="segmented" role="tablist" aria-label="Proof view">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === "summary"}
+              onClick={() => setMode("summary")}
+            >
+              Summary
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === "technical"}
+              onClick={() => setMode("technical")}
+            >
+              Technical
+            </button>
+          </div>
+          <span className="muted small">
+            {summary?.derived
+              ? "derived from the record"
+              : `bound · ${shortSha(summary?.sha256)}`}
+          </span>
+        </div>
+      ) : null}
+      {showSummary && mode === "summary" ? (
+        <div className="grid">
+          <div className="stack">
+            <Card
+              title="Plain-language summary"
+              actions={
+                <Pill tone={summary?.derived ? "amber" : "green"}>
+                  {summary?.derived ? "derived" : "bound"}
+                </Pill>
+              }
+            >
+              <SummaryText text={summary?.text} />
+              <div className="summary-facts">
+                <Pill tone={detail.summary?.risk === "low" ? "green" : detail.summary?.risk === "medium" ? "amber" : "red"}>
+                  risk {detail.summary?.risk || "—"}
+                </Pill>
+                <Pill tone={verdictOk === false ? "red" : "green"}>
+                  verdict {verdictOk === false ? "block" : evidence?.verdict ? "allow" : "not recorded"}
+                </Pill>
+                <span className="muted small">
+                  {evidence?.diff_stat?.length || 0} file(s) changed
+                </span>
+                <span className="mono small">{shortSha(evidence?.proof_sha256)}</span>
+              </div>
+            </Card>
+          </div>
+        </div>
+      ) : (
     <div className="grid">
       <div className="stack">
         <Pipeline stages={stages} />
@@ -403,5 +466,7 @@ export function Evidence({ detail, onShowRun, onAction, onLightbox, onOpenEvent 
         </Card>
       </div>
     </div>
+      )}
+    </>
   );
 }

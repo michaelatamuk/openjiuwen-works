@@ -29,6 +29,21 @@ hash), capped at `event_seq`. Removing or editing an event changes the root, and
 `evidence.json` keeps the full diff; `evidence.md` truncates it with a visible note and points to the
 JSON. Binary files and renames appear as git writes them.
 
+## Plain-language summary
+
+Every new run writes `artifacts/summary.md`: five sections — what was wrong, what caused it, what
+changed, what proves it and what was not tested — rendered by a deterministic template from the same
+record. It makes no model call, invents no number and names a missing field as missing. The text is
+stored in `evidence.json`, covered by `proof_sha256`, and its file hash is an artifact.
+
+```bash
+works proof summary <run-id>
+works proof summary <run-id> --json
+```
+
+The JSON form returns `{text, sha256, derived}`. Records written before M23 have no stored summary:
+one is derived on read and marked `derived`, and the original proof hash is never rewritten.
+
 ## Risk
 
 `evidence.json` carries a `RiskRating`: the level, one-line reasons, owners, required reviewers, file

@@ -172,6 +172,7 @@ def build_evidence(
     return Evidence(
         run_id=ctx.run_id,
         task_id=ctx.task.id,
+        task_title=ctx.task.source.title,
         flow=ctx.flow.flow,
         product=ctx.flow.product,
         source=f"{ctx.task.source.kind.value}:{ctx.task.source.ref}",

@@ -655,6 +655,20 @@
             "title": "Proof Md",
             "type": "string"
           },
+          "proof_summary": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            },
+            "title": "Proof Summary",
+            "type": "object"
+          },
           "rail": {
             "additionalProperties": true,
             "title": "Rail",

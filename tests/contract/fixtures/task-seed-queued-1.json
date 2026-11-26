@@ -256,6 +256,11 @@
   "plan": null,
   "plan_diff": null,
   "proof_md": "<markdown>",
+  "proof_summary": {
+    "derived": false,
+    "sha256": "",
+    "text": ""
+  },
   "rail": {
     "agents": [
       {
@@ -513,6 +518,8 @@
     "risk_reasons": [],
     "rollback": "discard the worktree; delivery never rewrites history",
     "run_id": null,
+    "summary": "",
+    "summary_derived": false,
     "task_id": "<task-id>",
     "tokens": 0,
     "usd": 0.0,

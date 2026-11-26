@@ -2,16 +2,20 @@
 
 from __future__ import annotations
 
+import hashlib
 import sqlite3
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+from pydantic import ValidationError
 
 from works.adapters.queue.files import INDEX_FILE
 from works.adapters.queue.index import TaskIndex
 from works.adapters.queue.store import Queue
 from works.application.planning.store import PlanStore
 from works.config.paths import WorksPaths
+from works.domain.evidence import Evidence, render_summary
 from works.domain.records import Event, Task
 from works.interfaces.api.presenters.story import _pipeline
 from works.interfaces.api.presenters.tasks.artifacts import _artifact_list
@@ -81,6 +85,25 @@ def _run_summaries(paths: WorksPaths, task_id: str) -> list[dict[str, Any]]:
     return items
 
 
+def _proof_summary(evidence: dict[str, object] | None) -> dict[str, str | bool]:
+    """The stored summary, or one derived on read for records that predate it."""
+    if not evidence:
+        return {"text": "", "sha256": "", "derived": False}
+    stored = str(evidence.get("summary") or "")
+    derived = not stored
+    text = stored
+    if derived:
+        try:
+            text = render_summary(Evidence.model_validate(evidence))
+        except ValidationError:
+            text = ""
+    return {
+        "text": text,
+        "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest() if text else "",
+        "derived": derived,
+    }
+
+
 def _task_detail(
     queue: Queue, paths: WorksPaths, task_id: str, *, api_prefix: str = "/api"
 ) -> dict[str, Any]:
@@ -148,6 +171,7 @@ def _task_detail(
         "run": run,
         "evidence": evidence,
         "proof_md": proof_md,
+        "proof_summary": _proof_summary(evidence),
         "timeline": timeline,
         "pipeline": _pipeline(task, events, evidence, delivery, confirmation),
         "plan": plan_payload,

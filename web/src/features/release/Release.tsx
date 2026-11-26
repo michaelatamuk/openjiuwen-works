@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { fmtMs, fmtUsd, shortSha, timeAgo } from "../../lib/format.js";
 import { Card, Pill, Table } from "../../ui/primitives";
+import { SummaryText } from "../../ui/summary";
 
 export type ReleaseGateDecision = {
   decision?: string | null;
@@ -25,6 +26,8 @@ export type ReleasePacket = {
   risk_reasons?: string[];
   risk_files?: number;
   risk_lines?: number;
+  summary?: string | null;
+  summary_derived?: boolean;
 };
 
 function riskTone(level?: string | null): "green" | "amber" | "red" {
@@ -248,6 +251,19 @@ export function Release({ detail, onAction, onShowRuns, onShowRun, onToast }: Re
               Reject
             </button>
           </div>
+        </Card>
+
+        <Card
+          title="Plain-language summary"
+          actions={
+            release.summary ? (
+              <Pill tone={release.summary_derived ? "amber" : "green"}>
+                {release.summary_derived ? "derived" : "bound"}
+              </Pill>
+            ) : null
+          }
+        >
+          <SummaryText text={release.summary} />
         </Card>
 
         <Card title="Delivery" actions={detail.delivery ? <Pill tone={detail.delivery.dry_run ? "amber" : "green"}>{detail.delivery.dry_run ? "dry run" : "delivered"}</Pill> : null}>

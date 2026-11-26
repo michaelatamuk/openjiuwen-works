@@ -649,14 +649,14 @@ end — backend, API, UI and CLI — before the next one starts.
   and a risk badge appears on the Story card and in the release banner. The tier is computed before
   `bind()`, so it cannot change after approval, and it never opens or closes a gate. Tests cover
   determinism, the unchanged gate refusal path and the badge.
-- [ ] **M23.2 Plain-language summary, end to end.** The summary is rendered from the evidence and the
+- [x] **M23.2 Plain-language summary, end to end.** The summary is rendered from the evidence and the
   plan — what was wrong, the cause, what changed, what proves it, what was not tested — by a
-  deterministic template with no model call and no new cost. `proof.md` is unchanged;
-  `proof.summary.md` is an artifact bound into `proof_sha256`. The evidence API returns it, the UI
-  toggles **Summary / Technical** and opens on Summary at the release gate, and
-  `works proof <run> --summary` gives CLI parity. Old evidence renders the summary on demand and is
-  marked `derived`, never bound. Tests cover the required sections, the absence of invented numbers,
-  identical hash binding and the old-record path.
+  deterministic template with no model call and no new cost. `evidence.md` is unchanged;
+  `artifacts/summary.md` is bound into `proof_sha256`. The evidence API returns it, the UI toggles
+  **Summary / Technical** and opens on Summary at the release gate, and `works proof summary <run>`
+  gives CLI parity. Old evidence renders the summary on demand and is marked `derived`, never bound.
+  Tests cover the required sections, the absence of invented numbers, identical hash binding and the
+  old-record path.
 - [ ] **M23.3 Reporter feedback loop, end to end.** A `reporter_replied` event on the existing intake
   matches the comment to the task through the delivery link and re-queues it with the previous plan,
   the evidence link and the reporter's text as context. Events are idempotent by id, only allowlisted

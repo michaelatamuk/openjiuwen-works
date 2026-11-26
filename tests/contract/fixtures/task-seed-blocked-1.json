@@ -173,8 +173,10 @@
     "source": "manual:SEED-BLOCKED-1",
     "state": "blocked",
     "stop_reason": "verdict_failed",
+    "summary": "",
     "task_id": "<task-id>",
     "task_kind": "fix",
+    "task_title": "A change that touches tests",
     "test": {
       "argv": [
         "<python>",
@@ -966,6 +968,11 @@
   },
   "plan_diff": "no previous version",
   "proof_md": "<markdown>",
+  "proof_summary": {
+    "derived": true,
+    "sha256": "<sha256>",
+    "text": "<summary>"
+  },
   "rail": {
     "agents": [
       {
@@ -1232,6 +1239,8 @@
     ],
     "rollback": "discard the worktree; delivery never rewrites history",
     "run_id": "<run-id>",
+    "summary": "## What was wrong\n\nA change that touches tests.\nThe reproduction command was not recorded.\n\n## What caused it\n\nThe approved plan described: Deterministic plan for fix-issue on Fixture: 4 flow nodes and 3 scenarios.\n\n## What changed\n\n1 file(s), 2 line(s) changed.\n- `calc/core.py` (+1, -1)\nRisk: low — no high-risk path and a bounded change.\n\n## What proves it\n\nVerdict: block — failed P0: add-negative.\nMust-pass checks: 1 of 2 passed.\nSupporting checks: 1 of 1 passed.\nDiff SHA-256: `<sha256>`.\nProof SHA-256: `<sha256>`.\nIndependent review: allow — fixture challenge passed.\n\n## What was not tested\n\nNothing was declared untested.\n",
+    "summary_derived": true,
     "task_id": "<task-id>",
     "tokens": 1300,
     "usd": 0.013,

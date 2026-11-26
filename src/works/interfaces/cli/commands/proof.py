@@ -6,11 +6,24 @@ import argparse
 from pathlib import Path
 
 from works.application.proof import verify
+from works.domain.evidence import Evidence, render_summary, summary_digest
 from works.interfaces.cli.commands.common import _emit, _paths
 
 
 def cmd_proof(args: argparse.Namespace) -> int:
     paths = _paths(args)
+    if args.action == "summary":
+        evidence_path = paths.run_dir(args.run) / "evidence.json"
+        if not evidence_path.is_file():
+            raise SystemExit(f"no evidence for run {args.run}")
+        evidence = Evidence.model_validate_json(evidence_path.read_text(encoding="utf-8"))
+        derived = not evidence.summary
+        text = evidence.summary or render_summary(evidence)
+        if args.json:
+            _emit({"text": text, "sha256": summary_digest(text), "derived": derived})
+        else:
+            print(text, end="")
+        return 0
     if args.action == "verify":
         result = verify.verify_run(paths, args.run)
         if args.json:

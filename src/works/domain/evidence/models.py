@@ -56,6 +56,7 @@ class Evidence(BaseModel):
     schema_version: int = 1
     run_id: str
     task_id: str
+    task_title: str = ""
     flow: str
     product: str
     source: str
@@ -129,12 +130,19 @@ class Evidence(BaseModel):
     diff: str = ""
     diff_sha256: str = ""
     proof_sha256: str = ""
+    summary: str = ""
 
     def bind(self) -> Evidence:
         """Bind the page to its own content and to the diff."""
         diff_hash = hashlib.sha256(self.diff.encode("utf-8")).hexdigest()
         payload = self.model_copy(update={"diff_sha256": diff_hash, "proof_sha256": ""})
         exclude = {"proof_sha256"}
+        if not self.task_title:
+            # Preserve the historical proof hash for evidence that predates titles.
+            exclude.add("task_title")
+        if not self.summary:
+            # Same for records written before the plain-language summary existed.
+            exclude.add("summary")
         if not any(
             (
                 self.plan_id,

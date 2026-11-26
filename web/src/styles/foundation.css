@@ -938,3 +938,15 @@ dialog dd { margin: 0; }
 .event-row { cursor: pointer; }
 .event-row:hover { background: var(--panel-2); }
 
+
+/* Plain-language proof summary */
+.proof-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.segmented { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; background: var(--panel-2); }
+.segmented button { border: 0; background: transparent; border-radius: 999px; padding: 5px 12px; font: inherit; font-size: 12px; color: var(--muted); cursor: pointer; }
+.segmented button[aria-selected="true"] { background: var(--panel); color: var(--text); box-shadow: var(--shadow); }
+.summary { display: grid; gap: 10px; max-width: 78ch; }
+.summary h3 { margin: 8px 0 0; font: 650 10.5px/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.summary p { margin: 0; line-height: 1.65; }
+.summary ul { margin: 0; }
+.summary code { font-family: var(--mono); font-size: 0.92em; overflow-wrap: anywhere; }
+.summary-facts { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; }
