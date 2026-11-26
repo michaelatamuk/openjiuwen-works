@@ -633,6 +633,57 @@ shadow mode that decides whether a learned order ever earns the right to run.
 **Not in scope:** story points or per-person productivity, price or schedule forecasting, embeddings or
 a cloud model, deep learning, and estimating delivery/deploy/confirm time.
 
+### M23 — Decision support at the gate (planned)
+
+**Prevents:** a release approved on a diff the approver cannot read, a reporter's "still broken" reply
+that disappears, and a risk tier nobody recorded before shipping.
+
+Wave one of `docs/design/feature-recommendations.md`. The design is
+`docs/design/2026-m23-decision-support.md`, and an ADR records that risk is evidence, not a gate. No
+new pipeline stage: all three features strengthen the existing release gate.
+
+- [ ] **M23.1** `rate_risk` is extended, not replaced: complexity delta and security surface (auth,
+  crypto, payments paths from the flow policy) join the current path, size and coverage signals; the
+  tier and one-line reasons lead the evidence page and the release-gate payload. The tier is computed
+  before `bind()`, so it cannot change after approval, and it never opens or closes a gate.
+- [ ] **M23.2** A plain-language summary is rendered from the evidence and the plan — what was wrong,
+  the cause, what changed, what proves it — by a deterministic template with no model call and no new
+  cost. `proof.md` is unchanged; `proof.summary.md` is an artifact bound into `proof_sha256`. The
+  evidence API returns it, the UI toggles **Summary / Technical** and opens on Summary at the release
+  gate, and `works proof <run> --summary` gives CLI parity. Old evidence renders the summary on
+  demand and is marked `derived`, never bound.
+- [ ] **M23.3** A `reporter_replied` event on the existing intake closes the loop: the comment is
+  matched to the task through the delivery link and the task is re-queued with the previous plan, the
+  evidence link and the reporter's text as context. Events are idempotent by id, only allowlisted
+  sources are accepted, the scheduler still decides budget and labels, and
+  `works task retry <id> --note "..."` is the CLI path.
+- [ ] **M23.4** GUI parity: a risk badge on the Story card and in the release banner, a re-opened task
+  that says "reported again" and links to the previous proof, and an e2e test for the toggle.
+- [ ] **M23.5** Docs and acceptance: the design doc, the ADR, `docs/reference/proof.md`, and tests for
+  tier determinism, no gate authority, the required summary sections, identical hash binding, webhook
+  idempotency and replay, unknown reporter, closed pull request and CLI parity.
+
+**Not in scope:** a model-written summary, risk-based blocking, a chat with the reporter, writing
+back to the tracker beyond the existing comment, auto-reopening a merged PR, and multi-repo tasks.
+
+**Estimate:** ~12 days (~14 with contingency); order 23.1 → 23.2 → 23.3.
+
+### M24 — Parallel tasks (planned, after M23)
+
+**Prevents:** a queue with work, budget and estimates that still runs one task at a time.
+
+Per-task git worktrees and a concurrent supervisor with a hard cap (2–3), sharing the budget, the
+slots, the disk checks and the no-preemption rule; the queue and the state machine stay as they are.
+The design is written when M23 is accepted. **Estimate:** ~12 days (~14).
+
+### M25 — CVE intake (planned, after M24)
+
+**Prevents:** a known vulnerable dependency waiting for a person to notice it.
+
+An intake adapter matches OSV and GitHub Advisory entries against the target lockfile and turns each
+hit into a task; the CVE proof or vulnerable path is the reproduction, the pipeline is unchanged, and
+the evidence page carries the CVE id and severity. **Estimate:** ~9 days (~11).
+
 ## 4. Sequencing and gates
 
 ### Phase 0 — Land the safety floor (week 1)
@@ -678,8 +729,9 @@ M11 12 + M12 14 = **69 engineer-days**, **~83 with 20% contingency** — 13–16
 9–10 weeks with two. The v1 8-week/57-day schedule was arithmetically impossible.
 
 **Beyond that scope:** M13–M20 (stages 3–10) were delivered as separate passes and are not re-estimated
-here. The remaining planned work is M21 **~27 days (~32)** and M22 **~11 days (~13)**, which is where
-the queue, the scheduler and the estimates live.
+here. The remaining planned work is M21 **~27 days (~32)**, M22 **~11 days (~13)**, M23 **~12 days
+(~14)**, M24 **~12 days (~14)** and M25 **~9 days (~11)**, which is where the queue, the scheduler, the
+estimates and decision support live.
 
 ## 5. Acceptance metrics
 
