@@ -7,40 +7,33 @@
 
 # openJiuwen Works
 
-**A local-first software factory.** A report goes in. A reproduced, checked and proven fix comes out —
-with people making the two decisions that matter.
+**A local-first software factory.** A report arrives. Works reproduces the problem, plans the change
+and the checks that will judge it, builds in a disposable copy and writes the proof. You approve the
+plan. You approve the release. Works delivers the change and confirms the result.
 
 [![ci](https://github.com/michaelatamuk/openjiuwen-works/actions/workflows/ci.yml/badge.svg)](https://github.com/michaelatamuk/openjiuwen-works/actions/workflows/ci.yml)
 [![license](https://img.shields.io/badge/license-Apache--2.0-6D28D9.svg)](LICENSE)
 
-> A coding agent usually stops at a diff. Works carries the change through proof, review and release.
+> Works carries a change through proof, review and release.
 
 <div align="center">
   <img src="docs/ui/story.png" alt="One task from report to release: the story, the checks and the proof, with the release gate ready for a person" width="100%" />
 </div>
 
-## Why it exists
-
-Writing a fix is rarely the slow part. Most of the time goes to understanding the report, agreeing on
-a plan, reviewing the change and proving that it is safe.
-
-Works takes that work and keeps it on your machine. It does not ask you to trust a summary: it shows
-the change, the checks and the evidence, and it stops where a person should decide.
-
 ## What it does
 
-- **Reproduces before fixing.** The failing behaviour is shown on the current code first.
-- **Plans the change and the checks.** You see what will change and what will judge it.
-- **Builds and checks in a disposable copy.** Your working tree is never the experiment.
-- **Writes the proof.** One page tied to the exact change: what ran, what passed, what cost, what was
+- **Reproduces the problem** on the current code before anything changes.
+- **Plans the change** and the checks that will judge it.
+- **Builds in a disposable copy**, leaving your working tree clean.
+- **Writes the proof**: one page tied to the exact change — commands, verdict, cost, risk and what was
   not covered.
-- **Delivers and confirms.** A change request and one comment on the original report; then the real
-  result is checked again.
+- **Delivers and confirms**: a change request, one comment on the original report, then a fresh check
+  of the real result.
 
 ## Two decisions stay with people
 
-- **The plan.** You approve the checks that will judge the change. An AI agent cannot approve them.
-- **The release.** You approve the exact commit and its proof. Delivery waits for that decision.
+- **The plan.** A person approves the checks that will judge the change.
+- **The release.** A person approves the exact commit and its proof. Delivery waits for that decision.
 
 Everything between the two decisions is automatic and recorded.
 
@@ -49,16 +42,16 @@ Everything between the two decisions is automatic and recorded.
 | Phase | What happens | Who |
 |---|---|---|
 | **Understand** | A report arrives from a person, a tracker or a monitor. Works reproduces the problem on the current code. | Works |
-| **Agree** | Works drafts a plan and the checks. You approve, change or reject it. | **you** |
+| **Agree** | Works drafts a plan and the checks. A person approves, changes or rejects it. | **you** |
 | **Change** | Works builds in a disposable copy and runs the approved checks. | Works |
 | **Prove** | The evidence page is written and tied to the exact change. | Works |
-| **Release** | You approve the proof. Works delivers the change and confirms the real result. | **you**, then Works |
+| **Release** | A person approves the proof. Works delivers the change and confirms the real result. | **you**, then Works |
 
 <div align="center">
   <img src="docs/deck/software-factory-flow.png" alt="The flow: signal, reproduce, plan, plan gate, build, check, proof, release gate, delivery and confirmation" width="100%" />
 </div>
 
-Nothing moves on silently. If a check fails or a proof no longer matches, the task waits for a person.
+Every phase is recorded. A failed check or a mismatched proof returns the task to a person.
 
 ## When several things are ready
 
@@ -69,12 +62,12 @@ day's budget or the machine being busy.
   <img src="docs/deck/software-factory-queue.png" alt="The queue: new work waits in one line, a helper asks four questions, and two decisions belong to a person" width="100%" />
 </div>
 
-The queue is optional and off by default. It never approves a plan or a release, and a started run is
-allowed to finish.
+The queue is optional and off by default. The plan and release decisions remain with people, and a
+started run finishes.
 
 ## Try it
 
-The demo is local, deterministic and needs no model or network:
+The demo is local and deterministic; it runs without a model or network.
 
 ```bash
 uv sync --extra dev
@@ -100,16 +93,15 @@ Open `http://127.0.0.1:8765/` and:
 3. **Approve the plan**, then let Works build, check and write the proof.
 4. **Approve the release**, deliver the change and confirm the result.
 
-A provider key is needed for the live builder. The deterministic trace mode runs without a model; see
-[`docs/guides/live-harness.md`](docs/guides/live-harness.md).
-
-The CLI follows the same two decisions; `works --help` lists the commands.
+A provider key is needed for the live builder; trace mode runs without a model — see
+[`docs/guides/live-harness.md`](docs/guides/live-harness.md). The CLI follows the same two decisions;
+`works --help` lists the commands.
 
 ## Built for one machine
 
-Works is deliberately local: one daemon, one home (`~/.works`), no accounts and no hosted service.
-The two gates are always human, one project runs one job at a time, and delivery ends at a change
-request — merge, deploy and close remain your decisions.
+Works runs on your machine: one daemon, one home (`~/.works`). The plan and release decisions are human;
+one project runs one job at a time. Delivery creates a change request; merge, deploy and close remain
+your decisions.
 
 ## Documentation
 
