@@ -777,6 +777,29 @@ access, per-specialist providers beyond the harness.
 
 **Estimate:** ~4 days (~5 with contingency).
 
+### M28 — Proactive scan (done)
+
+**Prevents:** a regression waiting until a person notices and files it.
+
+The design is `docs/design/2026-m28-scan.md`; the reference is `docs/reference/scan.md`. One explicit
+command runs the repository's own check and files only failures that were not in the previous scan.
+
+- [x] **M28.1** A baseline per `(repository, command)` lives in the home, never in the repository; a
+  green run clears it and a fixed failure leaves it.
+- [x] **M28.2** Pytest-style `FAILED`/`ERROR` ids are parsed and deduplicated; an unparseable non-zero
+  exit becomes one stable `command-<hash>` id.
+- [x] **M28.3** Each new failure becomes one `fix-issue` task from a `detector` source with channel
+  `scan`, severity S3 and a dedupe key; the scan never starts a run or opens a gate.
+- [x] **M28.4** `works scan --repo ... --command ... [--dry-run] [--json]` reports failures, new,
+  fixed, created and existing; `--dry-run` writes nothing.
+- [x] **M28.5** Docs and tests cover parsing, the baseline lifecycle, dedupe, the synthetic failure,
+  dry run and the CLI.
+
+**Not in scope:** a scheduled poller, sharding, flaky suppression, automatic repair, non-pytest
+parsers.
+
+**Estimate:** ~2.5 days (~3 with contingency).
+
 ## 4. Sequencing and gates
 
 ### Phase 0 — Land the safety floor (week 1)
@@ -823,8 +846,9 @@ M11 12 + M12 14 = **69 engineer-days**, **~83 with 20% contingency** — 13–16
 
 **Beyond that scope:** M13–M20 (stages 3–10) were delivered as separate passes and are not re-estimated
 here. The remaining planned work is M21 **~27 days (~32)**, M22 **~11 days (~13)**, M23 **~13 days
-(~15)**, M24 **~3 days (~4)** and M25 **~4 days (~5)** and M26 **~1 day (~1.5)** and M27 **~4 days (~5)**, which is
-where the queue, the scheduler, the estimates, decision support and specialists live.
+(~15)**, M24 **~3 days (~4)** and M25 **~4 days (~5)** and M26 **~1 day (~1.5)** and M27 **~4 days (~5)** and
+M28 **~2.5 days (~3)**, which is where the queue, the scheduler, the estimates, decision support,
+specialists and proactive intake live.
 
 ## 5. Acceptance metrics
 
