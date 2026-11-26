@@ -31,7 +31,7 @@ from works.application.scheduling.estimates import (
     plan_map,
 )
 from works.application.scheduling.policy import DispatchPolicy, load_policy, risk_for_severity
-from works.application.scheduling.select import Signals, TickPlan, tick_plan
+from works.application.scheduling.select import Signals, SkipReason, TickPlan, tick_plan
 from works.config.paths import WorksPaths
 from works.domain.enums import TaskState
 from works.domain.errors import WorksError
@@ -253,16 +253,19 @@ class Scheduler:
         moment = now or self._now()
         active = lease.active_leases(self._paths, moment)
         tasks = self._queue.list_tasks()
-        repos: frozenset[str] = frozenset()
+        by_repo: dict[str, int] = {}
         if active:
             by_id = {task.id: task for task in tasks}
-            repos = frozenset(by_id[item.task_id].repo for item in active if item.task_id in by_id)
+            for item in active:
+                task = by_id.get(item.task_id)
+                if task is not None:
+                    by_repo[task.repo] = by_repo.get(task.repo, 0) + 1
         waiting = sum(1 for task in tasks if task.state is TaskState.PLANNING)
         owned = frozenset(task.id for task in tasks if self._queue.owner(task.id))
         return Signals(
             now=moment,
             active_runs=len(active),
-            active_repos=repos,
+            active_by_repo=by_repo,
             remaining_usd=self._remaining_usd(policy),
             waiting_plans=waiting,
             stale_approvals=stale_approvals(self._paths, moment),
@@ -441,10 +444,11 @@ class Scheduler:
             reclaimed = lease.reclaim_stale(self._paths, self._queue, moment)
             tasks = self._queue.list_tasks()
             samples = self._samples(policy)
+            signals = self.signals(policy, now=moment)
             planned = tick_plan(
                 tasks,
                 policy,
-                self.signals(policy, now=moment),
+                signals,
                 self._history(policy, samples),
                 self._per_task(tasks, policy, samples),
             )
@@ -460,7 +464,14 @@ class Scheduler:
                 reclaimed=reclaimed,
                 order=[item.task.id for item in planned.eligible],
             )
+            reserved_usd = 0.0
             for candidate in planned.eligible[:free]:
+                if (
+                    signals.remaining_usd is not None
+                    and reserved_usd + candidate.estimate.p90_usd > signals.remaining_usd
+                ):
+                    result.skipped[candidate.task.id] = SkipReason.BUDGET_EXHAUSTED.value
+                    continue
                 ttl = int(max(600.0, candidate.estimate.p90_min * 90.0))
                 try:
                     lease.claim(
@@ -495,6 +506,7 @@ class Scheduler:
                     },
                 )
                 result.claimed.append(candidate.task.id)
+                reserved_usd += candidate.estimate.p90_usd
                 Ledger(self._paths.ledger).append(
                     LedgerRow(
                         task_id=candidate.task.id,

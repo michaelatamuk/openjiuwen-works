@@ -62,7 +62,7 @@ def policy(**overrides: object) -> DispatchPolicy:
 def signals(
     *,
     active_runs: int = 0,
-    active_repos: frozenset[str] = frozenset(),
+    active_by_repo: dict[str, int] | None = None,
     remaining_usd: float | None = None,
     job_pool_pct: float = 0.0,
     api_p95_ms: float = 0.0,
@@ -74,7 +74,7 @@ def signals(
     return Signals(
         now=NOW,
         active_runs=active_runs,
-        active_repos=active_repos,
+        active_by_repo=active_by_repo or {},
         remaining_usd=remaining_usd,
         job_pool_pct=job_pool_pct,
         api_p95_ms=api_p95_ms,
@@ -148,9 +148,7 @@ def test_risk_above_the_level_cap_is_refused() -> None:
 def test_slots_budget_and_machine_refusals() -> None:
     item = task()
 
-    assert evaluate(item, policy(), signals(active_repos=frozenset({"/repo"}))) == (
-        SkipReason.REPO_BUSY
-    )
+    assert evaluate(item, policy(), signals(active_by_repo={"/repo": 1})) == (SkipReason.REPO_BUSY)
     assert evaluate(item, policy(), signals(active_runs=2)) == SkipReason.GLOBAL_BUSY
     assert evaluate(item, policy(), signals(remaining_usd=0.0)) == SkipReason.BUDGET_EXHAUSTED
     assert evaluate(item, policy(), signals(job_pool_pct=90)) == SkipReason.SYSTEM_BUSY
@@ -270,4 +268,15 @@ def test_a_plan_estimate_overrides_history_for_that_task() -> None:
             {item.id: planned},
         )
         == SkipReason.RUN_BUDGET_CAP
+    )
+
+
+def test_a_second_task_in_one_repo_is_allowed_when_the_policy_says_so() -> None:
+    body = policy(concurrency={"global": 3, "per_repo": 2})
+    item = task()
+
+    assert evaluate(item, body, signals(active_runs=1, active_by_repo={"/repo": 1})) is None
+    assert (
+        evaluate(item, body, signals(active_runs=2, active_by_repo={"/repo": 2}))
+        == SkipReason.REPO_BUSY
     )

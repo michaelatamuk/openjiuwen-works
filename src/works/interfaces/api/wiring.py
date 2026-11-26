@@ -9,6 +9,7 @@ from pathlib import Path
 
 from works.adapters.queue.ledger import Ledger
 from works.adapters.queue.store import Queue
+from works.application.scheduling.policy import load_policy
 from works.application.settings import BuilderSettings, load_builder_settings, settings_path
 from works.application.supervisor import Supervisor
 from works.config.paths import WorksPaths, load_paths
@@ -31,6 +32,15 @@ class AppState:
     open_lan: bool = False
     write_lock: threading.Lock = field(default_factory=threading.Lock)
     stop_event: threading.Event = field(default_factory=threading.Event)
+
+
+def job_workers(paths: WorksPaths) -> int:
+    """The pool must be able to honour `concurrency.global`; policy changes need a restart."""
+    try:
+        policy = load_policy(paths)
+    except Exception:  # a broken policy must not stop the daemon from starting
+        return 2
+    return max(2, min(8, policy.concurrency.global_slots))
 
 
 def build_state(
@@ -58,7 +68,7 @@ def build_state(
         writable=writable,
         settings=settings,
         security=Security(resolved, bootstrap_token=bootstrap_token),
-        jobs=JobRunner(resolved, queue),
+        jobs=JobRunner(resolved, queue, max_workers=job_workers(resolved)),
         live=EventHub(resolved),
         open_lan=open_lan,
     )

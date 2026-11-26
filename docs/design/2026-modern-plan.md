@@ -675,13 +675,31 @@ back to the tracker beyond the existing comment, auto-reopening a merged PR, and
 
 **Estimate:** ~13 days (~15 with contingency); order 23.1 → 23.2 → 23.3, each merged complete.
 
-### M24 — Parallel tasks (planned, after M23)
+### M24 — Parallel tasks in one repository (started)
 
 **Prevents:** a queue with work, budget and estimates that still runs one task at a time.
 
-Per-task git worktrees and a concurrent supervisor with a hard cap (2–3), sharing the budget, the
-slots, the disk checks and the no-preemption rule; the queue and the state machine stay as they are.
-The design is written when M23 is accepted. **Estimate:** ~12 days (~14).
+The gap was narrower than the first estimate: a worktree per run, a branch per task and a job pool
+already exist. M24 makes the scheduler honour the `per_repo` slot it documents. The design is
+`docs/design/2026-m24-parallel.md`; the decision is ADR 027, which revisits one rejected alternative
+in ADR 024.
+
+- [x] **M24.1** `Signals.active_by_repo` counts active leases per repository; selection refuses only
+  when the count reaches `concurrency.per_repo`. The default stays 1, so an existing install behaves
+  exactly as before.
+- [x] **M24.2** Budget is reserved across claims in one tick: each claim subtracts its `p90_usd` from
+  the remainder, so the same dollars cannot be promised twice.
+- [x] **M24.3** The job pool is sized from `concurrency.global` at startup (clamped to 2–8); the status
+  shows the policy slots, and a change needs a restart.
+- [x] **M24.4** Isolation is unchanged and required: one worktree per run, one branch per task, no
+  preemption. Two runs never share a tree or a branch.
+- [x] **M24.5** Docs and acceptance: the design, ADR 027, `docs/reference/scheduler.md`, and tests for
+  the default refusal, the two-slot claim, the budget reservation and the pool sizing.
+
+**Not in scope:** cross-repository coordination, a distributed queue, preemption and automatic conflict
+resolution.
+
+**Estimate:** ~3 days (~4 with contingency).
 
 ### M25 — CVE intake (planned, after M24)
 
@@ -737,7 +755,7 @@ M11 12 + M12 14 = **69 engineer-days**, **~83 with 20% contingency** — 13–16
 
 **Beyond that scope:** M13–M20 (stages 3–10) were delivered as separate passes and are not re-estimated
 here. The remaining planned work is M21 **~27 days (~32)**, M22 **~11 days (~13)**, M23 **~13 days
-(~15)**, M24 **~12 days (~14)** and M25 **~9 days (~11)**, which is where the queue, the scheduler, the
+(~15)**, M24 **~3 days (~4)** and M25 **~9 days (~11)**, which is where the queue, the scheduler, the
 estimates and decision support live.
 
 ## 5. Acceptance metrics

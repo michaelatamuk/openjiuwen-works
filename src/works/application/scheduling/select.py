@@ -86,7 +86,7 @@ def estimate_for(
 class Signals:
     now: datetime
     active_runs: int = 0
-    active_repos: frozenset[str] = frozenset()
+    active_by_repo: dict[str, int] = field(default_factory=dict)
     remaining_usd: float | None = None
     job_pool_pct: float = 0.0
     api_p95_ms: float = 0.0
@@ -207,7 +207,7 @@ def evaluate(
     if cap is not None and risk > cap:
         return SkipReason.RISK_TOO_HIGH
 
-    if task.repo in signals.active_repos:
+    if signals.active_by_repo.get(task.repo, 0) >= policy.concurrency.per_repo:
         return SkipReason.REPO_BUSY
     if signals.active_runs >= policy.concurrency.global_slots:
         return SkipReason.GLOBAL_BUSY

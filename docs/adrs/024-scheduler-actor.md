@@ -61,5 +61,6 @@ a selection step with budgets and locks is the missing piece.
 - **Full auto (approve both gates).** Removes the only human moment that makes the proof meaningful
   and contradicts ADR 022.
 - **Per-repository parallelism with separate worktrees.** More moving parts than a local-first tool
-  needs, and it multiplies the cost of a mistaken ticket.
+  needs, and it multiplies the cost of a mistaken ticket. Revisited in ADR 027 once worktrees and the
+  job pool were already in place.
 - **A hosted scheduler.** Contradicts the local-first, one-daemon-owns-one-home model (ADR 016).

@@ -530,3 +530,32 @@ estimates:
     assert isinstance(estimates, list)
     found = next(item for item in estimates if item["task_id"] == task_id)
     assert found["source"] == "knn"
+
+
+def test_two_tasks_in_one_repo_claim_when_the_policy_allows_it(paths) -> None:
+    _write_policy(
+        paths, POLICY.replace("global: 1", "global: 2").replace("per_repo: 1", "per_repo: 2")
+    )
+    first = _task(paths, "A")
+    second = _task(paths, "B")
+
+    result = Scheduler(paths, now=lambda: NOW).tick()
+
+    assert set(result.claimed) == {first, second}
+
+
+def test_a_tick_reserves_the_remaining_budget_across_claims(paths) -> None:
+    _write_policy(
+        paths,
+        POLICY.replace("global: 1", "global: 2").replace("per_repo: 1", "per_repo: 2")
+        + "budget:\n  daily_usd: 3.0\n  per_run_usd: 5.0\n",
+    )
+    first = _task(paths, "A")
+    second = _task(paths, "B")
+
+    result = Scheduler(paths, now=lambda: NOW).tick()
+
+    assert len(result.claimed) == 1
+    assert result.claimed[0] in {first, second}
+    other = second if result.claimed[0] == first else first
+    assert result.skipped[other] == "budget_exhausted"

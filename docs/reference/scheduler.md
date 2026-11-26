@@ -103,7 +103,12 @@ not on loopback is treated as remote and refused unless the policy sets
 - `reclaim_stale` removes an expired lease and appends `scheduler.reclaimed`.
 - One dispatcher per home: `state/dispatcher.lock`. A second tick in another process reports `busy`
   and claims nothing.
-- `global` and `per_repo` slots are counted from active leases.
+- `global` and `per_repo` slots are counted from active leases. `per_repo` is a count, not a
+  switch: `2` lets two tasks in one repository run in parallel, each in its own worktree. The default
+  is `1`; 1–3 is the recommended range, and `global` should not exceed the job pool (sized at startup
+  from `global`, clamped to 2–8).
+- A tick reserves the remaining budget claim by claim: each claim subtracts its `p90_usd`, so the same
+  dollars are never promised twice.
 
 ## Why a task waits
 
