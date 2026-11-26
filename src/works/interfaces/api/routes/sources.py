@@ -8,7 +8,9 @@ from typing import Any
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 
+from works.application.scheduling.triggers import request_dispatch
 from works.domain.errors import ConfigError
+from works.interfaces.api.clientaddr import is_remote
 from works.interfaces.api.jobs import JobContext
 from works.interfaces.api.security import require_write
 from works.interfaces.api.wiring import AppState
@@ -25,6 +27,8 @@ def _state(request: Request) -> AppState:
 @router.post("/sources", dependencies=[Depends(require_write)])
 def import_sources(request: Request, payload: dict[str, Any]) -> JSONResponse:
     state = _state(request)
+    wants_dispatch = bool(payload.pop("dispatch_on_import", False))
+    remote = is_remote(request)
     source = str(payload.get("source") or "").strip()
     if source not in SOURCES:
         raise ConfigError(f"unknown source {source!r}; expected github, jira or detector")
@@ -34,6 +38,12 @@ def import_sources(request: Request, payload: dict[str, Any]) -> JSONResponse:
 
         ctx.check()
         _, body = write.run_source(state.paths, payload, state.write_lock)
+        if wants_dispatch:
+            results = [
+                request_dispatch(state.paths, str(task_id), remote=remote).as_dict()
+                for task_id in body.get("tasks", [])
+            ]
+            body["scheduler"] = results
         return body
 
     job = state.jobs.submit("sources", run)

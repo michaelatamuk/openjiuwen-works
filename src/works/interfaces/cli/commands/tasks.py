@@ -6,9 +6,9 @@ import argparse
 import json
 from typing import TYPE_CHECKING
 
-from works.domain.errors import (
-    ConfigError,
-)
+from works.domain.errors import ConfigError
+from works.domain.records import TaskState
+from works.domain.state import TERMINAL
 from works.interfaces.cli.commands.common import _emit, _paths, _queue
 from works.interfaces.cli.render import table
 
@@ -107,7 +107,43 @@ def cmd_status(args: argparse.Namespace) -> int:
     return 0
 
 
+def _merge_task(args: argparse.Namespace) -> int:
+    into = str(args.merge_into or "").strip()
+    if not into:
+        raise ConfigError("--merge-into needs a target task id")
+    if into == args.task_id:
+        raise ConfigError("a task cannot be merged into itself")
+    paths = _paths(args)
+    from works.adapters import daemon as daemons
+
+    info = daemons.current_daemon(paths)
+    if info is not None:
+        from works.interfaces.cli.daemon_client import DaemonClient
+
+        body = DaemonClient(info).post(f"/tasks/{args.task_id}/merge", {"into": into})
+        if args.json:
+            _emit(body)
+        else:
+            print(f"merged {args.task_id} into {into}")
+        return 0
+    queue = _queue(args)
+    task = queue.load(args.task_id)
+    target = queue.load(into)
+    if target.state in TERMINAL:
+        raise ConfigError(f"cannot merge into {into}: it is {target.state.value}")
+    if task.state not in TERMINAL:
+        queue.append(args.task_id, "task.merged", {"into": into})
+        queue.transition(args.task_id, TaskState.BLOCKED)
+    if args.json:
+        _emit({"ok": True, "merged": args.task_id, "into": into})
+    else:
+        print(f"merged {args.task_id} into {into}")
+    return 0
+
+
 def cmd_task(args: argparse.Namespace) -> int:
+    if getattr(args, "merge_into", None):
+        return _merge_task(args)
     queue = _queue(args)
     task = queue.load(args.task_id)
     events = queue.events(args.task_id)

@@ -228,6 +228,10 @@ class Scheduler:
         with lease.dispatcher(self._paths) as held:
             if not held:
                 return TickResult(status="busy")
+            atomic_write(
+                self._paths.state / "dispatcher.json",
+                json.dumps({"owner": self._owner, "at": _iso(moment)}, sort_keys=True),
+            )
             reclaimed = lease.reclaim_stale(self._paths, self._queue, moment)
             planned = tick_plan(
                 self._queue.list_tasks(),
@@ -297,6 +301,20 @@ class Scheduler:
                 finally:
                     lease.release(self._paths, candidate.task.id, owner=self._owner)
             state = self._read_state()
+            previous = state.get("last_reasons")
+            last: dict[str, str] = (
+                {str(key): str(value) for key, value in previous.items()}
+                if isinstance(previous, dict)
+                else {}
+            )
+            for task_id, reason in result.skipped.items():
+                if last.get(task_id) != reason and self._queue.exists(task_id):
+                    self._queue.append(
+                        task_id,
+                        "scheduler.skipped",
+                        {"reason": reason, "owner": self._owner},
+                    )
+            state["last_reasons"] = dict(result.skipped)
             state["last_tick"] = _iso(moment)
             counters = state.get("counters")
             counts: dict[str, int] = (

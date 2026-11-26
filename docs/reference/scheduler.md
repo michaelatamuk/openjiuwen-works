@@ -65,6 +65,9 @@ Writes need the local bearer token; loopback reads follow the usual auth rules.
 
 ## In the daemon
 
+Each tick writes `state/dispatcher.json` with the owner and the timestamp, so a status call can show
+who is dispatching.
+
 A **writable** daemon starts the loop automatically: every `tick_seconds` it reloads the policy, and
 when the policy is enabled it claims tasks and submits each claim as the same run job the manual path
 uses. The lease is released when the job ends or when submission is refused. A broken policy or a
@@ -86,9 +89,9 @@ task is created and the response carries `scheduler: {"requested": false, "reaso
 reason (`disabled`, `remote_trigger`, `manual_not_allowed`, `not_allowlisted`, `flow_not_allowed`,
 `budget_exhausted`).
 
-A client that is not on loopback is treated as remote and refused unless the policy sets
-`allow.remote_triggers: true`. The `/sources` import path does not take the flag yet; its tasks are
-found by the periodic tick like any other.
+`POST /api/v1/sources` takes the same flag and records one result per created task. A client that is
+not on loopback is treated as remote and refused unless the policy sets
+`allow.remote_triggers: true`.
 
 ## Leases and slots
 
@@ -105,12 +108,23 @@ Every refusal has a typed code, visible in `status` and `tick`:
 
 `disabled`, `paused`, `not_runnable`, `not_allowlisted`, `missing_label`, `denied_label`,
 `manual_not_allowed`, `flow_not_allowed`, `stale`, `waiting_on_event`, `attempts_exhausted`,
-`backoff`, `risk_too_high`, `repo_busy`, `global_busy`, `budget_exhausted`, `run_budget_cap`,
-`system_busy`, `interactive_load`, `low_disk`, `provider_degraded`, `attention_full`, `blackout`.
+`backoff`, `risk_too_high`, `stale_approval`, `repo_busy`, `global_busy`, `budget_exhausted`,
+`run_budget_cap`, `system_busy`, `interactive_load`, `low_disk`, `provider_degraded`,
+`attention_full`, `blackout`. A reason is written to the task as `scheduler.skipped` **when it
+changes**, not on every tick.
 
 `stale_approval` is emitted when a plan approval expired or no longer matches the latest plan hash;
 release approvals are checked for expiry (the release hash check lands with M21.5). `remote_trigger`
 still waits for the import path (M21.7).
+
+## Merging duplicates
+
+```bash
+works task <duplicate> --merge-into <target>
+```
+
+It records `task.merged` and blocks the duplicate, locally or through the daemon; the target must not
+be terminal. History is never deleted.
 
 ## Estimates
 

@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 from works.application.scheduling.triggers import request_dispatch
 from works.domain.errors import NotFoundError
 from works.interfaces.api import read, write
+from works.interfaces.api.clientaddr import is_remote
 from works.interfaces.api.schemas.tasks import RunList, TaskDetail, TaskList
 from works.interfaces.api.security import require_write
 from works.interfaces.api.wiring import AppState
@@ -28,14 +29,6 @@ def list_tasks(request: Request, limit: int = Query(default=200, ge=1, le=1000))
     return TaskList.model_validate(payload)
 
 
-LOOPBACK = frozenset({"127.0.0.1", "::1", "localhost"})
-
-
-def _remote(request: Request) -> bool:
-    client = request.client
-    return client is None or client.host not in LOOPBACK
-
-
 @router.post("/tasks", dependencies=[Depends(require_write)])
 def create_task(request: Request, payload: dict[str, Any]) -> JSONResponse:
     state = _state(request)
@@ -44,7 +37,7 @@ def create_task(request: Request, payload: dict[str, Any]) -> JSONResponse:
     if wants_dispatch:
         task = body.get("task")
         task_id = str(task.get("id") if isinstance(task, dict) else "")
-        result = request_dispatch(state.paths, task_id, remote=_remote(request))
+        result = request_dispatch(state.paths, task_id, remote=is_remote(request))
         body["scheduler"] = result.as_dict()
     return JSONResponse(status_code=int(status), content=body)
 

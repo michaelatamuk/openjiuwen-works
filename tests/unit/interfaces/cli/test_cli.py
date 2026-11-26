@@ -393,3 +393,16 @@ def test_import_hardening_drops_the_working_directory() -> None:
         assert "" not in sys.path
     finally:
         sys.path[:] = saved
+
+
+def test_task_merge_blocks_the_duplicate(paths, repo) -> None:
+    first = payload(invoke(paths, "submit", "--ref", "GH-1", "--repo", str(repo.path), "--json"))
+    second = payload(invoke(paths, "submit", "--ref", "GH-2", "--repo", str(repo.path), "--json"))
+    target = first["task"]["id"]
+    duplicate = second["task"]["id"]
+
+    result = invoke(paths, "task", duplicate, "--merge-into", target, "--json")
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert payload(result)["merged"] == duplicate
+    assert Queue(paths).load(duplicate).state is TaskState.BLOCKED

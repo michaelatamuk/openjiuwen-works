@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import UTC, datetime, timedelta
 
 from works.adapters.queue.store import Queue
@@ -249,3 +250,25 @@ queue:
     second = Scheduler(paths, now=lambda: NOW).tick(execute=execute)
     assert task_id not in second.claimed
     assert second.skipped[task_id] == "attempts_exhausted"
+
+
+def test_a_skip_is_recorded_once_per_reason(paths) -> None:
+    _write_policy(paths)
+    task_id = _task(paths)
+    Queue(paths).transition(task_id, TaskState.REPRODUCING)
+    scheduler = Scheduler(paths, now=lambda: NOW)
+
+    scheduler.tick()
+    scheduler.tick()
+
+    skipped = [event for event in Queue(paths).events(task_id) if event.type == "scheduler.skipped"]
+    assert len(skipped) == 1
+    assert skipped[0].data["reason"] == "not_runnable"
+
+
+def test_a_tick_writes_a_dispatcher_heartbeat(paths) -> None:
+    _write_policy(paths)
+    Scheduler(paths, now=lambda: NOW).tick()
+
+    payload = json.loads((paths.state / "dispatcher.json").read_text(encoding="utf-8"))
+    assert str(payload["owner"]).startswith("scheduler:")

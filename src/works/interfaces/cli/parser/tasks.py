@@ -43,6 +43,11 @@ def add_tasks_commands(sub: argparse._SubParsersAction[argparse.ArgumentParser])
     status.set_defaults(func=cmd_status)
 
     task = sub.add_parser("task", help="Print the task projection")
+    task.add_argument(
+        "--merge-into",
+        default=None,
+        help="Merge this duplicate into the given task and block it",
+    )
     task.add_argument("task_id")
     task.add_argument("--json", action="store_true")
     task.set_defaults(func=cmd_task)
