@@ -18,10 +18,6 @@ and writes the proof; people make the two decisions that matter.
 
 > Works carries a change through proof, review and release.
 
-<div align="center">
-  <img src="docs/ui/story.png" alt="One task from report to release: the story, the checks and the proof, with the release gate ready for a person" width="100%" />
-</div>
-
 ## What it does
 
 - **Reproduces the problem** on the current code before anything changes.
@@ -35,14 +31,14 @@ and writes the proof; people make the two decisions that matter.
 The difference is in the binding: the proof is tied to the commit and re-verified at release, and the
 checks are read from the base commit, so the change cannot edit its judge.
 
-## The proof is a page, not a claim
+## One screen, the whole task
 
 <div align="center">
-  <img src="docs/ui/evidence.png" alt="The evidence page: the ten steps, policy, risk, the decision, residual risk, cost and run metadata" width="100%" />
+  <img src="docs/ui/story.png" alt="One task from report to release: the route, the checks and the next step, with the release gate ready for a person" width="100%" />
 </div>
 
-This is a deterministic run, so the model cost is zero; a live run adds tokens, USD and the model. The
-page and its bindings are the same. [Watch the 90-second film](docs/video/openjiuwen-works-two-mondays.mp4).
+The report, the route, the checks and the next step are in one place; the proof is one click away.
+[Watch the 90-second film](docs/video/openjiuwen-works-two-mondays.mp4).
 
 ## Two decisions stay with people
 
