@@ -20,6 +20,7 @@ from works.domain.records import (
     TaskState,
     Verdict,
 )
+from works.domain.review import SpecialistReview
 from works.domain.risk import RiskRating
 
 MAX_DIFF_CHARS = 60_000
@@ -117,6 +118,7 @@ class Evidence(BaseModel):
     policy: PolicyReport = Field(default_factory=lambda: PolicyReport(ok=True))
     risk: RiskRating | None = None
     advisory: AdvisoryRef | None = None
+    specialists: list[SpecialistReview] = Field(default_factory=list)
     decision: GateVerdict | None = None
     reproduce: CommandRecord | None = None
     test: CommandRecord | None = None
@@ -148,6 +150,9 @@ class Evidence(BaseModel):
         if self.advisory is None:
             # And for every proof written before advisories existed.
             exclude.add("advisory")
+        if not self.specialists:
+            # And for every proof written before specialist reviews existed.
+            exclude.add("specialists")
         if not any(
             (
                 self.plan_id,

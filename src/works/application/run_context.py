@@ -25,6 +25,7 @@ from works.domain.records import (
     TaskState,
     Verdict,
 )
+from works.domain.review import SpecialistReview
 from works.domain.risk import RiskRating
 
 
@@ -55,6 +56,7 @@ class RunContext:
     proposal: Proposal | None = None
     verdict: Verdict | None = None
     challenge: Challenge | None = None
+    specialists: list[SpecialistReview] = field(default_factory=list)
     policy: PolicyReport = field(default_factory=lambda: PolicyReport(ok=True))
     risk: RiskRating | None = None
     decisions: list[GateVerdict] = field(default_factory=list)

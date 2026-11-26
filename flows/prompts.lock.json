@@ -28,6 +28,32 @@
       ]
     },
     {
+      "name": "fix-issue/prompts/data.md",
+      "path": "flows/fix-issue/prompts/data.md",
+      "sha256": "5ef9e530be2843e6a9f8e3dbd6a322e9e729550d56421d77f56fb753a64d6d80",
+      "owner": "platform",
+      "changelog": [
+        {
+          "version": 1,
+          "date": "2026-11-25",
+          "note": "initial registry; hash matches the prompt as shipped"
+        }
+      ]
+    },
+    {
+      "name": "fix-issue/prompts/performance.md",
+      "path": "flows/fix-issue/prompts/performance.md",
+      "sha256": "d8935e62a16da2bb094c422d044077c38a6dc6afe50cbef90d2689c00207814b",
+      "owner": "platform",
+      "changelog": [
+        {
+          "version": 1,
+          "date": "2026-11-25",
+          "note": "initial registry; hash matches the prompt as shipped"
+        }
+      ]
+    },
+    {
       "name": "fix-issue/prompts/plan-critique.md",
       "path": "flows/fix-issue/prompts/plan-critique.md",
       "sha256": "f22b7ea3d0274050886af9218a7bcb9e9f81650c76acbdb97a5d8f8d833e416b",
@@ -57,6 +83,19 @@
       "name": "fix-issue/prompts/plan.md",
       "path": "flows/fix-issue/prompts/plan.md",
       "sha256": "1200d627b2dc369bd1b406825f820e2c0d658c065bcfabd54d28eec8288eb18f",
+      "owner": "platform",
+      "changelog": [
+        {
+          "version": 1,
+          "date": "2026-11-25",
+          "note": "initial registry; hash matches the prompt as shipped"
+        }
+      ]
+    },
+    {
+      "name": "fix-issue/prompts/security.md",
+      "path": "flows/fix-issue/prompts/security.md",
+      "sha256": "8e5c3020ed8398c17b8acd205d6fc55e08234a178ac862a334b5947df9eb659a",
       "owner": "platform",
       "changelog": [
         {

@@ -124,6 +124,15 @@ def render_summary(evidence: Evidence) -> str:
             + "."
         )
 
+    if evidence.specialists:
+        lines.append(
+            "Specialist reviews: "
+            + ", ".join(
+                f"{item.area} {'allow' if item.allow else 'block'}" for item in evidence.specialists
+            )
+            + "."
+        )
+
     lines.extend(["", "## What was not tested", ""])
     if evidence.not_tested:
         lines.extend(f"- {_clean(item)}" for item in evidence.not_tested)

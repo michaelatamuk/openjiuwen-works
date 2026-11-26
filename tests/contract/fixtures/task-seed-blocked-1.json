@@ -172,6 +172,7 @@
     "schema_version": 1,
     "skipped_checks": [],
     "source": "manual:SEED-BLOCKED-1",
+    "specialists": [],
     "state": "blocked",
     "stop_reason": "verdict_failed",
     "summary": "",

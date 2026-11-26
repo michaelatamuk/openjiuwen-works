@@ -203,6 +203,15 @@ def render_markdown(evidence: Evidence) -> str:
             f"prompt `{evidence.challenge.prompt_sha256 or '—'}`.",
             "",
         ]
+    if evidence.specialists:
+        lines += ["## Specialist reviews", ""]
+        for review in evidence.specialists:
+            decision = "ALLOW" if review.allow else "BLOCK"
+            lines += [
+                f"**{_cell(review.area)} · {decision}** — {_cell(review.reason or 'no reason')}."
+            ]
+            lines += [f"- {_cell(item)}" for item in review.concerns]
+            lines.append("")
     lines += ["## Residual risk", ""]
     if evidence.not_tested:
         lines += [f"- Not tested: `{_cell(item)}`" for item in evidence.not_tested]

@@ -346,6 +346,14 @@ class Supervisor:
     async def _challenge(self, ctx: RunContext, proposal: Proposal) -> Challenge:
         return await verification._challenge(self, ctx, proposal)
 
+    async def _specialists(
+        self, ctx: RunContext, proposal: Proposal, challenge: Challenge
+    ) -> Challenge:
+        return await verification._specialists(self, ctx, proposal, challenge)
+
+    def _record_challenge(self, ctx: RunContext, challenge: Challenge) -> None:
+        verification.record_challenge(self, ctx, challenge)
+
     async def _judge(self, ctx: RunContext) -> Verdict:
         return await verification._judge(self, ctx)
 

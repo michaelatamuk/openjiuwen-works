@@ -30,12 +30,14 @@ class Trace(BaseModel):
     challenge_allow: bool = True
     challenge_reason: str = "fixture challenge passed"
     challenge_concerns: list[str] = Field(default_factory=list)
+    specialists: dict[str, bool] = Field(default_factory=dict)
 
 
 class FakeHarness:
     """Deterministic by construction: same trace, same proposal, no live call."""
 
     name = "fake"
+    supports_reviews = True
 
     def __init__(self, trace_path: Path) -> None:
         self._trace_path = trace_path
@@ -90,6 +92,18 @@ class FakeHarness:
 
     async def challenge(self, request: ProposalRequest, proposal: Proposal) -> Challenge:
         await asyncio.sleep(0)
+        if request.review is not None:
+            area = request.review.area
+            return Challenge(
+                allow=self._trace.specialists.get(area, True),
+                reason=f"fixture {area} review",
+                concerns=[],
+                model=self._trace.model,
+                provider=self._trace.provider,
+                version=self._trace.version,
+                tokens=0,
+                usd=0.0,
+            )
         return Challenge(
             allow=self._trace.challenge_allow,
             reason=self._trace.challenge_reason,

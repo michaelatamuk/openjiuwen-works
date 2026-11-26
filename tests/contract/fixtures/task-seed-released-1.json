@@ -238,6 +238,7 @@
     "schema_version": 1,
     "skipped_checks": [],
     "source": "manual:SEED-RELEASED-1",
+    "specialists": [],
     "state": "proved",
     "stop_reason": "completed",
     "summary": "",

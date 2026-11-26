@@ -444,6 +444,8 @@ async def _verify(
         challenge_node = flow.node("challenge")
         if challenge_node.mode is not GateMode.OFF:
             challenge = await sup._challenge(ctx, proposal)
+            challenge = await sup._specialists(ctx, proposal, challenge)
+            sup._record_challenge(ctx, challenge)
             ctx.challenge = challenge
             if not challenge.allow:
                 if challenge_node.mode is GateMode.OBSERVE:

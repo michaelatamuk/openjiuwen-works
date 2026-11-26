@@ -106,6 +106,22 @@ class RiskSpec(BaseModel):
     owners: dict[str, list[str]] = Field(default_factory=dict)
 
 
+class ReviewSpec(BaseModel):
+    """Which specialist reviewers run on which paths; off by default."""
+
+    mode: GateMode = GateMode.OFF
+    specialists: dict[str, list[str]] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def _check(self) -> ReviewSpec:
+        unknown = set(self.specialists) - {"security", "performance", "data"}
+        if unknown:
+            raise ValueError(f"unknown specialist area(s): {', '.join(sorted(unknown))}")
+        if self.mode is not GateMode.OFF and not self.specialists:
+            raise ValueError("a review mode needs at least one specialist")
+        return self
+
+
 class FlowSpec(BaseModel):
     schema_version: int = 1
     flow: str
@@ -118,6 +134,7 @@ class FlowSpec(BaseModel):
     gates: list[Gate] = Field(default_factory=list)
     mode: GateMode = GateMode.ENFORCE
     risk: RiskSpec = Field(default_factory=RiskSpec)
+    review: ReviewSpec = Field(default_factory=ReviewSpec)
 
     @model_validator(mode="after")
     def _check_graph(self) -> FlowSpec:

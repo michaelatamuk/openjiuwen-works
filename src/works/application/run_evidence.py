@@ -44,8 +44,10 @@ def totals(ctx: RunContext) -> RunTotals:
     proposal = ctx.proposal
     builder_tokens = proposal.tokens if proposal else 0
     builder_usd = proposal.usd if proposal else 0.0
-    verifier_tokens = ctx.challenge.tokens if ctx.challenge else 0
-    verifier_usd = ctx.challenge.usd if ctx.challenge else 0.0
+    specialist_tokens = sum(item.tokens for item in ctx.specialists)
+    specialist_usd = sum(item.usd for item in ctx.specialists)
+    verifier_tokens = (ctx.challenge.tokens if ctx.challenge else 0) + specialist_tokens
+    verifier_usd = (ctx.challenge.usd if ctx.challenge else 0.0) + specialist_usd
     tokens = builder_tokens + verifier_tokens
     usd = builder_usd + verifier_usd
     return RunTotals(
@@ -131,6 +133,16 @@ def _model_calls(ctx: RunContext) -> list[ModelCall]:
                 version=challenge.version,
                 tokens=challenge.tokens,
                 usd=challenge.usd,
+            )
+        )
+    for review in ctx.specialists:
+        calls.append(
+            ModelCall(
+                stage=f"review:{review.area}",
+                provider=review.provider,
+                model=review.model,
+                tokens=review.tokens,
+                usd=review.usd,
             )
         )
     return calls
@@ -251,6 +263,7 @@ def build_evidence(
         memory_recall=ctx.memory_recall,
         verdict=ctx.verdict,
         challenge=ctx.challenge,
+        specialists=ctx.specialists,
         findings=findings,
         would_block=ctx.would_block,
         diff=diff,

@@ -117,6 +117,7 @@ export type EvidencePayload = {
   memory_recall?: unknown[];
   findings?: EvidenceFinding[];
   challenge?: EvidenceChallenge | null;
+  specialists?: { area?: string; allow?: boolean; reason?: string; concerns?: string[] }[];
   verdict?: EvidenceVerdict | null;
   baseline_exit?: number | null;
   baseline_output_sha256?: string | null;
@@ -414,6 +415,23 @@ export function Evidence({ detail, onShowRun, onAction, onLightbox, onOpenEvent 
         <VerdictCard evidence={evidence} />
         <Findings findings={evidence?.findings} />
         <ChallengeCard challenge={evidence?.challenge} />
+        {evidence?.specialists?.length ? (
+          <Card
+            title="Specialist reviews"
+            actions={<Pill>{evidence.specialists.length}</Pill>}
+          >
+            <ul className="bullets">
+              {evidence.specialists.map((item) => (
+                <li key={item.area}>
+                  <Pill tone={item.allow === false ? "red" : "green"}>
+                    {item.area}
+                  </Pill>{" "}
+                  {item.reason || (item.allow === false ? "blocked" : "allowed")}
+                </li>
+              ))}
+            </ul>
+          </Card>
+        ) : null}
         <Commands evidence={evidence} />
         <ReproductionCard evidence={evidence} onAction={onAction} />
         <Change evidence={evidence} />

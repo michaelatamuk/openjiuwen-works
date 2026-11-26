@@ -180,6 +180,7 @@
     "schema_version": 1,
     "skipped_checks": [],
     "source": "manual:SEED-PROVED-1",
+    "specialists": [],
     "state": "proved",
     "stop_reason": "completed",
     "summary": "",

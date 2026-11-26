@@ -76,6 +76,7 @@ class SwarmHarness:
     timeout_s: int = 1800
     env: dict[str, str] = field(default_factory=dict)
     name: str = "jiuwenswarm"
+    supports_reviews: bool = False
 
     def diagnostic(self) -> SwarmDiagnostic:
         return preflight(

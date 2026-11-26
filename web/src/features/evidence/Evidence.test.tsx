@@ -132,3 +132,32 @@ describe("Evidence advisory", () => {
     expect(screen.getByText(/demo-pkg/)).toBeInTheDocument();
   });
 });
+
+
+describe("Evidence specialist reviews", () => {
+  it("shows each specialist and its verdict", () => {
+    const detail = {
+      ...provedDetail,
+      evidence: {
+        ...provedDetail.evidence,
+        specialists: [
+          { area: "security", allow: false, reason: "the token is logged" },
+          { area: "performance", allow: true, reason: "no new hot path" },
+        ],
+      },
+    };
+    render(
+      <Evidence
+        detail={detail}
+        onShowRun={vi.fn()}
+        onAction={vi.fn()}
+        onLightbox={vi.fn()}
+        onOpenEvent={vi.fn()}
+        onToast={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Specialist reviews")).toBeInTheDocument();
+    expect(screen.getByText("security")).toBeInTheDocument();
+    expect(screen.getByText("the token is logged")).toBeInTheDocument();
+  });
+});

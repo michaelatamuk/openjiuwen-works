@@ -10,6 +10,14 @@ from pydantic import BaseModel, Field
 from works.domain.records import Challenge
 
 
+class ReviewRequest(BaseModel):
+    """A specialist's slice of the same change."""
+
+    area: str
+    focus: list[str] = Field(default_factory=list)
+    mode: str = "observe"
+
+
 class ProposalRequest(BaseModel):
     task_id: str
     source_ref: str
@@ -17,6 +25,7 @@ class ProposalRequest(BaseModel):
     worktree: Path
     base_commit: str
     plan: dict[str, Any] = Field(default_factory=dict)
+    review: ReviewRequest | None = None
 
 
 class Proposal(BaseModel):
@@ -39,6 +48,7 @@ class Proposal(BaseModel):
 @runtime_checkable
 class Harness(Protocol):
     name: str
+    supports_reviews: bool
 
     async def propose(self, request: ProposalRequest) -> Proposal: ...
 

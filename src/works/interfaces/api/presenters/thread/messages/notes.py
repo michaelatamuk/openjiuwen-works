@@ -126,6 +126,20 @@ def _reporter_replied(event: Event, task: Task) -> Fields:
     }
 
 
+def _specialist_reviewed(event: Event, task: Task) -> Fields:
+    data = event.data
+    area = str(data.get("area") or "specialist")
+    allow = bool(data.get("allow"))
+    concerns = [str(item) for item in data.get("concerns") or []]
+    return {
+        "role": "verifier",
+        "title": f"{area.capitalize()} review {'allowed' if allow else 'blocked'}",
+        "body": str(data.get("reason") or "No reason recorded."),
+        "facts": [f"{len(concerns)} concern(s)", f"model {data.get('model') or '-'}"],
+        "tone": "ok" if allow else "bad",
+    }
+
+
 def _wait(event: Event, task: Task) -> Fields:
     data = event.data
     return {

@@ -6,7 +6,7 @@ import asyncio
 import os
 from typing import TYPE_CHECKING
 
-from works.adapters.harness.base import Proposal, ProposalRequest
+from works.adapters.harness.base import Proposal, ProposalRequest, ReviewRequest
 from works.application.approvals.decisions import (
     GateContext,
     GateVerdict,
@@ -21,14 +21,15 @@ from works.domain.errors import (
     HarnessError,
     StateError,
 )
-from works.domain.flow import GateMode
-from works.domain.policy import paths_from_patch
+from works.domain.flow import FlowSpec, GateMode
+from works.domain.policy import matches, paths_from_patch
 from works.domain.records import (
     Challenge,
     ScenarioOutcome,
     StopReason,
     Verdict,
 )
+from works.domain.review import SpecialistReview
 from works.domain.risk import RiskLevel
 
 if TYPE_CHECKING:
@@ -89,7 +90,10 @@ async def _challenge(sup: Supervisor, ctx: RunContext, proposal: Proposal) -> Ch
         base_commit=base_commit,
         plan=ctx.plan,
     )
-    challenge = await sup._harness.challenge(request, proposal)
+    return await sup._harness.challenge(request, proposal)
+
+
+def record_challenge(sup: Supervisor, ctx: RunContext, challenge: Challenge) -> None:
     (ctx.run_dir / "challenge.json").write_text(
         challenge.model_dump_json(indent=2) + "\n", encoding="utf-8", newline="\n"
     )
@@ -98,6 +102,90 @@ async def _challenge(sup: Supervisor, ctx: RunContext, proposal: Proposal) -> Ch
         "challenge.decided",
         challenge.model_dump(mode="json"),
     )
+
+
+def specialists_for(flow: FlowSpec, paths: list[str]) -> list[tuple[str, list[str]]]:
+    """The configured specialists whose paths this change actually touches."""
+    if flow.review.mode is GateMode.OFF:
+        return []
+    selected: list[tuple[str, list[str]]] = []
+    for area, patterns in flow.review.specialists.items():
+        hits = sorted({path for path in paths if matches(path, patterns)})
+        if hits:
+            selected.append((area, hits))
+    return selected
+
+
+async def _specialists(
+    sup: Supervisor, ctx: RunContext, proposal: Proposal, challenge: Challenge
+) -> Challenge:
+    paths = proposal.touched_paths or paths_from_patch(proposal.patch)
+    selected = specialists_for(ctx.flow, paths)
+    if not selected:
+        return challenge
+    harness = sup._harness
+    if harness is None:
+        raise ConfigError("specialist reviews need a harness")
+    if not getattr(harness, "supports_reviews", False):
+        raise ConfigError("the configured harness does not support specialist reviews")
+    worktree = _required(ctx.worktree, "worktree")
+    base_commit = _required(ctx.base_commit, "base commit")
+    mode = ctx.flow.review.mode
+
+    async def one(area: str, focus: list[str]) -> SpecialistReview:
+        request = ProposalRequest(
+            task_id=ctx.task.id,
+            source_ref=ctx.task.source.ref,
+            title=ctx.task.source.title,
+            worktree=worktree,
+            base_commit=base_commit,
+            plan=ctx.plan,
+            review=ReviewRequest(area=area, focus=focus, mode=mode.value),
+        )
+        try:
+            verdict = await harness.challenge(request, proposal)
+        except HarnessError as exc:
+            return SpecialistReview(
+                area=area,
+                allow=False,
+                reason=f"reviewer could not run: {exc}",
+            )
+        return SpecialistReview(
+            area=area,
+            allow=verdict.allow,
+            reason=verdict.reason,
+            concerns=list(verdict.concerns),
+            model=verdict.model,
+            provider=verdict.provider,
+            tokens=verdict.tokens,
+            usd=verdict.usd,
+            prompt_sha256=verdict.prompt_sha256,
+        )
+
+    reviews = list(await asyncio.gather(*(one(area, focus) for area, focus in selected)))
+    ctx.specialists = reviews
+    (ctx.run_dir / "specialists.json").write_text(
+        "\n".join(review.model_dump_json(indent=2) for review in reviews) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    for review in reviews:
+        sup._queue.append(ctx.task.id, "specialist.reviewed", review.model_dump(mode="json"))
+    if mode is GateMode.ENFORCE:
+        blocked = [review for review in reviews if not review.allow]
+        if blocked:
+            reason = "; ".join(f"{item.area}: {item.reason}" for item in blocked)
+            concerns = [
+                *challenge.concerns,
+                *(f"{item.area}: {text}" for item in blocked for text in item.concerns),
+            ]
+            challenge = challenge.model_copy(
+                update={
+                    "allow": False,
+                    "reason": f"specialist blocked ? {reason}",
+                    "concerns": concerns,
+                }
+            )
     return challenge
 
 

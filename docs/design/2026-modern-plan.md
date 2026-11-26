@@ -748,6 +748,35 @@ decisions, reopens, CVE work, escapes and stop reasons. It is read-only, local a
 
 **Estimate:** ~1 day (~1.5 with contingency).
 
+### M27 — Specialist verifiers (done)
+
+**Prevents:** one generalist reviewer being asked to catch security, performance and data regressions
+at once.
+
+The design is `docs/design/2026-m27-specialists.md`; the reference is `docs/reference/specialists.md`.
+A flow names specialists and their paths; each runs as a separate harness turn on the same worktree,
+with its own prompt and prompt hash.
+
+- [x] **M27.1** `review.mode: off|observe|enforce` and `review.specialists` per flow; off by default,
+  unknown areas and an empty enforce set are config errors.
+- [x] **M27.2** Selection is a pure function over touched paths; a specialist with no matched path is
+  not called and costs nothing.
+- [x] **M27.3** `ReviewRequest(area, focus, mode)` travels through the existing challenge contract;
+  `security`, `performance` and `data` prompts are registered like every other prompt.
+- [x] **M27.4** Observe records the reviews; enforce turns a block into a challenge block naming the
+  area and its concerns. Each review is an event and `specialists.json`; tokens and USD land in the
+  verifier totals.
+- [x] **M27.5** `Evidence.specialists` is bound into the proof, rendered as its own section and in the
+  summary, shown in the UI and the thread; old proofs keep their hash. A harness without reviews is a
+  config error.
+- [x] **M27.6** Docs and acceptance cover selection, observe/enforce, the config errors, evidence,
+  the fake harness and the UI.
+
+**Not in scope:** specialist debate or cross-review, automatic repair from a concern, extra tool
+access, per-specialist providers beyond the harness.
+
+**Estimate:** ~4 days (~5 with contingency).
+
 ## 4. Sequencing and gates
 
 ### Phase 0 — Land the safety floor (week 1)
@@ -794,8 +823,8 @@ M11 12 + M12 14 = **69 engineer-days**, **~83 with 20% contingency** — 13–16
 
 **Beyond that scope:** M13–M20 (stages 3–10) were delivered as separate passes and are not re-estimated
 here. The remaining planned work is M21 **~27 days (~32)**, M22 **~11 days (~13)**, M23 **~13 days
-(~15)**, M24 **~3 days (~4)** and M25 **~4 days (~5)** and M26 **~1 day (~1.5)**, which is where the queue, the scheduler, the
-estimates and decision support live.
+(~15)**, M24 **~3 days (~4)** and M25 **~4 days (~5)** and M26 **~1 day (~1.5)** and M27 **~4 days (~5)**, which is
+where the queue, the scheduler, the estimates, decision support and specialists live.
 
 ## 5. Acceptance metrics
 

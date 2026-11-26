@@ -37,7 +37,7 @@ from works.adapters.harness.openjiuwen.providers import (
 )
 from works.adapters.harness.usage import UsageTotals
 from works.adapters.harness.version import package_version
-from works.application.prompts import DEFAULT_PROMPT, load_prompt
+from works.application.prompts import DEFAULT_PROMPT, Prompt, load_prompt
 from works.domain.errors import ConfigError, HarnessError
 from works.domain.records import Challenge
 
@@ -58,6 +58,7 @@ class LiveHarness:
     """Run one real agent turn per proposal. No fallback to a fake result."""
 
     name = "openjiuwen"
+    supports_reviews = True
 
     def __init__(
         self,
@@ -75,6 +76,7 @@ class LiveHarness:
         timeout_s: int = 600,
         prompt_path: Path | None = None,
         challenge_prompt_path: Path | None = None,
+        prompts_dir: Path | None = None,
         harness_factory: Callable[[Path], Any] | None = None,
     ) -> None:
         self._model = model or default_model()
@@ -107,6 +109,10 @@ class LiveHarness:
             if challenge_prompt_path is not None and challenge_prompt_path.exists()
             else None
         )
+        self._prompts_dir = prompts_dir or (
+            challenge_prompt_path.parent if challenge_prompt_path is not None else None
+        )
+        self._specialist_prompts: dict[str, Prompt] = {}
         self._factory = harness_factory
 
     @property
@@ -237,8 +243,22 @@ class LiveHarness:
             notes=[answer] if answer else [],
         )
 
+    def _prompt_for_review(self, area: str) -> Prompt:
+        if area not in self._specialist_prompts:
+            if self._prompts_dir is None:
+                raise ConfigError(f"no prompts directory for the {area} reviewer")
+            path = self._prompts_dir / f"{area}.md"
+            if not path.exists():
+                raise ConfigError(f"no prompt for the {area} reviewer: {path}")
+            self._specialist_prompts[area] = load_prompt(path, name=area)
+        return self._specialist_prompts[area]
+
     async def challenge(self, request: ProposalRequest, proposal: Proposal) -> Challenge:
-        if self._challenge_prompt is None:
+        review = request.review
+        prompt_template = (
+            self._prompt_for_review(review.area) if review is not None else self._challenge_prompt
+        )
+        if prompt_template is None:
             raise ConfigError("the flow asks for a challenge but no challenge prompt is configured")
         repo = GitRepo(request.worktree)
         root = Path(tempfile.mkdtemp(prefix="works-challenge-"))
@@ -259,7 +279,10 @@ class LiveHarness:
                 context,
                 cwd=str(target),
                 system_prompt=(
-                    "You are an independent reviewer. Never edit files. "
+                    f"You are an independent {review.area} reviewer. Never edit files. "
+                    "Return only the JSON object the user asks for."
+                    if review is not None
+                    else "You are an independent reviewer. Never edit files. "
                     "Return only the JSON object the user asks for."
                 ),
             )
@@ -269,10 +292,12 @@ class LiveHarness:
                 else self._make_harness(target, verifier=True)
             )
             await harness.start(context)
-            prompt = self._challenge_prompt.render(
+            prompt = prompt_template.render(
                 worktree=str(target),
                 ref=request.source_ref,
                 title=request.title.strip() or request.source_ref,
+                area=review.area if review is not None else "",
+                focus=", ".join(review.focus) if review is not None else "",
             )
             receipt = await harness.send(input_type(content=prompt))
             async with asyncio.timeout(self._timeout_s):
@@ -292,7 +317,7 @@ class LiveHarness:
                 provider=self.verifier_provider,
                 version=self.version,
                 credential_split=self.credential_split,
-                prompt_sha256=self._challenge_prompt.sha256,
+                prompt_sha256=prompt_template.sha256,
             )
         finally:
             if harness is not None:
@@ -319,7 +344,7 @@ class LiveHarness:
                 credential_split=self.credential_split,
                 tokens=tokens,
                 usd=usd,
-                prompt_sha256=self._challenge_prompt.sha256,
+                prompt_sha256=prompt_template.sha256,
             )
         return parse_challenge(
             text,
@@ -329,7 +354,7 @@ class LiveHarness:
             provider=self.verifier_provider,
             version=self.version,
             credential_split=self.credential_split,
-            prompt_sha256=self._challenge_prompt.sha256,
+            prompt_sha256=prompt_template.sha256,
         )
 
     @staticmethod
