@@ -38,7 +38,7 @@ checks are read from the base commit, so the change cannot edit its judge.
 </div>
 
 The report, the route, the checks and the next step are in one place; the proof is one click away.
-[Watch the 90-second film](docs/video/openjiuwen-works-two-mondays.mp4).
+[Watch the 45-second film](docs/video/openjiuwen-works-two-mondays.mp4).
 
 ## Two decisions stay with people
 
