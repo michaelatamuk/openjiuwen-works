@@ -154,6 +154,17 @@ Three narrow contracts, not a merge:
 3. **"Fix and prove" is a tool.** An agent in Orbit calls Works and gets the proof and release state
    back into the room (`evidence`, `release` over MCP).
 
+### "Won't Orbit just do all this?"
+
+Technically, yes. It would have to add the change contract — queue and leases, plan gate, builder
+abstraction and worktree, policy, independent verifier, evidence and proof binding, release gate,
+delivery and confirmation — and it would become a vertical software-delivery product. If every room
+gets it, Orbit stops being generic. If one room type gets it, that is a separate product inside
+Orbit, with its own team, roadmap, support and liability. That is Works.
+
+The site office can hire the crew and the inspector, but then it is the delivery company. That is a
+different business, not a feature of the office.
+
 ### Why the merge fails
 
 > "Orbit should absorb the factory."

@@ -40,6 +40,17 @@ it becomes a different product for a different buyer.
 Source: `03-comparisons.md`, `docs/design/strategy/competitor-analysis.md`,
 `docs/archive/reviews/review-4-factories.md`.
 
+## "Won't Orbit just do all this?"
+
+Technically, yes. It would need the change contract: queue and leases, plan gate, builder abstraction
+and worktree, policy, independent verifier, evidence and proof binding, release gate, delivery and
+confirmation. Then it would be a vertical software-delivery product. If every room gets it, Orbit
+stops being generic; if one room type gets it, that is a separate product inside Orbit — Works, with
+its own team, roadmap and liability. The site office can hire the crew and the inspector, but then it
+is the delivery company.
+
+Source: `03-works-vs.md`, `09-explaining.md`.
+
 ## "Why not Jira + GitHub Actions + an agent?"
 
 The tracker holds state, CI runs checks, the agent writes code. None of them owns the plan decision,

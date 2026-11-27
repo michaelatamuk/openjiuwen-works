@@ -104,6 +104,29 @@ The integration is three narrow contracts, not a merge:
 
 Two products, one front door.
 
+## "Won't Orbit just do all this?"
+
+Technically, yes. There is no magic in the lifecycle; Orbit could add it. The question is what it
+would have to become.
+
+| Orbit already has | What the change contract adds | What Orbit becomes |
+|---|---|---|
+| rooms, people, tasks, connectors, memory, routing, agent runtimes, approvals inside a conversation | a durable change queue with budgets and leases; a plan artefact with a hash; a plan gate; a builder abstraction with a worktree; policy over touched paths; trusted-base checks; an independent verifier; an evidence schema with proof binding; a release gate with identity, TTL and quorum; delivery and confirmation | a vertical software-change delivery product, not a generic room platform |
+
+There are only two ways to add it:
+
+1. **Every room gets it.** Sales and support rooms inherit worktrees, checks and proof hashes. Orbit
+   stops being generic.
+2. **One special room type gets it.** That is a separate product inside Orbit, with its own team,
+   roadmap, support and liability. That is Works.
+
+The site office can hire the crew and the inspector, but then it is the delivery company. That is a
+different business with a different buyer, failure mode and contract. It is not a feature of the
+office.
+
+If Orbit's strategy is to own software delivery, it can absorb Works. Then Works is redundant — but
+Orbit is no longer the horizontal room product. That is a strategic choice, not a technical one.
+
 ## Why not Jira or Jenkins?
 
 Because they are workflow and tool runners, not change lifecycles. Adding pipeline steps gives you
