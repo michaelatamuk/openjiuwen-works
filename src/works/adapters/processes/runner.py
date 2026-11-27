@@ -109,13 +109,19 @@ def _kill_tree(process: subprocess.Popen[str]) -> None:
         process.kill()
 
 
+def _is_linux() -> bool:
+    # A helper keeps mypy from narrowing sys.platform to the host value and calling the Linux
+    # branch unreachable on macOS.
+    return sys.platform.startswith("linux")
+
+
 def _pdeathsig_hook() -> Callable[[], None] | None:
     """Linux: kill the command when the daemon dies, even by `SIGKILL`.
 
     `PR_SET_PDEATHSIG` is delivered to the direct child, which is the command Works started.
     macOS has no equivalent, so that platform keeps the documented gap.
     """
-    if not sys.platform.startswith("linux"):
+    if not _is_linux():
         return None
     import ctypes
     import signal
