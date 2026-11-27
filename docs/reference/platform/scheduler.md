@@ -189,6 +189,6 @@ The claimed order and the estimate are written to the task history as `scheduler
 
 ## Related
 
-- `docs/design/2026-m21-scheduler.md` — full design.
+- `docs/roadmap/milestones/m21-scheduler.md` — full design.
 - `docs/adrs/024-scheduler-actor.md` — why the scheduler runs but never decides.
 - `docs/adrs/025-ordering-cost-model.md` — why the order is a cost model, not a learned ranker.

@@ -32,7 +32,7 @@ make sbom          # writes dist/sbom.json
 - **Reproducible builds.** Hatchling plus Vite hashes are stable enough in practice, but a byte-for-byte
   rebuild has not been proven; it becomes a release task, not a checkbox.
 - **MSI/installer and a service wrapper.** The wheel plus Task Scheduler is enough for one home
-  (see `docs/guides/runbook.md`); an installer is a product decision.
+  (see `docs/guides/operations/runbook.md`); an installer is a product decision.
 - **Python 3.14 as the primary interpreter.** `openjiuwen` caps at `<3.14`, so the decision waits for
   the provider.
 
@@ -55,6 +55,6 @@ the providers this build actually ships, not the ones the UI hoped for.
 
 ## See also
 
-- `docs/reference/reliability.md` - what the daemon promises after a crash.
-- `docs/guides/live-harness.md` - which provider extras exist and why they are optional.
+- `docs/reference/platform/reliability.md` - what the daemon promises after a crash.
+- `docs/guides/integrations/live-harness.md` - which provider extras exist and why they are optional.
 - `docs/adrs/017-remote-trust.md` - the device-token boundary.

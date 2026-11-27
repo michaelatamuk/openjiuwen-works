@@ -1,4 +1,4 @@
-"""Render and check the route-class table in docs/reference/http-api.md.
+"""Render and check the route-class table in docs/reference/platform/http-api.md.
 
 python scripts/dump_route_classes.py --update
 python scripts/dump_route_classes.py --check
@@ -18,7 +18,7 @@ sys.path.insert(0, str(FACTORY))
 import works.interfaces.api.routes as routes_pkg  # noqa: E402
 from works.interfaces.api.route_classes import ROUTE_CLASSES  # noqa: E402
 
-TARGET = FACTORY / "docs" / "reference" / "http-api.md"
+TARGET = FACTORY / "docs" / "reference" / "platform" / "http-api.md"
 START = "<!-- route-classes:start -->"
 END = "<!-- route-classes:end -->"
 METHODS = frozenset({"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"})

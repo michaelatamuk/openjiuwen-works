@@ -2,7 +2,7 @@
 
 Usage:
     python scripts/check_api_compat.py \
-        docs/reference/openapi.baseline.json docs/reference/openapi.json
+        docs/reference/generated/openapi.baseline.json docs/reference/generated/openapi.json
 
 `--update` copies the current schema over the baseline. Do that only when a breaking change is
 deliberate and the ADR records it.

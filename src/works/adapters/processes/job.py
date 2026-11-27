@@ -3,7 +3,7 @@
 On Windows the child is placed in a Job Object with `KILL_ON_JOB_CLOSE`: when Works dies
 (including TerminateProcess) the handle closes and the whole tree is killed. POSIX already
 starts each command in its own session and kills the group on cancellation; a hard `SIGKILL`
-of the daemon can still orphan a child, which `docs/reference/reliability.md` records as the
+of the daemon can still orphan a child, which `docs/reference/platform/reliability.md` records as the
 remaining gap.
 """
 

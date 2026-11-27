@@ -245,7 +245,7 @@ decision, an ADR is added or amended.
 **Process**
 
 - Trunk-based, small PRs (< 400 changed lines), conventional commits, PR template asks for evidence.
-- `CHANGELOG.md` per release; `docs/guides/runbook.md` for known failures and their first response.
+- `CHANGELOG.md` per release; `docs/guides/operations/runbook.md` for known failures and their first response.
 - Renovate weekly; a dependency update that breaks a test is fixed or reverted the same day.
 
 ### 6.5 GUI standard — if a GUI is built

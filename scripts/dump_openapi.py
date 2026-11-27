@@ -16,7 +16,7 @@ sys.path.insert(0, str(FACTORY))
 
 from works.interfaces.api.app import create_app  # noqa: E402
 
-TARGET = FACTORY / "docs" / "reference" / "openapi.json"
+TARGET = FACTORY / "docs" / "reference" / "generated" / "openapi.json"
 
 
 def schema() -> dict[str, object]:

@@ -1,7 +1,7 @@
 # Local HTTP API
 
 The daemon serves `/api/v1` on loopback. The OpenAPI schema is
-[`openapi.json`](openapi.json); the TypeScript client is generated from it.
+[`openapi.json`](../generated/openapi.json); the TypeScript client is generated from it.
 
 ## Auth
 
@@ -22,7 +22,7 @@ A `503` from job backpressure carries `Retry-After: 5`; retry the same request w
 request log.
 Writes larger than 4 MiB are refused (declared or chunked); `WORKS_MAX_BODY_BYTES` overrides it.
 `WORKS_MAX_PENDING_JOBS` (default 64) bounds queued jobs. Delivery semantics, crash reconciliation
-and the no-auto-resume rule are in `docs/reference/reliability.md`.
+and the no-auto-resume rule are in `docs/reference/platform/reliability.md`.
 
 ## Endpoints
 

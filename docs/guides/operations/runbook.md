@@ -45,7 +45,7 @@ last recorded state.
 **Why:** neither a recorded trace nor the live harness was selected.
 
 **Do:** pass `--trace fixtures/traces/fix-add.json` for a deterministic run, or `--live` with
-`ANTHROPIC_API_KEY` and an openjiuwen installation. See `docs/guides/live-harness.md`.
+`ANTHROPIC_API_KEY` and an openjiuwen installation. See `docs/guides/integrations/live-harness.md`.
 
 ## The live harness refuses `claude.CMD`
 
@@ -192,7 +192,7 @@ index health, disk usage and log tails, with no tokens, cookies or device hashes
 
 A restart marks the job `failed` with `daemon restarted while the job was running` and releases the
 task owner. Nothing resumes automatically; start a fresh `works run` after checking the worktree and
-remote state. See `docs/reference/reliability.md`.
+remote state. See `docs/reference/platform/reliability.md`.
 
 ## Start the daemon at logon on Windows
 

@@ -269,7 +269,7 @@ match.
 - [x] `interfaces/api/schemas/health.py` and `routes/health.py` reuse the read presenter.
 - [x] `interfaces/cli/commands/daemon.py` + `cli/parser/daemon.py`: `works daemon --host --port
   --write --allow-remote`; non-loopback binds are refused by default.
-- [x] `scripts/dump_openapi.py` writes `docs/reference/openapi.json`; CI checks it is current and
+- [x] `scripts/dump_openapi.py` writes `docs/reference/generated/openapi.json`; CI checks it is current and
   smokes `works --help` / `works version`.
 - [x] Tests use FastAPI `TestClient` as a context manager so the lifespan runs (no extra dependency).
 
@@ -339,7 +339,7 @@ performance gate is tracked in Phase 8.
   become error events.
 - [x] Tests: hub replay/gap, subscriber fan-out, file-change mapping (task and job), connected
   comment, resync, ask stream.
-- [x] `docs/reference/http-api.md`: endpoints, actions, auth, errors and live events.
+- [x] `docs/reference/platform/http-api.md`: endpoints, actions, auth, errors and live events.
 
 **Gate (met):** `pytest tests/unit/interfaces/api/test_live.py`; full suite green.
 
@@ -437,9 +437,9 @@ pass.
 - [x] Logging: `request_id` and `job_id` are structured fields; request logs and Uvicorn startup
   logs use the same JSON formatter; Uvicorn access logging is disabled in favor of the request log.
 - [x] Final full runs: `pytest` green, deterministic wheel smoke and the local `--full` ask/team
-  smoke green; ADR [016](../adrs/016-local-daemon.md) records the daemon decision.
+  smoke green; ADR [016](../../adrs/016-local-daemon.md) records the daemon decision.
 - [x] Remote safety: `--trusted-host` for non-loopback binds, remote reads require bearer/session,
-  `/health` and `/session` stay open, and `docs/guides/remote.md` covers tunnels and phones.
+  `/health` and `/session` stay open, and `docs/guides/operations/remote.md` covers tunnels and phones.
   Pairing codes/per-device tokens remain a follow-up.
 
 **Gate (met):** all §17 checks on a fresh clone; the API p95 budget runs in CI.

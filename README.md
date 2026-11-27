@@ -138,7 +138,7 @@ the fixture costs $0.09 with the builder and $0.19 with an independent challenge
 and per-run limits live in the scheduler policy (`dispatch.yaml`).
 
 A provider key is needed for the live builder; trace mode runs without a model — see
-[`docs/guides/live-harness.md`](docs/guides/live-harness.md). The CLI follows the same two decisions;
+[`docs/guides/integrations/live-harness.md`](docs/guides/integrations/live-harness.md). The CLI follows the same two decisions;
 `works --help` lists the commands.
 
 ## Built for one machine
@@ -151,18 +151,18 @@ and close remain your decisions.
 
 ## Documentation
 
-- [`docs/guides/how-a-fix-flows.md`](docs/guides/how-a-fix-flows.md) — the flow in plain words.
-- [`docs/guides/runbook.md`](docs/guides/runbook.md) — what to do when something goes wrong.
-- [`docs/reference/proof.md`](docs/reference/proof.md) — what the proof contains.
-- [`docs/reference/cve.md`](docs/reference/cve.md) — scanning lockfiles for advisories.
-- [`docs/reference/reporter.md`](docs/reference/reporter.md) — what happens when a fix does not hold.
-- [`docs/reference/report.md`](docs/reference/report.md) — time, cost and gate decisions.
-- [`docs/reference/specialists.md`](docs/reference/specialists.md) — reviewers by area.
-- [`docs/reference/scan.md`](docs/reference/scan.md) — finding a regression before it is reported.
-- [`docs/reference/monitor.md`](docs/reference/monitor.md) — what happens when a released fix stops holding.
-- [`docs/reference/bench.md`](docs/reference/bench.md) — a local score for the pipeline itself.
-- [`docs/guides/intake.md`](docs/guides/intake.md) — trackers, monitors and your products.
-- [`docs/guides/remote.md`](docs/guides/remote.md) — another device without exposing the port.
+- [`docs/start/concepts.md`](docs/start/concepts.md) — the flow in plain words.
+- [`docs/guides/operations/runbook.md`](docs/guides/operations/runbook.md) — what to do when something goes wrong.
+- [`docs/reference/lifecycle/proof.md`](docs/reference/lifecycle/proof.md) — what the proof contains.
+- [`docs/reference/capabilities/cve.md`](docs/reference/capabilities/cve.md) — scanning lockfiles for advisories.
+- [`docs/reference/capabilities/reporter.md`](docs/reference/capabilities/reporter.md) — what happens when a fix does not hold.
+- [`docs/reference/platform/report.md`](docs/reference/platform/report.md) — time, cost and gate decisions.
+- [`docs/reference/capabilities/specialists.md`](docs/reference/capabilities/specialists.md) — reviewers by area.
+- [`docs/reference/capabilities/scan.md`](docs/reference/capabilities/scan.md) — finding a regression before it is reported.
+- [`docs/reference/capabilities/monitor.md`](docs/reference/capabilities/monitor.md) — what happens when a released fix stops holding.
+- [`docs/reference/capabilities/bench.md`](docs/reference/capabilities/bench.md) — a local score for the pipeline itself.
+- [`docs/guides/workflow/intake.md`](docs/guides/workflow/intake.md) — trackers, monitors and your products.
+- [`docs/guides/operations/remote.md`](docs/guides/operations/remote.md) — another device without exposing the port.
 - [`docs/video/openjiuwen-works-two-mondays.mp4`](docs/video/openjiuwen-works-two-mondays.mp4) — the
   flow in motion.
 - [`docs/deck/`](docs/deck/) — slides and diagrams.

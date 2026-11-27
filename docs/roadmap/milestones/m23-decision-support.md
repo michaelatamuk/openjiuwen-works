@@ -1,7 +1,7 @@
 # M23 — decision support at the gate (design)
 
 Status: complete (23.1?23.4). The ADR is `docs/adrs/026-risk-is-evidence.md`. Wave one of
-`docs/design/feature-recommendations.md`: three low-effort features that make the existing release
+`docs/strategy/feature-recommendations.md`: three low-effort features that make the existing release
 gate usable by the person who has to sign it.
 
 ## Why

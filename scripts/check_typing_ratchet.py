@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-BASELINE = ROOT / "docs" / "reference" / "typing-baseline.json"
+BASELINE = ROOT / "docs" / "reference" / "generated" / "typing-baseline.json"
 FLAGS = ("--disallow-any-explicit", "--warn-return-any")
 ERRORS = frozenset({"explicit-any", "no-any-return"})
 LINE = re.compile(r"^(?P<file>[^:]+):\d+: error: .*\[(?P<code>[a-z-]+)\]$")

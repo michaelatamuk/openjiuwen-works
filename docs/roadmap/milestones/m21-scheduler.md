@@ -2,7 +2,7 @@
 
 Status: core implemented as the first pass (policy, selection, leases, pause, one CLI tick). The
 daemon loop, HTTP surface, GUI, import triggers and bounded retries are still planned; the checkboxes
-live in `docs/design/2026-modern-plan.md`, and the actor rule is ADR 024.
+live in `docs/roadmap/2026-modern-plan.md`, and the actor rule is ADR 024.
 
 ## The problem
 

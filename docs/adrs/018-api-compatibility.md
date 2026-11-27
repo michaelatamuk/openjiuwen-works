@@ -6,14 +6,14 @@
 ## Context
 
 The HTTP API is a real contract: the browser bundle, a native Windows client and a phone all speak it.
-`docs/reference/openapi.json` already gates drift (`dump_openapi.py --check`) and generates the
+`docs/reference/generated/openapi.json` already gates drift (`dump_openapi.py --check`) and generates the
 TypeScript client, but nothing stopped a refactor from silently removing an operation, a parameter or
 a field that a client on the previous build still uses. "Be careful" is not a compatibility policy.
 
 ## Decision
 
-1. The committed `docs/reference/openapi.json` is the schema of the current build.
-2. `docs/reference/openapi.baseline.json` is the schema of the **last released** API. It only changes
+1. The committed `docs/reference/generated/openapi.json` is the schema of the current build.
+2. `docs/reference/generated/openapi.baseline.json` is the schema of the **last released** API. It only changes
    when a breaking change is deliberate and this ADR (or a successor) records it.
 3. `scripts/check_api_compat.py` compares the two on every CI run and fails on:
    - a removed path or method;

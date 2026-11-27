@@ -21,7 +21,7 @@ routes:
 	uv run python scripts/dump_route_classes.py --check
 
 api-compat:
-	uv run python scripts/check_api_compat.py docs/reference/openapi.baseline.json docs/reference/openapi.json
+	uv run python scripts/check_api_compat.py docs/reference/generated/openapi.baseline.json docs/reference/generated/openapi.json
 
 mutation:
 	uv run mutmut run || true

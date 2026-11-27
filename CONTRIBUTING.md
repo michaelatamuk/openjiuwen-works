@@ -1,7 +1,7 @@
 # Contributing
 
 Small, typed, tested changes. The plan is the source of truth for scope; the engineering standard
-in `docs/design/plan.md` §6.4 is the bar.
+in `docs/roadmap/plan.md` §6.4 is the bar.
 
 ## Setup
 
@@ -60,7 +60,7 @@ Or on Windows: `powershell -ExecutionPolicy Bypass -File scripts/check.ps1`.
 ## Async boundary and renderer
 
 - Every HTTP operation has a class in `src/works/interfaces/api/route_classes.py`; `make routes`
-  checks it and the table in `docs/reference/http-api.md`. Blocking handlers stay `def` and run in
+  checks it and the table in `docs/reference/platform/http-api.md`. Blocking handlers stay `def` and run in
   FastAPI's thread pool; do not rewrite a git or subprocess route as `async def` for style.
 - Jobs run on one bounded executor owned by `JobRunner` (ADR 019). Do not start an anonymous thread;
   the queue bound and the shutdown path depend on that single owner.

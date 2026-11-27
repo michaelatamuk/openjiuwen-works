@@ -25,7 +25,7 @@ exception to §6.4:
 - Cancellation is a `threading.Event` plus a process-tree kill; timeouts use a single `threading.Timer`
   per job; the heartbeat loop is one daemon thread that stops with the runner.
 - Job state stays in JSON files written through `atomic_write`, so a crash is visible on restart
-  (see `docs/reference/reliability.md`).
+  (see `docs/reference/platform/reliability.md`).
 
 Why not structured `asyncio` tasks: the bodies call synchronous SDKs and `subprocess`, so an async
 executor would immediately hand them to `anyio.to_thread` — the same pool with an extra layer. Windows

@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "generate:api": "openapi-typescript ../docs/reference/openapi.json -o src/api/generated/schema.ts",
+    "generate:api": "openapi-typescript ../docs/reference/generated/openapi.json -o src/api/generated/schema.ts",
     "e2e": "playwright test",
     "lint": "eslint .",
     "e2e:visual": "playwright test e2e/visual.spec.ts"

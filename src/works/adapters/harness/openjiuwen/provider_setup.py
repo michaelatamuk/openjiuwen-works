@@ -119,7 +119,7 @@ def provider_setup() -> dict[str, dict[str, Any]]:
         else:
             dsh_reason = (
                 "The DeepSeek Harness home is not set; point Works at the DSH checkout "
-                "(see docs/guides/live-harness.md)."
+                "(see docs/guides/integrations/live-harness.md)."
             )
         dsh_install.append("Set WORKS_DSH_HOME to the DeepSeek Harness home")
 

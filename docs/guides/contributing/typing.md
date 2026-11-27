@@ -14,7 +14,7 @@ python scripts/check_typing_ratchet.py --update  # only after removing Any on pu
 ```
 
 It runs mypy with `--disallow-any-explicit --warn-return-any` and compares the `[explicit-any]` and
-`[no-any-return]` errors with `docs/reference/typing-baseline.json`. A file or the total may shrink;
+`[no-any-return]` errors with `docs/reference/generated/typing-baseline.json`. A file or the total may shrink;
 growth fails the build. New files start at zero.
 
 ## Changing the baseline

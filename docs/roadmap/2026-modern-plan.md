@@ -47,7 +47,7 @@ in section 3, not this table.
 
 ## 2. Reconcile with the engineering standard
 
-[`docs/design/plan.md`](plan.md) §6.4 already requires, among others:
+[`docs/roadmap/plan.md`](plan.md) §6.4 already requires, among others:
 
 - mutation score ≥70% on core (`queue/`, `policy/`, `verify/`);
 - a provider circuit breaker after repeated failures;
@@ -98,7 +98,7 @@ the primary Windows lifecycle path going untested.
 
 - [x] **M1.1** `py.typed` ships and mypy runs `--strict`. A ratchet
   (`scripts/check_typing_ratchet.py`) runs mypy with `--disallow-any-explicit --warn-return-any`
-  against `docs/reference/typing-baseline.json` (317 errors in 93 files): no file and no total may
+  against `docs/reference/generated/typing-baseline.json` (317 errors in 93 files): no file and no total may
   grow, and new files start at zero. Removing every boundary `Any` in one change is deliberately not
   done; the baseline only shrinks. No second type checker.
 - [x] **M1.2a** Queue, Story, Evidence and Release are typed `.tsx`; `tsc`, Vitest and the bundle
@@ -142,7 +142,7 @@ the primary Windows lifecycle path going untested.
   `TaskIndex.replace`, not 10k fsync submissions; 3 runs, median p95; fail above 250 ms **and**
   above 120% of the `main` baseline for two consecutive runs.
 - [x] **M2.6** ADR 018 makes the committed schema the current contract and
-  `docs/reference/openapi.baseline.json` the released one; CI fails on a removed operation,
+  `docs/reference/generated/openapi.baseline.json` the released one; CI fails on a removed operation,
   parameter, schema, property, type change or a required-flag flip. Additive changes pass.
 - [x] **M2.7** **Drop** cursor pagination and ETag for now; revisit only if server-side search
   appears.
@@ -255,7 +255,7 @@ invariants.
   logs only with an explicit policy; `works doctor` reports disk use; index rebuild has a budget.
 - [x] **M7.5** Killed runs are **not** auto-resumed: `reconcile()` marks them failed and releases the
   owner. At-least-once delivery, phase idempotency and the operator recovery path are documented in
-  `docs/reference/reliability.md` and the runbook.
+  `docs/reference/platform/reliability.md` and the runbook.
 
 ### M8 — Runtime matrix and supply chain (4 days)
 
@@ -269,14 +269,14 @@ invariants.
   SBOM, and uploads both; `pip-audit`, `npm audit --omit=dev` and gitleaks gate the build. The `osv`
   job scans `uv.lock` and `web/package-lock.json` on push and weekly (run 45596833850 is green); the
   only findings are filelock advisories blocked by openjiuwen's `<4` pin, recorded with an expiry in
-  `osv-scanner.toml` and explained in `docs/reference/supply-chain.md`.
+  `osv-scanner.toml` and explained in `docs/guides/operations/supply-chain.md`.
 - [x] **M8.4** The `clean-install` CI job downloads the built wheel, exports `uv.lock` as hashed
   requirements, installs them with `pip install --require-hashes` into a clean Python 3.13 venv,
   installs the wheel with `--no-deps`, then runs `works doctor --json` and the daemon
   `start`/`status`/`stop` cycle on a fresh home.
-- [x] **M8.5** `docs/guides/runbook.md` documents Task Scheduler and NSSM with a start/health/stop
+- [x] **M8.5** `docs/guides/operations/runbook.md` documents Task Scheduler and NSSM with a start/health/stop
   verification; the Windows CI job's `smoke_daemon.py` covers start, kill and restart. No MSI.
-- [x] **M8.6** `docs/reference/supply-chain.md` records the deferrals (Sigstore, reproducible builds, MSI,
+- [x] **M8.6** `docs/guides/operations/supply-chain.md` records the deferrals (Sigstore, reproducible builds, MSI,
   OSV, Python 3.14) and the reason for each.
 
 ### M9 — Developer experience, mutation and docs (2 days)
@@ -304,7 +304,7 @@ migration.
 
 - [x] **M10.1** All 33 operations are classified in `src/works/interfaces/api/route_classes.py`
   (async-safe / blocking / subprocess / sse) with a note; `scripts/dump_route_classes.py` renders the
-  table in `docs/reference/http-api.md` and CI fails when a route is unclassified or the table is
+  table in `docs/reference/platform/http-api.md` and CI fails when a route is unclassified or the table is
   stale.
 - [x] **M10.2** Measured with `scripts/bench_api.py`: 10k tasks, 20 SSE streams, 300 reads, p95
   78 ms. The hot read path (`/tasks`) is index-backed and already runs in FastAPI's thread pool, so no
@@ -384,7 +384,7 @@ edit.
 - [x] **M13.6** A person can rework steps in the Story plan card (edit intent/done_when, add or remove
   a step, leave a comment) for the nodes the plan already covers; saving creates a new draft version,
   supersedes the old approval and requires a fresh gate decision.
-- [x] **M13.7** The same context produces the same plan and hash (test), and `docs/reference/planning.md`
+- [x] **M13.7** The same context produces the same plan and hash (test), and `docs/reference/lifecycle/planning.md`
   documents modes, impact, versions and editing.
 
 ### M14 ? Plan gate 2026 (stage 4, complete)
@@ -405,7 +405,7 @@ that survives an edit or a week of waiting.
 - [x] **M14.6** `GET /inbox` lists planning tasks with a drafted plan, their waiting time and an
   overdue flag (`WORKS_GATE_REMINDER_HOURS`, default 24); the Queue shows them under Waiting for you.
 - [x] **M14.7** Nine unit tests cover the three outcomes, agent refusal, stale hash, expiry, quorum
-  and the non-planning refusal; `docs/reference/gates.md` and ADR 022 record the semantics.
+  and the non-planning refusal; `docs/reference/lifecycle/gates.md` and ADR 022 record the semantics.
 
 ### M15 ? Build 2026 (stage 5, in progress)
 
@@ -464,7 +464,7 @@ a transcript.
   redacted, with the count recorded on the page.
 - [x] **M17.5** The page records Python version, platform, adapter version and schema; old pages load
   with defaults.
-- [x] **M17.6** Schema fields are additive and a page without them still validates; `docs/reference/proof.md`
+- [x] **M17.6** Schema fields are additive and a page without them still validates; `docs/reference/lifecycle/proof.md`
   describes the contract.
 - [x] **M17.7** `works proof export` writes a tarball with a hash manifest, and `works proof diff`
   reports verdict, risk, cost, changed files and fingerprint movement.
@@ -535,7 +535,7 @@ check reported as a pass, and a deploy failure hidden behind a local check.
 **Prevents:** a webhook that starts a run on every delivery, a burst that burns the daily budget, two
 runs racing for one worktree, and a queue that cannot say why a task is not moving.
 
-The design is `docs/design/2026-m21-scheduler.md`; the actor rule is ADR 024. Defaults are off.
+The design is `docs/roadmap/milestones/m21-scheduler.md`; the actor rule is ADR 024. Defaults are off.
 
 **Progress (first pass):** `application/scheduling/` has the policy loader, the pure selection and
 admission function, leases with a dispatcher lock and stale reclaim, pause/resume, and a CLI
@@ -595,7 +595,7 @@ from terminal failures; `order.mode: shadow` logs a k-NN order without changing 
 - [x] **M21.11** GUI parity: a Scheduler card (state, waiting reasons, pause, budget), a **Run** button
   on the task card and **Dispatch ready (N)** in the queue header; `works task merge` closes the last
   CLI gap for duplicate tasks.
-- [x] **M21.12** Docs and acceptance: `docs/design/2026-m21-scheduler.md`, ADR 024, and tests for
+- [x] **M21.12** Docs and acceptance: `docs/roadmap/milestones/m21-scheduler.md`, ADR 024, and tests for
   policy-off, labelled L1, unlabelled import, two dispatchers, crash reclaim, budget exhaustion,
   pause/resume, L2/L3 stop states and a scheduler gate refusal.
 
@@ -626,7 +626,7 @@ shadow mode that decides whether a learned order ever earns the right to run.
 - [x] **M22.6** `order.mode: rule|shadow|learned`: shadow logs "would pick X, rule picked Y" and starts
   nothing; `learned` is allowed only with ≥ 4 weeks or ≥ 50 claims of shadow evidence, no worse p95
   wait, no new starvation, no worse `$` per `proved`, and calibration inside the band.
-- [x] **M22.7** Docs and acceptance: `docs/design/2026-m22-estimates.md`, plus tests for cold start,
+- [x] **M22.7** Docs and acceptance: `docs/roadmap/milestones/m22-estimates.md`, plus tests for cold start,
   plan update, fit refusals, ordering by equal risk, shadow no-op, monotonicity and the promotion
   guard.
 
@@ -638,8 +638,8 @@ a cloud model, deep learning, and estimating delivery/deploy/confirm time.
 **Prevents:** a release approved on a diff the approver cannot read, a reporter's "still broken" reply
 that disappears, and a risk tier nobody recorded before shipping.
 
-Wave one of `docs/design/feature-recommendations.md`. The design is
-`docs/design/2026-m23-decision-support.md`, and ADR 026 records that risk is evidence, not a gate. No
+Wave one of `docs/strategy/feature-recommendations.md`. The design is
+`docs/roadmap/milestones/m23-decision-support.md`, and ADR 026 records that risk is evidence, not a gate. No
 new pipeline stage: three features strengthen the existing release gate, and each is delivered end to
 end — backend, API, UI and CLI — before the next one starts.
 
@@ -665,7 +665,7 @@ end — backend, API, UI and CLI — before the next one starts.
   `works task retry <id> --note "..."`, and the UI marks the task "reported again" with a link to the
   previous proof. Tests cover duplicate delivery, unknown reporter, closed pull request,
   non-allowlisted source and the reopening limit.
-- [x] **M23.4 Docs and acceptance.** The design doc, ADR 026, `docs/reference/proof.md`, and a
+- [x] **M23.4 Docs and acceptance.** The design doc, ADR 026, `docs/reference/lifecycle/proof.md`, and a
   cross-feature acceptance pass: both gates keep exactly the same authority, no new model calls are
   made, old proofs are not rewritten, and `mypy`, the web suite, e2e and the docs link check stay
   green.
@@ -681,7 +681,7 @@ back to the tracker beyond the existing comment, auto-reopening a merged PR, and
 
 The gap was narrower than the first estimate: a worktree per run, a branch per task and a job pool
 already exist. M24 makes the scheduler honour the `per_repo` slot it documents. The design is
-`docs/design/2026-m24-parallel.md`; the decision is ADR 027, which revisits one rejected alternative
+`docs/roadmap/milestones/m24-parallel.md`; the decision is ADR 027, which revisits one rejected alternative
 in ADR 024.
 
 - [x] **M24.1** `Signals.active_by_repo` counts active leases per repository; selection refuses only
@@ -693,7 +693,7 @@ in ADR 024.
   shows the policy slots, and a change needs a restart.
 - [x] **M24.4** Isolation is unchanged and required: one worktree per run, one branch per task, no
   preemption. Two runs never share a tree or a branch.
-- [x] **M24.5** Docs and acceptance: the design, ADR 027, `docs/reference/scheduler.md`, and tests for
+- [x] **M24.5** Docs and acceptance: the design, ADR 027, `docs/reference/platform/scheduler.md`, and tests for
   the default refusal, the two-slot claim, the budget reservation and the pool sizing.
 
 **Not in scope:** cross-repository coordination, a distributed queue, preemption and automatic conflict
@@ -705,7 +705,7 @@ resolution.
 
 **Prevents:** a known vulnerable dependency waiting for a person to notice it.
 
-The design is `docs/design/2026-m25-cve.md`; the reference is `docs/reference/cve.md`. Offline first:
+The design is `docs/roadmap/milestones/m25-cve.md`; the reference is `docs/reference/capabilities/cve.md`. Offline first:
 a scan reads an OSV-style feed, `--osv` is an explicit opt-in, and reproduction stays the repository's
 own checks. No PoC is claimed.
 
@@ -753,7 +753,7 @@ decisions, reopens, CVE work, escapes and stop reasons. It is read-only, local a
 **Prevents:** one generalist reviewer being asked to catch security, performance and data regressions
 at once.
 
-The design is `docs/design/2026-m27-specialists.md`; the reference is `docs/reference/specialists.md`.
+The design is `docs/roadmap/milestones/m27-specialists.md`; the reference is `docs/reference/capabilities/specialists.md`.
 A flow names specialists and their paths; each runs as a separate harness turn on the same worktree,
 with its own prompt and prompt hash.
 
@@ -781,7 +781,7 @@ access, per-specialist providers beyond the harness.
 
 **Prevents:** a regression waiting until a person notices and files it.
 
-The design is `docs/design/2026-m28-scan.md`; the reference is `docs/reference/scan.md`. One explicit
+The design is `docs/roadmap/milestones/m28-scan.md`; the reference is `docs/reference/capabilities/scan.md`. One explicit
 command runs the repository's own check and files only failures that were not in the previous scan.
 
 - [x] **M28.1** A baseline per `(repository, command)` lives in the home, never in the repository; a
@@ -804,7 +804,7 @@ parsers.
 
 **Prevents:** a proof that was true on release day becoming false in production with nobody noticing.
 
-The design is `docs/design/2026-m29-monitor.md`; the reference is `docs/reference/monitor.md`. The
+The design is `docs/roadmap/milestones/m29-monitor.md`; the reference is `docs/reference/capabilities/monitor.md`. The
 baseline is the confirmation recorded at release; a later pass → fail opens one task with the previous
 run and proof in its hint.
 
@@ -827,7 +827,7 @@ comparison as a drift.
 **Prevents:** arguing about quality without a repeatable number, and promising a SWE-bench score the
 product cannot yet produce.
 
-The design is `docs/design/2026-m30-bench.md`; the reference is `docs/reference/bench.md`. A JSONL case
+The design is `docs/roadmap/milestones/m30-bench.md`; the reference is `docs/reference/capabilities/bench.md`. A JSONL case
 names a repository, a scenario set, a recorded trace and the expected outcome; each case runs in its own
 home through the real supervisor.
 

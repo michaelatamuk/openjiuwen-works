@@ -1,6 +1,6 @@
 # Review 3 — external critique
 
-An independent reviewer (fresh context, no knowledge of our drafts) read `docs/design/plan.md` v2 and
+An independent reviewer (fresh context, no knowledge of our drafts) read `docs/roadmap/plan.md` v2 and
 `docs/archive/reviews/review-1-self.md`. Findings below are condensed; the plan's v3 changelog records the fixes.
 
 ## Blocking issues it raised
@@ -38,6 +38,6 @@ Week 0 and M0/M0.5 are safe and reusable. M1 was not safe: two of the three gate
 
 ## What changed in v3
 
-See the changelog in `docs/design/plan.md`. The four fixes the reviewer called necessary are all in:
+See the changelog in `docs/roadmap/plan.md`. The four fixes the reviewer called necessary are all in:
 isolation decided and moved to preconditions, test edits denied with quarantine outside the repo,
 specificity and calibration before any publish, and an in-scope rate over 40 real issues.
