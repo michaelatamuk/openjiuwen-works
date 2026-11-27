@@ -36,7 +36,8 @@ add a queue and a proof page to our agent framework?".
 - [06-sources.md](06-sources.md) — source docs and the assets to reuse.
 - [07-demo-script.md](07-demo-script.md) — a live demo that does not depend on a model.
 - [08-next-steps.md](08-next-steps.md) — open decisions and the build plan.
-- Images stay in [`../assets/`](../assets/); [06-sources.md](06-sources.md) maps each one.
+- Deck SVGs are in [assets/](assets/); shared diagrams stay in [`../assets/`](../assets/).
+  [06-sources.md](06-sources.md) maps each one.
 
 ## Status
 

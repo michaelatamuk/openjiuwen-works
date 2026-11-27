@@ -31,7 +31,7 @@ plan and the release — and spend their time on the problems that actually need
 team whose hours go to judgement and design.
 
 <div align="center">
-  <img src="docs/assets/ui/the-point.png" alt="The old way: one person does all six stages. With openJiuwen Works: the agent runs all six, and the person approves the plan and the release" width="100%" />
+  <img src="docs/assets/ui/the-point.svg" alt="The old way: one person does all six stages. With openJiuwen Works: the agent runs all six, and the person approves the plan and the release" width="100%" />
 </div>
 
 ## What it does
@@ -75,7 +75,7 @@ Everything between the two decisions is automatic and recorded.
 | **Release** | A person approves the proof. Works delivers the change and confirms the real result. | **you**, then Works |
 
 <div align="center">
-  <img src="docs/assets/deck/software-factory-flow.png" alt="The flow: signal, reproduce, plan, plan gate, build, check, proof, release gate, delivery and confirmation" width="100%" />
+  <img src="docs/presentation/assets/deck/software-factory-flow.svg" alt="The flow: signal, reproduce, plan, plan gate, build, check, proof, release gate, delivery and confirmation" width="100%" />
 </div>
 
 Every phase is recorded. A failed check or a mismatched proof returns the task to a person.
@@ -88,7 +88,7 @@ human gates, the proof, delivery and confirmation. The agent layer is openJiuwen
 are your choice, and every run records the runtime, model and provider.
 
 <div align="center">
-  <img src="docs/assets/ui/built-on-openjiuwen.png" alt="Three layers: models and providers below, openJiuwen as the agent layer, Works as the factory above" width="100%" />
+  <img src="docs/assets/ui/built-on-openjiuwen.svg" alt="Three layers: models and providers below, openJiuwen as the agent layer, Works as the factory above" width="100%" />
 </div>
 
 ## When there is more than one thing to do
@@ -97,7 +97,7 @@ One queue, one job per project. Works shows why each task is waiting: a free slo
 day's budget or the machine being busy.
 
 <div align="center">
-  <img src="docs/assets/deck/software-factory-queue.png" alt="The queue: new work waits in one line, a helper asks four questions, and two decisions belong to a person" width="100%" />
+  <img src="docs/presentation/assets/deck/software-factory-queue.svg" alt="The queue: new work waits in one line, a helper asks four questions, and two decisions belong to a person" width="100%" />
 </div>
 
 The queue is optional and off by default. The plan and release decisions remain with people, and a
@@ -166,7 +166,7 @@ and close remain your decisions.
 - [`docs/guides/operations/remote.md`](docs/guides/operations/remote.md) — another device without exposing the port.
 - [`docs/assets/film/two-mondays.mp4`](docs/assets/film/two-mondays.mp4) — the
   flow in motion.
-- [`docs/assets/deck/`](docs/assets/deck/) — slides and diagrams.
+- [`docs/presentation/assets/deck/`](docs/presentation/assets/deck/) — slides and diagrams.
 
 ## License
 

@@ -18,7 +18,7 @@ for adding, moving and retiring documentation.
 | What is planned or delivered? | `start/status.md`, `archive/` | current status; delivered plans and milestones |
 | What did we believe before? | `archive/` | reviews, plans, milestones, demos |
 | How do we present this? | `presentation/` | brief, narrative, comparisons, objections |
-| Where do images and video live? | `assets/` | brand, UI, deck, film |
+| Where do images and video live? | `assets/` (brand, UI, film), `presentation/assets/` (deck) | SVG sources; PNG only where a raster is required |
 
 Do not add a new top-level directory without updating this table. Do not create a directory with a
 single entry: merge it into a neighbouring section. `make docs` fails on both.

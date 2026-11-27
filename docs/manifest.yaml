@@ -275,6 +275,13 @@ documents:
   last_reviewed: '2026-11-27'
   audience: product
   canonical: false
+- path: docs/presentation/assets/README.md
+  title: Presentation assets
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: product
+  canonical: false
 - path: docs/reference/README.md
   title: Reference
   status: active

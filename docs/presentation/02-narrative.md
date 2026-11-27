@@ -20,7 +20,7 @@ A fix spends its life in queues: for triage, for an agent's answer, for a review
 increase the amount of work that reaches review; they do not increase the number of people who can
 approve it.
 
-**Visual:** `../assets/ui/the-point.png`.
+**Visual:** `../assets/ui/the-point.svg`.
 **Source:** `README.md`, `docs/start/concepts.md`.
 
 ## 3. What Works does
@@ -31,7 +31,7 @@ recorded."
 Signal → reproduce → plan → **plan gate** → build → check → proof → **release gate** → deliver →
 confirm.
 
-**Visual:** `../assets/deck/software-factory-flow.png`.
+**Visual:** `assets/deck/software-factory-flow.svg`.
 **Source:** `docs/start/concepts.md`, `docs/design/architecture.md`.
 
 ## 4. The product
@@ -67,7 +67,7 @@ different questions."
 - Swarm: how should the work be split? They build.
 - Works: how is it proven? They accept.
 
-**Visual:** `../assets/deck/why-works/01-three-products.png` and `../assets/deck/why-works/02-three-questions.png`.
+**Visual:** `assets/deck/why-works/01-three-products.svg` and `assets/deck/why-works/02-three-questions.svg`.
 **Source:** `docs/presentation/03-works-vs.md`, `docs/design/strategy/positioning.md`.
 
 ## 7. Three kinds of done
@@ -77,8 +77,8 @@ different questions."
 Only the third step can be shown to a customer, an auditor or a manager. A demo becomes a process
 someone stands behind.
 
-**Visual:** `../assets/deck/why-works/04-three-done.png`.
-**Source:** `../assets/deck/why-works/04-three-done.svg`.
+**Visual:** `assets/deck/why-works/04-three-done.svg`.
+**Source:** `assets/deck/why-works/04-three-done.svg`.
 
 ## 8. Separation of roles
 
@@ -87,7 +87,7 @@ someone stands behind.
 The leader owns the work. Someone outside the team owns the proof. That is why the verifier is
 independent and why the two gates belong to a person.
 
-**Visual:** `../assets/deck/why-works/05-separation.png`.
+**Visual:** `assets/deck/why-works/05-separation.svg`.
 **Source:** `docs/design/adrs/005-verifier-independence.md`,
 `docs/reference/lifecycle/gates.md`.
 
@@ -99,7 +99,7 @@ we ship what was never proven."
 - Plan gate: approve the checks before work.
 - Release gate: approve the exact commit and its proof.
 
-**Visual:** `../assets/deck/why-works/06-two-signatures.png`.
+**Visual:** `assets/deck/why-works/06-two-signatures.svg`.
 **Source:** `docs/reference/lifecycle/gates.md`.
 
 ## 10. Why pay for trust
@@ -109,8 +109,8 @@ we ship what was never proven."
 Swarm adds capacity. Orbit adds coordination. Works adds trust: work that can be shipped. A demo
 becomes a process someone stands behind.
 
-**Visual:** `../assets/deck/why-works/07-why-pay.png`.
-**Source:** `../assets/deck/why-works/07-why-pay.svg`.
+**Visual:** `assets/deck/why-works/07-why-pay.svg`.
+**Source:** `assets/deck/why-works/07-why-pay.svg`.
 
 ## 11. How it compares
 
@@ -120,7 +120,7 @@ Works owns one change from signal to confirmation."
 Use the category matrix: unit of work, what it owns, where it stops. Then the three direct
 comparisons: openJiuwen, JiuwenSwarm, Orbit.
 
-**Visual:** new comparison table; the current `positioning-two-products.png` can support the Orbit
+**Visual:** new comparison table; the current `positioning-two-products.svg` can support the Orbit
 part.
 **Source:** `docs/presentation/03-comparisons.md`, `docs/presentation/03-works-vs.md`.
 
@@ -144,7 +144,7 @@ daemon exist; the deck marks what is proposed."
 
 Show the architecture and the tests. Be explicit about built vs proposed.
 
-**Visual:** `../assets/ui/built-on-openjiuwen.png` plus a built/proposed table.
+**Visual:** `../assets/ui/built-on-openjiuwen.svg` plus a built/proposed table.
 **Source:** `docs/design/architecture.md`, `docs/presentation/05-evidence.md`.
 
 ## 14. The ask

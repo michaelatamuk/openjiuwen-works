@@ -42,16 +42,17 @@ Every claim in the deck should point here or to a demo step.
 
 ## Assets
 
-The images stay in `docs/assets/`; the presentation links to them. There are no copies.
+Deck SVGs live in `docs/presentation/assets/deck/`; shared diagrams and the product screenshot stay
+in `docs/assets/`. There are no copies.
 
 | Asset | Use |
 |---|---|
-| `../assets/deck/why-works/00`–`07` | three products, three kinds of done, separation, two signatures, why pay |
-| `../assets/ui/the-point.png` | the bottleneck |
-| `../assets/deck/software-factory-flow.png` | the ten stages |
-| `../assets/deck/software-factory-queue.png` | the queue |
-| `../assets/ui/built-on-openjiuwen.png` | layers: models, harness, Works |
-| `../assets/ui/positioning-*.png` | Works vs Orbit, contracts, build stage |
+| `assets/deck/why-works/00`–`07.svg` | three products, three kinds of done, separation, two signatures, why pay |
+| `../assets/ui/the-point.svg` | the bottleneck |
+| `assets/deck/software-factory-flow.svg` | the ten stages |
+| `assets/deck/software-factory-queue.svg` | the queue |
+| `../assets/ui/built-on-openjiuwen.svg` | layers: models, harness, Works |
+| `../assets/ui/positioning-*.svg` | Works vs Orbit, contracts, build stage |
 | `../assets/ui/story.png` | the product screen |
 | `../assets/ui/banner.svg`, `banner-dark.svg` | title and closing |
 
