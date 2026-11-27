@@ -48,11 +48,11 @@ this task?". They do not answer "who is in the room?", "what was agreed?" or "is
 ## What Orbit is
 
 Orbit is the horizontal app in this family. Its unit is a **room and a task**: rooms, connectors,
-shared memory, routing, agent runtimes, approvals inside a conversation. It is deliberately generic —
-sales, support, research and code in one product.
+shared memory, routing, agents, tasks, worktrees, coding evidence and approvals. It is deliberately
+generic — sales, support, research and code in one product.
 
-It can run harnesses and agents inside a room. It can also implement its own runtime protocol; it is
-closer to the harness layer than Works is. But it is not the change lifecycle for a software change.
+It can run Claude Code, Codex, Jiuwen and JiuwenSwarm behind one runtime protocol. It is closer to a
+coding workspace than a pure room. But it is not the acceptance contract for a software change.
 
 Works also runs builds. It can use openJiuwen, JiuwenSwarm or an Orbit room as the builder. The
 difference is not who builds; it is who owns the change contract and the proof.
@@ -63,37 +63,38 @@ Because they answer different questions:
 
 | Product | Question | Unit |
 |---|---|---|
-| Orbit | Who is working with whom, about what? | a room |
+| Orbit | Who is working with whom, about what? | a room and a task |
 | Swarm | How should the work be split and built? | a build |
 | Works | How is the change delivered, proven and signed? | one change |
 
-A leader inside Swarm cannot replace a room. A room cannot replace the change lifecycle. The change
-lifecycle can use the team that builds; it cannot outsource the proof.
+A leader inside Swarm cannot replace a room. A room cannot replace the acceptance contract. The
+acceptance contract can use the team that builds; it cannot outsource the proof.
 
 **Building-site analogy:**
 
-- Orbit is the site office: people, decisions, coordination.
+- Orbit is the project workspace: rooms, people, tasks, and it can call a crew.
 - Swarm is the construction crew: a leader, sub-crews, the build.
 - Works is the turnkey delivery company: it plans the job, hires or uses the crew, calls the
   independent inspector, assembles the acceptance act, delivers the building and confirms it.
 
-The fact that the crew has a foreman does not remove the site office or the delivery company. The
-delivery company can hire the crew; it cannot sign for the inspector. Nobody confuses these three on a
-building site. With agents they get confused because all three look like AI.
+The fact that the crew has a foreman does not remove the workspace or the delivery company. The
+delivery company can hire the crew; it cannot sign for the inspector. Nobody confuses these three on
+a building site. With agents they get confused because all three look like AI.
 
 ## Why Works if Orbit exists?
 
-They serve different purposes. Orbit optimises **coordination**; Works optimises **delivery with
-proof**.
+They serve different purposes. Orbit optimises **coordination and task execution**; Works optimises
+the **acceptance contract**.
 
-Works also runs builds. It can use an Orbit room as a builder, just as it can use openJiuwen or
-JiuwenSwarm. The difference is not who builds; it is who owns the change contract: reproduction, the
-plan gate, the check contract, the proof binding, the release gate, delivery and confirmation.
+Orbit already has tasks, worktrees, coding evidence and approvals. Works also runs builds; it can use
+an Orbit room as a builder, just as it can use openJiuwen or JiuwenSwarm. The difference is not who
+builds; it is who owns the change contract: reproduction, the plan gate, trusted-base checks, the
+independent verifier, the proof binding, the release gate, code delivery and confirmation.
 
-Technically, you could add the lifecycle to Orbit. But then every room would inherit per-language
-check contracts, worktree lifecycle, evidence hashes, commit binding, release gates and delivery
-semantics — or Works would have to weaken them to stay generic. If you merge them, **Orbit stops
-being generic and Works stops being strict**.
+Technically, you could add the acceptance contract to Orbit. But then every room would inherit plan
+gates, trusted-base checks, independent verification, commit-bound proof, release gates and code
+delivery/confirmation — or Works would have to weaken them to stay generic. If you merge them,
+**Orbit stops being generic and Works stops being strict**.
 
 The integration is three narrow contracts, not a merge:
 
@@ -109,23 +110,23 @@ Two products, one front door.
 Technically, yes. There is no magic in the lifecycle; Orbit could add it. The question is what it
 would have to become.
 
-| Orbit already has | What the change contract adds | What Orbit becomes |
+| Orbit already has | The acceptance contract adds | What Orbit becomes |
 |---|---|---|
-| rooms, people, tasks, connectors, memory, routing, agent runtimes, approvals inside a conversation | a durable change queue with budgets and leases; a plan artefact with a hash; a plan gate; a builder abstraction with a worktree; policy over touched paths; trusted-base checks; an independent verifier; an evidence schema with proof binding; a release gate with identity, TTL and quorum; delivery and confirmation | a vertical software-change delivery product, not a generic room platform |
+| rooms, people, tasks, queue, budgets, routing; Claude/Codex/Jiuwen/Swarm runtimes; worktrees; coding evidence; approvals, grants and a delivery gate; memory and schedules | reproduce-on-base; plan artefact + plan gate; trusted-base check contract; an independent verifier; a proof bound to the commit and event root; a release gate; code delivery and confirmation | a vertical software-delivery product, not a generic workspace |
 
 There are only two ways to add it:
 
-1. **Every room gets it.** Sales and support rooms inherit worktrees, checks and proof hashes. Orbit
+1. **Every room gets it.** Sales and support rooms inherit plan gates, checks and proof hashes. Orbit
    stops being generic.
 2. **One special room type gets it.** That is a separate product inside Orbit, with its own team,
    roadmap, support and liability. That is Works.
 
-The site office can hire the crew and the inspector, but then it is the delivery company. That is a
-different business with a different buyer, failure mode and contract. It is not a feature of the
-office.
+The project workspace can hire the crew and the inspector, but then it is the delivery company. That
+is a different business with a different buyer, failure mode and contract. It is not a feature of the
+workspace.
 
 If Orbit's strategy is to own software delivery, it can absorb Works. Then Works is redundant — but
-Orbit is no longer the horizontal room product. That is a strategic choice, not a technical one.
+Orbit is no longer the horizontal workspace product. That is a strategic choice, not a technical one.
 
 ## Why not Jira or Jenkins?
 
@@ -167,7 +168,7 @@ The category is real; the names change. Verify current names before putting them
 | **Alex Greenshpun's Outsourcerer / Total Recall** | An orchestrator and scheduler over agents; work is split outside the agent |
 | **Parallel agent runners** (Conductor, Crystal, Claude Squad, Vibe Kanban) | Run many Claude Code or Codex sessions in parallel worktrees; each session is a black box |
 | **Zed with Agent Client Protocol** | The editor hosts external agents as black boxes |
-| **Orbit** | A horizontal room that can run harnesses and agents inside the work |
+| **Orbit** | A horizontal workspace with rooms, tasks, worktrees and coding evidence; runs Claude/Codex/Jiuwen/Swarm behind one runtime protocol |
 | **Works** | A vertical change lifecycle that can use openJiuwen, JiuwenSwarm or an Orbit room as the builder |
 
 GitHub Copilot Workspace is a useful UX analog — a workspace above an agent — but it is not
@@ -179,7 +180,7 @@ harness-agnostic in the same way.
 - "Works can hire any builder; it cannot outsource the proof."
 - "A leader inside the team cannot sign the inspection; Works can hire the team and the inspector."
 - "Swarm is a builder; Works is the change lifecycle that can use it and still owns the proof."
-- "Orbit is the room; Works is the delivery system for one change."
+- "Orbit is the workspace; Works is the acceptance contract for one change."
 - "Jenkins runs the commands; Works runs the change and signs the result."
 - "A patch is an input to a proof, not a proof."
 - "If you merge them, Orbit stops being generic and Works stops being strict."
@@ -189,6 +190,8 @@ harness-agnostic in the same way.
 - Works does not replace the harness, Jira, Jenkins or Orbit.
 - Works is not only an inspector: it runs the build through a harness, Swarm or an Orbit room, then
   verifies and proves the result.
+- Orbit is not just a room: it runs tasks, worktrees and coding evidence. The difference is the
+  acceptance contract.
 - JiuwenSwarm is not a patch library; it is a multi-agent build platform.
 - Orbit is not a worse Works; it is a different product with a different unit of work.
 - Competitors can build a lifecycle; the argument is that doing so changes their product.

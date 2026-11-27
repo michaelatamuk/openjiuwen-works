@@ -4,9 +4,10 @@ Short answers for the questions that decide the meeting. Each answer has a sourc
 
 ## "Why not just use Orbit?"
 
-Orbit is horizontal: rooms, people, coordination, shared memory, routing. Works is vertical: one
-change, per-language checks, a proof bound to the commit, two human gates. Works also runs builds; it
-can use an Orbit room as a builder. The difference is the change contract, not who builds. They
+Orbit is horizontal: rooms, people, tasks, shared memory, routing, agent runtimes, worktrees and
+coding evidence. Works is vertical: one change, reproduce-on-base, a plan gate, trusted-base checks,
+an independent verifier, a proof bound to the commit, two human gates. Works also runs builds; it can
+use an Orbit room as a builder. The difference is the acceptance contract, not who builds. They
 compose through three narrow contracts; they do not replace each other. If you merge them, Orbit stops
 being generic and Works stops being strict.
 
@@ -42,12 +43,13 @@ Source: `03-comparisons.md`, `docs/design/strategy/competitor-analysis.md`,
 
 ## "Won't Orbit just do all this?"
 
-Technically, yes. It would need the change contract: queue and leases, plan gate, builder abstraction
-and worktree, policy, independent verifier, evidence and proof binding, release gate, delivery and
-confirmation. Then it would be a vertical software-delivery product. If every room gets it, Orbit
-stops being generic; if one room type gets it, that is a separate product inside Orbit — Works, with
-its own team, roadmap and liability. The site office can hire the crew and the inspector, but then it
-is the delivery company.
+Technically, yes. Orbit already has tasks, queue/budgets, worktrees, coding evidence, approvals and a
+delivery gate. It would need the acceptance contract on top: reproduce-on-base, a plan gate,
+trusted-base checks, an independent verifier, a proof bound to the commit and event root, a release
+gate, and code delivery/confirmation. Then it would be a vertical software-delivery product. If every
+room gets it, Orbit stops being generic; if one room type gets it, that is a separate product inside
+Orbit — Works, with its own team, roadmap and liability. The project workspace can hire the crew and
+the inspector, but then it is the delivery company.
 
 Source: `03-works-vs.md`, `09-explaining.md`.
 

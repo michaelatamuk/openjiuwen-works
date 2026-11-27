@@ -2,7 +2,9 @@
 
 > **Doc status:** active · **Owner:** Michael · **Last reviewed:** 2026-11-27
 
-Status: internal note for the Creative Apps team. Not a README page and not a public claim.
+Status: internal note for the Creative Apps team. Not a README page and not a public claim. Orbit
+claims were checked against the Orbit checkout at commit `d53837a`; the notes are in
+[`docs/presentation/10-orbit-study.md`](../../presentation/10-orbit-study.md).
 
 ## One line
 
@@ -81,7 +83,7 @@ A patch is an input to a proof, not a proof.
 |---|---|---|
 | "Works is a harness." | **Wrong** | The harness contract is two methods, `propose` and `challenge`. Works has no model, no agent loop and no tool runtime; it has a queue, policy, gates, evidence, delivery and confirmation. Remove the harness and the factory still has its product; remove the pipeline and nothing is left. |
 | "Orbit is a sibling app above harnesses." | **Partly** | Same broad layer, different axis. Orbit also implements its own runtime protocol and ships about three dozen task tools, so by "harness-ness" it is closer to the Harness team than Works is. |
-| "Orbit is an extended builder and should own the factory." | **Wrong as a role** | Orbit can dispatch coding agents and isolate worktrees, but it has no reproduction stage, no plan gate, no check contract, no verdict rule, no bound proof, no release gate. Its "evidence" is source-revision evidence for a briefing, not a proof of a fix. |
+| "Orbit is an extended builder and should own the factory." | **Wrong as a role** | Orbit can dispatch coding agents, isolate worktrees and record coding evidence (changed files, hashes, test log). But it has no reproduction stage, no plan gate, no trusted-base check contract, no independent verifier, no commit-bound proof, no release gate and no code delivery/confirmation loop. Its coding evidence is useful, but it is not a proof bound to the commit and event root. |
 | "The factory can use Orbit as one of its stages." | **Partly** | As intake, yes. As an execution adapter inside `build`, yes. As a replacement for a stage of the lifecycle, no. |
 
 ## How to say it in a meeting
@@ -92,7 +94,9 @@ A patch is an input to a proof, not a proof.
   with Works."
 - "Works is not competing with Orbit; it is the vertical app Orbit can call when the work is a
   software change."
-- "Orbit is the front door and the room. Works is the control plane for the change."
+- "Orbit is the workspace and the front door. Works is the acceptance contract for one change."
+- "Orbit is not just a room: it runs tasks, worktrees and coding evidence. The difference is what it
+  proves and releases."
 - "If we merge them, Orbit stops being generic and Works stops being strict."
 - "The integration is three narrow contracts, not one roadmap."
 
@@ -100,12 +104,13 @@ Questions to expect, and the short answers:
 
 - **"But Orbit already runs Claude and Codex."** Yes — that is the build turn. The proof is what
   happens after the patch.
-- **"Orbit already has tasks and evidence."** It has tasks and source evidence for a briefing. It
-  does not bind a diff, checks, a verdict and a release to one hash.
+- **"Orbit already has tasks and evidence."** It has tasks, worktrees and coding evidence — changed
+  files, hashes and a test log. It does not bind the diff, checks, verdict and event root to one
+  commit, and it has no plan/release gate pair.
 - **"Why not one product?"** Because one product would have to be both generic and strict at the
   same time. The MCP boundary gives one front door with two engines.
-- **"Who owns what?"** Harnesses own the turn, Creative Apps owns both apps, Works owns the change
-  lifecycle, Orbit owns the room.
+- **"Who owns what?"** Harnesses own the turn, Creative Apps owns both apps, Works owns the
+  acceptance contract, Orbit owns the workspace and the task.
 
 ## What exists and what is proposed
 
@@ -114,7 +119,7 @@ Questions to expect, and the short answers:
 | Works harness contract (`propose`, `challenge`) and adapters for openJiuwen and JiuwenSwarm | built |
 | Works MCP tools: `submit_signal`, `list_tasks`, `task`, `evidence`, `release` | built |
 | Works intake from GitHub, Jira, a monitor and a person | built |
-| Orbit rooms, connectors, memory, routing and runtimes | built, in Orbit |
+| Orbit rooms, connectors, memory, routing, tasks, worktrees, coding evidence, approvals and runtimes | built, in Orbit |
 | Orbit calling Works over MCP | proposed |
 | Orbit as a Works build adapter | proposed |
 | Works accepting a signal from an Orbit room | proposed |

@@ -26,6 +26,7 @@ Every claim in the deck should point here or to a demo step.
 | `docs/archive/reviews/review-4-factories.md` | two agent factories, attention and review bottleneck |
 | `docs/presentation/03-works-vs.md` | the direct three-way comparison |
 | `docs/presentation/03-comparisons.md` | category matrix and "why not add modules" |
+| `docs/presentation/10-orbit-study.md` | verified Orbit code/docs notes (commit `d53837a`) |
 
 ## Decisions
 

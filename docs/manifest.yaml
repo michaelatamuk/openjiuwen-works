@@ -275,6 +275,13 @@ documents:
   last_reviewed: '2026-11-27'
   audience: product
   canonical: false
+- path: docs/presentation/10-orbit-study.md
+  title: Orbit study
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: product
+  canonical: false
 - path: docs/presentation/README.md
   title: 'Presentation: openJiuwen Works'
   status: active

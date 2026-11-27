@@ -71,8 +71,9 @@ different questions."
 - Swarm: how should the work be split? They build.
 - Works: how is the change delivered and proven? They accept the result.
 
-Works also runs the build; the builder can be openJiuwen, JiuwenSwarm or an Orbit room. The question
-is not who builds; it is what Works owns around the build.
+Orbit also runs tasks and coding agents; the table is about the primary question, not a capability
+limit. Works also runs the build; the builder can be openJiuwen, JiuwenSwarm or an Orbit room. The
+question is not who builds; it is what Works owns around the build.
 
 **Visual:** `assets/deck/why-works/01-three-products.svg` and `assets/deck/why-works/02-three-questions.svg`.
 **Source:** `docs/presentation/03-works-vs.md`, `docs/design/strategy/positioning.md`.
@@ -113,8 +114,8 @@ we ship what was never proven."
 
 **Say:** "Capacity does not scale without trust."
 
-Swarm adds build capacity. Orbit adds coordination. Works delivers the change and owns the proof:
-work that can be shipped. A demo becomes a process someone stands behind.
+Swarm adds build capacity. Orbit adds coordination and task execution. Works delivers the change and
+owns the proof: work that can be shipped. A demo becomes a process someone stands behind.
 
 **Visual:** `assets/deck/why-works/07-why-pay.svg`.
 **Source:** `assets/deck/why-works/07-why-pay.svg`.

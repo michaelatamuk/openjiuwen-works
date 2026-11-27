@@ -130,17 +130,26 @@ delivery and confirmation.
 ### What Orbit owns
 
 - The room, the people and the conversation.
-- Connectors, shared memory and routing.
-- Agent runtimes and approvals inside a room.
+- Connectors, shared memory, routing and schedules.
+- Agent runtimes: Claude Code, Codex, Jiuwen, JiuwenSwarm, human.
+- Tasks, task queue, budgets, routing and bindings.
+- Git worktrees and coding evidence (changed files, hashes, test log).
+- Approval cards, grants, delivery gate, receipts and task acceptance.
 - The front door for many kinds of work.
 
 ### What Orbit does not own
 
-- Per-language check contracts and a verifier.
-- Worktree lifecycle and policy over touched paths.
-- The evidence schema, hashes and commit binding.
-- Release and delivery semantics.
-- A change queue with budgets and gate identity.
+- Reproduction of the failure on the current base commit as a required stage.
+- A plan artefact and a plan gate that approves the checks before work.
+- A trusted-base check contract (checks and scenarios read from the base commit).
+- An independent verifier separate from the builder.
+- A proof bound to the diff, checks, verdict and event root at one commit.
+- A release gate for code and a code delivery/confirmation loop.
+- The two-gate lifecycle: plan and release.
+
+Orbit has coding evidence, but it is the runtime's own test run and changed-file summary, not a proof
+bound to the commit and the event root. It also has cross-review between agents; that is useful, but
+it is not a separate verifier with a trusted-base check contract.
 
 ### How they compose
 
@@ -156,23 +165,31 @@ Three narrow contracts, not a merge:
 
 ### "Won't Orbit just do all this?"
 
-Technically, yes. It would have to add the change contract — queue and leases, plan gate, builder
-abstraction and worktree, policy, independent verifier, evidence and proof binding, release gate,
-delivery and confirmation — and it would become a vertical software-delivery product. If every room
-gets it, Orbit stops being generic. If one room type gets it, that is a separate product inside
-Orbit, with its own team, roadmap, support and liability. That is Works.
+Technically, yes. It would have to add the acceptance contract on top of what it already has.
 
-The site office can hire the crew and the inspector, but then it is the delivery company. That is a
-different business, not a feature of the office.
+| Orbit already has | The acceptance contract adds | What Orbit becomes |
+|---|---|---|
+| rooms, people, tasks, queue, budgets, routing; Claude/Codex/Jiuwen/Swarm runtimes; worktrees; coding evidence; approvals, grants and a delivery gate; memory and schedules | reproduce-on-base; plan artefact + plan gate; trusted-base check contract; an independent verifier; a proof bound to the commit and event root; a release gate; code delivery and confirmation | a vertical software-delivery product, not a generic workspace |
+
+There are only two ways to add it:
+
+1. **Every room gets it.** Sales and support rooms inherit plan gates, checks and proof hashes. Orbit
+   stops being generic.
+2. **One special room type gets it.** That is a separate product inside Orbit, with its own team,
+   roadmap, support and liability. That is Works.
+
+The project workspace can hire the crew and the inspector, but then it is the delivery company. That
+is a different business, not a feature of the workspace.
 
 ### Why the merge fails
 
 > "Orbit should absorb the factory."
 
-A horizontal product would have to own per-language check contracts, worktree lifecycle, evidence
-schema and hashes, release and delivery semantics, and a change queue with budgets — while keeping
-all of it generic for every room. If you merge them, **Orbit stops being generic and Works stops
-being strict**.
+A horizontal product would have to own the acceptance contract — reproduce-on-base, a plan gate,
+trusted-base checks, an independent verifier, commit-bound proof, a release gate and code
+delivery/confirmation — while keeping all of it generic for every room. It already has tasks,
+worktrees and coding evidence; the missing piece is the part that makes the result provable and
+releasable. If you merge them, **Orbit stops being generic and Works stops being strict**.
 
 ### What is built vs proposed
 
@@ -181,7 +198,7 @@ being strict**.
 | Works harness contract (`propose`, `challenge`) and adapters | built |
 | Works MCP tools: `submit_signal`, `list_tasks`, `task`, `evidence`, `release` | built |
 | Works intake from GitHub, Jira, a monitor and a person | built |
-| Orbit rooms, connectors, memory, routing and runtimes | built, in Orbit |
+| Orbit rooms, connectors, memory, routing, tasks, worktrees, coding evidence, approvals and runtimes | built, in Orbit |
 | Orbit calling Works over MCP | proposed |
 | Orbit as a Works build adapter | proposed |
 | Works accepting a signal from an Orbit room | proposed |
@@ -223,7 +240,7 @@ The same agent can appear in all three. The products answer different questions.
 
 - "Works is not a harness; it consumes one."
 - "Swarm is a builder; Works is the change lifecycle that can use it and still owns the proof."
-- "Orbit is the room; Works is the delivery system for one change."
+- "Orbit is the workspace; Works is the acceptance contract for one change."
 - "Works runs builds; it can hire Orbit as one of the builders."
 - "If you merge them, Orbit stops being generic and Works stops being strict."
 - "A patch is an input to a proof, not a proof."

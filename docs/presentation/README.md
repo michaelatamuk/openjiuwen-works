@@ -37,6 +37,7 @@ add a queue and a proof page to our agent framework?".
 - [07-demo-script.md](07-demo-script.md) — a live demo that does not depend on a model.
 - [08-next-steps.md](08-next-steps.md) — open decisions and the build plan.
 - [09-explaining.md](09-explaining.md) — layers, black box vs white box, Orbit, Swarm, Jira/Jenkins.
+- [10-orbit-study.md](10-orbit-study.md) — verified notes from the Orbit checkout.
 - Deck SVGs are in [assets/](assets/); shared diagrams stay in [`../assets/`](../assets/).
   [06-sources.md](06-sources.md) maps each one.
 

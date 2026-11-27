@@ -12,10 +12,13 @@ others are bad; the point is that they answer a different question.
 | | Unit of work | What it owns | What it does not own | Where it stops |
 |---|---|---|---|---|
 | **Harness** (openJiuwen, Claude Code, Codex) | One turn | Model, tools, the agent loop | Queue, policy, proof, gates, delivery | When the turn ends |
-| **Horizontal app** (Orbit) | A room and a task | People, chats, coordination, routing, shared memory | Per-language check contracts, proof binding, release semantics | When the work is agreed or handed off |
+| **Horizontal app** (Orbit) | A room and a task | People, chats, coordination, routing, shared memory, tasks, agent runtimes, worktrees, coding evidence, approvals and delivery | Reproduce-on-base, plan gate, trusted-base checks, independent verifier, commit-bound proof, release gate, code delivery/confirmation | When the task is accepted or delivered |
 | **Agent factory** (Devin, Factory.ai, OpenHands) | A ticket or a task | Planning, execution, some review; usually cloud or self-hosted | Local-first ownership, open harness choice, two-gate proof binding as the product | At the vendor's boundary |
 | **Tracker + CI** (Jira, GitHub Actions) | An issue and a check | Workflow state, build and test execution | The agent lifecycle, the plan/release decision, the proof | When CI is green |
 | **Works** | One change | Reproduce, plan gate, build, check, proof, release gate, deliver, confirm | The model, the agent turn, deploy | When the reporter confirms the fix |
+
+Orbit is more than a room: it runs tasks, worktrees and coding evidence. The table asks what each
+product is *for*, not what it is capable of doing.
 
 ## The question each product answers
 
@@ -38,7 +41,7 @@ be true together.
 | If you add it to… | What you actually have to add | Why it changes the product |
 |---|---|---|
 | **A harness** | Durable queue, state machine, worktrees, policy, independent verifier, evidence schema, gate identity and TTL, delivery and confirmation | The harness stops being a turn and becomes a factory. Its contract, latency and failure model change. |
-| **Orbit** | Per-language check contracts, proof hashes, commit binding, release semantics, a queue with budgets | Orbit stops being generic. Every room would inherit a strict software lifecycle it does not need. |
+| **Orbit** | Reproduce-on-base, plan artefact + plan gate, trusted-base check contract, independent verifier, commit-bound proof, release gate, code delivery/confirmation. It already has tasks, queue/budgets, worktrees, coding evidence, approvals and delivery. | Orbit stops being generic. Every room would inherit a strict acceptance contract it does not need, or one room type becomes a separate product inside Orbit. |
 | **An agent factory** | Local-first ownership, open harness choice, two human gates, a proof bound to the commit, a confirmation loop | It can be built, but it is a different product for a different buyer. The vendor's cloud and workflow are the product. |
 | **A tracker + CI** | An agent runtime, a planner, a verifier, a proof, gate decisions, delivery markers | The tracker and CI become an agent factory. That is a new product, not a plugin. |
 
@@ -73,3 +76,5 @@ This is an argument, not a fact about any one roadmap. It should be tested in th
 - "Works is the only agent factory." It is not; it is the one that makes the proof and the two gates
   the product.
 - "The harness is commodity." The harness is essential; Works is the layer above it.
+- "Orbit is just a room." It has tasks, worktrees and coding evidence. The difference is the
+  acceptance contract, not the ability to run a build.
