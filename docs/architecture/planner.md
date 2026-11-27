@@ -1,5 +1,7 @@
 # Planner
 
+> **Doc status:** active · **Owner:** Michael · **Last reviewed:** 2026-11-27
+
 Works should plan better than a single prompt and stay auditable. This document is the design
 contract and the delivery plan for the planner. It is intentionally broader than the first
 implementation; each phase lands with tests and evidence.

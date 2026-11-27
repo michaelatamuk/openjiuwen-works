@@ -1,5 +1,7 @@
 # How a fix gets made
 
+> **Doc status:** active · **Owner:** Michael · **Last reviewed:** 2026-11-27
+
 This is the short version of what happens between “a problem was reported” and “the fix is live and
 confirmed”. It is written for product people: no internal names, no code.
 

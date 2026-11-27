@@ -1,5 +1,7 @@
 # Works 2026 modernization plan (v2)
 
+> **Doc status:** active · **Owner:** Michael · **Last reviewed:** 2026-11-27
+
 **Status:** revised after a staff-engineer critique of v1  
 **Date:** 2026-11-24  
 **Scope:** local-first daemon, CLI, web UI, packaging, AI quality and engineering system.  

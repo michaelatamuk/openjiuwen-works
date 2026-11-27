@@ -1,6 +1,8 @@
 # Migrating to a separate backend and frontend
 
-**Status:** plan (not started)
+> **Doc status:** archived · **Owner:** Michael · **Last reviewed:** 2026-11-24
+
+**Status:** executed (archived)
 **Date:** 2026-11-24
 **Companion:** [`stack-migration-review.md`](stack-migration-review.md) — the code review that
 prompted the corrections below.

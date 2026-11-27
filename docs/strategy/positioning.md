@@ -1,5 +1,7 @@
 # Positioning: where Works sits, and why it is not a harness
 
+> **Doc status:** active · **Owner:** Michael · **Last reviewed:** 2026-11-27
+
 Status: internal note for the Creative Apps team. Not a README page and not a public claim.
 
 ## One line

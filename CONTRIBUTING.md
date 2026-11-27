@@ -24,7 +24,7 @@ packages as extraneous and removes them.
 ## Before a PR
 
 ```bash
-make check          # ruff, format, mypy, pytest with coverage
+make check          # ruff, format, mypy, pytest with coverage, docs structure
 make integration    # the whole loop, no model
 make bench          # budgets; do not regress without an ADR line
 ```
@@ -43,6 +43,16 @@ Or on Windows: `powershell -ExecutionPolicy Bypass -File scripts/check.ps1`.
   opt-in visual snapshots become required when the E2E job lands (2026 plan, M3).
 - No new TODO; an old TODO is a refactoring trigger at the next gate.
 - Refactoring is scheduled (RG0–RG4). Do not mix it with feature work.
+
+## Documentation
+
+- A new page goes in the directory that matches the reader's question, not the author's. The
+  placement table, manifest fields and status rules are in
+  [`docs/guides/contributing/docs.md`](docs/guides/contributing/docs.md).
+- Every page under `docs/` is registered in `docs/manifest.yaml`; ADRs are indexed in
+  `docs/adrs/README.md`, and `docs/archive/` is read-only. `make docs` checks all of it.
+- A non-active page carries a status banner under its H1, and the banner must agree with the
+  manifest. Do not hand-edit `docs/reference/generated/`.
 
 ## Typed frontend
 

@@ -1,5 +1,7 @@
 # M25 — CVE intake (design)
 
+> **Doc status:** archived · **Owner:** Michael · **Last reviewed:** 2026-11-26
+
 Status: complete (25.1–25.5).
 
 ## Why

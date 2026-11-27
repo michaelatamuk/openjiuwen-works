@@ -1,5 +1,7 @@
 # Review: `docs/roadmap/archive/stack-migration.md`
 
+> **Doc status:** archived · **Owner:** Michael · **Last reviewed:** 2026-11-24
+
 ## Verdict
 
 **No — not executable as written.** The direction (keep the engine, put a thin FastAPI daemon in front, generate the client types, keep one local writer) is sound, and the file mapping in §7 mostly matches the repository. But three gate-breaking problems remain: the plan misstates the engine as synchronous, it claims the daemon owns runs and a scheduler without defining any run/scheduler API, and its Phase 3 smoke test and Phase 6 gate cannot pass. Fix the blockers and expand the contract, auth, job and static sections before starting Phase 0.

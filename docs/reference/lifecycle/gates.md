@@ -1,5 +1,7 @@
 # Gates (stage 4 and stage 8)
 
+> **Doc status:** active · **Owner:** Michael · **Last reviewed:** 2026-11-27
+
 A gate is a recorded human decision bound to an artefact, not a chat reply. This page covers the shared
 mechanics; the release-specific packet and blockers are on `release-gate.md`.
 

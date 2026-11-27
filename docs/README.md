@@ -1,8 +1,8 @@
 # Documentation
 
-Start with the question you have. Every page below is current; `archive/` is historical and
-read-only. A new page belongs in the section that matches the reader's question, not in the
-section that matches the file's genre.
+Start with the question you have. A page whose status is not `active` carries a banner under its H1;
+`archive/` is historical and read-only. A new page belongs in the section that matches the reader's
+question, not in the section that matches the file's genre.
 
 ## Start here
 
@@ -36,11 +36,13 @@ section that matches the file's genre.
   [features](reference/capabilities/features.md), [inbox](reference/capabilities/inbox.md).
 - Generated, do not edit: [OpenAPI](reference/generated/openapi.json),
   [baseline](reference/generated/openapi.baseline.json),
-  [typing ratchet](reference/generated/typing-baseline.json).
+  [typing ratchet](reference/generated/typing-baseline.json); the
+  [directory README](reference/generated/README.md) names the script for each one.
 
 ## Understand the design
 
-- [The plan](roadmap/plan.md) — vision, invariants, architecture and the engineering standard.
+- [The plan](roadmap/plan.md) — legacy v4.24: vision, invariants, architecture and the engineering
+  standard; still authoritative for scope until the split lands.
 - [Planner](architecture/planner.md) — the planning contract and its delivery phases.
 - [Architecture decisions](adrs/README.md) — one record per expensive choice.
 - [2026 modernization plan](roadmap/2026-modern-plan.md) and
@@ -51,6 +53,7 @@ section that matches the file's genre.
 
 ## Contribute
 
+- [Docs conventions](guides/contributing/docs.md) — where a page goes, the manifest and the checks.
 - [Layout](guides/contributing/layout.md) — where a new module, route or screen goes.
 - [Typing](guides/contributing/typing.md) — the `Any` ratchet and how to change it.
 - [Contributing](../CONTRIBUTING.md) — setup, rules and the PR checklist.

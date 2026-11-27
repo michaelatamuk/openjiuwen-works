@@ -1,5 +1,7 @@
 # M27 — specialist verifiers (design)
 
+> **Doc status:** archived · **Owner:** Michael · **Last reviewed:** 2026-11-26
+
 Status: complete (27.1–27.5).
 
 ## Why

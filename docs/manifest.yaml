@@ -1,0 +1,438 @@
+# Documentation manifest.
+#
+# Every page under docs/ is listed here except:
+#   - docs/adrs/**            (indexed by docs/adrs/README.md and check_adr_index.py)
+#   - docs/archive/**         (read-only history, documented by docs/archive/README.md)
+#   - docs/reference/generated/*.json (machine-written, documented by the directory README)
+#
+# Fields: path, title, status, owner, last_reviewed, audience, canonical.
+# The title must match the page's first H1. Run `make docs` after editing.
+version: 1
+documents:
+- path: docs/README.md
+  title: Documentation
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: everyone
+  canonical: true
+- path: docs/architecture/planner.md
+  title: Planner
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
+- path: docs/brand/mascot.md
+  title: Mira — the mascot
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: product
+  canonical: true
+- path: docs/guides/contributing/docs.md
+  title: Documentation
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
+- path: docs/guides/contributing/layout.md
+  title: Layout
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
+- path: docs/guides/contributing/typing.md
+  title: Typing
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
+- path: docs/guides/integrations/agent-core.md
+  title: agent-core verification team
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: integrator
+  canonical: true
+- path: docs/guides/integrations/laix.md
+  title: LAIX decision layer
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: integrator
+  canonical: true
+- path: docs/guides/integrations/live-harness.md
+  title: Live harness
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: integrator
+  canonical: true
+- path: docs/guides/integrations/ppma.md
+  title: PPMA memory
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: integrator
+  canonical: true
+- path: docs/guides/integrations/swarm.md
+  title: 'JiuwenSwarm: an isolated builder boundary'
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: integrator
+  canonical: true
+- path: docs/guides/operations/remote.md
+  title: Remote clients and the LAN
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: operator
+  canonical: true
+- path: docs/guides/operations/runbook.md
+  title: Runbook
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: operator
+  canonical: true
+- path: docs/guides/operations/supply-chain.md
+  title: Supply chain and release artifacts
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: operator
+  canonical: true
+- path: docs/guides/workflow/intake.md
+  title: 'Intake: a tracker issue becomes one work item'
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: user
+  canonical: true
+- path: docs/guides/workflow/readiness.md
+  title: Readiness
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: user
+  canonical: true
+- path: docs/guides/workflow/release.md
+  title: Release, delivery and confirmation
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: user
+  canonical: true
+- path: docs/guides/workflow/ui.md
+  title: Local GUI
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: user
+  canonical: true
+- path: docs/guides/workflow/verification.md
+  title: Verification and approval boundaries
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: user
+  canonical: true
+- path: docs/guides/workflow/waiting-and-dispatch.md
+  title: Waiting and dispatch
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: user
+  canonical: true
+- path: docs/reference/capabilities/bench.md
+  title: Pipeline benchmark
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
+- path: docs/reference/capabilities/cve.md
+  title: CVE intake
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
+- path: docs/reference/capabilities/features.md
+  title: Feature map
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: product
+  canonical: true
+- path: docs/reference/capabilities/inbox.md
+  title: Duplicate suggestions (inbox triage)
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
+- path: docs/reference/capabilities/monitor.md
+  title: Production feedback
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
+- path: docs/reference/capabilities/reporter.md
+  title: Reporter loop (after release)
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
+- path: docs/reference/capabilities/scan.md
+  title: Proactive scan
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
+- path: docs/reference/capabilities/specialists.md
+  title: Specialist verifiers
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
+- path: docs/reference/generated/README.md
+  title: Generated reference
+  status: generated
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: false
+- path: docs/reference/lifecycle/build.md
+  title: Build (stage 5)
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
+- path: docs/reference/lifecycle/check.md
+  title: Check (stage 6)
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
+- path: docs/reference/lifecycle/confirm.md
+  title: Confirm (stage 10)
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
+- path: docs/reference/lifecycle/deliver.md
+  title: Deliver (stage 9)
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
+- path: docs/reference/lifecycle/gates.md
+  title: Gates (stage 4 and stage 8)
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
+- path: docs/reference/lifecycle/planning.md
+  title: Planning (stage 3)
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
+- path: docs/reference/lifecycle/proof.md
+  title: Proof (stage 7)
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
+- path: docs/reference/lifecycle/release-gate.md
+  title: Release gate (stage 8)
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
+- path: docs/reference/lifecycle/reproduce.md
+  title: Reproduce (stage 2)
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
+- path: docs/reference/lifecycle/signal-intake.md
+  title: Signal intake (stage 1)
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
+- path: docs/reference/platform/http-api.md
+  title: Local HTTP API
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
+- path: docs/reference/platform/prompts.md
+  title: Prompts and golden evals
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
+- path: docs/reference/platform/reliability.md
+  title: Reliability, crashes and delivery semantics
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
+- path: docs/reference/platform/report.md
+  title: Report
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
+- path: docs/reference/platform/scheduler.md
+  title: Scheduler (first pass)
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
+- path: docs/roadmap/2026-modern-plan.md
+  title: Works 2026 modernization plan (v2)
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: product
+  canonical: true
+- path: docs/roadmap/archive/stack-migration-review.md
+  title: 'Review: `docs/roadmap/archive/stack-migration.md`'
+  status: archived
+  owner: Michael
+  last_reviewed: '2026-11-24'
+  audience: engineer
+  canonical: false
+- path: docs/roadmap/archive/stack-migration.md
+  title: Migrating to a separate backend and frontend
+  status: archived
+  owner: Michael
+  last_reviewed: '2026-11-24'
+  audience: engineer
+  canonical: false
+- path: docs/roadmap/milestones/m21-scheduler.md
+  title: M21 — queue and scheduler (design)
+  status: archived
+  owner: Michael
+  last_reviewed: '2026-11-26'
+  audience: engineer
+  canonical: false
+- path: docs/roadmap/milestones/m22-estimates.md
+  title: M22 — estimating the work (design)
+  status: archived
+  owner: Michael
+  last_reviewed: '2026-11-26'
+  audience: engineer
+  canonical: false
+- path: docs/roadmap/milestones/m23-decision-support.md
+  title: M23 — decision support at the gate (design)
+  status: archived
+  owner: Michael
+  last_reviewed: '2026-11-26'
+  audience: engineer
+  canonical: false
+- path: docs/roadmap/milestones/m24-parallel.md
+  title: M24 — parallel tasks in one repository (design)
+  status: archived
+  owner: Michael
+  last_reviewed: '2026-11-26'
+  audience: engineer
+  canonical: false
+- path: docs/roadmap/milestones/m25-cve.md
+  title: M25 — CVE intake (design)
+  status: archived
+  owner: Michael
+  last_reviewed: '2026-11-26'
+  audience: engineer
+  canonical: false
+- path: docs/roadmap/milestones/m27-specialists.md
+  title: M27 — specialist verifiers (design)
+  status: archived
+  owner: Michael
+  last_reviewed: '2026-11-26'
+  audience: engineer
+  canonical: false
+- path: docs/roadmap/milestones/m28-scan.md
+  title: M28 — proactive scan (design)
+  status: archived
+  owner: Michael
+  last_reviewed: '2026-11-26'
+  audience: engineer
+  canonical: false
+- path: docs/roadmap/milestones/m29-monitor.md
+  title: M29 — production feedback (design)
+  status: archived
+  owner: Michael
+  last_reviewed: '2026-11-26'
+  audience: engineer
+  canonical: false
+- path: docs/roadmap/milestones/m30-bench.md
+  title: M30 — pipeline benchmark (design)
+  status: archived
+  owner: Michael
+  last_reviewed: '2026-11-26'
+  audience: engineer
+  canonical: false
+- path: docs/roadmap/plan.md
+  title: Development plan — openJiuwen Works
+  status: legacy
+  owner: Michael
+  last_reviewed: '2026-11-21'
+  audience: product
+  canonical: true
+- path: docs/start/concepts.md
+  title: How a fix gets made
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: everyone
+  canonical: true
+- path: docs/strategy/competitor-analysis.md
+  title: Competitor Analysis
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: product
+  canonical: true
+- path: docs/strategy/feature-recommendations.md
+  title: Feature Recommendations
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: product
+  canonical: true
+- path: docs/strategy/positioning.md
+  title: 'Positioning: where Works sits, and why it is not a harness'
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: product
+  canonical: true

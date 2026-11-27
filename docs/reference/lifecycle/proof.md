@@ -1,5 +1,7 @@
 # Proof (stage 7)
 
+> **Doc status:** active · **Owner:** Michael · **Last reviewed:** 2026-11-27
+
 A proof is a page plus the material to re-check it. Nothing here is decorative: every claim is either
 hashed or recomputed.
 

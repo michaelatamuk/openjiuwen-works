@@ -1,5 +1,7 @@
 # Release gate (stage 8)
 
+> **Doc status:** active · **Owner:** Michael · **Last reviewed:** 2026-11-27
+
 The release packet is read-only; the gate is the human decision that follows it. Identity, TTL and
 quorum mechanics are shared with the plan gate (`gates.md`); this page adds what is release-specific.
 

@@ -1,5 +1,7 @@
 # M28 — proactive scan (design)
 
+> **Doc status:** archived · **Owner:** Michael · **Last reviewed:** 2026-11-26
+
 Status: complete (28.1–28.5).
 
 ## Why

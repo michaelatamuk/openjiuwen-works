@@ -1,8 +1,10 @@
 # M21 — queue and scheduler (design)
 
-Status: core implemented as the first pass (policy, selection, leases, pause, one CLI tick). The
-daemon loop, HTTP surface, GUI, import triggers and bounded retries are still planned; the checkboxes
-live in `docs/roadmap/2026-modern-plan.md`, and the actor rule is ADR 024.
+> **Doc status:** archived · **Owner:** Michael · **Last reviewed:** 2026-11-26
+
+Status: complete (M21.1–M21.12). The first pass covered policy, selection, leases, pause and one CLI
+tick; the daemon loop, HTTP surface, GUI, import triggers and bounded retries landed with it. The
+checkboxes live in `docs/roadmap/2026-modern-plan.md`, and the actor rule is ADR 024.
 
 ## The problem
 

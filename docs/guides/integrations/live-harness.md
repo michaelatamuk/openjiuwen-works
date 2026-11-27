@@ -1,5 +1,7 @@
 # Live harness
 
+> **Doc status:** active · **Owner:** Michael · **Last reviewed:** 2026-11-27
+
 `works run --live` uses the real builder through an `openjiuwen` harness. The default provider is
 Claude Code on an Anthropic-compatible endpoint; `dsh` (DeepSeek Harness), `native` (Jiuwen's
 in-process DeepAgent) and `codex` are selectable when their runtime is installed. The provider is

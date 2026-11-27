@@ -1,7 +1,9 @@
 # M22 — estimating the work (design)
 
-Status: planned. M21 ships with coarse grouped medians; M22 makes the estimate good enough to order
-and fit work.
+> **Doc status:** archived · **Owner:** Michael · **Last reviewed:** 2026-11-26
+
+Status: complete (M22.1–M22.7). M21 shipped with coarse grouped medians; M22 makes the estimate good
+enough to order and fit work.
 
 ## Why
 

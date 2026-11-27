@@ -1,5 +1,7 @@
 # M29 — production feedback (design)
 
+> **Doc status:** archived · **Owner:** Michael · **Last reviewed:** 2026-11-26
+
 Status: complete (29.1–29.4).
 
 ## Why

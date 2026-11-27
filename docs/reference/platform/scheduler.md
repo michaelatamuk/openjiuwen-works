@@ -1,5 +1,7 @@
 # Scheduler (first pass)
 
+> **Doc status:** active · **Owner:** Michael · **Last reviewed:** 2026-11-27
+
 Status: core implemented (policy, selection, leases, pause), the HTTP surface (status, pause, resume,
 one tick as a job), a daemon loop for a writable daemon, and `dispatch_on_import` on task creation.
 Bounded retries, `/sources` triggers and the remaining GUI parity are still planned.

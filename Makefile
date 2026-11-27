@@ -1,6 +1,6 @@
-.PHONY: check lint format type test unit integration cov bench wheel security gitleaks demo docs-links sbom api-compat routes mutation prompts evals typing-ratchet
+.PHONY: check lint format type test unit integration cov bench wheel security gitleaks demo docs docs-links docs-manifest docs-status docs-adr-index sbom api-compat routes mutation prompts evals typing-ratchet
 
-check: lint format type typing-ratchet prompts evals cov
+check: docs lint format type typing-ratchet prompts evals cov
 
 lint:
 	uv run ruff check src tests
@@ -8,8 +8,19 @@ lint:
 format:
 	uv run ruff format --check src tests
 
+docs: docs-links docs-manifest docs-status docs-adr-index
+
 docs-links:
 	uv run python scripts/check_docs_links.py
+
+docs-manifest:
+	uv run python scripts/check_docs_manifest.py
+
+docs-status:
+	uv run python scripts/check_docs_status.py
+
+docs-adr-index:
+	uv run python scripts/check_adr_index.py
 
 prompts:
 	uv run python scripts/check_prompts.py

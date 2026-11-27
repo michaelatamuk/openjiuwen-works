@@ -1,5 +1,7 @@
 # M30 — pipeline benchmark (design)
 
+> **Doc status:** archived · **Owner:** Michael · **Last reviewed:** 2026-11-26
+
 Status: complete (30.1–30.4).
 
 ## Why

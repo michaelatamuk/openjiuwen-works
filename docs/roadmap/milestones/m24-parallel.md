@@ -1,5 +1,7 @@
 # M24 — parallel tasks in one repository (design)
 
+> **Doc status:** archived · **Owner:** Michael · **Last reviewed:** 2026-11-26
+
 Status: complete (24.1–24.5). The gap was narrower than the first estimate: a worktree per run and a
 job pool already existed. M24 makes the scheduler honour the `per_repo` slot it documents.
 

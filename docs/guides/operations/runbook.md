@@ -1,5 +1,7 @@
 # Runbook
 
+> **Doc status:** active · **Owner:** Michael · **Last reviewed:** 2026-11-27
+
 Known failures and the first response. Every entry says what the operator sees, why it happens,
 and what to do — no narration, no guesses.
 

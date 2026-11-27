@@ -1,5 +1,7 @@
 # Development plan — openJiuwen Works
 
+> **Doc status:** legacy · **Owner:** Michael · **Last reviewed:** 2026-11-21
+
 **Status:** v4.24 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
 
 Every task is a checkbox, checked when its criteria are met and the change is merged. `S/M/L`:

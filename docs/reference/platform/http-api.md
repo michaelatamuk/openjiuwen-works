@@ -1,5 +1,7 @@
 # Local HTTP API
 
+> **Doc status:** active · **Owner:** Michael · **Last reviewed:** 2026-11-27
+
 The daemon serves `/api/v1` on loopback. The OpenAPI schema is
 [`openapi.json`](../generated/openapi.json); the TypeScript client is generated from it.
 
