@@ -96,8 +96,8 @@ verdict (`challenge`).
 
 > "Swarm is the factory."
 
-No. Swarm is capacity. A leader can split work and build, but a leader cannot sign off its own work.
-The acceptance layer is outside the team.
+No. Swarm is a builder. A leader can split work and build, but a leader cannot sign off its own work.
+The change lifecycle is outside the team; it can hire the team and still owns the proof.
 
 ### What is built
 
@@ -122,6 +122,11 @@ gate, deliver, confirm. It is deliberately narrow — software changes, one way.
 
 They are both above harnesses. They are not above each other.
 
+Works also runs builds. It can use openJiuwen, JiuwenSwarm or an Orbit room as the builder; the
+independent inspector is a role inside Works, not the whole product. The difference is the change
+contract: reproduction, the plan gate, the check contract, the proof binding, the release gate,
+delivery and confirmation.
+
 ### What Orbit owns
 
 - The room, the people and the conversation.
@@ -143,8 +148,9 @@ Three narrow contracts, not a merge:
 
 1. **A room signal becomes a task.** Orbit sends the report through Works intake (`submit_signal`
    over MCP).
-2. **Orbit runs the build turn.** Works treats Orbit like any build adapter; the patch returns to
-   the same run for checks.
+2. **Orbit can run the build turn.** Works treats Orbit like any build adapter; the patch returns to
+   the same run for checks. Works can equally build through openJiuwen or JiuwenSwarm, so the builder
+   is interchangeable.
 3. **"Fix and prove" is a tool.** An agent in Orbit calls Works and gets the proof and release state
    back into the room (`evidence`, `release` over MCP).
 
@@ -173,8 +179,8 @@ Do not draw the proposed links as solid in public material.
 
 ### The common confusion
 
-> "Orbit already runs Claude and Codex." — That is the build turn. The proof is what happens after
-> the patch.
+> "Orbit already runs Claude and Codex." — That is the build turn. Works can use that turn and still
+> owns the proof. The proof is what happens after the patch.
 >
 > "Orbit already has tasks and evidence." — It has tasks and source evidence for a briefing. It does
 > not bind a diff, checks, a verdict and a release to one hash.
@@ -189,9 +195,9 @@ Sources: [`positioning.md`](../design/strategy/positioning.md),
 ## One picture
 
 ```
-Orbit        who, with whom, about what?     they agree
-Swarm        how should the work be split?   they build
-Works        how is it proven?               they accept
+Orbit        who, with whom, about what?          they agree
+Swarm        how should the work be split?        they build
+Works        how is it delivered and proven?      they accept the result
 ```
 
 The same agent can appear in all three. The products answer different questions.
@@ -200,12 +206,14 @@ The same agent can appear in all three. The products answer different questions.
 - Built is not proven.
 - A leader cannot sign off its own work.
 - A patch is an input to a proof, not a proof.
+- Works runs the build; the inspector is a role inside it, not the product.
 
 ## One-line answers for the meeting
 
 - "Works is not a harness; it consumes one."
-- "Swarm is capacity; Works is acceptance."
-- "Orbit is the room; Works is the control plane for the change."
+- "Swarm is a builder; Works is the change lifecycle that can use it and still owns the proof."
+- "Orbit is the room; Works is the delivery system for one change."
+- "Works runs builds; it can hire Orbit as one of the builders."
 - "If you merge them, Orbit stops being generic and Works stops being strict."
 - "A patch is an input to a proof, not a proof."
 

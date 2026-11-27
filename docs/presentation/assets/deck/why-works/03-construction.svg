@@ -8,7 +8,7 @@
   <rect x="0" y="0" width="1600" height="900" fill="#F4F5F9"/>
 
   <text x="100" y="90" font-size="13" font-weight="700" fill="#6D28D9" letter-spacing="2.4">A BUILD SITE</text>
-  <text x="100" y="160" font-size="46" font-weight="700" fill="#111827">Office. Team. Acceptance.</text>
+  <text x="100" y="160" font-size="46" font-weight="700" fill="#111827">Office. Team. Delivery.</text>
   <text x="100" y="205" font-size="19" fill="#6B7280">Nobody confuses these three on a building site. With agents they do, because all three look like AI.</text>
 
   <g>
@@ -76,11 +76,11 @@
     <rect x="1182" y="474" width="12" height="26" rx="3" fill="#6D28D9"/>
     <circle cx="1188" cy="540" r="16" fill="none" stroke="#6D28D9" stroke-width="2"/>
     <path d="M1180 540 L1186 546 L1197 534" fill="none" stroke="#6D28D9" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-    <text x="1290" y="580" font-size="22" font-weight="700" fill="#6D28D9" text-anchor="middle">WORKS · inspection</text>
-    <text x="1290" y="612" font-size="15" fill="#6B7280" text-anchor="middle">checks and signs</text>
+    <text x="1290" y="580" font-size="22" font-weight="700" fill="#6D28D9" text-anchor="middle">WORKS · delivery</text>
+    <text x="1290" y="612" font-size="15" fill="#6B7280" text-anchor="middle">delivers and signs</text>
   </g>
 
-  <text x="800" y="790" font-size="20" fill="#475569" text-anchor="middle">The office does not build. The team does not sign the act. Inspection does not negotiate.</text>
+  <text x="800" y="790" font-size="20" fill="#475569" text-anchor="middle">The office does not build. The team does not sign the act. Delivery does not negotiate.</text>
 
   <line x1="100" y1="830" x2="1500" y2="830" stroke="#DDE2E8" stroke-width="1.5"/>
   <text x="100" y="862" font-size="13" fill="#9CA3AF">openJiuwen Works · 2026</text>

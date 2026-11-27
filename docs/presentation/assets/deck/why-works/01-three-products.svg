@@ -53,7 +53,7 @@
     <line x1="1255" y1="490" x2="1225" y2="520" stroke="#94A3B8" stroke-width="3" stroke-linecap="round"/>
     <line x1="1325" y1="490" x2="1355" y2="520" stroke="#94A3B8" stroke-width="3" stroke-linecap="round"/>
     <text x="1290" y="610" font-size="24" font-weight="700" fill="#6D28D9" text-anchor="middle">WORKS</text>
-    <text x="1290" y="640" font-size="14" fill="#6B7280" text-anchor="middle">acceptance</text>
+    <text x="1290" y="640" font-size="14" fill="#6B7280" text-anchor="middle">delivery</text>
   </g>
 
   <text x="800" y="790" font-size="20" fill="#475569" text-anchor="middle">For now all three look the same. The difference comes next.</text>

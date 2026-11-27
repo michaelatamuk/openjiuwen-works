@@ -5,9 +5,10 @@ Short answers for the questions that decide the meeting. Each answer has a sourc
 ## "Why not just use Orbit?"
 
 Orbit is horizontal: rooms, people, coordination, shared memory, routing. Works is vertical: one
-change, per-language checks, a proof bound to the commit, two human gates. They compose through three
-narrow contracts; they do not replace each other. If you merge them, Orbit stops being generic and
-Works stops being strict.
+change, per-language checks, a proof bound to the commit, two human gates. Works also runs builds; it
+can use an Orbit room as a builder. The difference is the change contract, not who builds. They
+compose through three narrow contracts; they do not replace each other. If you merge them, Orbit stops
+being generic and Works stops being strict.
 
 Source: `03-works-vs.md`, `docs/design/strategy/positioning.md`.
 
@@ -22,9 +23,10 @@ Source: `03-works-vs.md`, `docs/guides/integrations/live-harness.md`.
 
 ## "Why not use JiuwenSwarm as the factory?"
 
-Swarm is capacity: a leader splits work and subagents build. A leader cannot sign off its own work.
-Works owns the plan gate, policy, verification, proof, release gate, delivery and confirmation.
-Swarm is an external builder behind `works.swarm.v1`; the worktree is the only shared path.
+Swarm is a builder: a leader splits work and subagents build. A leader cannot sign off its own work.
+Works runs the build through Swarm but owns the plan gate, policy, verification, proof, release
+gate, delivery and confirmation. Swarm is an external builder behind `works.swarm.v1`; the worktree
+is the only shared path.
 
 Source: `03-works-vs.md`, `docs/guides/integrations/swarm.md`.
 
@@ -41,15 +43,17 @@ Source: `03-comparisons.md`, `docs/design/strategy/competitor-analysis.md`,
 ## "Why not Jira + GitHub Actions + an agent?"
 
 The tracker holds state, CI runs checks, the agent writes code. None of them owns the plan decision,
-the independent verification, the proof binding or the release decision. You would have to add all
-four, and then you have built an agent factory.
+the independent verification, the proof binding or the release decision. Works can use Jira for
+intake and Jenkins for commands; the difference is the change contract around them. You would have to
+add all of it to Jira/Jenkins, and then you have built an agent factory.
 
 Source: `03-comparisons.md`.
 
 ## "Isn't this just an agent wrapper?"
 
 No. Remove the harness and Works still has a queue, policy, gates, proof, delivery and confirmation.
-Remove the lifecycle and nothing is left. Works has no model, no agent loop and no tool runtime.
+Remove the lifecycle and nothing is left. Works has no model, no agent loop and no tool runtime, but
+it does run the build through a harness; the wrapper is the lifecycle around that build.
 
 Source: `03-works-vs.md`.
 

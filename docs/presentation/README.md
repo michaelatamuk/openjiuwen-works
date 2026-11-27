@@ -23,7 +23,7 @@ add a queue and a proof page to our agent framework?".
 
 ## One line
 
-**Harnesses run a turn. Orbit organises work. Works proves a change.**
+**Harnesses run a turn. Orbit organises work. Works delivers a proven change.**
 
 ## Files
 

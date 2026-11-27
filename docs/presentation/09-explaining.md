@@ -52,7 +52,10 @@ shared memory, routing, agent runtimes, approvals inside a conversation. It is d
 sales, support, research and code in one product.
 
 It can run harnesses and agents inside a room. It can also implement its own runtime protocol; it is
-closer to the harness layer than Works is. But it is not the acceptance layer for a software change.
+closer to the harness layer than Works is. But it is not the change lifecycle for a software change.
+
+Works also runs builds. It can use openJiuwen, JiuwenSwarm or an Orbit room as the builder. The
+difference is not who builds; it is who owns the change contract and the proof.
 
 ## Why Orbit if Swarm has leader and subagents?
 
@@ -62,24 +65,30 @@ Because they answer different questions:
 |---|---|---|
 | Orbit | Who is working with whom, about what? | a room |
 | Swarm | How should the work be split and built? | a build |
-| Works | How is the change proven and who signs it? | one change |
+| Works | How is the change delivered, proven and signed? | one change |
 
-A leader inside Swarm cannot replace a room. A room cannot replace an independent inspection. An
-inspection cannot replace the team that builds.
+A leader inside Swarm cannot replace a room. A room cannot replace the change lifecycle. The change
+lifecycle can use the team that builds; it cannot outsource the proof.
 
 **Building-site analogy:**
 
 - Orbit is the site office: people, decisions, coordination.
-- Swarm is the construction team: a leader, sub-crews, the build.
-- Works is the inspection and sign-off: independent check, proof, signatures.
+- Swarm is the construction crew: a leader, sub-crews, the build.
+- Works is the turnkey delivery company: it plans the job, hires or uses the crew, calls the
+  independent inspector, assembles the acceptance act, delivers the building and confirms it.
 
-The fact that the construction team has a foreman does not remove the site office or the inspector.
-Nobody confuses these three on a building site. With agents they get confused because all three look
-like AI.
+The fact that the crew has a foreman does not remove the site office or the delivery company. The
+delivery company can hire the crew; it cannot sign for the inspector. Nobody confuses these three on a
+building site. With agents they get confused because all three look like AI.
 
 ## Why Works if Orbit exists?
 
-They serve different purposes. Orbit optimises **coordination**; Works optimises **trust**.
+They serve different purposes. Orbit optimises **coordination**; Works optimises **delivery with
+proof**.
+
+Works also runs builds. It can use an Orbit room as a builder, just as it can use openJiuwen or
+JiuwenSwarm. The difference is not who builds; it is who owns the change contract: reproduction, the
+plan gate, the check contract, the proof binding, the release gate, delivery and confirmation.
 
 Technically, you could add the lifecycle to Orbit. But then every room would inherit per-language
 check contracts, worktree lifecycle, evidence hashes, commit binding, release gates and delivery
@@ -89,17 +98,19 @@ being generic and Works stops being strict**.
 The integration is three narrow contracts, not a merge:
 
 1. a room signal becomes a task;
-2. Orbit can run a build turn for Works;
+2. Orbit can run a build turn for Works; Works can equally build through openJiuwen or Swarm, so the
+   builder is interchangeable;
 3. "fix and prove" is a tool that returns the proof and release state to the room.
 
 Two products, one front door.
 
 ## Why not Jira or Jenkins?
 
-Because they are workflow and tool runners, not agent lifecycles. Adding pipeline steps gives you
-automation, not acceptance.
+Because they are workflow and tool runners, not change lifecycles. Adding pipeline steps gives you
+automation, not the change contract.
 
-What a pipeline step does not know:
+Works also runs builds; Jenkins can be a tool inside Works. The difference is what surrounds the
+build:
 
 - whether the failure was reproduced on the current base commit;
 - which plan a person approved, and which checks will judge the change;
@@ -114,8 +125,9 @@ That is a different product, not a plugin.
 
 **Analogies:**
 
-- Jenkins is the robot that runs commands; Works is the inspector who signs the building. Teaching the
-  robot to hold a pen does not make it an inspector.
+- Jenkins is the robot that runs commands; Works is the delivery company that runs the project,
+  hires the inspector and signs the result. Teaching the robot to hold a pen does not make it the
+  delivery company.
 - CI is a smoke detector; Works is the fire-inspection certificate. You want both.
 - Jira tracks the ticket; it does not prove the change.
 
@@ -133,24 +145,27 @@ The category is real; the names change. Verify current names before putting them
 | **Parallel agent runners** (Conductor, Crystal, Claude Squad, Vibe Kanban) | Run many Claude Code or Codex sessions in parallel worktrees; each session is a black box |
 | **Zed with Agent Client Protocol** | The editor hosts external agents as black boxes |
 | **Orbit** | A horizontal room that can run harnesses and agents inside the work |
-| **Works** | A vertical lifecycle that uses openJiuwen or JiuwenSwarm as the builder |
+| **Works** | A vertical change lifecycle that can use openJiuwen, JiuwenSwarm or an Orbit room as the builder |
 
 GitHub Copilot Workspace is a useful UX analog — a workspace above an agent — but it is not
 harness-agnostic in the same way.
 
 ## One-liners for the meeting
 
-- "A harness runs a turn. A host organises work. Works proves a change."
-- "A leader inside the team cannot sign the inspection."
-- "Swarm is capacity; Works is acceptance."
-- "Orbit is the room; Works is the control plane for the change."
-- "Jenkins runs the commands; Works signs the building."
+- "A harness runs a turn. A host organises work. Works delivers a proven change."
+- "Works can hire any builder; it cannot outsource the proof."
+- "A leader inside the team cannot sign the inspection; Works can hire the team and the inspector."
+- "Swarm is a builder; Works is the change lifecycle that can use it and still owns the proof."
+- "Orbit is the room; Works is the delivery system for one change."
+- "Jenkins runs the commands; Works runs the change and signs the result."
 - "A patch is an input to a proof, not a proof."
 - "If you merge them, Orbit stops being generic and Works stops being strict."
 
 ## What not to claim
 
 - Works does not replace the harness, Jira, Jenkins or Orbit.
+- Works is not only an inspector: it runs the build through a harness, Swarm or an Orbit room, then
+  verifies and proves the result.
 - JiuwenSwarm is not a patch library; it is a multi-agent build platform.
 - Orbit is not a worse Works; it is a different product with a different unit of work.
 - Competitors can build a lifecycle; the argument is that doing so changes their product.

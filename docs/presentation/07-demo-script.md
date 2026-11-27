@@ -57,7 +57,7 @@ Delivery waits for that decision; confirmation checks the real result."
 
 ### 6. The close (1 min)
 
-**Say:** "Harnesses run a turn. Orbit organises work. Works proves a change. Give us one repository
+**Say:** "Harnesses run a turn. Orbit organises work. Works delivers a proven change. Give us one repository
 and one class of change, and we will show the two gates and the proof on your code."
 
 ## The 20-minute path

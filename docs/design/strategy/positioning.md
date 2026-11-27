@@ -6,7 +6,7 @@ Status: internal note for the Creative Apps team. Not a README page and not a pu
 
 ## One line
 
-**Harnesses run a turn. Orbit organises work. Works proves a change.**
+**Harnesses run a turn. Orbit organises work. Works delivers a proven change.**
 
 ## The layers
 
@@ -88,6 +88,8 @@ A patch is an input to a proof, not a proof.
 
 - "Works is not competing with the Harness team; it consumes harnesses through a two-method
   contract."
+- "Works runs the build, too: it can use Orbit, openJiuwen or Swarm as the builder; the proof stays
+  with Works."
 - "Works is not competing with Orbit; it is the vertical app Orbit can call when the work is a
   software change."
 - "Orbit is the front door and the room. Works is the control plane for the change."

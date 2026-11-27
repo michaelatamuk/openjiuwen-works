@@ -6,8 +6,9 @@ A 12-slide arc. Each slide has one job. The deck is a story about a category, no
 
 **Say:** "One signal in. A released fix out. Two human decisions."
 
-Works is a local software factory. It is not an agent, a harness or a chat product. It is the layer
-that makes an agent's change provable and signed.
+Works is a local software factory. It is not an agent, a harness or a chat product. It runs one
+change from signal to confirmation: it can use any harness as the builder, then verifies the result
+and makes it provable and signed.
 
 **Visual:** `../assets/ui/banner.svg` (or the dark variant).
 **Source:** `README.md`.
@@ -30,6 +31,9 @@ recorded."
 
 Signal → reproduce → plan → **plan gate** → build → check → proof → **release gate** → deliver →
 confirm.
+
+Works runs the build through a harness; the builder can be openJiuwen, JiuwenSwarm or an Orbit room.
+The lifecycle stays with Works.
 
 **Visual:** `assets/deck/software-factory-flow.svg`.
 **Source:** `docs/start/concepts.md`, `docs/design/architecture.md`.
@@ -65,7 +69,10 @@ different questions."
 
 - Orbit: who, with whom, about what? They agree.
 - Swarm: how should the work be split? They build.
-- Works: how is it proven? They accept.
+- Works: how is the change delivered and proven? They accept the result.
+
+Works also runs the build; the builder can be openJiuwen, JiuwenSwarm or an Orbit room. The question
+is not who builds; it is what Works owns around the build.
 
 **Visual:** `assets/deck/why-works/01-three-products.svg` and `assets/deck/why-works/02-three-questions.svg`.
 **Source:** `docs/presentation/03-works-vs.md`, `docs/design/strategy/positioning.md`.
@@ -84,8 +91,8 @@ someone stands behind.
 
 **Say:** "A leader cannot sign off their own work."
 
-The leader owns the work. Someone outside the team owns the proof. That is why the verifier is
-independent and why the two gates belong to a person.
+The leader owns the work. Someone outside the team owns the proof. Works can hire the team; it owns
+the delivery and the proof.
 
 **Visual:** `assets/deck/why-works/05-separation.svg`.
 **Source:** `docs/design/adrs/005-verifier-independence.md`,
@@ -106,8 +113,8 @@ we ship what was never proven."
 
 **Say:** "Capacity does not scale without trust."
 
-Swarm adds capacity. Orbit adds coordination. Works adds trust: work that can be shipped. A demo
-becomes a process someone stands behind.
+Swarm adds build capacity. Orbit adds coordination. Works delivers the change and owns the proof:
+work that can be shipped. A demo becomes a process someone stands behind.
 
 **Visual:** `assets/deck/why-works/07-why-pay.svg`.
 **Source:** `assets/deck/why-works/07-why-pay.svg`.

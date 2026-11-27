@@ -20,7 +20,7 @@ of people who can approve it.
 
 Every tool looks like it solves this because every tool shows an agent doing work. But a turn is not
 a change, a patch is not a proof, and a merged PR is not a confirmed result. The market conflates
-three different jobs: coordination, capacity and acceptance.
+three different jobs: coordination, build capacity and change delivery with proof.
 
 ## Question
 
@@ -38,8 +38,9 @@ Works is that lifecycle. It is not a harness and not a horizontal room.
 
 1. **The bottleneck is trust, not code.** The scarce resource is a person who can approve a change,
    not an agent that can write one.
-2. **Works is the acceptance layer.** Two human gates, an independent verifier and a proof bound to
-   the commit; the harness stays a harness.
+2. **Works is the change delivery system.** It runs the build through any harness, verifies
+   independently, binds the proof to the commit and puts the two human gates on the result; the
+   harness stays a harness.
 3. **It is not a plugin.** Adding a queue, a policy engine, a verifier, an evidence schema, a gate
    identity and a delivery loop to X changes what X is. That is why the module argument fails on
    ownership and incentives, not on code volume.
@@ -47,7 +48,7 @@ Works is that lifecycle. It is not a harness and not a horizontal room.
 ## What the audience should do
 
 Ask for a demo or a pilot. Not "nice deck". The deck is successful when someone can repeat the one
-line — *harnesses run a turn, Orbit organises work, Works proves a change* — and then ask how to try
+line — *harnesses run a turn, Orbit organises work, Works delivers a proven change* — and then ask how to try
 it.
 
 ## Success criteria
