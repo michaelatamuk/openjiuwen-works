@@ -2,7 +2,7 @@ import math
 import os
 import wave
 
-OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs", "assets", "frames")
+OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs", "assets", "film", "frames")
 SR = 22050
 DUR = 46.0
 N = int(SR * DUR)

@@ -3,7 +3,7 @@ import shutil
 import subprocess
 
 OUT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-FR = os.path.join(OUT, "docs", "assets", "frames")
+FR = os.path.join(OUT, "docs", "assets", "film", "frames")
 AN = FR
 FF = (os.environ.get("FFMPEG") or shutil.which("ffmpeg")
       or r"C:\Users\m00645993\AppData\Local\Temp\opencode\vidvenv\Lib\site-packages\imageio_ffmpeg\binaries\ffmpeg-win-x86_64-v9.0.2.exe")

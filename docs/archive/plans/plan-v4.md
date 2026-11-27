@@ -33,7 +33,7 @@ told. "Released" means merged and confirmed; deploy is out of scope.
 Writing code is no longer the bottleneck; waiting is. A fix spends its life in queues: for triage,
 for an agent's answers, for a reviewer's time, for someone to prove the change works.
 
-Detail: `docs/assets/deck/`, `docs/assets/openjiuwen-works-two-mondays.mp4`.
+Detail: `docs/assets/deck/`, `docs/assets/film/two-mondays.mp4`.
 
 ---
 

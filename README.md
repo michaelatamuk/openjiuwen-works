@@ -55,7 +55,7 @@ the checks are read from the base commit, so a change cannot rewrite the tests t
 </div>
 
 The report, the route, the checks and the next step are in one place; the proof is one click away.
-[Watch the 45-second film](docs/assets/openjiuwen-works-two-mondays.mp4).
+[Watch the 45-second film](docs/assets/film/two-mondays.mp4).
 
 ## Two decisions stay with people
 
@@ -164,7 +164,7 @@ and close remain your decisions.
 - [`docs/reference/capabilities/bench.md`](docs/reference/capabilities/bench.md) — a local score for the pipeline itself.
 - [`docs/guides/workflow/intake.md`](docs/guides/workflow/intake.md) — trackers, monitors and your products.
 - [`docs/guides/operations/remote.md`](docs/guides/operations/remote.md) — another device without exposing the port.
-- [`docs/assets/openjiuwen-works-two-mondays.mp4`](docs/assets/openjiuwen-works-two-mondays.mp4) — the
+- [`docs/assets/film/two-mondays.mp4`](docs/assets/film/two-mondays.mp4) — the
   flow in motion.
 - [`docs/assets/deck/`](docs/assets/deck/) — slides and diagrams.
 

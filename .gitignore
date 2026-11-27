@@ -1,6 +1,6 @@
 # generated audio and concat lists
-docs/assets/frames/*.wav
-docs/assets/frames/scenes.txt
+docs/assets/film/frames/*.wav
+docs/assets/film/frames/scenes.txt
 
 # python / editors
 __pycache__/

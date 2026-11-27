@@ -9,8 +9,8 @@ originals; `.png` files are rendered from them.
 |---|---|
 | [`ui/`](ui/) | banners, diagrams and UI concepts |
 | [`deck/`](deck/) | slides and diagrams for the deck |
-| [`frames/`](frames/) | the film frames |
-| [`openjiuwen-works-two-mondays.mp4`](openjiuwen-works-two-mondays.mp4) | the 45-second film |
+| [`deck/`](deck/) | slides and diagrams for the deck |
+| [`film/`](film/) | the 45-second film and its source frames |
 
 Do not put a single file in its own directory. If a new asset type has one file, put it directly in
 this directory; add a subdirectory only when there are several files to group.
