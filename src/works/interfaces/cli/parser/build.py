@@ -6,6 +6,7 @@ import argparse
 from pathlib import Path
 
 from works.interfaces.cli.commands.common import DESCRIPTION
+from works.interfaces.cli.parser.bench import add_bench_commands
 from works.interfaces.cli.parser.cve import add_cve_commands
 from works.interfaces.cli.parser.daemon import add_daemon_commands
 from works.interfaces.cli.parser.delivery import add_delivery_commands
@@ -42,6 +43,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_intake_commands(sub)
     add_proof_commands(sub)
     add_cve_commands(sub)
+    add_bench_commands(sub)
     add_report_commands(sub)
     add_scan_commands(sub)
     add_reproduce_commands(sub)

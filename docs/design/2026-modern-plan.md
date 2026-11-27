@@ -822,6 +822,27 @@ comparison as a drift.
 
 **Estimate:** ~2.7 days (~3 with contingency).
 
+### M30 — Pipeline benchmark (done)
+
+**Prevents:** arguing about quality without a repeatable number, and promising a SWE-bench score the
+product cannot yet produce.
+
+The design is `docs/design/2026-m30-bench.md`; the reference is `docs/reference/bench.md`. A JSONL case
+names a repository, a scenario set, a recorded trace and the expected outcome; each case runs in its own
+home through the real supervisor.
+
+- [x] **M30.1** A case loader resolves paths relative to the dataset and names the malformed line.
+- [x] **M30.2** Each case runs with its own home, queue and fake harness; a case is resolved only when
+  the state matches, the verdict matches when expected, and the proof is bound.
+- [x] **M30.3** `works bench --dataset ... [--json] [--keep]` reports resolved/cases, rate, bound
+  proofs, total USD and one line per case.
+- [x] **M30.4** Docs and tests cover a good and a hostile case, the wrong expectation, a missing
+  repository, relative paths, a malformed dataset and the CLI.
+
+**Not in scope:** a SWE-bench adapter, live-model runs, a leaderboard, CI gating, parallel cases.
+
+**Estimate:** ~2.5 days (~3 with contingency).
+
 ## 4. Sequencing and gates
 
 ### Phase 0 — Land the safety floor (week 1)
@@ -869,8 +890,9 @@ M11 12 + M12 14 = **69 engineer-days**, **~83 with 20% contingency** — 13–16
 **Beyond that scope:** M13–M20 (stages 3–10) were delivered as separate passes and are not re-estimated
 here. The remaining planned work is M21 **~27 days (~32)**, M22 **~11 days (~13)**, M23 **~13 days
 (~15)**, M24 **~3 days (~4)** and M25 **~4 days (~5)** and M26 **~1 day (~1.5)** and M27 **~4 days (~5)** and
-M28 **~2.5 days (~3)** and M29 **~2.7 days (~3)**, which is where the queue, the scheduler, the
-estimates, decision support, specialists and the post-release loop live.
+M28 **~2.5 days (~3)** and M29 **~2.7 days (~3)** and M30 **~2.5 days (~3)**, which is where the
+queue, the scheduler, the estimates, decision support, specialists, the post-release loop and the
+benchmark live.
 
 ## 5. Acceptance metrics
 
