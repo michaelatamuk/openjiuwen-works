@@ -109,6 +109,30 @@ These are product-contract gaps, not insults. Each could be built.
 | Code delivery to a forge and confirmation by the reporter | No code PR/merge/confirmation loop found in the product docs; delivery is messages/files. Verify before claiming |
 | Two-gate lifecycle: plan and release | No plan/release gate pair found; task accept is a different decision |
 
+## The ten Works stages, mapped to Orbit
+
+Orbit touches most of the middle of the lifecycle. The missing steps are the ones that make the
+result trustworthy.
+
+| # | Works stage | Orbit | Verdict |
+|---|---|---|---|
+| 1 | Signal intake | Rooms, messages, connectors, triggers; `task.create` from a room message | **Yes** |
+| 2 | Reproduce | A task starts from an objective and a brief; no failing test on the base commit | **No** |
+| 3 | Plan | The router chooses an agent; the runtime may plan internally; no versioned plan artefact | **Partial** |
+| 4 | Plan gate | Approval cards exist for tools and deliveries, not for the plan and its checks | **No** |
+| 5 | Build | Claude Code, Codex, Jiuwen, JiuwenSwarm in git worktrees | **Yes** |
+| 6 | Check | The runtime's own tests, coding evidence and cross-review; no independent verifier or trusted-base checks | **Partial** |
+| 7 | Proof | Coding evidence: changed files, hashes, test log, artifacts; no proof bound to commit and event root | **Partial** |
+| 8 | Release gate | A delivery gate for messages/actions and `task.accept`; no code release gate | **No** |
+| 9 | Deliver | Sends messages and files to connected apps; no code PR/merge/confirmation loop found | **Partial** |
+| 10 | Confirm | A reply can continue the task; no post-release confirmation of the fix | **Partial** |
+
+**Counts:** 2 full (signal, build), 5 partial (plan, check, proof, deliver, confirm), 3 absent
+(reproduce, plan gate, release gate).
+
+The count is misleading if all ten steps are weighted equally. The two gates and the proof are the
+product identity. Orbit can run the build; it does not yet make the build an acceptance contract.
+
 ## What this corrects in our story
 
 1. **Do not say "Orbit is just a room."** It is a workspace with tasks, runtimes, worktrees, coding

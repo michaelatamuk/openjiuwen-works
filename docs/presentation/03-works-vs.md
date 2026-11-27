@@ -151,6 +151,10 @@ Orbit has coding evidence, but it is the runtime's own test run and changed-file
 bound to the commit and the event root. It also has cross-review between agents; that is useful, but
 it is not a separate verifier with a trusted-base check contract.
 
+Stage by stage: Orbit has full signal intake and build; partial plan, check, proof, deliver and
+confirm; no reproduce, plan gate or release gate. The full table is in
+[10-orbit-study.md](10-orbit-study.md).
+
 ### How they compose
 
 Three narrow contracts, not a merge:
