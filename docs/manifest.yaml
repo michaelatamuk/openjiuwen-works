@@ -23,6 +23,13 @@ documents:
   last_reviewed: '2026-11-27'
   audience: engineer
   canonical: true
+- path: docs/design/README.md
+  title: Design
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
 - path: docs/design/architecture.md
   title: Architecture
   status: active
@@ -64,6 +71,13 @@ documents:
   owner: Michael
   last_reviewed: '2026-11-27'
   audience: product
+  canonical: true
+- path: docs/guides/README.md
+  title: Guides
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: everyone
   canonical: true
 - path: docs/guides/contributing/docs.md
   title: Documentation
@@ -183,6 +197,13 @@ documents:
   owner: Michael
   last_reviewed: '2026-11-27'
   audience: user
+  canonical: true
+- path: docs/reference/README.md
+  title: Reference
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
   canonical: true
 - path: docs/reference/capabilities/bench.md
   title: Pipeline benchmark
@@ -351,6 +372,13 @@ documents:
   owner: Michael
   last_reviewed: '2026-11-27'
   audience: engineer
+  canonical: true
+- path: docs/start/README.md
+  title: Start here
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: everyone
   canonical: true
 - path: docs/start/concepts.md
   title: How a fix gets made

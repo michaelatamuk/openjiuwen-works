@@ -5,7 +5,7 @@
 Works is one local engine around an openJiuwen harness. The CLI and the SPA are two clients of the
 same home; the daemon owns background work and the CLI can host a single run in-process. This page is
 the system view: where the processes run, how the code is layered, what one run does, and which files
-make it durable. Stage contracts stay in [the lifecycle reference](../reference/lifecycle/signal-intake.md);
+make it durable. Stage contracts stay in [the reference section](../reference/README.md);
 the planner has its own [component design](../reference/lifecycle/planner.md).
 
 ## System context
@@ -180,7 +180,7 @@ flowchart LR
 | Invariant | Enforced by |
 |---|---|
 | One supervisor advances a task | `application/supervisor/core.py` |
-| Two human gates only: plan and release | `application/approvals/`, [gates](../reference/lifecycle/gates.md) |
+| Two human gates only: plan and release | `application/approvals/`, gates |
 | The builder cannot edit the tests that judge it | `domain/policy.py`, `adapters/processes/runner.py` |
 | The verifier is independent in runtime and provider | `application/execution/verifier.py` |
 | Scenarios live outside the repository | `config/paths.py`, `works-scenarios` |
@@ -199,10 +199,10 @@ flowchart LR
 | Trusted base | Flows, checks, scenarios and risk rules are read from the base commit, not the worktree | ADR 012 |
 | Builder | Works in a disposable worktree; the worktree is not a security boundary | ADR 004 |
 | Verifier | Separate process or container, no builder transcript, different provider where possible | ADR 005 |
-| Policy | Enforced by the runner, never requested from the model | [build](../reference/lifecycle/build.md) |
-| Gates | Plan and release are the only human blocks; identity, TTL and quorum are recorded | [gates](../reference/lifecycle/gates.md) |
+| Policy | Enforced by the runner, never requested from the model | build |
+| Gates | Plan and release are the only human blocks; identity, TTL and quorum are recorded | gates |
 | Concurrency | One bounded job pool; the scheduler claims, the job runs | ADR 019, ADR 024 |
-| Delivery | Idempotent by marker; a crash never silently repeats a PR or comment | [reliability](../reference/platform/reliability.md) |
+| Delivery | Idempotent by marker; a crash never silently repeats a PR or comment | reliability |
 
 ## Where to change what
 
@@ -220,11 +220,8 @@ flowchart LR
 
 ## See also
 
-- [Concepts](../start/concepts.md) — the ten stages in plain words.
-- [Lifecycle](../reference/lifecycle/signal-intake.md) — stage contracts.
-- [Gates](../reference/lifecycle/gates.md) — the two human decisions.
-- [Planner](../reference/lifecycle/planner.md) — the planning component design.
-- [HTTP API](../reference/platform/http-api.md) and [scheduler](../reference/platform/scheduler.md).
-- [Reliability](../reference/platform/reliability.md) — crash, retry and delivery semantics.
-- [Layout](../guides/contributing/layout.md) — the contributor's short version of the code map.
+- [Start](../start/README.md) — concepts and status.
+- [Reference](../reference/README.md) — lifecycle, platform, capabilities and generated files.
+- [Guides](../guides/README.md) — workflow, operations, integrations and contributing.
 - [ADRs](adrs/README.md) — why the expensive choices were made.
+- [Archive](../archive/README.md) — history.

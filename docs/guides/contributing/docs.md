@@ -19,8 +19,8 @@ for adding, moving and retiring documentation.
 | What did we believe before? | `archive/` | reviews, plans, milestones, demos |
 | Where do images and video live? | `assets/` | UI, deck, frames, the film |
 
-Do not add a new top-level directory without updating this table and `docs/README.md`. Do not create
-a directory with a single entry: merge it into a neighbouring section. `make docs` fails on both.
+Do not add a new top-level directory without updating this table. Do not create a directory with a
+single entry: merge it into a neighbouring section. `make docs` fails on both.
 
 ## Every page is registered
 
@@ -70,7 +70,8 @@ The banner must agree with the manifest. A page whose status changes gets both e
 2. Add the H1 and the body. Use the stage template below for a lifecycle contract.
 3. Add the manifest entry.
 4. Add a banner if the status is not `active`.
-5. Link it from `docs/README.md` and from the nearest section page.
+5. Link it from the section README (`start/`, `design/`, `guides/`, `reference/`); update
+   `docs/README.md` only when the section itself is new.
 6. Run `make docs`.
 
 ## Move or retire a page

@@ -1,64 +1,28 @@
 # Documentation
 
 Start with the question you have. A page whose status is not `active` carries a banner under its H1;
-`archive/` is historical and read-only. A new page belongs in the section that matches the reader's
-question, not in the section that matches the file's genre.
+`archive/` is historical and read-only.
 
-## Start here
+## Start
 
-- [Concepts: how a fix gets made](start/concepts.md) — the ten stages and the two human gates.
-- [Status](start/status.md) — what is built and the one open item.
-- [Quickstart](../README.md#try-it) — run the deterministic demo without a model.
+- [Start here](start/README.md) — concepts, status and the first demo.
 
 ## Design
 
-- [Architecture](design/architecture.md) — processes, layers, one run, data and invariants.
-- [Engineering standard](design/engineering-standard.md) — the bar every change meets.
-- [Architecture decisions](design/adrs/README.md) — one record per expensive choice.
-- [Planner](reference/lifecycle/planner.md) — the planning component and its delivery phases.
-- Strategy: [positioning](design/strategy/positioning.md),
-  [competitors](design/strategy/competitor-analysis.md),
-  [feature recommendations](design/strategy/feature-recommendations.md),
-  [Mira](design/strategy/mascot.md).
+- [Design](design/README.md) — architecture, engineering standard, decisions and strategy.
 
-## Do a task
+## Guides
 
-- Workflow: [intake](guides/workflow/intake.md), [release](guides/workflow/release.md),
-  [verification](guides/workflow/verification.md), [readiness](guides/workflow/readiness.md),
-  [waiting and dispatch](guides/workflow/waiting-and-dispatch.md), [local GUI](guides/workflow/ui.md).
-- Operations: [runbook](guides/operations/runbook.md), [remote clients](guides/operations/remote.md),
-  [supply chain](guides/operations/supply-chain.md).
-- Integrations: [live harness](guides/integrations/live-harness.md),
-  [JiuwenSwarm](guides/integrations/swarm.md), [PPMA memory](guides/integrations/ppma.md),
-  [LAIX](guides/integrations/laix.md), [agent-core team](guides/integrations/agent-core.md).
+- [Guides](guides/README.md) — workflow, operations, integrations and contributing.
 
-## Look up a fact
+## Reference
 
-- Lifecycle: [signal](reference/lifecycle/signal-intake.md) →
-  [reproduce](reference/lifecycle/reproduce.md) → [plan](reference/lifecycle/planning.md) →
-  [build](reference/lifecycle/build.md) → [check](reference/lifecycle/check.md) →
-  [proof](reference/lifecycle/proof.md) → [gates](reference/lifecycle/gates.md) →
-  [deliver](reference/lifecycle/deliver.md) → [confirm](reference/lifecycle/confirm.md).
-- Platform: [HTTP API](reference/platform/http-api.md), [scheduler](reference/platform/scheduler.md),
-  [reliability](reference/platform/reliability.md), [prompts](reference/platform/prompts.md),
-  [report](reference/platform/report.md).
-- Capabilities: [CVE](reference/capabilities/cve.md), [scan](reference/capabilities/scan.md),
-  [monitor](reference/capabilities/monitor.md), [reporter](reference/capabilities/reporter.md),
-  [specialists](reference/capabilities/specialists.md), [bench](reference/capabilities/bench.md),
-  [features](reference/capabilities/features.md), [inbox](reference/capabilities/inbox.md).
-- Generated, do not edit: [OpenAPI](reference/generated/openapi.json),
-  [baseline](reference/generated/openapi.baseline.json),
-  [typing ratchet](reference/generated/typing-baseline.json); the
-  [directory README](reference/generated/README.md) names the script for each one.
-
-## Contribute
-
-- [Docs conventions](guides/contributing/docs.md) — where a page goes, the manifest and the checks.
-- [Layout](guides/contributing/layout.md) — where a new module, route or screen goes.
-- [Typing](guides/contributing/typing.md) — the `Any` ratchet and how to change it.
-- [Assets](assets/README.md) — images, slides and the film; no single-entry directories.
-- [Contributing](../CONTRIBUTING.md) — setup, rules and the PR checklist.
+- [Reference](reference/README.md) — lifecycle, platform, capabilities and generated files.
 
 ## Archive
 
-- [Archive](archive/) — reviews, plans, milestones, demos and proposals; read-only.
+- [Archive](archive/README.md) — reviews, plans, milestones, demos and proposals.
+
+## Assets
+
+- [Assets](assets/README.md) — images, slides and the film.
