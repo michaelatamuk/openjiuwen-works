@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-labelledby="title">
-  <title id="title">Paper clip proof object</title>
-  <g transform="rotate(-12 128 128)">
-    <rect x="78" y="46" width="100" height="140" rx="12" fill="#F4EFE3"/>
-    <path d="M 98 76 H 158 M 98 104 H 144 M 98 132 H 152" stroke="#9CA3AF" stroke-width="7" stroke-linecap="round"/>
-    <path d="M 112 164 L 126 178 L 154 148" stroke="#6D28D9" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M 60 70 C 60 46 92 42 102 62 L 118 92 M 118 92 L 92 146 M 92 146 C 82 166 56 156 60 136 L 74 100" fill="none" stroke="#6D28D9" stroke-width="12" stroke-linecap="round"/>
-  </g>
-</svg>
