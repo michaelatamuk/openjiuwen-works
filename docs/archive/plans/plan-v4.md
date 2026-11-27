@@ -3,9 +3,9 @@
 > **Doc status:** archived · **Owner:** Michael · **Last reviewed:** 2026-11-21
 
 > Archived: this is the original v4.24 plan, kept for history. The stable design is
-> [architecture.md](../../architecture.md), the current status is
-> [roadmap/status.md](../status.md), and the engineering bar is
-> [guides/contributing/engineering-standard.md](../../guides/contributing/engineering-standard.md).
+> [architecture.md](../../design/architecture.md), the current status is
+> [status.md](../../start/status.md), and the engineering bar is
+> [engineering-standard.md](../../design/engineering-standard.md).
 
 **Version:** v4.24 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
 
@@ -1291,7 +1291,7 @@ agents, a zoo of model providers before M3, and autonomous merge without the two
   `works finding`, attention metrics and `works metrics`, proof rubric with residual risk; Mira
   primary/avatar assets and CLI empty state. T1.14–T1.17 closed; T1.18 poses defer to the GUI.
 - **v4.6** — brand: Mira, the magpie courier; primary and avatar SVG assets, voice and usage rules
-  (`docs/strategy/mascot.md`); T1.18; Mira in empty/waiting/proved/blocked states, never as a chat
+  (`docs/design/strategy/mascot.md`); T1.18; Mira in empty/waiting/proved/blocked states, never as a chat
   avatar or status substitute.
 - **v4.5** — factory parity from OpenAI Performance Factory and Alex Greenshpun's essay: waiting
   states and wake subscriptions; dispatch loop; structured findings; versioned prompt registry;

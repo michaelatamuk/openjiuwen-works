@@ -19,7 +19,7 @@ Status: internal note for the Creative Apps team. Not a README page and not a pu
 
 Works and Orbit both sit above harnesses. They are not above each other.
 
-![Many jobs at once vs one change all the way](../assets/ui/positioning-two-products.png)
+![Many jobs at once vs one change all the way](../../assets/ui/positioning-two-products.png)
 
 ## Two axes, not two sizes
 
@@ -39,7 +39,7 @@ every room.
 
 ## Where Orbit attaches to the spine
 
-![One vertical spine, three horizontal branches](../assets/ui/positioning-axes.png)
+![One vertical spine, three horizontal branches](../../assets/ui/positioning-axes.png)
 
 The spine is the change. Orbit only attaches where a room adds something:
 
@@ -51,7 +51,7 @@ Checks, the proof and both gates have no horizontal branch. They stay vertical.
 
 ## How they compose
 
-![Three contracts](../assets/ui/positioning-contracts.png)
+![Three contracts](../../assets/ui/positioning-contracts.png)
 
 Three narrow contracts, in both directions:
 
@@ -67,7 +67,7 @@ the Orbit side is proposed, not built.
 
 ## Orbit inside one stage, if needed
 
-![Orbit inside build](../assets/ui/positioning-build.png)
+![Orbit inside build](../../assets/ui/positioning-build.png)
 
 If one room should run several harnesses, that is a build-stage concern. Orbit can multiplex
 openJiuwen, JiuwenSwarm, Claude Code and Codex there. The result is still a patch and a transcript
@@ -128,6 +128,6 @@ Do not draw the proposed links as solid in public material.
 
 ## Related
 
-- `docs/roadmap/archive/2026-modern-plan.md` — the completed modernization plan.
-- `docs/roadmap/archive/milestones/m23-decision-support.md` — the decision-support design record.
+- `docs/archive/plans/2026-modern-plan.md` — the completed modernization plan.
+- `docs/archive/milestones/m23-decision-support.md` — the decision-support design record.
 - `docs/reference/lifecycle/proof.md` — what a proof actually binds.

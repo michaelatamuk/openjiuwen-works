@@ -4,7 +4,7 @@
 
 Status: complete (M21.1–M21.12). The first pass covered policy, selection, leases, pause and one CLI
 tick; the daemon loop, HTTP surface, GUI, import triggers and bounded retries landed with it. The
-checkboxes live in `docs/roadmap/archive/2026-modern-plan.md`, and the actor rule is ADR 024.
+checkboxes live in `docs/archive/plans/2026-modern-plan.md`, and the actor rule is ADR 024.
 
 ## The problem
 

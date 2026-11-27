@@ -3,8 +3,8 @@
 > **Doc status:** active · **Owner:** Michael · **Last reviewed:** 2026-11-27
 
 Every commit satisfies this. It is checked in CI, not in review comments. This is the bar referenced
-by [`CONTRIBUTING.md`](../../../CONTRIBUTING.md); the original v4.24 plan is archived at
-[`docs/roadmap/archive/plan-v4.md`](../../roadmap/archive/plan-v4.md).
+by [`CONTRIBUTING.md`](../../CONTRIBUTING.md); the original v4.24 plan is archived at
+[`docs/archive/plans/plan-v4.md`](../archive/plans/plan-v4.md).
 
 **Language and shape**
 
@@ -88,13 +88,13 @@ decision, an ADR is added or amended.
 **Process**
 
 - Trunk-based, small PRs (< 400 changed lines), conventional commits, PR template asks for evidence.
-- `CHANGELOG.md` per release; [`docs/guides/operations/runbook.md`](../operations/runbook.md) for
+- `CHANGELOG.md` per release; [`docs/guides/operations/runbook.md`](../guides/operations/runbook.md) for
   known failures and their first response.
 - Renovate weekly; a dependency update that breaks a test is fixed or reverted the same day.
 
 ## Related
 
-- [Layout](layout.md) — where a module, route or screen belongs.
-- [Typing](typing.md) — the `Any` ratchet and how to change it.
-- [Docs](docs.md) — where a page belongs and how the manifest works.
-- [Contributing](../../../CONTRIBUTING.md) — setup, rules and the PR checklist.
+- [Layout](../guides/contributing/layout.md) — where a module, route or screen belongs.
+- [Typing](../guides/contributing/typing.md) — the `Any` ratchet and how to change it.
+- [Docs](../guides/contributing/docs.md) — where a page belongs and how the manifest works.
+- [Contributing](../../CONTRIBUTING.md) — setup, rules and the PR checklist.

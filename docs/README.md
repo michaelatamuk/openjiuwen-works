@@ -6,9 +6,20 @@ question, not in the section that matches the file's genre.
 
 ## Start here
 
-- [Concepts: how a fix gets made](guides/workflow/concepts.md) — the ten stages and the two human gates.
-- [Status](roadmap/status.md) — what is built and the one open item.
+- [Concepts: how a fix gets made](start/concepts.md) — the ten stages and the two human gates.
+- [Status](start/status.md) — what is built and the one open item.
 - [Quickstart](../README.md#try-it) — run the deterministic demo without a model.
+
+## Design
+
+- [Architecture](design/architecture.md) — processes, layers, one run, data and invariants.
+- [Engineering standard](design/engineering-standard.md) — the bar every change meets.
+- [Architecture decisions](design/adrs/README.md) — one record per expensive choice.
+- [Planner](reference/lifecycle/planner.md) — the planning component and its delivery phases.
+- Strategy: [positioning](design/strategy/positioning.md),
+  [competitors](design/strategy/competitor-analysis.md),
+  [feature recommendations](design/strategy/feature-recommendations.md),
+  [Mira](design/strategy/mascot.md).
 
 ## Do a task
 
@@ -40,24 +51,14 @@ question, not in the section that matches the file's genre.
   [typing ratchet](reference/generated/typing-baseline.json); the
   [directory README](reference/generated/README.md) names the script for each one.
 
-## Understand the design
-
-- [Architecture](architecture.md) — processes, layers, one run, data and invariants.
-- [Planner](reference/lifecycle/planner.md) — the planning component and its delivery phases.
-- [Architecture decisions](adrs/README.md) — one record per expensive choice.
-- [Legacy plan v4.24](roadmap/archive/plan-v4.md) — the original scope and rationale; archived.
-- Strategy: [positioning](strategy/positioning.md),
-  [competitors](strategy/competitor-analysis.md),
-  [feature recommendations](strategy/feature-recommendations.md),
-  [Mira](strategy/mascot.md).
-
 ## Contribute
 
-- [Engineering standard](guides/contributing/engineering-standard.md) — the bar every change meets.
 - [Docs conventions](guides/contributing/docs.md) — where a page goes, the manifest and the checks.
 - [Layout](guides/contributing/layout.md) — where a new module, route or screen goes.
 - [Typing](guides/contributing/typing.md) — the `Any` ratchet and how to change it.
-- [Assets](assets/README.md) — images, slides and the film; no single-file directories.
+- [Assets](assets/README.md) — images, slides and the film; no single-entry directories.
 - [Contributing](../CONTRIBUTING.md) — setup, rules and the PR checklist.
-- [Archive](archive/) and [roadmap archive](roadmap/archive/) — historical reviews, demos and plans;
-  read-only.
+
+## Archive
+
+- [Archive](archive/) — reviews, plans, milestones, demos and proposals; read-only.

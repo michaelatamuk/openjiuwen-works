@@ -5,8 +5,8 @@
 Works is one local engine around an openJiuwen harness. The CLI and the SPA are two clients of the
 same home; the daemon owns background work and the CLI can host a single run in-process. This page is
 the system view: where the processes run, how the code is layered, what one run does, and which files
-make it durable. Stage contracts stay in [the lifecycle reference](reference/lifecycle/signal-intake.md);
-the planner has its own [component design](reference/lifecycle/planner.md).
+make it durable. Stage contracts stay in [the lifecycle reference](../reference/lifecycle/signal-intake.md);
+the planner has its own [component design](../reference/lifecycle/planner.md).
 
 ## System context
 
@@ -180,7 +180,7 @@ flowchart LR
 | Invariant | Enforced by |
 |---|---|
 | One supervisor advances a task | `application/supervisor/core.py` |
-| Two human gates only: plan and release | `application/approvals/`, [gates](reference/lifecycle/gates.md) |
+| Two human gates only: plan and release | `application/approvals/`, [gates](../reference/lifecycle/gates.md) |
 | The builder cannot edit the tests that judge it | `domain/policy.py`, `adapters/processes/runner.py` |
 | The verifier is independent in runtime and provider | `application/execution/verifier.py` |
 | Scenarios live outside the repository | `config/paths.py`, `works-scenarios` |
@@ -199,10 +199,10 @@ flowchart LR
 | Trusted base | Flows, checks, scenarios and risk rules are read from the base commit, not the worktree | ADR 012 |
 | Builder | Works in a disposable worktree; the worktree is not a security boundary | ADR 004 |
 | Verifier | Separate process or container, no builder transcript, different provider where possible | ADR 005 |
-| Policy | Enforced by the runner, never requested from the model | [build](reference/lifecycle/build.md) |
-| Gates | Plan and release are the only human blocks; identity, TTL and quorum are recorded | [gates](reference/lifecycle/gates.md) |
+| Policy | Enforced by the runner, never requested from the model | [build](../reference/lifecycle/build.md) |
+| Gates | Plan and release are the only human blocks; identity, TTL and quorum are recorded | [gates](../reference/lifecycle/gates.md) |
 | Concurrency | One bounded job pool; the scheduler claims, the job runs | ADR 019, ADR 024 |
-| Delivery | Idempotent by marker; a crash never silently repeats a PR or comment | [reliability](reference/platform/reliability.md) |
+| Delivery | Idempotent by marker; a crash never silently repeats a PR or comment | [reliability](../reference/platform/reliability.md) |
 
 ## Where to change what
 
@@ -211,7 +211,7 @@ flowchart LR
 | CLI command | `src/works/interfaces/cli/commands/<group>.py` and `.../parser/<group>.py` |
 | HTTP route | `src/works/interfaces/api/routes/`, with helpers in `read.py` / `write.py` |
 | Run phase | `src/works/application/supervisor/` (`planning`, `execution`, `verification`, `recording`) |
-| Planner | `src/works/application/planning/`; design in [planner](reference/lifecycle/planner.md) |
+| Planner | `src/works/application/planning/`; design in [planner](../reference/lifecycle/planner.md) |
 | Scheduler | `src/works/application/scheduling/` and `interfaces/api/scheduler_loop.py` |
 | Queue or index | `src/works/adapters/queue/` |
 | Harness | `src/works/adapters/harness/` (`openjiuwen/`, `swarm/`, `fake.py`) |
@@ -220,11 +220,11 @@ flowchart LR
 
 ## See also
 
-- [Concepts](guides/workflow/concepts.md) — the ten stages in plain words.
-- [Lifecycle](reference/lifecycle/signal-intake.md) — stage contracts.
-- [Gates](reference/lifecycle/gates.md) — the two human decisions.
-- [Planner](reference/lifecycle/planner.md) — the planning component design.
-- [HTTP API](reference/platform/http-api.md) and [scheduler](reference/platform/scheduler.md).
-- [Reliability](reference/platform/reliability.md) — crash, retry and delivery semantics.
-- [Layout](guides/contributing/layout.md) — the contributor's short version of the code map.
+- [Concepts](../start/concepts.md) — the ten stages in plain words.
+- [Lifecycle](../reference/lifecycle/signal-intake.md) — stage contracts.
+- [Gates](../reference/lifecycle/gates.md) — the two human decisions.
+- [Planner](../reference/lifecycle/planner.md) — the planning component design.
+- [HTTP API](../reference/platform/http-api.md) and [scheduler](../reference/platform/scheduler.md).
+- [Reliability](../reference/platform/reliability.md) — crash, retry and delivery semantics.
+- [Layout](../guides/contributing/layout.md) — the contributor's short version of the code map.
 - [ADRs](adrs/README.md) — why the expensive choices were made.

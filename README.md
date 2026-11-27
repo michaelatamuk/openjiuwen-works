@@ -151,8 +151,8 @@ and close remain your decisions.
 
 ## Documentation
 
-- [`docs/guides/workflow/concepts.md`](docs/guides/workflow/concepts.md) — the flow in plain words.
-- [`docs/roadmap/status.md`](docs/roadmap/status.md) — what is built and what is left.
+- [`docs/start/concepts.md`](docs/start/concepts.md) — the flow in plain words.
+- [`docs/start/status.md`](docs/start/status.md) — what is built and what is left.
 - [`docs/guides/operations/runbook.md`](docs/guides/operations/runbook.md) — what to do when something goes wrong.
 - [`docs/reference/lifecycle/proof.md`](docs/reference/lifecycle/proof.md) — what the proof contains.
 - [`docs/reference/capabilities/cve.md`](docs/reference/capabilities/cve.md) — scanning lockfiles for advisories.

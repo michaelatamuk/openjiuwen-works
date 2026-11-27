@@ -38,6 +38,6 @@ Week 0 and M0/M0.5 are safe and reusable. M1 was not safe: two of the three gate
 
 ## What changed in v3
 
-See the changelog in the [archived plan](../../roadmap/archive/plan-v4.md). The four fixes the reviewer called necessary are all in:
+See the changelog in the [archived plan](../plans/plan-v4.md). The four fixes the reviewer called necessary are all in:
 isolation decided and moved to preconditions, test edits denied with quarantine outside the repo,
 specificity and calibration before any publish, and an in-scope rate over 40 real issues.

@@ -57,4 +57,4 @@ the providers this build actually ships, not the ones the UI hoped for.
 
 - `docs/reference/platform/reliability.md` - what the daemon promises after a crash.
 - `docs/guides/integrations/live-harness.md` - which provider extras exist and why they are optional.
-- `docs/adrs/017-remote-trust.md` - the device-token boundary.
+- `docs/design/adrs/017-remote-trust.md` - the device-token boundary.

@@ -10,6 +10,9 @@ changes. If a fact here is still needed, copy it into a current page and leave t
 
 - [demo-m0.md](demo-m0.md) — the M0 walking skeleton and what it proved.
 - [reviews/](reviews/) — five critiques of the plan, kept as the audit trail behind its revisions.
+- [plans/](plans/) — the original v4.24 plan, the completed 2026 modernization plan, and the stack
+  migration with its review.
+- [milestones/](milestones/) — design records for the delivered M21–M30 passes.
 - [video-proposal.md](video-proposal.md) — the original cut of the "Two Mondays" film.
 
 New historical material goes here only after the current page that supersedes it exists.

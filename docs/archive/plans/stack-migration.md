@@ -439,7 +439,7 @@ pass.
 - [x] Logging: `request_id` and `job_id` are structured fields; request logs and Uvicorn startup
   logs use the same JSON formatter; Uvicorn access logging is disabled in favor of the request log.
 - [x] Final full runs: `pytest` green, deterministic wheel smoke and the local `--full` ask/team
-  smoke green; ADR [016](../../adrs/016-local-daemon.md) records the daemon decision.
+  smoke green; ADR [016](../../design/adrs/016-local-daemon.md) records the daemon decision.
 - [x] Remote safety: `--trusted-host` for non-loopback binds, remote reads require bearer/session,
   `/health` and `/session` stay open, and `docs/guides/operations/remote.md` covers tunnels and phones.
   Pairing codes/per-device tokens remain a follow-up.

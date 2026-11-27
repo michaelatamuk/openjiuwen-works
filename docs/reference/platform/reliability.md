@@ -136,6 +136,6 @@ console exporter writes the finished span as one JSON line.
 
 ## See also
 
-- `docs/adrs/016-local-daemon.md` - why one daemon owns one home.
+- `docs/design/adrs/016-local-daemon.md` - why one daemon owns one home.
 - `docs/reference/platform/http-api.md` - status codes, idempotency and retry hints.
 - `docs/guides/operations/runbook.md` - day-to-day operation.

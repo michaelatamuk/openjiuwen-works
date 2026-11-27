@@ -1,8 +1,8 @@
 # Documentation manifest.
 #
 # Every page under docs/ is listed here except:
-#   - docs/adrs/**            (indexed by docs/adrs/README.md and check_adr_index.py)
-#   - docs/archive/**         (read-only history, documented by docs/archive/README.md)
+#   - docs/design/adrs/**    (indexed by docs/design/adrs/README.md and check_adr_index.py)
+#   - docs/archive/**        (read-only history, documented by docs/archive/README.md)
 #   - docs/reference/generated/*.json (machine-written, documented by the directory README)
 #
 # Fields: path, title, status, owner, last_reviewed, audience, canonical.
@@ -16,13 +16,6 @@ documents:
   last_reviewed: '2026-11-27'
   audience: everyone
   canonical: true
-- path: docs/architecture.md
-  title: Architecture
-  status: active
-  owner: Michael
-  last_reviewed: '2026-11-27'
-  audience: engineer
-  canonical: true
 - path: docs/assets/README.md
   title: Assets
   status: active
@@ -30,15 +23,50 @@ documents:
   last_reviewed: '2026-11-27'
   audience: engineer
   canonical: true
-- path: docs/guides/contributing/docs.md
-  title: Documentation
+- path: docs/design/architecture.md
+  title: Architecture
   status: active
   owner: Michael
   last_reviewed: '2026-11-27'
   audience: engineer
   canonical: true
-- path: docs/guides/contributing/engineering-standard.md
+- path: docs/design/engineering-standard.md
   title: Engineering standard
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
+- path: docs/design/strategy/competitor-analysis.md
+  title: Competitor Analysis
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: product
+  canonical: true
+- path: docs/design/strategy/feature-recommendations.md
+  title: Feature Recommendations
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: product
+  canonical: true
+- path: docs/design/strategy/mascot.md
+  title: Mira — the mascot
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: product
+  canonical: true
+- path: docs/design/strategy/positioning.md
+  title: 'Positioning: where Works sits, and why it is not a harness'
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: product
+  canonical: true
+- path: docs/guides/contributing/docs.md
+  title: Documentation
   status: active
   owner: Michael
   last_reviewed: '2026-11-27'
@@ -113,13 +141,6 @@ documents:
   owner: Michael
   last_reviewed: '2026-11-27'
   audience: operator
-  canonical: true
-- path: docs/guides/workflow/concepts.md
-  title: How a fix gets made
-  status: active
-  owner: Michael
-  last_reviewed: '2026-11-27'
-  audience: everyone
   canonical: true
 - path: docs/guides/workflow/intake.md
   title: 'Intake: a tracker issue becomes one work item'
@@ -331,127 +352,15 @@ documents:
   last_reviewed: '2026-11-27'
   audience: engineer
   canonical: true
-- path: docs/roadmap/archive/2026-modern-plan.md
-  title: Works 2026 modernization plan (v2, archived)
-  status: archived
+- path: docs/start/concepts.md
+  title: How a fix gets made
+  status: active
   owner: Michael
   last_reviewed: '2026-11-27'
-  audience: product
-  canonical: false
-- path: docs/roadmap/archive/milestones/m21-scheduler.md
-  title: M21 — queue and scheduler (design)
-  status: archived
-  owner: Michael
-  last_reviewed: '2026-11-26'
-  audience: engineer
-  canonical: false
-- path: docs/roadmap/archive/milestones/m22-estimates.md
-  title: M22 — estimating the work (design)
-  status: archived
-  owner: Michael
-  last_reviewed: '2026-11-26'
-  audience: engineer
-  canonical: false
-- path: docs/roadmap/archive/milestones/m23-decision-support.md
-  title: M23 — decision support at the gate (design)
-  status: archived
-  owner: Michael
-  last_reviewed: '2026-11-26'
-  audience: engineer
-  canonical: false
-- path: docs/roadmap/archive/milestones/m24-parallel.md
-  title: M24 — parallel tasks in one repository (design)
-  status: archived
-  owner: Michael
-  last_reviewed: '2026-11-26'
-  audience: engineer
-  canonical: false
-- path: docs/roadmap/archive/milestones/m25-cve.md
-  title: M25 — CVE intake (design)
-  status: archived
-  owner: Michael
-  last_reviewed: '2026-11-26'
-  audience: engineer
-  canonical: false
-- path: docs/roadmap/archive/milestones/m27-specialists.md
-  title: M27 — specialist verifiers (design)
-  status: archived
-  owner: Michael
-  last_reviewed: '2026-11-26'
-  audience: engineer
-  canonical: false
-- path: docs/roadmap/archive/milestones/m28-scan.md
-  title: M28 — proactive scan (design)
-  status: archived
-  owner: Michael
-  last_reviewed: '2026-11-26'
-  audience: engineer
-  canonical: false
-- path: docs/roadmap/archive/milestones/m29-monitor.md
-  title: M29 — production feedback (design)
-  status: archived
-  owner: Michael
-  last_reviewed: '2026-11-26'
-  audience: engineer
-  canonical: false
-- path: docs/roadmap/archive/milestones/m30-bench.md
-  title: M30 — pipeline benchmark (design)
-  status: archived
-  owner: Michael
-  last_reviewed: '2026-11-26'
-  audience: engineer
-  canonical: false
-- path: docs/roadmap/archive/plan-v4.md
-  title: Development plan — openJiuwen Works (v4.24, archived)
-  status: archived
-  owner: Michael
-  last_reviewed: '2026-11-21'
-  audience: product
-  canonical: false
-- path: docs/roadmap/archive/stack-migration-review.md
-  title: 'Review: `docs/roadmap/archive/stack-migration.md`'
-  status: archived
-  owner: Michael
-  last_reviewed: '2026-11-24'
-  audience: engineer
-  canonical: false
-- path: docs/roadmap/archive/stack-migration.md
-  title: Migrating to a separate backend and frontend
-  status: archived
-  owner: Michael
-  last_reviewed: '2026-11-24'
-  audience: engineer
-  canonical: false
-- path: docs/roadmap/status.md
+  audience: everyone
+  canonical: true
+- path: docs/start/status.md
   title: Status
-  status: active
-  owner: Michael
-  last_reviewed: '2026-11-27'
-  audience: product
-  canonical: true
-- path: docs/strategy/competitor-analysis.md
-  title: Competitor Analysis
-  status: active
-  owner: Michael
-  last_reviewed: '2026-11-27'
-  audience: product
-  canonical: true
-- path: docs/strategy/feature-recommendations.md
-  title: Feature Recommendations
-  status: active
-  owner: Michael
-  last_reviewed: '2026-11-27'
-  audience: product
-  canonical: true
-- path: docs/strategy/mascot.md
-  title: Mira — the mascot
-  status: active
-  owner: Michael
-  last_reviewed: '2026-11-27'
-  audience: product
-  canonical: true
-- path: docs/strategy/positioning.md
-  title: 'Positioning: where Works sits, and why it is not a harness'
   status: active
   owner: Michael
   last_reviewed: '2026-11-27'

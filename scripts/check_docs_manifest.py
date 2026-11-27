@@ -1,8 +1,8 @@
 """Check that every documentation page is registered in docs/manifest.yaml.
 
-ADRs have their own index (docs/adrs/README.md), the read-only archive is exempt by design, and
-the generated JSON is documented by docs/reference/generated/README.md. Everything else must have
-one entry with the right title, status, owner, review date, audience and canonical flag.
+ADRs have their own index (docs/design/adrs/README.md), the read-only archive is exempt by
+design, and the generated JSON is documented by docs/reference/generated/README.md. Everything else
+must have one entry with the right title, status, owner, review date, audience and canonical flag.
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ DOCS = ROOT / "docs"
 STATUSES = frozenset({"active", "legacy", "archived", "generated"})
 AUDIENCES = frozenset({"everyone", "user", "operator", "integrator", "engineer", "product"})
 REQUIRED = ("path", "title", "status", "owner", "last_reviewed", "audience", "canonical")
-EXEMPT_PREFIXES = ("docs/adrs/", "docs/archive/")
+EXEMPT_PREFIXES = ("docs/design/adrs/", "docs/archive/")
 
 
 def fail(problems: list[str], message: str) -> None:

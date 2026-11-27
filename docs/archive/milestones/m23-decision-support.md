@@ -2,8 +2,8 @@
 
 > **Doc status:** archived · **Owner:** Michael · **Last reviewed:** 2026-11-26
 
-Status: complete (23.1?23.4). The ADR is `docs/adrs/026-risk-is-evidence.md`. Wave one of
-`docs/strategy/feature-recommendations.md`: three low-effort features that make the existing release
+Status: complete (23.1?23.4). The ADR is `docs/design/adrs/026-risk-is-evidence.md`. Wave one of
+`docs/design/strategy/feature-recommendations.md`: three low-effort features that make the existing release
 gate usable by the person who has to sign it.
 
 ## Why

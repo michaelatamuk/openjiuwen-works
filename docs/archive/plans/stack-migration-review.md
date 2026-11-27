@@ -1,4 +1,4 @@
-# Review: `docs/roadmap/archive/stack-migration.md`
+# Review: `docs/archive/plans/stack-migration.md`
 
 > **Doc status:** archived · **Owner:** Michael · **Last reviewed:** 2026-11-24
 

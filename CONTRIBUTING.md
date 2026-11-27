@@ -1,7 +1,7 @@
 # Contributing
 
-Small, typed, tested changes. [Status](docs/roadmap/status.md) records what is left; the bar is the
-[engineering standard](docs/guides/contributing/engineering-standard.md).
+Small, typed, tested changes. [Status](docs/start/status.md) records what is left; the bar is the
+[engineering standard](docs/design/engineering-standard.md).
 
 ## Setup
 
@@ -50,7 +50,7 @@ Or on Windows: `powershell -ExecutionPolicy Bypass -File scripts/check.ps1`.
   placement table, manifest fields and status rules are in
   [`docs/guides/contributing/docs.md`](docs/guides/contributing/docs.md).
 - Every page under `docs/` is registered in `docs/manifest.yaml`; ADRs are indexed in
-  `docs/adrs/README.md`, and `docs/archive/` is read-only. `make docs` checks all of it.
+  `docs/design/adrs/README.md`, and `docs/archive/` is read-only. `make docs` checks all of it.
 - A non-active page carries a status banner under its H1, and the banner must agree with the
   manifest. Do not hand-edit `docs/reference/generated/`.
 

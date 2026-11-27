@@ -9,15 +9,14 @@ for adding, moving and retiring documentation.
 
 | Reader's question | Directory | Examples |
 |---|---|---|
-| What happens, in plain words? | `start/` | the ten stages |
+| What happens, in plain words? | `start/` | concepts, status |
 | How do I do this task? | `guides/workflow/` | intake, release, verification |
 | How do I run or fix it? | `guides/operations/` | runbook, remote, supply chain |
 | How do I connect a harness or service? | `guides/integrations/` | live harness, swarm, PPMA, LAIX |
 | What is the contract? | `reference/lifecycle/`, `reference/platform/`, `reference/capabilities/` | stage contracts, HTTP API, scheduler |
-| Why is it built this way? | `architecture.md`, `adrs/` | processes, layers, decisions |
-| What is planned or delivered? | `roadmap/` | plan, modernization plan, milestones |
-| Who is this for? | `strategy/` | positioning, competitors, mascot |
-| What did we believe before? | `archive/` | reviews, demos, old proposals |
+| Why is it built this way? | `design/` | architecture, engineering standard, decisions, strategy |
+| What is planned or delivered? | `start/status.md`, `archive/` | current status; delivered plans and milestones |
+| What did we believe before? | `archive/` | reviews, plans, milestones, demos |
 | Where do images and video live? | `assets/` | UI, deck, frames, the film |
 
 Do not add a new top-level directory without updating this table and `docs/README.md`. Do not create
@@ -118,8 +117,8 @@ Links to the stage before, the stage after, the ADR and the guide.
 
 ## Decisions and generated files
 
-- An architecture decision is `docs/adrs/NNN-slug.md`, using the same context / decision /
-  consequences / alternatives structure. Add it to the table in `docs/adrs/README.md`; the index
+- An architecture decision is `docs/design/adrs/NNN-slug.md`, using the same context / decision /
+  consequences / alternatives structure. Add it to the table in `docs/design/adrs/README.md`; the index
   check fails on a missing or misnumbered row.
 - A generated file is never edited by hand. `docs/reference/generated/README.md` names the script
   and the check for each one.

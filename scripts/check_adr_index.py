@@ -1,4 +1,4 @@
-"""Check that docs/adrs/README.md indexes every ADR exactly once, in order.
+"""Check that docs/design/adrs/README.md indexes every ADR exactly once, in order.
 
 The ADR files use three historical heading styles and two status styles. The index normalises
 both: the number comes from the heading, and the status is the first clause before a date or a
@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-ADR_DIR = ROOT / "docs" / "adrs"
+ADR_DIR = ROOT / "docs" / "design" / "adrs"
 INDEX = ADR_DIR / "README.md"
 
 H1 = re.compile(r"^# (?:ADR[- ]?)?(?P<num>\d{1,3})\b")
@@ -75,51 +75,53 @@ def main() -> int:
     problems: list[str] = []
     files = adr_files()
     if not files:
-        problems.append("docs/adrs: no ADR files found")
+        problems.append("docs/design/adrs: no ADR files found")
 
     numbers = sorted(files)
     for previous, current in itertools.pairwise(numbers):
         if int(current) != int(previous) + 1:
-            problems.append(f"docs/adrs: numbering gap between {previous} and {current}")
+            problems.append(f"docs/design/adrs: numbering gap between {previous} and {current}")
 
     rows = index_rows()
     seen: dict[str, dict[str, str]] = {}
     for row in rows:
         num = row["num"]
         if num in seen:
-            problems.append(f"docs/adrs/README.md: {num} listed more than once")
+            problems.append(f"docs/design/adrs/README.md: {num} listed more than once")
             continue
         seen[num] = row
         path = ADR_DIR / row["file"]
         if not path.is_file():
-            problems.append(f"docs/adrs/README.md: {num} points at missing {row['file']}")
+            problems.append(f"docs/design/adrs/README.md: {num} points at missing {row['file']}")
             continue
         if path.name.split("-", 1)[0] != num:
             problems.append(
-                f"docs/adrs/README.md: {num} points at {row['file']} with another number"
+                f"docs/design/adrs/README.md: {num} points at {row['file']} with another number"
             )
         if not row["title"].strip():
-            problems.append(f"docs/adrs/README.md: {num} has an empty decision title")
+            problems.append(f"docs/design/adrs/README.md: {num} has an empty decision title")
 
     for num in sorted(set(files) - set(seen)):
-        problems.append(f"docs/adrs/{files[num].name}: missing from docs/adrs/README.md")
+        problems.append(
+            f"docs/design/adrs/{files[num].name}: missing from docs/design/adrs/README.md"
+        )
     for num in sorted(set(seen) - set(files)):
-        problems.append(f"docs/adrs/README.md: {num} has no ADR file")
+        problems.append(f"docs/design/adrs/README.md: {num} has no ADR file")
 
     for num, path in files.items():
         found_num, _heading = heading_number(path)
         if found_num != num:
             problems.append(
-                f"docs/adrs/{path.name}: heading number {found_num!r} != filename {num}"
+                f"docs/design/adrs/{path.name}: heading number {found_num!r} != filename {num}"
             )
         status = adr_status(path)
         if status is None:
-            problems.append(f"docs/adrs/{path.name}: no Status line")
+            problems.append(f"docs/design/adrs/{path.name}: no Status line")
             continue
         row = seen.get(num)
         if row is not None and normalise_status(row["status"]) != status:
             problems.append(
-                f"docs/adrs/README.md: {num} status {row['status']!r} != record {status!r}"
+                f"docs/design/adrs/README.md: {num} status {row['status']!r} != record {status!r}"
             )
 
     for problem in problems:
