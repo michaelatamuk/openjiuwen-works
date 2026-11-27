@@ -6,7 +6,8 @@ question, not in the section that matches the file's genre.
 
 ## Start here
 
-- [Concepts: how a fix gets made](start/concepts.md) — the ten stages and the two human gates.
+- [Concepts: how a fix gets made](guides/workflow/concepts.md) — the ten stages and the two human gates.
+- [Status](roadmap/status.md) — what is built and the one open item.
 - [Quickstart](../README.md#try-it) — run the deterministic demo without a model.
 
 ## Do a task
@@ -41,20 +42,23 @@ question, not in the section that matches the file's genre.
 
 ## Understand the design
 
-- [The plan](roadmap/plan.md) — legacy v4.24: vision, invariants, architecture and the engineering
-  standard; still authoritative for scope until the split lands.
+- [Architecture overview](architecture/overview.md) — vision, invariants, components and one run.
 - [Planner](architecture/planner.md) — the planning contract and its delivery phases.
 - [Architecture decisions](adrs/README.md) — one record per expensive choice.
 - [2026 modernization plan](roadmap/2026-modern-plan.md) and
   [milestones](roadmap/milestones/) — what was built and why.
+- [Legacy plan v4.24](roadmap/archive/plan-v4.md) — the original scope and rationale; archived.
 - Strategy: [positioning](strategy/positioning.md),
   [competitors](strategy/competitor-analysis.md),
-  [feature recommendations](strategy/feature-recommendations.md).
+  [feature recommendations](strategy/feature-recommendations.md),
+  [Mira](strategy/mascot.md).
 
 ## Contribute
 
+- [Engineering standard](guides/contributing/engineering-standard.md) — the bar every change meets.
 - [Docs conventions](guides/contributing/docs.md) — where a page goes, the manifest and the checks.
 - [Layout](guides/contributing/layout.md) — where a new module, route or screen goes.
 - [Typing](guides/contributing/typing.md) — the `Any` ratchet and how to change it.
+- [Assets](assets/README.md) — images, slides and the film; no single-file directories.
 - [Contributing](../CONTRIBUTING.md) — setup, rules and the PR checklist.
 - [Archive](archive/) — historical reviews and demos; read-only.

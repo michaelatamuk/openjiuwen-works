@@ -20,8 +20,9 @@ version:
 - moves Windows lifecycle CI and server-side idempotency to Phase 0;
 - replaces OTel/Prometheus/SQLite-job-store/release-signing churn with measurable local gaps:
   backup/restore, retention, liveness/readiness, SSE limits, prompt provenance and a mutation gate;
-- reconciles the plan with the existing standard in [`plan.md`](plan.md) §6.4, which is stricter
-  than v1 in mutation score, circuit breaking, prompt hashes and “no bare threads”;
+- reconciles the plan with the existing
+  [engineering standard](../guides/contributing/engineering-standard.md), which is stricter than v1
+  in mutation score, circuit breaking, prompt hashes and “no bare threads”;
 - fixes the arithmetic: **81 engineer-days + 20% ≈ 97 days**, not 57 days in 8 weeks.
 
 ## 1. Baseline: done, in flight, new
@@ -49,7 +50,8 @@ in section 3, not this table.
 
 ## 2. Reconcile with the engineering standard
 
-[`docs/roadmap/plan.md`](plan.md) §6.4 already requires, among others:
+[`docs/guides/contributing/engineering-standard.md`](../guides/contributing/engineering-standard.md)
+already requires, among others:
 
 - mutation score ≥70% on core (`queue/`, `policy/`, `verify/`);
 - a provider circuit breaker after repeated failures;
@@ -91,7 +93,8 @@ the primary Windows lifecycle path going untested.
 - [x] **M0.5** `prompt_sha256` is recorded in `run.json` and printed in `evidence.md`;
   `tests/integration/test_loop.py` asserts the same 64-character hash in both.
 - [x] **M0.6** Fix docs contradictions: remote pairing wording, CONTRIBUTING Playwright claims,
-  Tailwind/shadcn decision in `plan.md` vs `stack-migration.md`. *Proof:* link/text check in CI.
+  Tailwind/shadcn decision between the legacy plan and the stack migration. *Proof:* link/text check
+  in CI.
 
 ### M1 — End-to-end type safety (11 days)
 
@@ -312,7 +315,8 @@ migration.
   78 ms. The hot read path (`/tasks`) is index-backed and already runs in FastAPI's thread pool, so no
   route was converted; blocking git/subprocess routes stay sync by design.
 - [x] **M10.3** ADR 019 keeps one bounded `ThreadPoolExecutor` (2 workers, 64 queued) as the documented
-  exception to `plan.md` §6.4; the 503 backpressure path and the crash matrix cover it.
+  exception to the [engineering standard](../guides/contributing/engineering-standard.md); the 503
+  backpressure path and the crash matrix cover it.
 - [x] **M10.4** React Compiler is opt-in (`WORKS_REACT_COMPILER=1`). `scripts/measure_web.py` builds
   both ways and `web/e2e/perf.spec.ts` measures the first queue render plus console errors; a growth
   over 5% fails the script. Measured: bundle **+6.33%** (JS +7.8%), build ~68% slower, render

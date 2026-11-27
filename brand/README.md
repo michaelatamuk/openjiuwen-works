@@ -6,7 +6,7 @@ Mira is the courier of openJiuwen Works. She carries the signal in and the proof
 |---|---|
 | `mascot/mira-primary.svg` / `.png` | README, deck, empty states |
 | `mascot/mira-avatar.svg` / `.png` | favicon, small avatar, CLI docs |
-| `../docs/brand/mascot.md` | personality, poses, voice, usage rules |
+| `../docs/strategy/mascot.md` | personality, poses, voice, usage rules |
 
 Rules: flat vector, violet scarf, a proof page, no gradients on the character, no chat-avatar
 behaviour, no mascot inside error text, and no status that relies on Mira instead of words.

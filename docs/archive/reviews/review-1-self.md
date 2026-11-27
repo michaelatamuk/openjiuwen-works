@@ -1,4 +1,4 @@
-# Review 1 — self-critique of `docs/roadmap/plan.md` v1
+# Review 1 — self-critique of the v1 plan
 
 Written before any code. Each point is a gap that would cost time or credibility later.
 

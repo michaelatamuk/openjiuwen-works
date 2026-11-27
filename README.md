@@ -1,7 +1,7 @@
 <div align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/ui/banner-dark.svg" />
-    <img src="docs/ui/banner.svg" alt="openJiuwen Works — one signal in, a released fix out, back in the product" width="100%" />
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/ui/banner-dark.svg" />
+    <img src="docs/assets/ui/banner.svg" alt="openJiuwen Works — one signal in, a released fix out, back in the product" width="100%" />
   </picture>
 </div>
 
@@ -31,7 +31,7 @@ plan and the release — and spend their time on the problems that actually need
 team whose hours go to judgement and design.
 
 <div align="center">
-  <img src="docs/ui/the-point.png" alt="The old way: one person does all six stages. With openJiuwen Works: the agent runs all six, and the person approves the plan and the release" width="100%" />
+  <img src="docs/assets/ui/the-point.png" alt="The old way: one person does all six stages. With openJiuwen Works: the agent runs all six, and the person approves the plan and the release" width="100%" />
 </div>
 
 ## What it does
@@ -51,11 +51,11 @@ the checks are read from the base commit, so a change cannot rewrite the tests t
 ## One screen, the whole task
 
 <div align="center">
-  <img src="docs/ui/story.png" alt="One task from report to release: the route, the checks and the next step, with the release gate ready for a person" width="100%" />
+  <img src="docs/assets/ui/story.png" alt="One task from report to release: the route, the checks and the next step, with the release gate ready for a person" width="100%" />
 </div>
 
 The report, the route, the checks and the next step are in one place; the proof is one click away.
-[Watch the 45-second film](docs/video/openjiuwen-works-two-mondays.mp4).
+[Watch the 45-second film](docs/assets/openjiuwen-works-two-mondays.mp4).
 
 ## Two decisions stay with people
 
@@ -75,7 +75,7 @@ Everything between the two decisions is automatic and recorded.
 | **Release** | A person approves the proof. Works delivers the change and confirms the real result. | **you**, then Works |
 
 <div align="center">
-  <img src="docs/deck/software-factory-flow.png" alt="The flow: signal, reproduce, plan, plan gate, build, check, proof, release gate, delivery and confirmation" width="100%" />
+  <img src="docs/assets/deck/software-factory-flow.png" alt="The flow: signal, reproduce, plan, plan gate, build, check, proof, release gate, delivery and confirmation" width="100%" />
 </div>
 
 Every phase is recorded. A failed check or a mismatched proof returns the task to a person.
@@ -88,7 +88,7 @@ human gates, the proof, delivery and confirmation. The agent layer is openJiuwen
 are your choice, and every run records the runtime, model and provider.
 
 <div align="center">
-  <img src="docs/ui/built-on-openjiuwen.png" alt="Three layers: models and providers below, openJiuwen as the agent layer, Works as the factory above" width="100%" />
+  <img src="docs/assets/ui/built-on-openjiuwen.png" alt="Three layers: models and providers below, openJiuwen as the agent layer, Works as the factory above" width="100%" />
 </div>
 
 ## When there is more than one thing to do
@@ -97,7 +97,7 @@ One queue, one job per project. Works shows why each task is waiting: a free slo
 day's budget or the machine being busy.
 
 <div align="center">
-  <img src="docs/deck/software-factory-queue.png" alt="The queue: new work waits in one line, a helper asks four questions, and two decisions belong to a person" width="100%" />
+  <img src="docs/assets/deck/software-factory-queue.png" alt="The queue: new work waits in one line, a helper asks four questions, and two decisions belong to a person" width="100%" />
 </div>
 
 The queue is optional and off by default. The plan and release decisions remain with people, and a
@@ -151,7 +151,8 @@ and close remain your decisions.
 
 ## Documentation
 
-- [`docs/start/concepts.md`](docs/start/concepts.md) — the flow in plain words.
+- [`docs/guides/workflow/concepts.md`](docs/guides/workflow/concepts.md) — the flow in plain words.
+- [`docs/roadmap/status.md`](docs/roadmap/status.md) — what is built and what is left.
 - [`docs/guides/operations/runbook.md`](docs/guides/operations/runbook.md) — what to do when something goes wrong.
 - [`docs/reference/lifecycle/proof.md`](docs/reference/lifecycle/proof.md) — what the proof contains.
 - [`docs/reference/capabilities/cve.md`](docs/reference/capabilities/cve.md) — scanning lockfiles for advisories.
@@ -163,9 +164,9 @@ and close remain your decisions.
 - [`docs/reference/capabilities/bench.md`](docs/reference/capabilities/bench.md) — a local score for the pipeline itself.
 - [`docs/guides/workflow/intake.md`](docs/guides/workflow/intake.md) — trackers, monitors and your products.
 - [`docs/guides/operations/remote.md`](docs/guides/operations/remote.md) — another device without exposing the port.
-- [`docs/video/openjiuwen-works-two-mondays.mp4`](docs/video/openjiuwen-works-two-mondays.mp4) — the
+- [`docs/assets/openjiuwen-works-two-mondays.mp4`](docs/assets/openjiuwen-works-two-mondays.mp4) — the
   flow in motion.
-- [`docs/deck/`](docs/deck/) — slides and diagrams.
+- [`docs/assets/deck/`](docs/assets/deck/) — slides and diagrams.
 
 ## License
 

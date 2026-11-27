@@ -16,6 +16,13 @@ documents:
   last_reviewed: '2026-11-27'
   audience: everyone
   canonical: true
+- path: docs/architecture/overview.md
+  title: Architecture overview
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
 - path: docs/architecture/planner.md
   title: Planner
   status: active
@@ -23,15 +30,22 @@ documents:
   last_reviewed: '2026-11-27'
   audience: engineer
   canonical: true
-- path: docs/brand/mascot.md
-  title: Mira — the mascot
+- path: docs/assets/README.md
+  title: Assets
   status: active
   owner: Michael
   last_reviewed: '2026-11-27'
-  audience: product
+  audience: engineer
   canonical: true
 - path: docs/guides/contributing/docs.md
   title: Documentation
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
+- path: docs/guides/contributing/engineering-standard.md
+  title: Engineering standard
   status: active
   owner: Michael
   last_reviewed: '2026-11-27'
@@ -106,6 +120,13 @@ documents:
   owner: Michael
   last_reviewed: '2026-11-27'
   audience: operator
+  canonical: true
+- path: docs/guides/workflow/concepts.md
+  title: How a fix gets made
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: everyone
   canonical: true
 - path: docs/guides/workflow/intake.md
   title: 'Intake: a tracker issue becomes one work item'
@@ -261,13 +282,6 @@ documents:
   last_reviewed: '2026-11-27'
   audience: engineer
   canonical: true
-- path: docs/reference/lifecycle/release-gate.md
-  title: Release gate (stage 8)
-  status: active
-  owner: Michael
-  last_reviewed: '2026-11-27'
-  audience: engineer
-  canonical: true
 - path: docs/reference/lifecycle/reproduce.md
   title: Reproduce (stage 2)
   status: active
@@ -324,6 +338,13 @@ documents:
   last_reviewed: '2026-11-27'
   audience: product
   canonical: true
+- path: docs/roadmap/archive/plan-v4.md
+  title: Development plan — openJiuwen Works (v4.24, archived)
+  status: archived
+  owner: Michael
+  last_reviewed: '2026-11-21'
+  audience: product
+  canonical: false
 - path: docs/roadmap/archive/stack-migration-review.md
   title: 'Review: `docs/roadmap/archive/stack-migration.md`'
   status: archived
@@ -401,19 +422,12 @@ documents:
   last_reviewed: '2026-11-26'
   audience: engineer
   canonical: false
-- path: docs/roadmap/plan.md
-  title: Development plan — openJiuwen Works
-  status: legacy
-  owner: Michael
-  last_reviewed: '2026-11-21'
-  audience: product
-  canonical: true
-- path: docs/start/concepts.md
-  title: How a fix gets made
+- path: docs/roadmap/status.md
+  title: Status
   status: active
   owner: Michael
   last_reviewed: '2026-11-27'
-  audience: everyone
+  audience: product
   canonical: true
 - path: docs/strategy/competitor-analysis.md
   title: Competitor Analysis
@@ -424,6 +438,13 @@ documents:
   canonical: true
 - path: docs/strategy/feature-recommendations.md
   title: Feature Recommendations
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: product
+  canonical: true
+- path: docs/strategy/mascot.md
+  title: Mira — the mascot
   status: active
   owner: Michael
   last_reviewed: '2026-11-27'

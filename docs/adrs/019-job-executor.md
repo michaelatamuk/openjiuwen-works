@@ -5,7 +5,8 @@
 
 ## Context
 
-`plan.md` §6.4 says "no bare threads". `JobRunner` needs to run blocking work: git, subprocesses, file
+The [engineering standard](../guides/contributing/engineering-standard.md) says "no bare threads".
+`JobRunner` needs to run blocking work: git, subprocesses, file
 writes to the queue and evidence. FastAPI already runs `def` routes in its own bounded thread pool, so
 a second, ad-hoc pool would double the concurrency and hide the bound.
 

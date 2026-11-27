@@ -16,10 +16,13 @@ for adding, moving and retiring documentation.
 | What is the contract? | `reference/lifecycle/`, `reference/platform/`, `reference/capabilities/` | stage contracts, HTTP API, scheduler |
 | Why is it built this way? | `architecture/`, `adrs/` | planner, decisions |
 | What is planned or delivered? | `roadmap/` | plan, modernization plan, milestones |
-| Who is this for? | `strategy/`, `brand/` | positioning, competitors, mascot |
+| Who is this for? | `strategy/` | positioning, competitors, mascot |
 | What did we believe before? | `archive/` | reviews, demos, old proposals |
+| Where do images and video live? | `assets/` | UI, deck, frames, the film |
 
-Do not add a new top-level directory without updating this table and `docs/README.md`.
+Do not add a new top-level directory without updating this table and `docs/README.md`. Do not create
+a directory whose only content is one Markdown file: merge it into a neighbouring section.
+`make docs` fails on both.
 
 ## Every page is registered
 
@@ -43,7 +46,8 @@ Do not add a new top-level directory without updating this table and `docs/READM
 - `canonical` is `true` when this is the page to read for its subject.
 
 `make docs` fails when a Markdown page is missing from the manifest, an entry points at a missing
-file, a title drifts from the heading, or a non-active page has no status banner.
+file, a title drifts from the heading, a non-active page has no status banner, or a directory holds
+a single Markdown file.
 
 ## Status
 

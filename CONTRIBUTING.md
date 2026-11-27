@@ -1,7 +1,7 @@
 # Contributing
 
-Small, typed, tested changes. The plan is the source of truth for scope; the engineering standard
-in `docs/roadmap/plan.md` §6.4 is the bar.
+Small, typed, tested changes. The [2026 plan](docs/roadmap/2026-modern-plan.md) is the source of truth
+for scope; the bar is the [engineering standard](docs/guides/contributing/engineering-standard.md).
 
 ## Setup
 

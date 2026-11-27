@@ -1,6 +1,6 @@
 Add-Type -AssemblyName System.Speech
 $root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
-$dir = Join-Path $root 'docs\frames'
+$dir = Join-Path $root 'docs\assets\frames'
 New-Item -ItemType Directory -Force -Path $dir | Out-Null
 
 $s = New-Object System.Speech.Synthesis.SpeechSynthesizer

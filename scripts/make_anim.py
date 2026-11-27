@@ -2,7 +2,7 @@ import os
 import subprocess
 
 OUT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-AN = os.path.join(OUT, "docs", "frames")
+AN = os.path.join(OUT, "docs", "assets", "frames")
 SC = AN
 os.makedirs(SC, exist_ok=True)
 CHROME = r"C:\Program Files\Google\Chrome\Application\chrome.exe"

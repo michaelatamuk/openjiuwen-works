@@ -7,9 +7,9 @@ repos:
       - id: check-added-large-files
         args: ["--maxkb=2000"]
       - id: end-of-file-fixer
-        exclude: '^(archive|docs/frames)/'
+        exclude: '^(archive|docs/assets/frames)/'
       - id: trailing-whitespace
-        exclude: '(\.diff$|^archive/|^docs/frames/)'
+        exclude: '(\.diff$|^archive/|^docs/assets/frames/)'
 
   # Local hooks use the exact versions in uv.lock, not a second toolchain.
   - repo: local

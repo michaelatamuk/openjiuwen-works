@@ -1,8 +1,13 @@
-# Development plan — openJiuwen Works
+# Development plan — openJiuwen Works (v4.24, archived)
 
-> **Doc status:** legacy · **Owner:** Michael · **Last reviewed:** 2026-11-21
+> **Doc status:** archived · **Owner:** Michael · **Last reviewed:** 2026-11-21
 
-**Status:** v4.24 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
+> Archived: this is the original v4.24 plan, kept for history. The stable design is
+> [architecture/overview.md](../../architecture/overview.md), the current status is
+> [roadmap/status.md](../status.md), and the engineering bar is
+> [guides/contributing/engineering-standard.md](../../guides/contributing/engineering-standard.md).
+
+**Version:** v4.24 · **Owner:** Michael (solo) · **Updated:** 2026-11-21
 
 Every task is a checkbox, checked when its criteria are met and the change is merged. `S/M/L`:
 S ≤ half a day, M ≤ two days, L ≤ a week. Nothing is checked because it was started.
@@ -28,7 +33,7 @@ told. "Released" means merged and confirmed; deploy is out of scope.
 Writing code is no longer the bottleneck; waiting is. A fix spends its life in queues: for triage,
 for an agent's answers, for a reviewer's time, for someone to prove the change works.
 
-Detail: `docs/deck/`, `docs/video/`.
+Detail: `docs/assets/deck/`, `docs/assets/openjiuwen-works-two-mondays.mp4`.
 
 ---
 
@@ -1286,7 +1291,7 @@ agents, a zoo of model providers before M3, and autonomous merge without the two
   `works finding`, attention metrics and `works metrics`, proof rubric with residual risk; Mira
   primary/avatar assets and CLI empty state. T1.14–T1.17 closed; T1.18 poses defer to the GUI.
 - **v4.6** — brand: Mira, the magpie courier; primary and avatar SVG assets, voice and usage rules
-  (`docs/brand/mascot.md`); T1.18; Mira in empty/waiting/proved/blocked states, never as a chat
+  (`docs/strategy/mascot.md`); T1.18; Mira in empty/waiting/proved/blocked states, never as a chat
   avatar or status substitute.
 - **v4.5** — factory parity from OpenAI Performance Factory and Alex Greenshpun's essay: waiting
   states and wake subscriptions; dispatch loop; structured findings; versioned prompt registry;
