@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" font-family="Inter, Segoe UI, Arial, Helvetica, sans-serif">
+  <defs>
+    <filter id="s6" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="10" flood-color="#111827" flood-opacity="0.07"/>
+    </filter>
+    <marker id="a6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#94A3B8"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1600" height="900" fill="#F4F5F9"/>
+
+  <text x="100" y="90" font-size="13" font-weight="700" fill="#6D28D9" letter-spacing="2.4">TWO SIGNATURES</text>
+  <text x="100" y="160" font-size="46" font-weight="700" fill="#111827">Two signatures on one case.</text>
+  <text x="100" y="205" font-size="19" fill="#6B7280">Without the first we build the wrong thing. Without the second we ship what was never proven.</text>
+
+  <rect x="180" y="250" width="560" height="540" rx="12" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1.5" filter="url(#s6)"/>
+  <text x="220" y="302" font-size="16" font-weight="700" fill="#111827" letter-spacing="1.4">PROOF RECORD</text>
+  <line x1="220" y1="326" x2="700" y2="326" stroke="#E5E7EB" stroke-width="1.5"/>
+  <line x1="220" y1="360" x2="640" y2="360" stroke="#E5E7EB" stroke-width="3"/>
+  <line x1="220" y1="386" x2="680" y2="386" stroke="#F1F5F9" stroke-width="3"/>
+  <line x1="220" y1="412" x2="600" y2="412" stroke="#F1F5F9" stroke-width="3"/>
+
+  <g transform="rotate(-8 355 470)">
+    <rect x="260" y="430" width="190" height="80" rx="10" fill="#F5F3FF" stroke="#6D28D9" stroke-width="3"/>
+    <text x="355" y="468" font-size="26" font-weight="700" fill="#6D28D9" text-anchor="middle">PLAN</text>
+    <text x="355" y="492" font-size="12" fill="#6D28D9" text-anchor="middle">before work</text>
+  </g>
+
+  <g transform="rotate(6 385 625)">
+    <rect x="290" y="585" width="190" height="80" rx="10" fill="#F5F3FF" stroke="#6D28D9" stroke-width="3"/>
+    <text x="385" y="623" font-size="26" font-weight="700" fill="#6D28D9" text-anchor="middle">RELEASE</text>
+    <text x="385" y="647" font-size="12" fill="#6D28D9" text-anchor="middle">after proof</text>
+  </g>
+
+  <line x1="280" y1="700" x2="640" y2="700" stroke="#E5E7EB" stroke-width="3"/>
+  <line x1="280" y1="724" x2="520" y2="724" stroke="#F1F5F9" stroke-width="3"/>
+
+  <line x1="755" y1="520" x2="865" y2="520" stroke="#94A3B8" stroke-width="3" marker-end="url(#a6)"/>
+
+  <rect x="880" y="330" width="520" height="300" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="2" filter="url(#s6)"/>
+  <path d="M880 330 L1140 486 L1400 330" fill="none" stroke="#CBD5E1" stroke-width="2"/>
+  <circle cx="1140" cy="486" r="38" fill="#6D28D9"/>
+  <path d="M1122 486 L1134 499 L1159 470" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="1140" y="670" font-size="20" font-weight="700" fill="#111827" text-anchor="middle">the proof</text>
+  <text x="1140" y="698" font-size="15" fill="#6B7280" text-anchor="middle">bound to the commit</text>
+
+  <line x1="100" y1="830" x2="1500" y2="830" stroke="#DDE2E8" stroke-width="1.5"/>
+  <text x="100" y="862" font-size="13" fill="#9CA3AF">openJiuwen Works · 2026</text>
+  <text x="1500" y="862" font-size="13" fill="#9CA3AF" text-anchor="end">6 / 7</text>
+</svg>

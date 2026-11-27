@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" font-family="Inter, Segoe UI, Arial, Helvetica, sans-serif">
+  <defs>
+    <filter id="s3" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="10" flood-color="#111827" flood-opacity="0.07"/>
+    </filter>
+  </defs>
+  <rect x="0" y="0" width="1600" height="900" fill="#F4F5F9"/>
+
+  <text x="100" y="90" font-size="13" font-weight="700" fill="#6D28D9" letter-spacing="2.4">A BUILD SITE</text>
+  <text x="100" y="160" font-size="46" font-weight="700" fill="#111827">Office. Team. Acceptance.</text>
+  <text x="100" y="205" font-size="19" fill="#6B7280">Nobody confuses these three on a building site. With agents they do, because all three look like AI.</text>
+
+  <g>
+    <rect x="100" y="270" width="420" height="460" rx="18" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1.5" filter="url(#s3)"/>
+    <circle cx="240" cy="400" r="18" fill="none" stroke="#0F766E" stroke-width="2"/>
+    <line x1="240" y1="418" x2="240" y2="480" stroke="#0F766E" stroke-width="2.5"/>
+    <line x1="240" y1="438" x2="214" y2="460" stroke="#0F766E" stroke-width="2.5"/>
+    <line x1="240" y1="438" x2="266" y2="460" stroke="#0F766E" stroke-width="2.5"/>
+    <circle cx="350" cy="400" r="18" fill="none" stroke="#0F766E" stroke-width="2"/>
+    <line x1="350" y1="418" x2="350" y2="480" stroke="#0F766E" stroke-width="2.5"/>
+    <line x1="350" y1="438" x2="324" y2="460" stroke="#0F766E" stroke-width="2.5"/>
+    <line x1="350" y1="438" x2="376" y2="460" stroke="#0F766E" stroke-width="2.5"/>
+    <rect x="200" y="480" width="200" height="14" rx="7" fill="#0F766E" opacity="0.25"/>
+    <rect x="192" y="338" width="86" height="38" rx="12" fill="#F0FDFA" stroke="#99F6E4"/>
+    <path d="M208 376 L208 388 L220 376" fill="#F0FDFA" stroke="#99F6E4"/>
+    <rect x="312" y="338" width="86" height="38" rx="12" fill="#F0FDFA" stroke="#99F6E4"/>
+    <path d="M380 376 L380 388 L368 376" fill="#F0FDFA" stroke="#99F6E4"/>
+    <text x="310" y="580" font-size="22" font-weight="700" fill="#0F766E" text-anchor="middle">ORBIT · office</text>
+    <text x="310" y="612" font-size="15" fill="#6B7280" text-anchor="middle">people, chats, decisions</text>
+  </g>
+
+  <g>
+    <rect x="590" y="270" width="420" height="460" rx="18" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1.5" filter="url(#s3)"/>
+    <circle cx="800" cy="348" r="16" fill="none" stroke="#334155" stroke-width="2"/>
+    <line x1="800" y1="364" x2="800" y2="404" stroke="#334155" stroke-width="2.5"/>
+    <line x1="800" y1="380" x2="776" y2="398" stroke="#334155" stroke-width="2.5"/>
+    <line x1="800" y1="380" x2="824" y2="398" stroke="#334155" stroke-width="2.5"/>
+    <text x="834" y="380" font-size="11" font-weight="700" fill="#64748B">leader</text>
+
+    <line x1="800" y1="404" x2="680" y2="468" stroke="#94A3B8" stroke-width="2"/>
+    <line x1="800" y1="404" x2="800" y2="468" stroke="#94A3B8" stroke-width="2"/>
+    <line x1="800" y1="404" x2="920" y2="468" stroke="#94A3B8" stroke-width="2"/>
+
+    <g stroke="#334155" stroke-width="2" fill="none">
+      <circle cx="680" cy="480" r="11"/>
+      <line x1="680" y1="491" x2="680" y2="520"/>
+      <line x1="680" y1="500" x2="666" y2="512"/>
+      <line x1="680" y1="500" x2="694" y2="512"/>
+      <circle cx="800" cy="480" r="11"/>
+      <line x1="800" y1="491" x2="800" y2="520"/>
+      <line x1="800" y1="500" x2="786" y2="512"/>
+      <line x1="800" y1="500" x2="814" y2="512"/>
+      <circle cx="920" cy="480" r="11"/>
+      <line x1="920" y1="491" x2="920" y2="520"/>
+      <line x1="920" y1="500" x2="906" y2="512"/>
+      <line x1="920" y1="500" x2="934" y2="512"/>
+    </g>
+    <text x="800" y="552" font-size="11" font-weight="700" fill="#64748B" text-anchor="middle">subagents</text>
+
+    <text x="800" y="592" font-size="22" font-weight="700" fill="#334155" text-anchor="middle">SWARM · leader</text>
+    <text x="800" y="624" font-size="15" fill="#6B7280" text-anchor="middle">splits the work and builds</text>
+  </g>
+
+  <g>
+    <rect x="1080" y="270" width="420" height="460" rx="18" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1.5" filter="url(#s3)"/>
+    <circle cx="1240" cy="400" r="18" fill="none" stroke="#6D28D9" stroke-width="2"/>
+    <line x1="1240" y1="418" x2="1240" y2="480" stroke="#6D28D9" stroke-width="2.5"/>
+    <line x1="1240" y1="438" x2="1214" y2="462" stroke="#6D28D9" stroke-width="2.5"/>
+    <line x1="1240" y1="438" x2="1290" y2="466" stroke="#6D28D9" stroke-width="2.5"/>
+    <rect x="1296" y="446" width="64" height="86" rx="6" fill="#F5F3FF" stroke="#6D28D9" stroke-width="2"/>
+    <line x1="1308" y1="466" x2="1348" y2="466" stroke="#C4B5FD" stroke-width="2"/>
+    <line x1="1308" y1="480" x2="1348" y2="480" stroke="#C4B5FD" stroke-width="2"/>
+    <line x1="1308" y1="494" x2="1338" y2="494" stroke="#C4B5FD" stroke-width="2"/>
+    <rect x="1164" y="500" width="48" height="12" rx="3" fill="#6D28D9"/>
+    <rect x="1182" y="474" width="12" height="26" rx="3" fill="#6D28D9"/>
+    <circle cx="1188" cy="540" r="16" fill="none" stroke="#6D28D9" stroke-width="2"/>
+    <path d="M1180 540 L1186 546 L1197 534" fill="none" stroke="#6D28D9" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="1290" y="580" font-size="22" font-weight="700" fill="#6D28D9" text-anchor="middle">WORKS · inspection</text>
+    <text x="1290" y="612" font-size="15" fill="#6B7280" text-anchor="middle">checks and signs</text>
+  </g>
+
+  <text x="800" y="790" font-size="20" fill="#475569" text-anchor="middle">The office does not build. The team does not sign the act. Inspection does not negotiate.</text>
+
+  <line x1="100" y1="830" x2="1500" y2="830" stroke="#DDE2E8" stroke-width="1.5"/>
+  <text x="100" y="862" font-size="13" fill="#9CA3AF">openJiuwen Works · 2026</text>
+  <text x="1500" y="862" font-size="13" fill="#9CA3AF" text-anchor="end">3 / 7</text>
+</svg>
