@@ -268,6 +268,13 @@ documents:
   last_reviewed: '2026-11-27'
   audience: product
   canonical: false
+- path: docs/presentation/09-explaining.md
+  title: Explaining the product
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: product
+  canonical: false
 - path: docs/presentation/README.md
   title: 'Presentation: openJiuwen Works'
   status: active
