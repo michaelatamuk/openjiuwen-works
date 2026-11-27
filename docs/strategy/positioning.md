@@ -128,6 +128,6 @@ Do not draw the proposed links as solid in public material.
 
 ## Related
 
-- `docs/roadmap/2026-modern-plan.md` — the milestones.
-- `docs/roadmap/milestones/m23-decision-support.md` — the current work.
+- `docs/roadmap/archive/2026-modern-plan.md` — the completed modernization plan.
+- `docs/roadmap/archive/milestones/m23-decision-support.md` — the decision-support design record.
 - `docs/reference/lifecycle/proof.md` — what a proof actually binds.

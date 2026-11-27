@@ -1,10 +1,16 @@
-# Works 2026 modernization plan (v2)
+# Works 2026 modernization plan (v2, archived)
 
-> **Doc status:** active · **Owner:** Michael · **Last reviewed:** 2026-11-27
+> **Doc status:** archived · **Owner:** Michael · **Last reviewed:** 2026-11-27
 
-**Status:** revised after a staff-engineer critique of v1  
-**Date:** 2026-11-24  
-**Scope:** local-first daemon, CLI, web UI, packaging, AI quality and engineering system.  
+> Archived: the plan is complete except M15.7 (deferred). The current page is
+> [roadmap/status.md](../status.md); the milestone designs are in [milestones/](milestones/).
+
+**Version:** v2, revised after a staff-engineer critique of v1
+
+**Date:** 2026-11-24
+
+**Scope:** local-first daemon, CLI, web UI, packaging, AI quality and engineering system.
+
 **Non-goals:** microservices, Redis/Postgres, Kubernetes, multi-tenant SaaS, a cloud control plane.
 Works stays one home with one writable daemon.
 
@@ -21,7 +27,7 @@ version:
 - replaces OTel/Prometheus/SQLite-job-store/release-signing churn with measurable local gaps:
   backup/restore, retention, liveness/readiness, SSE limits, prompt provenance and a mutation gate;
 - reconciles the plan with the existing
-  [engineering standard](../guides/contributing/engineering-standard.md), which is stricter than v1
+  [engineering standard](../../guides/contributing/engineering-standard.md), which is stricter than v1
   in mutation score, circuit breaking, prompt hashes and “no bare threads”;
 - fixes the arithmetic: **81 engineer-days + 20% ≈ 97 days**, not 57 days in 8 weeks.
 
@@ -50,7 +56,7 @@ in section 3, not this table.
 
 ## 2. Reconcile with the engineering standard
 
-[`docs/guides/contributing/engineering-standard.md`](../guides/contributing/engineering-standard.md)
+[`docs/guides/contributing/engineering-standard.md`](../../guides/contributing/engineering-standard.md)
 already requires, among others:
 
 - mutation score ≥70% on core (`queue/`, `policy/`, `verify/`);
@@ -315,7 +321,7 @@ migration.
   78 ms. The hot read path (`/tasks`) is index-backed and already runs in FastAPI's thread pool, so no
   route was converted; blocking git/subprocess routes stay sync by design.
 - [x] **M10.3** ADR 019 keeps one bounded `ThreadPoolExecutor` (2 workers, 64 queued) as the documented
-  exception to the [engineering standard](../guides/contributing/engineering-standard.md); the 503
+  exception to the [engineering standard](../../guides/contributing/engineering-standard.md); the 503
   backpressure path and the crash matrix cover it.
 - [x] **M10.4** React Compiler is opt-in (`WORKS_REACT_COMPILER=1`). `scripts/measure_web.py` builds
   both ways and `web/e2e/perf.spec.ts` measures the first queue render plus console errors; a growth
@@ -541,7 +547,7 @@ check reported as a pass, and a deploy failure hidden behind a local check.
 **Prevents:** a webhook that starts a run on every delivery, a burst that burns the daily budget, two
 runs racing for one worktree, and a queue that cannot say why a task is not moving.
 
-The design is `docs/roadmap/milestones/m21-scheduler.md`; the actor rule is ADR 024. Defaults are off.
+The design is `docs/roadmap/archive/milestones/m21-scheduler.md`; the actor rule is ADR 024. Defaults are off.
 
 **Progress (first pass):** `application/scheduling/` has the policy loader, the pure selection and
 admission function, leases with a dispatcher lock and stale reclaim, pause/resume, and a CLI
@@ -601,7 +607,7 @@ from terminal failures; `order.mode: shadow` logs a k-NN order without changing 
 - [x] **M21.11** GUI parity: a Scheduler card (state, waiting reasons, pause, budget), a **Run** button
   on the task card and **Dispatch ready (N)** in the queue header; `works task merge` closes the last
   CLI gap for duplicate tasks.
-- [x] **M21.12** Docs and acceptance: `docs/roadmap/milestones/m21-scheduler.md`, ADR 024, and tests for
+- [x] **M21.12** Docs and acceptance: `docs/roadmap/archive/milestones/m21-scheduler.md`, ADR 024, and tests for
   policy-off, labelled L1, unlabelled import, two dispatchers, crash reclaim, budget exhaustion,
   pause/resume, L2/L3 stop states and a scheduler gate refusal.
 
@@ -632,7 +638,7 @@ shadow mode that decides whether a learned order ever earns the right to run.
 - [x] **M22.6** `order.mode: rule|shadow|learned`: shadow logs "would pick X, rule picked Y" and starts
   nothing; `learned` is allowed only with ≥ 4 weeks or ≥ 50 claims of shadow evidence, no worse p95
   wait, no new starvation, no worse `$` per `proved`, and calibration inside the band.
-- [x] **M22.7** Docs and acceptance: `docs/roadmap/milestones/m22-estimates.md`, plus tests for cold start,
+- [x] **M22.7** Docs and acceptance: `docs/roadmap/archive/milestones/m22-estimates.md`, plus tests for cold start,
   plan update, fit refusals, ordering by equal risk, shadow no-op, monotonicity and the promotion
   guard.
 
@@ -645,7 +651,7 @@ a cloud model, deep learning, and estimating delivery/deploy/confirm time.
 that disappears, and a risk tier nobody recorded before shipping.
 
 Wave one of `docs/strategy/feature-recommendations.md`. The design is
-`docs/roadmap/milestones/m23-decision-support.md`, and ADR 026 records that risk is evidence, not a gate. No
+`docs/roadmap/archive/milestones/m23-decision-support.md`, and ADR 026 records that risk is evidence, not a gate. No
 new pipeline stage: three features strengthen the existing release gate, and each is delivered end to
 end — backend, API, UI and CLI — before the next one starts.
 
@@ -687,7 +693,7 @@ back to the tracker beyond the existing comment, auto-reopening a merged PR, and
 
 The gap was narrower than the first estimate: a worktree per run, a branch per task and a job pool
 already exist. M24 makes the scheduler honour the `per_repo` slot it documents. The design is
-`docs/roadmap/milestones/m24-parallel.md`; the decision is ADR 027, which revisits one rejected alternative
+`docs/roadmap/archive/milestones/m24-parallel.md`; the decision is ADR 027, which revisits one rejected alternative
 in ADR 024.
 
 - [x] **M24.1** `Signals.active_by_repo` counts active leases per repository; selection refuses only
@@ -711,7 +717,7 @@ resolution.
 
 **Prevents:** a known vulnerable dependency waiting for a person to notice it.
 
-The design is `docs/roadmap/milestones/m25-cve.md`; the reference is `docs/reference/capabilities/cve.md`. Offline first:
+The design is `docs/roadmap/archive/milestones/m25-cve.md`; the reference is `docs/reference/capabilities/cve.md`. Offline first:
 a scan reads an OSV-style feed, `--osv` is an explicit opt-in, and reproduction stays the repository's
 own checks. No PoC is claimed.
 
@@ -759,7 +765,7 @@ decisions, reopens, CVE work, escapes and stop reasons. It is read-only, local a
 **Prevents:** one generalist reviewer being asked to catch security, performance and data regressions
 at once.
 
-The design is `docs/roadmap/milestones/m27-specialists.md`; the reference is `docs/reference/capabilities/specialists.md`.
+The design is `docs/roadmap/archive/milestones/m27-specialists.md`; the reference is `docs/reference/capabilities/specialists.md`.
 A flow names specialists and their paths; each runs as a separate harness turn on the same worktree,
 with its own prompt and prompt hash.
 
@@ -787,7 +793,7 @@ access, per-specialist providers beyond the harness.
 
 **Prevents:** a regression waiting until a person notices and files it.
 
-The design is `docs/roadmap/milestones/m28-scan.md`; the reference is `docs/reference/capabilities/scan.md`. One explicit
+The design is `docs/roadmap/archive/milestones/m28-scan.md`; the reference is `docs/reference/capabilities/scan.md`. One explicit
 command runs the repository's own check and files only failures that were not in the previous scan.
 
 - [x] **M28.1** A baseline per `(repository, command)` lives in the home, never in the repository; a
@@ -810,7 +816,7 @@ parsers.
 
 **Prevents:** a proof that was true on release day becoming false in production with nobody noticing.
 
-The design is `docs/roadmap/milestones/m29-monitor.md`; the reference is `docs/reference/capabilities/monitor.md`. The
+The design is `docs/roadmap/archive/milestones/m29-monitor.md`; the reference is `docs/reference/capabilities/monitor.md`. The
 baseline is the confirmation recorded at release; a later pass → fail opens one task with the previous
 run and proof in its hint.
 
@@ -833,7 +839,7 @@ comparison as a drift.
 **Prevents:** arguing about quality without a repeatable number, and promising a SWE-bench score the
 product cannot yet produce.
 
-The design is `docs/roadmap/milestones/m30-bench.md`; the reference is `docs/reference/capabilities/bench.md`. A JSONL case
+The design is `docs/roadmap/archive/milestones/m30-bench.md`; the reference is `docs/reference/capabilities/bench.md`. A JSONL case
 names a repository, a scenario set, a recorded trace and the expected outcome; each case runs in its own
 home through the real supervisor.
 

@@ -2,9 +2,9 @@
 
 > **Doc status:** active · **Owner:** Michael · **Last reviewed:** 2026-11-27
 
-What is built and what is left. The live checklist is the
-[2026 modernization plan](2026-modern-plan.md); this page is the one-screen answer, and the
-[milestones](milestones/) are the design records.
+What is built and what is left. The 2026 modernization plan is finished and archived; this page is
+the current answer, and the milestone design records are under
+[archive/milestones](archive/milestones/).
 
 ## The loop is complete
 
@@ -22,7 +22,7 @@ in place. The deterministic demo runs without a model.
 | Decision support (M23) | [ADR 026](../adrs/026-risk-is-evidence.md) |
 | Per-repository parallelism (M24) | [ADR 027](../adrs/027-per-repo-parallelism.md) |
 | CVE, measurement report, scan, monitor, specialists and benchmark (M25–M30) | [capabilities](../reference/capabilities/), [report](../reference/platform/report.md) |
-| 2026 modernization | [plan](2026-modern-plan.md) — every checkbox is closed except one |
+| 2026 modernization | [archived plan](archive/2026-modern-plan.md) — every checkbox is closed except one |
 
 ## Open
 
@@ -34,9 +34,9 @@ One checkbox is open in the 2026 plan:
 
 Anything not in that plan belongs in a new ADR or a new milestone, not in a silent edit.
 
-## How to read the plans
+## Plans and records
 
-- [2026 modernization plan](2026-modern-plan.md) — the live checklist and the acceptance gates.
-- [Milestones](milestones/) — design records for the delivered passes.
+- [2026 modernization plan](archive/2026-modern-plan.md) — archived checklist and acceptance gates.
+- [Milestones](archive/milestones/) — design records for the delivered passes.
 - [Legacy plan v4.24](archive/plan-v4.md) — the original scope, invariants and rationale; archived.
 - [Engineering standard](../guides/contributing/engineering-standard.md) — the bar every change meets.

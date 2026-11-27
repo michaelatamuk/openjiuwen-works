@@ -45,8 +45,6 @@ question, not in the section that matches the file's genre.
 - [Architecture overview](architecture/overview.md) — vision, invariants, components and one run.
 - [Planner](architecture/planner.md) — the planning contract and its delivery phases.
 - [Architecture decisions](adrs/README.md) — one record per expensive choice.
-- [2026 modernization plan](roadmap/2026-modern-plan.md) and
-  [milestones](roadmap/milestones/) — what was built and why.
 - [Legacy plan v4.24](roadmap/archive/plan-v4.md) — the original scope and rationale; archived.
 - Strategy: [positioning](strategy/positioning.md),
   [competitors](strategy/competitor-analysis.md),
@@ -61,4 +59,5 @@ question, not in the section that matches the file's genre.
 - [Typing](guides/contributing/typing.md) — the `Any` ratchet and how to change it.
 - [Assets](assets/README.md) — images, slides and the film; no single-file directories.
 - [Contributing](../CONTRIBUTING.md) — setup, rules and the PR checklist.
-- [Archive](archive/) — historical reviews and demos; read-only.
+- [Archive](archive/) and [roadmap archive](roadmap/archive/) — historical reviews, demos and plans;
+  read-only.

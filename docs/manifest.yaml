@@ -331,13 +331,76 @@ documents:
   last_reviewed: '2026-11-27'
   audience: engineer
   canonical: true
-- path: docs/roadmap/2026-modern-plan.md
-  title: Works 2026 modernization plan (v2)
-  status: active
+- path: docs/roadmap/archive/2026-modern-plan.md
+  title: Works 2026 modernization plan (v2, archived)
+  status: archived
   owner: Michael
   last_reviewed: '2026-11-27'
   audience: product
-  canonical: true
+  canonical: false
+- path: docs/roadmap/archive/milestones/m21-scheduler.md
+  title: M21 — queue and scheduler (design)
+  status: archived
+  owner: Michael
+  last_reviewed: '2026-11-26'
+  audience: engineer
+  canonical: false
+- path: docs/roadmap/archive/milestones/m22-estimates.md
+  title: M22 — estimating the work (design)
+  status: archived
+  owner: Michael
+  last_reviewed: '2026-11-26'
+  audience: engineer
+  canonical: false
+- path: docs/roadmap/archive/milestones/m23-decision-support.md
+  title: M23 — decision support at the gate (design)
+  status: archived
+  owner: Michael
+  last_reviewed: '2026-11-26'
+  audience: engineer
+  canonical: false
+- path: docs/roadmap/archive/milestones/m24-parallel.md
+  title: M24 — parallel tasks in one repository (design)
+  status: archived
+  owner: Michael
+  last_reviewed: '2026-11-26'
+  audience: engineer
+  canonical: false
+- path: docs/roadmap/archive/milestones/m25-cve.md
+  title: M25 — CVE intake (design)
+  status: archived
+  owner: Michael
+  last_reviewed: '2026-11-26'
+  audience: engineer
+  canonical: false
+- path: docs/roadmap/archive/milestones/m27-specialists.md
+  title: M27 — specialist verifiers (design)
+  status: archived
+  owner: Michael
+  last_reviewed: '2026-11-26'
+  audience: engineer
+  canonical: false
+- path: docs/roadmap/archive/milestones/m28-scan.md
+  title: M28 — proactive scan (design)
+  status: archived
+  owner: Michael
+  last_reviewed: '2026-11-26'
+  audience: engineer
+  canonical: false
+- path: docs/roadmap/archive/milestones/m29-monitor.md
+  title: M29 — production feedback (design)
+  status: archived
+  owner: Michael
+  last_reviewed: '2026-11-26'
+  audience: engineer
+  canonical: false
+- path: docs/roadmap/archive/milestones/m30-bench.md
+  title: M30 — pipeline benchmark (design)
+  status: archived
+  owner: Michael
+  last_reviewed: '2026-11-26'
+  audience: engineer
+  canonical: false
 - path: docs/roadmap/archive/plan-v4.md
   title: Development plan — openJiuwen Works (v4.24, archived)
   status: archived
@@ -357,69 +420,6 @@ documents:
   status: archived
   owner: Michael
   last_reviewed: '2026-11-24'
-  audience: engineer
-  canonical: false
-- path: docs/roadmap/milestones/m21-scheduler.md
-  title: M21 — queue and scheduler (design)
-  status: archived
-  owner: Michael
-  last_reviewed: '2026-11-26'
-  audience: engineer
-  canonical: false
-- path: docs/roadmap/milestones/m22-estimates.md
-  title: M22 — estimating the work (design)
-  status: archived
-  owner: Michael
-  last_reviewed: '2026-11-26'
-  audience: engineer
-  canonical: false
-- path: docs/roadmap/milestones/m23-decision-support.md
-  title: M23 — decision support at the gate (design)
-  status: archived
-  owner: Michael
-  last_reviewed: '2026-11-26'
-  audience: engineer
-  canonical: false
-- path: docs/roadmap/milestones/m24-parallel.md
-  title: M24 — parallel tasks in one repository (design)
-  status: archived
-  owner: Michael
-  last_reviewed: '2026-11-26'
-  audience: engineer
-  canonical: false
-- path: docs/roadmap/milestones/m25-cve.md
-  title: M25 — CVE intake (design)
-  status: archived
-  owner: Michael
-  last_reviewed: '2026-11-26'
-  audience: engineer
-  canonical: false
-- path: docs/roadmap/milestones/m27-specialists.md
-  title: M27 — specialist verifiers (design)
-  status: archived
-  owner: Michael
-  last_reviewed: '2026-11-26'
-  audience: engineer
-  canonical: false
-- path: docs/roadmap/milestones/m28-scan.md
-  title: M28 — proactive scan (design)
-  status: archived
-  owner: Michael
-  last_reviewed: '2026-11-26'
-  audience: engineer
-  canonical: false
-- path: docs/roadmap/milestones/m29-monitor.md
-  title: M29 — production feedback (design)
-  status: archived
-  owner: Michael
-  last_reviewed: '2026-11-26'
-  audience: engineer
-  canonical: false
-- path: docs/roadmap/milestones/m30-bench.md
-  title: M30 — pipeline benchmark (design)
-  status: archived
-  owner: Michael
-  last_reviewed: '2026-11-26'
   audience: engineer
   canonical: false
 - path: docs/roadmap/status.md

@@ -45,14 +45,14 @@ def tracked_pages() -> set[str]:
     return pages
 
 
-def check_single_file_directories(problems: list[str]) -> None:
-    """A documentation directory whose only content is one Markdown file hides its grouping."""
+def check_single_entry_directories(problems: list[str]) -> None:
+    """A documentation directory with one entry hides its own grouping."""
     for directory in sorted({path.parent for path in DOCS.rglob("*.md")}):
-        files = [entry for entry in directory.iterdir() if entry.is_file()]
-        if len(files) == 1 and files[0].suffix == ".md":
+        entries = list(directory.iterdir())
+        if len(entries) == 1:
             fail(
                 problems,
-                f"{directory.relative_to(ROOT)}: only content is one Markdown file; "
+                f"{directory.relative_to(ROOT)}: only one entry; "
                 "merge it into a neighbouring section",
             )
 
@@ -143,7 +143,7 @@ def main() -> int:
         listed[path] = entry
 
     tracked = tracked_pages()
-    check_single_file_directories(problems)
+    check_single_entry_directories(problems)
     for path in sorted(tracked - set(listed)):
         fail(problems, f"{path}: not listed in docs/manifest.yaml")
     for path in sorted(set(listed) - tracked):

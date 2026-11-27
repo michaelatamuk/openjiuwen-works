@@ -21,8 +21,7 @@ for adding, moving and retiring documentation.
 | Where do images and video live? | `assets/` | UI, deck, frames, the film |
 
 Do not add a new top-level directory without updating this table and `docs/README.md`. Do not create
-a directory whose only content is one Markdown file: merge it into a neighbouring section.
-`make docs` fails on both.
+a directory with a single entry: merge it into a neighbouring section. `make docs` fails on both.
 
 ## Every page is registered
 
@@ -47,7 +46,7 @@ a directory whose only content is one Markdown file: merge it into a neighbourin
 
 `make docs` fails when a Markdown page is missing from the manifest, an entry points at a missing
 file, a title drifts from the heading, a non-active page has no status banner, or a directory holds
-a single Markdown file.
+a single entry.
 
 ## Status
 
