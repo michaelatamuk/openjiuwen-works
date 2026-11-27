@@ -159,6 +159,7 @@ and close remain your decisions.
 - [`docs/reference/report.md`](docs/reference/report.md) — time, cost and gate decisions.
 - [`docs/reference/specialists.md`](docs/reference/specialists.md) — reviewers by area.
 - [`docs/reference/scan.md`](docs/reference/scan.md) — finding a regression before it is reported.
+- [`docs/reference/monitor.md`](docs/reference/monitor.md) — what happens when a released fix stops holding.
 - [`docs/guides/intake.md`](docs/guides/intake.md) — trackers, monitors and your products.
 - [`docs/guides/remote.md`](docs/guides/remote.md) — another device without exposing the port.
 - [`docs/video/openjiuwen-works-two-mondays.mp4`](docs/video/openjiuwen-works-two-mondays.mp4) — the

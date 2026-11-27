@@ -177,6 +177,7 @@ def confirm(
     tracker: str | None = None,
     close_issue: bool = False,
     force: bool = False,
+    record: bool = True,
     runner: CommandRunner | None = None,
     tracker_client: Tracker | None = None,
 ) -> Confirmation:
@@ -309,8 +310,9 @@ def confirm(
             confirmation.notes.append("source issue closed")
     elif close_issue:
         confirmation.notes.append("no tracker configured; the source issue was not closed")
-    (run_dir / "confirmation.json").write_text(
-        json.dumps(confirmation.as_dict(), indent=2) + "\n", encoding="utf-8", newline="\n"
-    )
-    queue.append(task_id, "confirmation.finished", confirmation.as_dict())
+    if record:
+        (run_dir / "confirmation.json").write_text(
+            json.dumps(confirmation.as_dict(), indent=2) + "\n", encoding="utf-8", newline="\n"
+        )
+        queue.append(task_id, "confirmation.finished", confirmation.as_dict())
     return confirmation

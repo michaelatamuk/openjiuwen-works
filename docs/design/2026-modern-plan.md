@@ -800,6 +800,28 @@ parsers.
 
 **Estimate:** ~2.5 days (~3 with contingency).
 
+### M29 — Production feedback (done)
+
+**Prevents:** a proof that was true on release day becoming false in production with nobody noticing.
+
+The design is `docs/design/2026-m29-monitor.md`; the reference is `docs/reference/monitor.md`. The
+baseline is the confirmation recorded at release; a later pass → fail opens one task with the previous
+run and proof in its hint.
+
+- [x] **M29.1** The monitor reuses the recorded confirmation target (URL, command or scenario set) and
+  keeps its baseline in the home, not in the repository.
+- [x] **M29.2** Pass → fail creates one `fix-issue` task from a `detector` source with channel `drift`,
+  severity S2, the previous task/run/proof in the hint and a dedupe key; a failed baseline or a
+  passing re-check files nothing.
+- [x] **M29.3** `works monitor [--days] [--dry-run] [--json]` reports checked, skipped, drift and
+  created; `confirm(record=False)` makes the dry run write nothing.
+- [x] **M29.4** Docs and tests cover the baseline, drift, dedupe, dry run, skipped checks and the CLI.
+
+**Not in scope:** OTel metric ingestion, a daemon poller, automatic reopen/repair/release, body
+comparison as a drift.
+
+**Estimate:** ~2.7 days (~3 with contingency).
+
 ## 4. Sequencing and gates
 
 ### Phase 0 — Land the safety floor (week 1)
@@ -847,8 +869,8 @@ M11 12 + M12 14 = **69 engineer-days**, **~83 with 20% contingency** — 13–16
 **Beyond that scope:** M13–M20 (stages 3–10) were delivered as separate passes and are not re-estimated
 here. The remaining planned work is M21 **~27 days (~32)**, M22 **~11 days (~13)**, M23 **~13 days
 (~15)**, M24 **~3 days (~4)** and M25 **~4 days (~5)** and M26 **~1 day (~1.5)** and M27 **~4 days (~5)** and
-M28 **~2.5 days (~3)**, which is where the queue, the scheduler, the estimates, decision support,
-specialists and proactive intake live.
+M28 **~2.5 days (~3)** and M29 **~2.7 days (~3)**, which is where the queue, the scheduler, the
+estimates, decision support, specialists and the post-release loop live.
 
 ## 5. Acceptance metrics
 

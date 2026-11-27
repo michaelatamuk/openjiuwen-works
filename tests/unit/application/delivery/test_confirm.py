@@ -226,3 +226,14 @@ def test_the_deployment_record_is_linked(paths, repo, tmp_path) -> None:
     result = confirm(paths, task.id, command=[sys.executable, "-c", "print(1)"])
 
     assert result.deployment_status == "deployed"
+
+
+def test_record_false_leaves_the_confirmation_untouched(paths, repo, tmp_path) -> None:
+    task, _, _ = _delivered(paths, repo, tmp_path)
+
+    result = confirm(paths, task.id, command=[sys.executable, "-c", "print('ok')"], record=False)
+
+    assert result.ok is True
+    assert not (paths.runs / "r-deliver" / "confirmation.json").exists()
+    events = [e for e in Queue(paths).events(task.id) if e.type == "confirmation.finished"]
+    assert events == []

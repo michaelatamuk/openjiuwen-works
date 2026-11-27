@@ -14,6 +14,7 @@ from works.interfaces.cli.parser.inspect import add_inspect_commands
 from works.interfaces.cli.parser.intake import add_intake_commands
 from works.interfaces.cli.parser.maintenance import add_maintenance_commands
 from works.interfaces.cli.parser.memory import add_memory_commands
+from works.interfaces.cli.parser.monitor import add_monitor_commands
 from works.interfaces.cli.parser.plan import add_plan_commands
 from works.interfaces.cli.parser.proof import add_proof_commands
 from works.interfaces.cli.parser.report import add_report_commands
@@ -48,5 +49,6 @@ def build_parser() -> argparse.ArgumentParser:
     add_inspect_commands(sub)
     add_memory_commands(sub)
     add_maintenance_commands(sub)
+    add_monitor_commands(sub)
     add_ui_commands(sub)
     return parser
