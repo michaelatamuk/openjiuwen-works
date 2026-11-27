@@ -9,7 +9,7 @@ A 12-slide arc. Each slide has one job. The deck is a story about a category, no
 Works is a local software factory. It is not an agent, a harness or a chat product. It is the layer
 that makes an agent's change provable and signed.
 
-**Visual:** `assets/brand/banner.svg` (or the dark variant).
+**Visual:** `../assets/ui/banner.svg` (or the dark variant).
 **Source:** `README.md`.
 
 ## 2. The bottleneck
@@ -20,7 +20,7 @@ A fix spends its life in queues: for triage, for an agent's answer, for a review
 increase the amount of work that reaches review; they do not increase the number of people who can
 approve it.
 
-**Visual:** `assets/diagrams/the-point.png`.
+**Visual:** `../assets/ui/the-point.png`.
 **Source:** `README.md`, `docs/start/concepts.md`.
 
 ## 3. What Works does
@@ -31,7 +31,7 @@ recorded."
 Signal → reproduce → plan → **plan gate** → build → check → proof → **release gate** → deliver →
 confirm.
 
-**Visual:** `assets/diagrams/software-factory-flow.png`.
+**Visual:** `../assets/deck/software-factory-flow.png`.
 **Source:** `docs/start/concepts.md`, `docs/design/architecture.md`.
 
 ## 4. The product
@@ -42,7 +42,7 @@ click away."
 Show the queue, one task's story, the proof page and the two decisions. The product is a window over
 one home, not a chat.
 
-**Visual:** `assets/screens/story.png`.
+**Visual:** `../assets/ui/story.png`.
 **Source:** `README.md`, `docs/guides/workflow/ui.md`.
 
 ## 5. The proof is the product
@@ -67,8 +67,8 @@ different questions."
 - Swarm: how should the work be split? They build.
 - Works: how is it proven? They accept.
 
-**Visual:** `assets/why-works/01-three-products.png` and `02-three-questions.png`.
-**Source:** `presentation/03-works-vs.md`, `docs/design/strategy/positioning.md`.
+**Visual:** `../assets/deck/why-works/01-three-products.png` and `../assets/deck/why-works/02-three-questions.png`.
+**Source:** `docs/presentation/03-works-vs.md`, `docs/design/strategy/positioning.md`.
 
 ## 7. Three kinds of done
 
@@ -77,8 +77,8 @@ different questions."
 Only the third step can be shown to a customer, an auditor or a manager. A demo becomes a process
 someone stands behind.
 
-**Visual:** `assets/why-works/04-three-done.png`.
-**Source:** `assets/why-works/04-three-done.svg`.
+**Visual:** `../assets/deck/why-works/04-three-done.png`.
+**Source:** `../assets/deck/why-works/04-three-done.svg`.
 
 ## 8. Separation of roles
 
@@ -87,7 +87,7 @@ someone stands behind.
 The leader owns the work. Someone outside the team owns the proof. That is why the verifier is
 independent and why the two gates belong to a person.
 
-**Visual:** `assets/why-works/05-separation.png`.
+**Visual:** `../assets/deck/why-works/05-separation.png`.
 **Source:** `docs/design/adrs/005-verifier-independence.md`,
 `docs/reference/lifecycle/gates.md`.
 
@@ -99,7 +99,7 @@ we ship what was never proven."
 - Plan gate: approve the checks before work.
 - Release gate: approve the exact commit and its proof.
 
-**Visual:** `assets/why-works/06-two-signatures.png`.
+**Visual:** `../assets/deck/why-works/06-two-signatures.png`.
 **Source:** `docs/reference/lifecycle/gates.md`.
 
 ## 10. Why pay for trust
@@ -109,8 +109,8 @@ we ship what was never proven."
 Swarm adds capacity. Orbit adds coordination. Works adds trust: work that can be shipped. A demo
 becomes a process someone stands behind.
 
-**Visual:** `assets/why-works/07-why-pay.png`.
-**Source:** `assets/why-works/07-why-pay.svg`.
+**Visual:** `../assets/deck/why-works/07-why-pay.png`.
+**Source:** `../assets/deck/why-works/07-why-pay.svg`.
 
 ## 11. How it compares
 
@@ -122,7 +122,7 @@ comparisons: openJiuwen, JiuwenSwarm, Orbit.
 
 **Visual:** new comparison table; the current `positioning-two-products.png` can support the Orbit
 part.
-**Source:** `presentation/03-comparisons.md`, `presentation/03-works-vs.md`.
+**Source:** `docs/presentation/03-comparisons.md`, `docs/presentation/03-works-vs.md`.
 
 ## 12. Why not just add modules?
 
@@ -135,7 +135,7 @@ factory.
 
 **Visual:** new diagram needed — **not a plugin**. A box labelled "X" with the lifecycle modules
 pulling it into a different product.
-**Source:** `presentation/03-comparisons.md`.
+**Source:** `docs/presentation/03-comparisons.md`.
 
 ## 13. Evidence and what is built
 
@@ -144,8 +144,8 @@ daemon exist; the deck marks what is proposed."
 
 Show the architecture and the tests. Be explicit about built vs proposed.
 
-**Visual:** `assets/diagrams/built-on-openjiuwen.png` plus a built/proposed table.
-**Source:** `docs/design/architecture.md`, `presentation/05-evidence.md`.
+**Visual:** `../assets/ui/built-on-openjiuwen.png` plus a built/proposed table.
+**Source:** `docs/design/architecture.md`, `docs/presentation/05-evidence.md`.
 
 ## 14. The ask
 

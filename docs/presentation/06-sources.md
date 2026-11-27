@@ -24,8 +24,8 @@ Every claim in the deck should point here or to a demo step.
 | `docs/guides/integrations/swarm.md` | Works vs JiuwenSwarm; external builder boundary |
 | `docs/design/strategy/competitor-analysis.md` | Devin, Claude Code/Codex, Copilot Workspace, OpenHands, OpenAI factory |
 | `docs/archive/reviews/review-4-factories.md` | two agent factories, attention and review bottleneck |
-| `presentation/03-works-vs.md` | the direct three-way comparison |
-| `presentation/03-comparisons.md` | category matrix and "why not add modules" |
+| `docs/presentation/03-works-vs.md` | the direct three-way comparison |
+| `docs/presentation/03-comparisons.md` | category matrix and "why not add modules" |
 
 ## Decisions
 
@@ -42,18 +42,18 @@ Every claim in the deck should point here or to a demo step.
 
 ## Assets
 
-Copied into `presentation/assets/` for the deck; the originals stay in `docs/assets/`.
+The images stay in `docs/assets/`; the presentation links to them. There are no copies.
 
 | Asset | Use |
 |---|---|
-| `assets/why-works/00`–`07` | three products, three kinds of done, separation, two signatures, why pay |
-| `assets/diagrams/the-point.png` | the bottleneck |
-| `assets/diagrams/software-factory-flow.png` | the ten stages |
-| `assets/diagrams/software-factory-queue.png` | the queue |
-| `assets/diagrams/built-on-openjiuwen.png` | layers: models, harness, Works |
-| `assets/diagrams/positioning-*.png` | Works vs Orbit, contracts, build stage |
-| `assets/screens/story.png` | the product screen |
-| `assets/brand/banner.svg`, `banner-dark.svg` | title and closing |
+| `../assets/deck/why-works/00`–`07` | three products, three kinds of done, separation, two signatures, why pay |
+| `../assets/ui/the-point.png` | the bottleneck |
+| `../assets/deck/software-factory-flow.png` | the ten stages |
+| `../assets/deck/software-factory-queue.png` | the queue |
+| `../assets/ui/built-on-openjiuwen.png` | layers: models, harness, Works |
+| `../assets/ui/positioning-*.png` | Works vs Orbit, contracts, build stage |
+| `../assets/ui/story.png` | the product screen |
+| `../assets/ui/banner.svg`, `banner-dark.svg` | title and closing |
 
 ## Assets still to draw
 

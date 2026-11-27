@@ -1,7 +1,7 @@
 # Presentation: openJiuwen Works
 
-> Working folder for the product story and the eventual PowerPoint. This is not part of `docs/`;
-> it is a script, a comparison pack and a set of selected assets.
+> Working folder for the product story and the eventual PowerPoint. It lives inside `docs/` but is
+> working material, not reader documentation.
 
 ## Goal
 
@@ -36,7 +36,7 @@ add a queue and a proof page to our agent framework?".
 - [06-sources.md](06-sources.md) — source docs and the assets to reuse.
 - [07-demo-script.md](07-demo-script.md) — a live demo that does not depend on a model.
 - [08-next-steps.md](08-next-steps.md) — open decisions and the build plan.
-- [assets/](assets/) — selected images copied from `docs/assets/`.
+- Images stay in [`../assets/`](../assets/); [06-sources.md](06-sources.md) maps each one.
 
 ## Status
 

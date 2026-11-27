@@ -14,7 +14,7 @@ uv run works --home /path/printed/by/demo ui
 The demo home has five example tasks, including one waiting at the release gate. Keep a second
 terminal ready with `uv run works status` and `uv run works proof verify <run-id>`.
 
-Fallback: `presentation/assets/screens/story.png` and the proof page screenshot. If the live demo
+Fallback: `docs/assets/ui/story.png` and the proof page screenshot. If the live demo
 fails, switch to the images and keep talking; do not debug in front of the audience.
 
 ## The 10-minute path

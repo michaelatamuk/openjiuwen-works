@@ -23,6 +23,13 @@ documents:
   last_reviewed: '2026-11-27'
   audience: engineer
   canonical: true
+- path: docs/assets/brand/README.md
+  title: Brand
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: product
+  canonical: false
 - path: docs/design/README.md
   title: Design
   status: active
@@ -198,6 +205,76 @@ documents:
   last_reviewed: '2026-11-27'
   audience: user
   canonical: true
+- path: docs/presentation/01-brief.md
+  title: Brief
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: product
+  canonical: false
+- path: docs/presentation/02-narrative.md
+  title: Narrative
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: product
+  canonical: false
+- path: docs/presentation/03-comparisons.md
+  title: Comparisons
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: product
+  canonical: false
+- path: docs/presentation/03-works-vs.md
+  title: Works vs openJiuwen, JiuwenSwarm and Orbit
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: product
+  canonical: false
+- path: docs/presentation/04-objections.md
+  title: Objections
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: product
+  canonical: false
+- path: docs/presentation/05-evidence.md
+  title: Evidence
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: product
+  canonical: false
+- path: docs/presentation/06-sources.md
+  title: Sources
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: product
+  canonical: false
+- path: docs/presentation/07-demo-script.md
+  title: Demo script
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: product
+  canonical: false
+- path: docs/presentation/08-next-steps.md
+  title: Next steps
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: product
+  canonical: false
+- path: docs/presentation/README.md
+  title: 'Presentation: openJiuwen Works'
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: product
+  canonical: false
 - path: docs/reference/README.md
   title: Reference
   status: active

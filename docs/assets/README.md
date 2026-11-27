@@ -7,8 +7,8 @@ originals; `.png` files are rendered from them.
 
 | Path | Contents |
 |---|---|
+| [`brand/`](brand/) | banners, the Mira mascot and brand rules |
 | [`ui/`](ui/) | banners, diagrams and UI concepts |
-| [`deck/`](deck/) | slides and diagrams for the deck |
 | [`deck/`](deck/) | slides and diagrams for the deck |
 | [`film/`](film/) | the 45-second film and its source frames |
 

@@ -56,9 +56,9 @@ Remove the lifecycle and nothing is left. Works is not a model, an agent loop or
 - "Works replaces the harness." It does not.
 - "The harness is the product." A turn is not a change.
 
-Sources: [`live-harness.md`](../docs/guides/integrations/live-harness.md),
-[`ADR-008`](../docs/design/adrs/008-live-harness.md),
-[`architecture.md`](../docs/design/architecture.md).
+Sources: [`live-harness.md`](../guides/integrations/live-harness.md),
+[`ADR-008`](../design/adrs/008-live-harness.md),
+[`architecture.md`](../design/architecture.md).
 
 ## Works vs JiuwenSwarm
 
@@ -107,9 +107,9 @@ The acceptance layer is outside the team.
 - A live run still needs the Swarm gateway/model configuration and an isolated venv; the live model
   is not part of CI.
 
-Sources: [`swarm.md`](../docs/guides/integrations/swarm.md),
-[`live-harness.md`](../docs/guides/integrations/live-harness.md),
-[`ADR-010`](../docs/design/adrs/010-factory-and-attention.md).
+Sources: [`swarm.md`](../guides/integrations/swarm.md),
+[`live-harness.md`](../guides/integrations/live-harness.md),
+[`ADR-010`](../design/adrs/010-factory-and-attention.md).
 
 ## Works vs Orbit
 
@@ -182,9 +182,9 @@ Do not draw the proposed links as solid in public material.
 > "Why not one product?" — One product would have to be both generic and strict at the same time.
 > The MCP boundary gives one front door with two engines.
 
-Sources: [`positioning.md`](../docs/design/strategy/positioning.md),
-[`architecture.md`](../docs/design/architecture.md),
-[`ADR-010`](../docs/design/adrs/010-factory-and-attention.md).
+Sources: [`positioning.md`](../design/strategy/positioning.md),
+[`architecture.md`](../design/architecture.md),
+[`ADR-010`](../design/adrs/010-factory-and-attention.md).
 
 ## One picture
 

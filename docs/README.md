@@ -19,6 +19,10 @@ Start with the question you have. A page whose status is not `active` carries a 
 
 - [Reference](reference/README.md) — lifecycle, platform, capabilities and generated files.
 
+## Presentation
+
+- [Presentation](presentation/README.md) — the product story, comparisons and working deck.
+
 ## Archive
 
 - [Archive](archive/README.md) — reviews, plans, milestones, demos and proposals.

@@ -85,7 +85,7 @@ The binding, not the UI: checks read from the base commit, an independent verifi
 the exact commit and event root, gate identity with expiry and quorum, and a delivery/confirmation
 loop. Each piece is small; together they are a system contract that is expensive to retrofit.
 
-Source: `presentation/05-evidence.md`, `docs/reference/lifecycle/proof.md`.
+Source: `docs/presentation/05-evidence.md`, `docs/reference/lifecycle/proof.md`.
 
 ## "What is actually built?"
 
@@ -94,7 +94,7 @@ openJiuwen and JiuwenSwarm adapters, delivery and confirmation. The Orbit MCP to
 Works side; Orbit calling Works and Orbit as a build adapter are proposed. The deck must mark the
 difference.
 
-Source: `presentation/05-evidence.md`, `docs/design/strategy/positioning.md`.
+Source: `docs/presentation/05-evidence.md`, `docs/design/strategy/positioning.md`.
 
 ## "Why now?"
 

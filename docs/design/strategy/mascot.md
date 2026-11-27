@@ -60,6 +60,6 @@ Short, declarative, no exclamation marks. The same voice in CLI human output and
 
 ## Assets
 
-- `brand/mascot/mira-primary.svg` — full courier pose.
-- `brand/mascot/mira-avatar.svg` — head, favicon and small avatar.
+- `../../assets/brand/mascot/mira-primary.svg` — full courier pose.
+- `../../assets/brand/mascot/mira-avatar.svg` — head, favicon and small avatar.
 - Original character. No third-party likeness, no AI-generated artefact; the SVG is the source.

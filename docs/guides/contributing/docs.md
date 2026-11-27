@@ -17,7 +17,8 @@ for adding, moving and retiring documentation.
 | Why is it built this way? | `design/` | architecture, engineering standard, decisions, strategy |
 | What is planned or delivered? | `start/status.md`, `archive/` | current status; delivered plans and milestones |
 | What did we believe before? | `archive/` | reviews, plans, milestones, demos |
-| Where do images and video live? | `assets/` | UI, deck, film |
+| How do we present this? | `presentation/` | brief, narrative, comparisons, objections |
+| Where do images and video live? | `assets/` | brand, UI, deck, film |
 
 Do not add a new top-level directory without updating this table. Do not create a directory with a
 single entry: merge it into a neighbouring section. `make docs` fails on both.

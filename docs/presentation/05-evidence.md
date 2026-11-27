@@ -106,5 +106,5 @@ Source: `docs/design/strategy/positioning.md`, `docs/guides/integrations/live-ha
 5. The release gate: approve, deliver, confirm.
 6. `works proof verify <run-id>` on the proof.
 
-If the live demo fails, use `presentation/assets/screens/story.png` and the proof page screenshot.
+If the live demo fails, use `docs/assets/ui/story.png` and the proof page screenshot.
 Never debug the demo in front of the audience.
