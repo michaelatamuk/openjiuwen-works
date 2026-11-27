@@ -3,7 +3,7 @@
 > **Doc status:** archived · **Owner:** Michael · **Last reviewed:** 2026-11-21
 
 > Archived: this is the original v4.24 plan, kept for history. The stable design is
-> [architecture/overview.md](../../architecture/overview.md), the current status is
+> [architecture.md](../../architecture.md), the current status is
 > [roadmap/status.md](../status.md), and the engineering bar is
 > [guides/contributing/engineering-standard.md](../../guides/contributing/engineering-standard.md).
 

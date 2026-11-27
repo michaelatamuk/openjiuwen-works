@@ -16,15 +16,8 @@ documents:
   last_reviewed: '2026-11-27'
   audience: everyone
   canonical: true
-- path: docs/architecture/overview.md
-  title: Architecture overview
-  status: active
-  owner: Michael
-  last_reviewed: '2026-11-27'
-  audience: engineer
-  canonical: true
-- path: docs/architecture/planner.md
-  title: Planner
+- path: docs/architecture.md
+  title: Architecture
   status: active
   owner: Michael
   last_reviewed: '2026-11-27'
@@ -263,6 +256,13 @@ documents:
   canonical: true
 - path: docs/reference/lifecycle/gates.md
   title: Gates (stage 4 and stage 8)
+  status: active
+  owner: Michael
+  last_reviewed: '2026-11-27'
+  audience: engineer
+  canonical: true
+- path: docs/reference/lifecycle/planner.md
+  title: Planner
   status: active
   owner: Michael
   last_reviewed: '2026-11-27'

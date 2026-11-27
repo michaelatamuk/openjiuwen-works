@@ -1,5 +1,7 @@
 # Planning (stage 3)
 
+The component design, modes and delivery phases are in [planner.md](planner.md).
+
 A plan is a contract, not an essay: every step says what will be done and when it counts as done,
 and a person approves the exact version.
 

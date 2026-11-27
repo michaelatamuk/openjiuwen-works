@@ -42,8 +42,8 @@ question, not in the section that matches the file's genre.
 
 ## Understand the design
 
-- [Architecture overview](architecture/overview.md) — vision, invariants, components and one run.
-- [Planner](architecture/planner.md) — the planning contract and its delivery phases.
+- [Architecture](architecture.md) — processes, layers, one run, data and invariants.
+- [Planner](reference/lifecycle/planner.md) — the planning component and its delivery phases.
 - [Architecture decisions](adrs/README.md) — one record per expensive choice.
 - [Legacy plan v4.24](roadmap/archive/plan-v4.md) — the original scope and rationale; archived.
 - Strategy: [positioning](strategy/positioning.md),

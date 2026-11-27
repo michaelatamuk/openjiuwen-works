@@ -14,7 +14,7 @@ for adding, moving and retiring documentation.
 | How do I run or fix it? | `guides/operations/` | runbook, remote, supply chain |
 | How do I connect a harness or service? | `guides/integrations/` | live harness, swarm, PPMA, LAIX |
 | What is the contract? | `reference/lifecycle/`, `reference/platform/`, `reference/capabilities/` | stage contracts, HTTP API, scheduler |
-| Why is it built this way? | `architecture/`, `adrs/` | planner, decisions |
+| Why is it built this way? | `architecture.md`, `adrs/` | processes, layers, decisions |
 | What is planned or delivered? | `roadmap/` | plan, modernization plan, milestones |
 | Who is this for? | `strategy/` | positioning, competitors, mascot |
 | What did we believe before? | `archive/` | reviews, demos, old proposals |
